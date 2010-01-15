@@ -1,0 +1,14 @@
+.hg
+*.svn
+*.pyc
+*~
+.project
+.pydevproject
+.settings
+pprep.py
+pushgit
+pushhg
+pushreg
+mypoly.py
+tmp
+
