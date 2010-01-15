@@ -137,8 +137,8 @@ Combining Querysets of different types/models
 Using Third Party Models (without modifying them)
 -------------------------------------------------
 
-    Third party models can be used as polymorphic models without any
-    restrictions by simply subclassing them. E.g. using a third party
+    Third party models can be used as polymorphic models without
+    restrictions by subclassing them. E.g. using a third party
     model as the root of a polymorphic inheritance tree::
         
         from thirdparty import ThirdPartyModel
@@ -227,12 +227,13 @@ Manager Inheritance
 -------------------
 
 The current polymorphic models implementation unconditionally
-inherits all managers from the base models. An example::
+inherits all managers from its base models (but only the
+polymorphic ones). An example::
 
     class MyModel2(MyModel):
         pass
 
-    # Managers inherited from MyModel
+    # Managers inherited from MyModel, delivering MyModel2 objects
     >>> MyModel2.objects.all()
     >>> MyModel2.ordered_objects.all()
 

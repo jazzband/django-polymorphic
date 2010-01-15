@@ -138,8 +138,8 @@ Combining Querysets of different types/models
 Using Third Party Models (without modifying them)
 -------------------------------------------------
 
-    Third party models can be used as polymorphic models without any
-    restrictions by simply subclassing them. E.g. using a third party
+    Third party models can be used as polymorphic models without
+    restrictions by subclassing them. E.g. using a third party
     model as the root of a polymorphic inheritance tree::
         
         from thirdparty import ThirdPartyModel
@@ -228,12 +228,15 @@ Manager Inheritance
 -------------------
 
 The current polymorphic models implementation unconditionally
-inherits all managers from the base models. An example::
+inherits all managers from its base models (but only the
+polymorphic base models).
+
+An example (inheriting from MyModel above)::
 
     class MyModel2(MyModel):
         pass
 
-    # Managers inherited from MyModel
+    # Managers inherited from MyModel, delivering MyModel2 objects (including MyModel2 subclass objects)
     >>> MyModel2.objects.all()
     >>> MyModel2.ordered_objects.all()
 
@@ -552,8 +555,7 @@ class PolymorphicQuerySet(QuerySet):
         Some, many or all of these objects were not created and stored as
         class self.model, but as a class derived from self.model. So, these
         objects in base_result_objects have not the class they were created as
-        and are incomplete, as they do not contain the additional fields
-        of their real class.
+        and do not contain all fields of their real class.
         
         We identify them by looking at o.p_classname & o.p_appname, which specify
         the real class of these objects (the class at the time they were saved).
@@ -646,10 +648,8 @@ class PolymorphicQuerySet(QuerySet):
     def annotate(self, *args, **kwargs): raise NotImplementedError
 
     def __repr__(self):
-        result = []
-        for o in self.all():
-            result.append((',\n  ' if result else '') + repr(o))
-        return  '[ ' + ''.join(result) + ' ]' 
+        result = [ repr(o) for o in self.all() ]
+        return  '[ ' + ',\n  '.join(result) + ' ]' 
         
 
 ###################################################################################
@@ -750,7 +750,7 @@ def _translate_polymorphic_filter_spec(queryset_model, field_path, field_val):
         e = 'queryset filter error: "' + model.__name__ + '" is not derived from "' + queryset_model.__name__ + '"'
         raise AssertionError(e)
     
-    # create new field path for expressions, e.g. for ModelA, ModelC
+    # create new field path for expressions, e.g. for baseclass=ModelA, myclass=ModelC
     # 'modelb__modelc" is returned
     def _create_base_path(baseclass, myclass):
         bases = myclass.__bases__
@@ -770,7 +770,7 @@ def _create_model_filter_Q(modellist, not_instance_of=False):
     """
     Helper function for instance_of / not_instance_of
     Creates and returns a Q object that filters for the models in modellist,
-    including all subclasses of these models (as we want be to the same
+    including all subclasses of these models (as we want to do the same
     as pythons isinstance() ).
     .
     We recursively collect all __subclasses__(), create a Q filter for each,
