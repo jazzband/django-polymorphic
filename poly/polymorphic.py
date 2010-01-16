@@ -509,12 +509,16 @@ class PolymorphicManager(models.Manager):
     def get_query_set(self):
         return self.queryset_class(self.model)
     
+    # proxy all unknown method calls to the queryset
+    # so that its members are directly accessible from PolymorphicModel.objects.
+    # The advantage is that not yet known member functions of derived querysets will be proxied as well. 
+    # But also execute all special functions (__) as usual.
+    def __getattr__(self, name):
+        if name.startswith('__'): return super(PolymorphicManager, self).__getattr__(self, name)
+        return getattr(self.get_query_set(), name)
+    
     def __unicode__(self):
         return self.__class__.__name__ + ' (PolymorphicManager) using ' + self.queryset_class.__name__
-
-    # proxies to queryset
-    def instance_of(self, *args, **kwargs): return self.get_query_set().instance_of(*args, **kwargs)
-    def not_instance_of(self, *args, **kwargs): return self.get_query_set().not_instance_of(*args, **kwargs)
 
 
 ###################################################################################
