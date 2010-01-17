@@ -995,8 +995,9 @@ class PolymorphicModel(models.Model):
     # TODO: investigate Django how this can be avoided
     def __getattribute__(self, name):
         if name != '__class__':
-            modelname = name.rstrip('_ptr')
-            model = self.__class__.sub_and_superclass_dict.get(modelname, None)
+            #if name.endswith('_ptr_cache'): # unclear if this should be handled as well
+            if name.endswith('_ptr'): name=name[:-4]
+            model = self.__class__.sub_and_superclass_dict.get(name, None)
             if model: 
                 id = super(PolymorphicModel, self).__getattribute__('id')
                 attr = model.base_objects.get(id=id)
