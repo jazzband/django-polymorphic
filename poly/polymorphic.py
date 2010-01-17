@@ -746,10 +746,12 @@ def _translate_polymorphic_filter_spec(queryset_model, field_path, field_val):
     
     # filter expression contains '___' (i.e. filter for polymorphic field)
     # => get the model class specified in the filter expression
+    # TODO: if app not given, just model name => try to find model in any app??
     classname, sep, pure_field_path = field_path.partition('___')
     if '__' in classname: appname, sep, classname = classname.partition('__')
     else: appname = queryset_model._meta.app_label
     model = models.get_model(appname, classname)
+    assert model, 'model %s (in app %s) not found!' % (modelname, appname)
     if not issubclass(model, queryset_model):
         e = 'queryset filter error: "' + model.__name__ + '" is not derived from "' + queryset_model.__name__ + '"'
         raise AssertionError(e)
@@ -868,7 +870,7 @@ class PolymorphicModelBase(ModelBase):
         add_managers = []; add_managers_keys = set()
         for base in self.__mro__[1:]:
             if not issubclass(base, models.Model): continue
-            if not getattr(base,'polymorphic_model_marker',None): continue # leave managers of non-polym. models alone
+            if not getattr(base, 'polymorphic_model_marker', None): continue # leave managers of non-polym. models alone
 
             for key, manager in base.__dict__.items():
                 if type(manager) == models.manager.ManagerDescriptor: manager = manager.manager 
@@ -948,19 +950,25 @@ class PolymorphicModel(models.Model):
     objects = PolymorphicManager()
     base_objects = models.Manager()
 
-    def save(self, *args, **kwargs):
-        """Overridden model save function which supports the polymorphism
-        functionality. If your derived class overrides save() as well, then you
-        need to take care that you correctly call the save() method of
-        the superclass.
+    def pre_save_polymorphic(self):
+        """
+        Normally not needed - this function may be called manually in special use-cases.
         
         When the object is saved for the first time, we store its real class and app name
         into p_classname and p_appname. When the object later is retrieved by
         PolymorphicQuerySet, it uses these fields to figure out the real type of this object
-        (used by PolymorphicQuerySet._get_real_instances)"""
+        (used by PolymorphicQuerySet._get_real_instances)
+        """
         if not self.p_classname:
             self.p_classname = self.__class__.__name__
             self.p_appname = self.__class__._meta.app_label
+
+    def save(self, *args, **kwargs):
+        """Overridden model save function which supports the polymorphism
+        functionality (through pre_save). If your derived class overrides
+        save() as well, then you need to take care that you correctly call
+        the save() method of the superclass."""
+        self.pre_save_polymorphic()
         return super(PolymorphicModel, self).save(*args, **kwargs)
 
     def get_real_instance_class(self):
@@ -1028,3 +1036,4 @@ class PolymorphicModel(models.Model):
             if f != last:  out += ', '
         return '<' + out + '>'
     
+
