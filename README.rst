@@ -228,12 +228,14 @@ Manager Inheritance
 
 The current polymorphic models implementation unconditionally
 inherits all managers from its base models (but only the
-polymorphic ones). An example::
+polymorphic base models).
+
+An example (inheriting from MyModel above)::
 
     class MyModel2(MyModel):
         pass
 
-    # Managers inherited from MyModel, delivering MyModel2 objects
+    # Managers inherited from MyModel, delivering MyModel2 objects (including MyModel2 subclass objects)
     >>> MyModel2.objects.all()
     >>> MyModel2.ordered_objects.all()
 
