@@ -1,4 +1,17 @@
 #!/usr/bin/env python
+
+# Prepend project subdirectory 'libraries-local' to sys.path.
+# This allows us to use/test any version of Django
+# (e.g. Django 1.2 subversion) or any other packages/libraries.
+import sys, os
+project_path = os.path.dirname(os.path.abspath(__file__))
+libs_local_path = os.path.join(project_path, 'libraries-local')
+if libs_local_path not in sys.path: sys.path.insert(1, libs_local_path)
+import django
+print 'using Django version: %s, from %s' % (django.get_version(), os.path.dirname(os.path.abspath(django.__file__)))
+
+# vanilla Django manage.py from here on:
+
 from django.core.management import execute_manager
 try:
     import settings # Assumed to be in the same directory.
