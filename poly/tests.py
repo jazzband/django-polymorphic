@@ -17,6 +17,11 @@
   <ModelB: id 2, field1 (CharField), field2 (CharField)>,
   <ModelC: id 3, field1 (CharField), field2 (CharField), field3 (CharField)> ]
 
+# manual get_real_instance()
+>>> o=ModelA.base_objects.get(field1='C1')
+>>> o.get_real_instance()
+<ModelC: id 3, field1 (CharField), field2 (CharField), field3 (CharField)>
+
 ### class filtering, instance_of, not_instance_of
 
 >>> ModelA.objects.instance_of(ModelB)

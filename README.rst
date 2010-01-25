@@ -2,9 +2,17 @@
 Fully Polymorphic Django Models
 ===============================
 
+News
+----
 
-What it Does
-============
+* 	2010-1-26: IMPORTANT - database schema change (more info in change log).
+	I hope I got this change in early enough before anyone started to use
+	polymorphic.py in earnest. Sorry for any inconvenience.
+	This should be the final DB schema now!
+
+
+What is django_polymorphic good for?
+------------------------------------
 
 If ``ArtProject`` and ``ResearchProject`` inherit from the model ``Project``::
 

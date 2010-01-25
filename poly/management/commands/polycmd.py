@@ -7,6 +7,7 @@ from django.core.management.base import NoArgsCommand
 from django.db.models import connection
 from poly.models import *
 from pprint import pprint
+import settings
 
 def reset_queries():
     connection.queries=[]
@@ -18,9 +19,9 @@ class Command(NoArgsCommand):
     help = ""
 
     def handle_noargs(self, **options):
-        print "polycmd"
-
-
+        print 'polycmd - sqlite test db is stored in:',settings.DATABASE_NAME
+        print
+        
         Project.objects.all().delete()
         o=Project.objects.create(topic="John's gathering")
         o=ArtProject.objects.create(topic="Sculpting with Tim", artist="T. Turner")

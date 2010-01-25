@@ -1,23 +1,26 @@
 # -*- coding: utf-8 -*-
 """
 Fully Polymorphic Django Models
+===============================
 
-Please see the examples and the documentation here:
+Please see the examples and documentation here:
 
-http://bserve.webhop.org/wiki/django_polymorphic
+    http://bserve.webhop.org/wiki/django_polymorphic
 
-or in the included README.rst and DOCS.rst files
+or in the included README.rst and DOCS.rst files.
 
-Copyright: This code and affiliated files are (C) 2010 Bert Constantin
-and individual contributors. Please see LICENSE for more information. 
+Copyright:
+This code and affiliated files are (C) by
+Bert Constantin and the individual contributors.
+Please see LICENSE and AUTHORS for more information. 
 """
 
 from django.db import models
 from django.db.models.base import ModelBase
 from django.db.models.query import QuerySet
-from collections import deque
+from collections import defaultdict
 from pprint import pprint
-import copy
+from django.contrib.contenttypes.models import ContentType
 
 # chunk-size: maximum number of objects requested per db-request
 # by the polymorphic queryset.iterator() implementation
@@ -29,12 +32,10 @@ Polymorphic_QuerySet_objects_per_request = 100
 
 class PolymorphicManager(models.Manager):
     """
-    Manager for PolymorphicModel abstract model.
+    Manager for PolymorphicModel
     
     Usually not explicitly needed, except if a custom manager or
     a custom queryset class is to be used.
-    
-    For more information, please see documentation.
     """
     use_for_related_fields = True
 
@@ -46,10 +47,10 @@ class PolymorphicManager(models.Manager):
     def get_query_set(self):
         return self.queryset_class(self.model)
     
-    # proxy all unknown method calls to the queryset
-    # so that its members are directly accessible from PolymorphicModel.objects.
+    # Proxy all unknown method calls to the queryset, so that its members are
+    # directly accessible from PolymorphicModel.objects.
     # The advantage is that not yet known member functions of derived querysets will be proxied as well. 
-    # But also execute all special functions (__) as usual.
+    # We exclude any special functions (__) from this automatic proxying.
     def __getattr__(self, name):
         if name.startswith('__'): return super(PolymorphicManager, self).__getattr__(self, name)
         return getattr(self.get_query_set(), name)
@@ -63,12 +64,12 @@ class PolymorphicManager(models.Manager):
 
 class PolymorphicQuerySet(QuerySet):
     """
-    QuerySet for PolymorphicModel abstract model
+    QuerySet for PolymorphicModel
     
-    contains the core functionality for PolymorphicModel 
+    Contains the core functionality for PolymorphicModel 
     
     Usually not explicitly needed, except if a custom queryset class
-    is to be used (see PolymorphicManager).
+    is to be used.
     """
 
     def instance_of(self, *args):
@@ -95,59 +96,50 @@ class PolymorphicQuerySet(QuerySet):
         
         Some, many or all of these objects were not created and stored as
         class self.model, but as a class derived from self.model. We want to fetch
-        their missing fields and return them as they saved.
+        these objects from the db so we can return them just as they were saved.
         
-        We identify these objects by looking at o.p_classname & o.p_appname, which specify
+        We identify these objects by looking at o.polymorphic_ctype, which specifies
         the real class of these objects (the class at the time they were saved).
-        We replace them by the correct objects, which we fetch from the db.
         
-        To do this, we sort the result objects in base_result_objects for their
-        subclass first, then execute one db query per subclass of objects,
-        and finally re-sort the resulting objects into the correct
-        order and return them as a list.
+        First, we sort the result objects in base_result_objects for their
+        subclass (from o.polymorphic_ctype), and then we execute one db query per
+        subclass of objects. Finally we re-sort the resulting objects into the
+        correct order and return them as a list.
         """
-        ordered_id_list = []      # list of ids of result-objects in correct order
-        results = {}          # polymorphic dict of result-objects, keyed with their id (no order)
-
-        # dict contains one entry for the different model types occurring in result, keyed by model-name
-        # each entry: { 'p_classname': <model name>, 'appname':<model app name>,
-        #      'idlist':<list of all result object ids from this model> }
-        type_bins = {}
+        ordered_id_list = []    # list of ids of result-objects in correct order
+        results = {}            # polymorphic dict of result-objects, keyed with their id (no order)
         
-        # - sort base_result_objects into bins depending on their real class;
-        # - also record the correct result order in ordered_id_list
+        # dict contains one entry for the different model types occurring in result,
+        # in the format idlist_per_model['applabel.modelname']=[list-of-ids-for-this-model]
+        idlist_per_model = defaultdict(list)
+        
+        # - sort base_result_object ids into idlist_per_model lists, depending on their real class;
+        # - also record the correct result order in "ordered_id_list"
+        # - store objects that already have the correct class into "results"
+        self_model_content_type_id = ContentType.objects.get_for_model(self.model).pk
         for base_object in base_result_objects:
             ordered_id_list.append(base_object.id)
 
             # this object is not a derived object and already the real instance => store it right away
-            if (base_object.p_classname == base_object.__class__.__name__
-                and base_object.p_appname == base_object.__class__._meta.app_label):
+            if (base_object.polymorphic_ctype_id == self_model_content_type_id):
                 results[base_object.id] = base_object
 
             # this object is derived and its real instance needs to be retrieved
             # => store it's id into the bin for this model type
             else:
-                model_key = base_object.p_classname + '-' + base_object.p_appname
-                if not model_key in type_bins:
-                    type_bins[model_key] = {
-                        'classname':base_object.p_classname,
-                        'appname':base_object.p_appname,
-                        'idlist':[]
-                        }
-                type_bins[model_key]['idlist'].append(base_object.id)
+                idlist_per_model[base_object.get_real_instance_class()].append(base_object.id)
         
-        # for each bin request its objects (the full model) from the db and store them in results[]
-        for bin in type_bins.values():
-            modelclass = models.get_model(bin['appname'], bin['classname'])
-            if modelclass:
-                qs = modelclass.base_objects.filter(id__in=bin['idlist'])
-                # copy select related configuration to new qs
-                # TODO: this does not seem to copy the complete sel_rel-config (field names etc.)
-                self.dup_select_related(qs) 
-                # TODO: defer(), only() and annotate(): support for these would be around here
-                
-                for o in qs: results[o.id] = o
+        # for each model in "idlist_per_model" request its objects (the full model)
+        # from the db and store them in results[]
+        for modelclass, idlist in idlist_per_model.items():
+            qs = modelclass.base_objects.filter(id__in=idlist)
+            # copy select related configuration to new qs
+            # TODO: this does not seem to copy the complete sel_rel-config (field names etc.)
+            self.dup_select_related(qs) 
+            # TODO: defer(), only() and annotate(): support for these would be around here
+            for o in qs: results[o.id] = o
         
+        # re-create correct order and return result list
         resultlist = [ results[ordered_id] for ordered_id in ordered_id_list if ordered_id in results ]
         return resultlist
 
@@ -301,21 +293,21 @@ def _translate_polymorphic_field_path(queryset_model, field_path):
         # the user has app label prepended to class name via __ => use Django's get_model function
         appname, sep, classname = classname.partition('__')
         model = models.get_model(appname, classname)
-        assert model, 'model %s (in app %s) not found!' % (model.__name__, appname)
+        assert model, 'PolymorphicModel: model %s (in app %s) not found!' % (model.__name__, appname)
         if not issubclass(model, queryset_model):
-            e = 'queryset filter error: "' + model.__name__ + '" is not derived from "' + queryset_model.__name__ + '"'
+            e = 'PolymorphicModel: queryset filter error: "' + model.__name__ + '" is not derived from "' + queryset_model.__name__ + '"'
             raise AssertionError(e)
         
     else:
         # the user has only given us the class name via __
         # => select the model from the sub models of the queryset base model
 
-        # function to collect all sub-models, this could be optimized
+        # function to collect all sub-models, this should be optimized (cached)
         def add_all_sub_models(model, result):
             if issubclass(model, models.Model) and model != models.Model:
                 # model name is occurring twice in submodel inheritance tree => Error
-                if model.__name__ in result and model!=result[model.__name__]:
-                    assert model, 'model name is ambiguous: %s.%s, %s.%s!' % (
+                if model.__name__ in result and model != result[model.__name__]:
+                    assert model, 'PolymorphicModel: model name is ambiguous: %s.%s, %s.%s!' % (
                         model._meta.app_label, model.__name__,
                         result[model.__name__]._meta.app_label, result[model.__name__].__name__)
             
@@ -326,8 +318,8 @@ def _translate_polymorphic_field_path(queryset_model, field_path):
         
         submodels = {}
         add_all_sub_models(queryset_model, submodels)
-        model=submodels.get(classname,None)
-        assert model, 'model %s not found (not a subclass of %s)!' % (model.__name__, queryset_model.__name__)
+        model = submodels.get(classname, None)
+        assert model, 'PolymorphicModel: model %s not found (not a subclass of %s)!' % (model.__name__, queryset_model.__name__)
 
     # create new field path for expressions, e.g. for baseclass=ModelA, myclass=ModelC
     # 'modelb__modelc" is returned
@@ -366,10 +358,10 @@ def _create_model_filter_Q(modellist, not_instance_of=False):
         if issubclass(modellist, PolymorphicModel):
             modellist = [modellist]
         else:
-            assert False, 'instance_of expects a list of models or a single model'
+            assert False, 'PolymorphicModel: instance_of expects a list of models or a single model'
 
     def q_class_with_subclasses(model):
-        q = Q(p_classname=model.__name__) & Q(p_appname=model._meta.app_label)
+        q = Q(polymorphic_ctype=ContentType.objects.get_for_model(model))
         for subclass in model.__subclasses__():
             q = q | q_class_with_subclasses(subclass)
         return q
@@ -386,18 +378,19 @@ def _create_model_filter_Q(modellist, not_instance_of=False):
 
 class PolymorphicModelBase(ModelBase):
     """
-    Manager inheritance is a pretty complex topic which will need
+    Manager inheritance is a pretty complex topic which may need
     more thought regarding how this should be handled for polymorphic
     models.
     
     In any case, we probably should propagate 'objects' and 'base_objects'
     from PolymorphicModel to every subclass. We also want to somehow
-    inherit _default_manager as well, as it needs to be polymorphic.
+    inherit/propagate _default_manager as well, as it needs to be polymorphic.
     
-    The current implementation below is an experiment to solve the
-    problem with a very simplistic approach: We unconditionally inherit
-    any and all managers (using _copy_to_model), as long as they are
-    defined on polymorphic models (the others are left alone).
+    The current implementation below is an experiment to solve this
+    problem with a very simplistic approach: We unconditionally
+    inherit/propagate any and all managers (using _copy_to_model),
+    as long as they are defined on polymorphic models
+    (the others are left alone).
     
     Like Django ModelBase, we special-case _default_manager:
     if there are any user-defined managers, it is set to the first of these.
@@ -437,9 +430,9 @@ class PolymorphicModelBase(ModelBase):
 
     def get_inherited_managers(self, attrs):
         """
-        Return list of all managers to be inherited from the base classes;
+        Return list of all managers to be inherited/propagated from the base classes;
         use correct mro, only use managers with _inherited==False,
-        skip managers that are overwritten by the user with same-named class attributes (attr)
+        skip managers that are overwritten by the user with same-named class attributes (in attrs)
         """
         add_managers = []; add_managers_keys = set()
         for base in self.__mro__[1:]:
@@ -476,11 +469,11 @@ class PolymorphicModelBase(ModelBase):
         and its querysets from PolymorphicQuerySet - throw AssertionError if not"""
         
         if not issubclass(type(manager), PolymorphicManager):
-            e = '"' + model_name + '.' + manager_name + '" manager is of type "' + type(manager).__name__
+            e = 'PolymorphicModel: "' + model_name + '.' + manager_name + '" manager is of type "' + type(manager).__name__
             e += '", but must be a subclass of PolymorphicManager'
             raise AssertionError(e)
         if not getattr(manager, 'queryset_class', None) or not issubclass(manager.queryset_class, PolymorphicQuerySet):
-            e = '"' + model_name + '.' + manager_name + '" (PolymorphicManager) has been instantiated with a queryset class which is'
+            e = 'PolymorphicModel: "' + model_name + '.' + manager_name + '" (PolymorphicManager) has been instantiated with a queryset class which is'
             e += ' not a subclass of PolymorphicQuerySet (which is required)'
             raise AssertionError(e)
         return manager
@@ -491,14 +484,14 @@ class PolymorphicModelBase(ModelBase):
 
 class PolymorphicModel(models.Model):
     """
-    Abstract base class that provides full polymorphism
-    to any model directly or indirectly derived from it
+    Abstract base class that provides polymorphic behaviour
+    for any model directly or indirectly derived from it.
     
     For usage instructions & examples please see documentation.
     
-    PolymorphicModel declares two fields for internal use (p_classname
-    and p_appname) and provides a polymorphic manager as the
-    default manager (and as 'objects').
+    PolymorphicModel declares one field for internal use (polymorphic_ctype)
+    and provides a polymorphic manager as the default manager
+    (and as 'objects').
     
     PolymorphicModel overrides the save() method.
     
@@ -515,11 +508,10 @@ class PolymorphicModel(models.Model):
     class Meta:
         abstract = True
 
-    p_classname = models.CharField(max_length=100, default='', editable=False)
-    p_appname = models.CharField(max_length=50, default='', editable=False)
-
-    # some applications want to know the name of fields that are added to its models
-    polymorphic_internal_model_fields = [ 'p_classname', 'p_appname' ]
+    polymorphic_ctype = models.ForeignKey(ContentType, null=True, editable=False)        
+            
+    # some applications want to know the name of the fields that are added to its models
+    polymorphic_internal_model_fields = [ 'polymorphic_ctype' ]
 
     objects = PolymorphicManager()
     base_objects = models.Manager()
@@ -527,21 +519,18 @@ class PolymorphicModel(models.Model):
     def pre_save_polymorphic(self):
         """
         Normally not needed.
-        This function may be called manually in special use-cases.
-        When the object is saved for the first time, we store its real class and app name
-        into p_classname and p_appname. When the object later is retrieved by
-        PolymorphicQuerySet, it uses these fields to figure out the real type of this object
+        This function may be called manually in special use-cases. When the object
+        is saved for the first time, we store its real class in polymorphic_ctype.
+        When the object later is retrieved by PolymorphicQuerySet, it uses this
+        field to figure out the real class of this object
         (used by PolymorphicQuerySet._get_real_instances)
         """
-        if not self.p_classname:
-            self.p_classname = self.__class__.__name__
-            self.p_appname = self.__class__._meta.app_label
+        if not self.polymorphic_ctype:
+            self.polymorphic_ctype = ContentType.objects.get_for_model(self)
 
     def save(self, *args, **kwargs):
         """Overridden model save function which supports the polymorphism
-        functionality (through pre_save). If your derived class overrides
-        save() as well, then you need to take care that you correctly call
-        the save() method of the superclass."""
+        functionality (through pre_save_polymorphic)."""
         self.pre_save_polymorphic()
         return super(PolymorphicModel, self).save(*args, **kwargs)
 
@@ -550,36 +539,40 @@ class PolymorphicModel(models.Model):
         If a non-polymorphic manager (like base_objects) has been used to
         retrieve objects, then the real class/type of these objects may be
         determined using this method.""" 
-        return models.get_model(self.p_appname, self.p_classname)
+        # the following line would be the easiest way to do this, but it produces sql queries
+        #return self.polymorphic_ctype.model_class()
+        # so we use the following version, which uses the CopntentType manager cache
+        return ContentType.objects.get_for_id(self.polymorphic_ctype_id).model_class()
     
     def get_real_instance(self):
         """Normally not needed.
         If a non-polymorphic manager (like base_objects) has been used to
-        retrieve objects, then the real class/type of these objects may be
-        retrieve the complete object with i's real class/type and all fields.
-        Each method call executes one db query.""" 
-        if self.p_classname == self.__class__.__name__ and self.p_appname == self.__class__._meta.app_label:
-            return self
-        return self.get_real_instance_class().objects.get(id=self.id)
-
+        retrieve objects, then the complete object with it's real class/type
+        and all fields may be retrieved with this method.
+        Each method call executes one db query (if necessary).""" 
+        real_model = self.get_real_instance_class()
+        if real_model == self.__class__: return self
+        return real_model.objects.get(id=self.id)
+    
     # Hack: 
-    # For base model back reference fields (like basemodel_ptr), Django should =not= use our polymorphic manager/queryset.
+    # For base model back reference fields (like basemodel_ptr),
+    # Django definitely must =not= use our polymorphic manager/queryset.
     # For now, we catch objects attribute access here and handle back reference fields manually.
-    # This problem is triggered by delete(), like here: django.db.models.base._collect_sub_objects: parent_obj = getattr(self, link.name)
+    # This problem is triggered by delete(), like here:
+    # django.db.models.base._collect_sub_objects: parent_obj = getattr(self, link.name)
     # TODO: investigate Django how this can be avoided
     def __getattribute__(self, name):
         if name != '__class__':
             #if name.endswith('_ptr_cache'): # unclear if this should be handled as well
-            if name.endswith('_ptr'): name=name[:-4]
+            if name.endswith('_ptr'): name = name[:-4]
             model = self.__class__.sub_and_superclass_dict.get(name, None)
             if model: 
                 id = super(PolymorphicModel, self).__getattribute__('id')
                 attr = model.base_objects.get(id=id)
                 return attr
-
         return super(PolymorphicModel, self).__getattribute__(name)
 
-    # support for __getattribute__: create sub_and_superclass_dict,
+    # support for __getattribute__ hack: create sub_and_superclass_dict,
     # containing all model attribute names we need to intercept
     # (do this once here instead of in __getattribute__ every time)
     def __init__(self, *args, **kwargs):
@@ -603,14 +596,13 @@ class PolymorphicModel(models.Model):
         super(PolymorphicModel, self).__init__(*args, **kwargs)
         
     def __repr__(self):
-        "output object descriptions as seen in documentation"
         out = self.__class__.__name__ + ': id %d, ' % (self.id or - 1); last = self._meta.fields[-1]
         for f in self._meta.fields:
-            if f.name in [ 'id', 'p_classname', 'p_appname' ] or 'ptr' in f.name: continue
+            if f.name in [ 'id' ] + self.polymorphic_internal_model_fields or 'ptr' in f.name: continue
             out += f.name + ' (' + type(f).__name__ + ')'
             if f != last:  out += ', '
         return '<' + out + '>'
-    
+
 
 class ShowFields(object):
     """ mixin that shows the object's class, it's fields and field contents """
@@ -642,5 +634,4 @@ class ShowFieldsAndTypes(object):
                 out += ': "' + getattr(self, f.name) + '"'
             if f != last:  out += ', '
         return '<' + self.__class__.__name__ + ': ' + out + '>'
-
 

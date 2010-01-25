@@ -74,7 +74,7 @@ TEMPLATE_DIRS = (
 
 INSTALLED_APPS = (
     #'django.contrib.auth',
-    #'django.contrib.contenttypes',
+    'django.contrib.contenttypes',
     #'django.contrib.sessions',
     #'django.contrib.sites',
     'poly', # this Django app is for testing and experimentation; not needed otherwise
