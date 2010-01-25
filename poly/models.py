@@ -1,20 +1,6 @@
 from django.db import models
 
-from polymorphic import PolymorphicModel, PolymorphicManager, PolymorphicQuerySet
-
-class ShowFieldContent(object):
-    def __repr__(self):
-        out = 'id %d, ' % (self.id); last = self._meta.fields[-1]
-        for f in self._meta.fields:
-            if f.name in [ 'id', 'p_classname', 'p_appname' ] or 'ptr' in f.name: continue
-            out += f.name + ' (' + type(f).__name__ + ')'
-            if isinstance(f, (models.ForeignKey)):
-                o = getattr(self, f.name)
-                out += ': "' + ('None' if o == None else o.__class__.__name__) + '"'
-            else:
-                out += ': "' + getattr(self, f.name) + '"'
-            if f != last:  out += ', '
-        return '<' + self.__class__.__name__ + ': ' + out + '>'
+from polymorphic import PolymorphicModel, PolymorphicManager, PolymorphicQuerySet, ShowFields, ShowFieldsAndTypes
 
 class PlainA(models.Model):
     field1 = models.CharField(max_length=10)
@@ -39,7 +25,7 @@ class ModelY(Base):
 
 class Enhance_Plain(models.Model):
     field_p = models.CharField(max_length=10)
-class Enhance_Base(ShowFieldContent, PolymorphicModel):
+class Enhance_Base(ShowFieldsAndTypes, PolymorphicModel):
     field_b = models.CharField(max_length=10)
 class Enhance_Inherit(Enhance_Base, Enhance_Plain):
     field_i = models.CharField(max_length=10)
@@ -54,7 +40,7 @@ class DiamondY(DiamondBase):
 class DiamondXY(DiamondX, DiamondY):
     pass
 
-class RelationBase(ShowFieldContent, PolymorphicModel):
+class RelationBase(ShowFieldsAndTypes, PolymorphicModel):
     field_base = models.CharField(max_length=10)
     fk = models.ForeignKey('self', null=True)
     m2m = models.ManyToManyField('self')
@@ -71,7 +57,7 @@ class RelatingModel(models.Model):
 class MyManager(PolymorphicManager):
     def get_query_set(self):
         return super(MyManager, self).get_query_set().order_by('-field1')
-class ModelWithMyManager(ShowFieldContent, ModelA):
+class ModelWithMyManager(ShowFieldsAndTypes, ModelA):
     objects = MyManager()
     field4 = models.CharField(max_length=10)
 
@@ -91,6 +77,13 @@ class MgrInheritA(models.Model):
 class MgrInheritB(MgrInheritA):  
     mgrB = models.Manager()
     field2 = models.CharField(max_length=10)
-class MgrInheritC(ShowFieldContent, MgrInheritB):
+class MgrInheritC(ShowFieldsAndTypes, MgrInheritB):
     pass
+
+class Project(ShowFields,PolymorphicModel):
+    topic = models.CharField(max_length=30)
+class ArtProject(Project):
+    artist = models.CharField(max_length=30)
+class ResearchProject(Project):
+    supervisor = models.CharField(max_length=30)
 

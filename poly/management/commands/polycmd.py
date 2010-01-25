@@ -20,10 +20,20 @@ class Command(NoArgsCommand):
     def handle_noargs(self, **options):
         print "polycmd"
 
+
+        Project.objects.all().delete()
+        o=Project.objects.create(topic="John's gathering")
+        o=ArtProject.objects.create(topic="Sculpting with Tim", artist="T. Turner")
+        o=ResearchProject.objects.create(topic="Swallow Aerodynamics", supervisor="Dr. Winter")
+
+        print Project.objects.all()
+        print
+
         ModelA.objects.all().delete()
-        
         o=ModelA.objects.create(field1='A1')
         o=ModelB.objects.create(field1='B1', field2='B2')
         o=ModelC.objects.create(field1='C1', field2='C2', field3='C3')
         
         print ModelA.objects.all()
+
+
