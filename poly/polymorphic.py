@@ -515,8 +515,8 @@ class PolymorphicModel(models.Model):
     class Meta:
         abstract = True
 
-    p_classname = models.CharField(max_length=100, default='')
-    p_appname = models.CharField(max_length=50, default='')
+    p_classname = models.CharField(max_length=100, default='', editable=False)
+    p_appname = models.CharField(max_length=50, default='', editable=False)
 
     # some applications want to know the name of fields that are added to its models
     polymorphic_internal_model_fields = [ 'p_classname', 'p_appname' ]
