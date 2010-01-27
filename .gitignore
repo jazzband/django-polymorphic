@@ -5,13 +5,18 @@
 .project
 .pydevproject
 .settings
-pprep.py
+
+mypoly.py
+
+tmp
+libraries-local
+
 pushgit
 pushhg
 pushreg
-mypoly.py
-tmp
-poly2.py
-libraries-local
+
+ppreadme.py
+ppdocs.py
 README.html
+DOCS.html
 

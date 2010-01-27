@@ -10,8 +10,7 @@ Please see the examples and documentation here:
 or in the included README.rst and DOCS.rst files.
 
 Copyright:
-This code and affiliated files are (C) by
-Bert Constantin and the individual contributors.
+This code and affiliated files are (C) by Bert Constantin and individual contributors.
 Please see LICENSE and AUTHORS for more information. 
 """
 
@@ -21,6 +20,7 @@ from django.db.models.query import QuerySet
 from collections import defaultdict
 from pprint import pprint
 from django.contrib.contenttypes.models import ContentType
+import sys
 
 # chunk-size: maximum number of objects requested per db-request
 # by the polymorphic queryset.iterator() implementation
@@ -48,7 +48,7 @@ class PolymorphicManager(models.Manager):
         return self.queryset_class(self.model)
     
     # Proxy all unknown method calls to the queryset, so that its members are
-    # directly accessible from PolymorphicModel.objects.
+    # directly accessible as PolymorphicModel.objects.*
     # The advantage is that not yet known member functions of derived querysets will be proxied as well. 
     # We exclude any special functions (__) from this automatic proxying.
     def __getattr__(self, name):
@@ -109,8 +109,8 @@ class PolymorphicQuerySet(QuerySet):
         ordered_id_list = []    # list of ids of result-objects in correct order
         results = {}            # polymorphic dict of result-objects, keyed with their id (no order)
         
-        # dict contains one entry for the different model types occurring in result,
-        # in the format idlist_per_model['applabel.modelname']=[list-of-ids-for-this-model]
+        # dict contains one entry per unique model type occurring in result,
+        # in the format idlist_per_model[modelclass]=[list-of-object-ids]
         idlist_per_model = defaultdict(list)
         
         # - sort base_result_object ids into idlist_per_model lists, depending on their real class;
@@ -307,7 +307,9 @@ def _translate_polymorphic_field_path(queryset_model, field_path):
             if issubclass(model, models.Model) and model != models.Model:
                 # model name is occurring twice in submodel inheritance tree => Error
                 if model.__name__ in result and model != result[model.__name__]:
-                    assert model, 'PolymorphicModel: model name is ambiguous: %s.%s, %s.%s!' % (
+                    e = 'PolymorphicModel: model name alone is ambiguous: %s.%s and %s.%s!\n'
+                    e += 'In this case, please use the syntax: applabel__ModelName___field'
+                    assert model, e % (
                         model._meta.app_label, model.__name__,
                         result[model.__name__]._meta.app_label, result[model.__name__].__name__)
             
@@ -451,6 +453,7 @@ class PolymorphicModelBase(ModelBase):
                 add_managers_keys.add(key)
         return add_managers
 
+
     @classmethod
     def get_first_user_defined_manager(self, attrs):
         mgr_list = []
@@ -462,7 +465,7 @@ class PolymorphicModelBase(ModelBase):
             _, manager = sorted(mgr_list)[0]
             return manager
         return None  
-    
+
     @classmethod
     def validate_model_manager(self, manager, model_name, manager_name):
         """check if the manager is derived from PolymorphicManager
@@ -617,7 +620,7 @@ class ShowFields(object):
             else:
                 out += ': "' + getattr(self, f.name) + '"'
             if f != last:  out += ', '
-        return '<' + (self.__class__.__name__ + ': ').ljust(17) + out + '>'
+        return '<' + (self.__class__.__name__ + ': ') + out + '>'
 
 
 class ShowFieldsAndTypes(object):
