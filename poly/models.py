@@ -63,6 +63,7 @@ class ModelWithMyManager(ShowFieldsAndTypes, ModelA):
 
 class MROBase1(PolymorphicModel):
     objects = MyManager()
+    field1 = models.CharField(max_length=10) # needed as MyManager uses it
 class MROBase2(MROBase1):  
     pass # Django vanilla inheritance does not inherit MyManager as _default_manager here
 class MROBase3(models.Model):
