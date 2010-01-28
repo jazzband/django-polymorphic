@@ -406,7 +406,7 @@ class PolymorphicModelBase(ModelBase):
         #print; print '###', model_name, '- bases:', bases
         
         # create new model
-        new_class = super(PolymorphicModelBase, self).__new__(self, model_name, bases, attrs)
+        new_class = self.call_superclass_new_method(model_name, bases, attrs)
 
         # create list of all managers to be inherited from the base classes
         inherited_managers = new_class.get_inherited_managers(attrs)
@@ -453,7 +453,6 @@ class PolymorphicModelBase(ModelBase):
                 add_managers_keys.add(key)
         return add_managers
 
-
     @classmethod
     def get_first_user_defined_manager(self, attrs):
         mgr_list = []
@@ -465,6 +464,27 @@ class PolymorphicModelBase(ModelBase):
             _, manager = sorted(mgr_list)[0]
             return manager
         return None  
+
+    @classmethod
+    def call_superclass_new_method(self, model_name, bases, attrs):
+        """call __new__ method of super class and return the newly created class.
+        Also work around a limitation in Django's ModelBase."""
+        # There seems to be a general limitation in Django's app_label handling
+        # regarding abstract models (in ModelBase). See issue 1 on github - TODO: propose patch for Django
+        # We run into this problem if polymorphic.py is located in a top-level directory
+        # which is directly in the python path. To work around this we temporarily set
+        # app_label here for PolymorphicModel. 
+        meta = attrs.get('Meta', None)
+        model_module_name = attrs['__module__']
+        do_app_label_workaround = (meta
+                                    and model_module_name == 'polymorphic'
+                                    and model_name == 'PolymorphicModel'
+                                    and getattr(meta, 'app_label', None) is None )
+        
+        if do_app_label_workaround: meta.app_label = 'poly_dummy_app_label'
+        new_class = super(PolymorphicModelBase, self).__new__(self, model_name, bases, attrs)
+        if do_app_label_workaround: del(meta.app_label)
+        return new_class
 
     @classmethod
     def validate_model_manager(self, manager, model_name, manager_name):
