@@ -8,7 +8,9 @@ Requirements
 ------------
 
 Django 1.1 (or later) and Python 2.5 (or later). This code has been tested
-on Django 1.1.1 / 1.2 alpha and Python 2.5.4 / 2.6.4 on Linux. 
+on Django 1.1.1 / 1.2 alpha and Python 2.5.4 / 2.6.4 on Linux.
+Django's ContentType framework is used (part of Django).
+
 
 Testing
 -------
@@ -18,20 +20,28 @@ that may be used for tests or experiments.
 
 To run the included test suite, execute::
 
-    ./manage test poly
+    ./manage test polymorphic
 
-'management/commands/polycmd.py' can be used for experiments
-- modify this file to your liking, then run::
+The management command ``pcmd.py`` in the app ``pexp`` (Polymorphic EXPerimenting)
+can be used for experiments - modify this file (pexp/management/commands/pcmd.py)
+to your liking, then run::
 
     ./manage syncdb      # db is created in /var/tmp/... (settings.py)
-    ./manage polycmd
+    ./manage pcmd
     
 Using polymorphic models in your own projects
 ---------------------------------------------
 
-Copy polymorphic.py (from the 'poly' dir) into a directory from where
-you can import it, like your app directory (where your models.py and
-views.py files live).
+The best way for now is probably to just copy the ``polymorphic`` directory
+into your project dir. If you want to use the management command
+``polymorphic_dumpdata``, then you also need to add ``polymorphic``
+to your INSTALLED_APPS setting. The ContentType framework 
+(``django.contrib.contenttypes``) needs to be listed in INSTALLED_APPS
+as well (usually it already is). 
+
+It's also still possible to use ``polymorphic.py`` only, as a single file
+add-on module, copied to somewhere where it can be imported (like your
+own app dir).
 
 
 Defining Polymorphic Models
@@ -41,7 +51,7 @@ To make models polymorphic, use ``PolymorphicModel`` instead of Django's
 ``models.Model`` as the superclass of your base model. All models
 inheriting from your base class will be polymorphic as well::
 
-    from polymorphic import PolymorphicModel    
+    from polymorphic.models import PolymorphicModel    
 
     class ModelA(PolymorphicModel):
         field1 = models.CharField(max_length=10)
@@ -177,6 +187,15 @@ Non-Polymorphic Queries
     Django manager. Of course, arbitrary custom managers may be
     added to the models as well.
     
+manage.py dumpdata
+------------------
+    
+    Django's standard ``dumpdata`` requires non-polymorphic
+    behaviour from the querysets it uses and produces incomplete
+    results with polymorphic models. Django_polymorphic includes
+    a slightly modified version, named ``polymorphic_dumpdata``.
+    Just use this command instead of Django's (see "installation/testing").
+    
 
 Custom Managers, Querysets & Inheritance
 ========================================
@@ -205,22 +224,20 @@ the plain ``PolymorphicManager`` here.
 Manager Inheritance / Propagation
 ---------------------------------
 
-Polymorphic models unconditionally inherit all managers from their
-base models (as long as these are polymorphic).
+Polymorphic models unconditionally propagate (or inherit) all managers from
+their base models, as long as these are polymorphic. This means that all
+managers inherited from polymorphic base models work just the same as if
+they were defined in the new model.
 
 An example (inheriting from MyModel above)::
 
     class MyModel2(MyModel):
         pass
 
-    # Managers inherited from MyModel, delivering MyModel2 (and subclass) objects
+    # Managers inherited from MyModel:
+    # the regular 'objects' manager and the custom 'ordered_objects' manager
     >>> MyModel2.objects.all()
     >>> MyModel2.ordered_objects.all()
-
-Perhaps a more correct way to describe this: With polymorphic models the
-managers are always fully propagated from all polymorphic base models
-(as strictly speaking all managers are always inherited with Django models).
-
 
 Using a Custom Queryset Class
 -----------------------------
@@ -377,6 +394,10 @@ Restrictions & Caveats
     ContentType table needs to be corrected too, if the db content
     should stay usable after the rename.
 
++   The stability of the ``ContentType`` ids when combined with Django's
+	serialisation / fixtures has not yet been sufficiently
+	investigated (please see issue 4 on github).
+
 +   For all objects that are not instances of the base class type, but
     instances of a subclass, the base class fields are currently
     transferred twice from the database (an artefact of the current
@@ -393,13 +414,13 @@ Restrictions & Caveats
 In General
 ----------   
  
-It is important to consider that this code is still very new and experimental.
+It's important to consider that this code is still very new and experimental.
 
-It has, however, been integrated into one larger system where all seems to work flawlessly
-so far. A small number of people tested this code for their purposes and reported that it
-works well for them.
+Right now it's suitable only for the more enterprising early adopters.
 
-Right now this module is suitable only for the more enterprising early adopters.
+It does seem to work well for a number of people (including me), but
+it's still very early and API changes, code reorganisations or further
+schema changes are still a possibility.
 
 
 Links

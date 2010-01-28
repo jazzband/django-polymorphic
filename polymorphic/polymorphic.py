@@ -321,7 +321,7 @@ def _translate_polymorphic_field_path(queryset_model, field_path):
         submodels = {}
         add_all_sub_models(queryset_model, submodels)
         model = submodels.get(classname, None)
-        assert model, 'PolymorphicModel: model %s not found (not a subclass of %s)!' % (model.__name__, queryset_model.__name__)
+        assert model, 'PolymorphicModel: model %s not found (not a subclass of %s)!' % (classname, queryset_model.__name__)
 
     # create new field path for expressions, e.g. for baseclass=ModelA, myclass=ModelC
     # 'modelb__modelc" is returned

@@ -1,0 +1,5 @@
+#!/bin/bash
+
+rm /var/tmp/django-polymorphic-test-db.sqlite3
+./manage.py syncdb
+

@@ -80,6 +80,8 @@ class Command(BaseCommand):
         objects = []
         for model in sort_dependencies(app_list.items()):
             if not model._meta.proxy:
+
+#### patch for django_polymorphic ######################################################
                 # modified for django_polymorphic compatibility:
                 # do not use polymorphic queryset for serialisation
                 # (as the dumpdata/serializer implementation depends

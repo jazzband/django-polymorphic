@@ -77,5 +77,6 @@ INSTALLED_APPS = (
     'django.contrib.contenttypes',
     #'django.contrib.sessions',
     #'django.contrib.sites',
-    'poly', # this Django app is for testing and experimentation; not needed otherwise
+    'polymorphic',      # only needed if you want to use polymorphic_dumpdata
+    'pexp',             # this Django app is for testing and experimentation; not needed otherwise
 )
