@@ -8,7 +8,9 @@ project_path = os.path.dirname(os.path.abspath(__file__))
 libs_local_path = os.path.join(project_path, 'libraries-local')
 if libs_local_path not in sys.path: sys.path.insert(1, libs_local_path)
 import django
-print 'using Django version: %s, from %s' % (django.get_version(), os.path.dirname(os.path.abspath(django.__file__)))
+sys.stderr.write( 'using Django version: %s, from %s\n' % (
+        django.get_version(),
+        os.path.dirname(os.path.abspath(django.__file__))) )
 
 # vanilla Django manage.py from here on:
 
