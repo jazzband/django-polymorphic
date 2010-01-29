@@ -9,11 +9,11 @@ Usage, Examples, Installation & Documentation, Links
 ----------------------------------------------------
 
 * Please see the `Documentation and Examples`_ (or the short `Overview`_)  
-* If you have comments or suggestions: `Discussion, Comments, Suggestions`_
+* If you have comments, questions or suggestions: `Comments & Discussion`_
 * The code can be found on GitHub_ and Bitbucket_, or downloaded as TGZ_ or ZIP_ 
 
 .. _Documentation and Examples: http://bserve.webhop.org/wiki/django_polymorphic/doc 
-.. _Discussion, Questions, Suggestions: http://django-polymorphic.blogspot.com/2010/01/messages.html
+.. _Comments & Discussion: http://django-polymorphic.blogspot.com/2010/01/messages.html
 .. _GitHub: http://github.com/bconstantin/django_polymorphic
 .. _Bitbucket: http://bitbucket.org/bconstantin/django_polymorphic
 .. _TGZ: http://github.com/bconstantin/django_polymorphic/tarball/master
