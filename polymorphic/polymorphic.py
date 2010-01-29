@@ -79,9 +79,16 @@ class PolymorphicQuerySet(QuerySet):
         return self.filter(not_instance_of=args)
 
     def _filter_or_exclude(self, negate, *args, **kwargs):
-        _translate_polymorphic_filter_specs_in_args(self.model, args)
-        additional_args = _translate_polymorphic_filter_specs_in_kwargs(self.model, kwargs)
+        """ we override this internal Django functon since it is used for all filtering """
+        _translate_polymorphic_filter_defnitions_in_args(self.model, args) # the Q objects
+        additional_args = _translate_polymorphic_filter_defnitions_in_kwargs(self.model, kwargs) # filter_field='data'
         return super(PolymorphicQuerySet, self)._filter_or_exclude(negate, *(list(args) + additional_args), **kwargs)
+
+    # these queryset functions are not yet supported
+    def defer(self, *args, **kwargs): raise NotImplementedError
+    def only(self, *args, **kwargs): raise NotImplementedError
+    def aggregate(self, *args, **kwargs): raise NotImplementedError
+    def annotate(self, *args, **kwargs): raise NotImplementedError
 
     def _get_real_instances(self, base_result_objects):
         """
@@ -95,8 +102,9 @@ class PolymorphicQuerySet(QuerySet):
         base class query. The class of all of them is self.model (our base model).
         
         Some, many or all of these objects were not created and stored as
-        class self.model, but as a class derived from self.model. We want to fetch
-        these objects from the db so we can return them just as they were saved.
+        class self.model, but as a class derived from self.model. We want to re-fetch
+        these objects from the db as their original class so we can return them
+        just as they were created/saved.
         
         We identify these objects by looking at o.polymorphic_ctype, which specifies
         the real class of these objects (the class at the time they were saved).
@@ -145,7 +153,11 @@ class PolymorphicQuerySet(QuerySet):
 
     def iterator(self):
         """
-        This function does the same as:
+        This function is used by Django for all object retrieval.
+        By overriding it, we modify the objects that ths queryset returns
+        when it is evaluated (or it's get method or other object-returning methods are called).
+        
+        Here we do the same as:
 
             base_result_objects=list(super(PolymorphicQuerySet, self).iterator())
             real_results=self._get_get_real_instances(base_result_objects)
@@ -173,12 +185,6 @@ class PolymorphicQuerySet(QuerySet):
                 
             if reached_end: raise StopIteration
             
-    # these queryset functions are not yet supported
-    def defer(self, *args, **kwargs): raise NotImplementedError
-    def only(self, *args, **kwargs): raise NotImplementedError
-    def aggregate(self, *args, **kwargs): raise NotImplementedError
-    def annotate(self, *args, **kwargs): raise NotImplementedError
-
     def __repr__(self):
         result = [ repr(o) for o in self.all() ]
         return  '[ ' + ',\n  '.join(result) + ' ]' 
@@ -192,7 +198,7 @@ class PolymorphicQuerySet(QuerySet):
 # functionality to filters and Q objects.
 # Probably a more general queryset enhancement class could be made out them.
  
-def _translate_polymorphic_filter_specs_in_kwargs(queryset_model, kwargs):
+def _translate_polymorphic_filter_defnitions_in_kwargs(queryset_model, kwargs):
     """
     Translate the keyword argument list for PolymorphicQuerySet.filter()
     
@@ -209,7 +215,7 @@ def _translate_polymorphic_filter_specs_in_kwargs(queryset_model, kwargs):
     additional_args = []
     for field_path, val in kwargs.items():
         # normal filter expression => ignore
-        new_expr = _translate_polymorphic_filter_spec(queryset_model, field_path, val)
+        new_expr = _translate_polymorphic_filter_defnition(queryset_model, field_path, val)
         if type(new_expr) == tuple:
             # replace kwargs element
             del(kwargs[field_path])
@@ -221,13 +227,15 @@ def _translate_polymorphic_filter_specs_in_kwargs(queryset_model, kwargs):
 
     return additional_args
     
-def _translate_polymorphic_filter_specs_in_args(queryset_model, args):
+def _translate_polymorphic_filter_defnitions_in_args(queryset_model, args):
     """
     Translate the non-keyword argument list for PolymorphicQuerySet.filter()
     
     In the args list, we replace all kwargs to Q-objects that contain special
     polymorphic functionality with their vanilla django equivalents.
     We traverse the Q object tree for this (which is simple).
+    
+    TODO: investigate: we modify the Q-objects ina args in-place. Is this OK?
     
     Modifies: args list
     """
@@ -240,7 +248,7 @@ def _translate_polymorphic_filter_specs_in_args(queryset_model, args):
             if type(child) == tuple:
                 # this Q object child is a tuple => a kwarg like Q( instance_of=ModelB )
                 key, val = child
-                new_expr = _translate_polymorphic_filter_spec(queryset_model, key, val)
+                new_expr = _translate_polymorphic_filter_defnition(queryset_model, key, val)
                 if new_expr:
                     node.children[i] = new_expr
             else:
@@ -251,7 +259,7 @@ def _translate_polymorphic_filter_specs_in_args(queryset_model, args):
         if isinstance(q, models.Q):
             tree_node_correct_field_specs(q)
 
-def _translate_polymorphic_filter_spec(queryset_model, field_path, field_val):
+def _translate_polymorphic_filter_defnition(queryset_model, field_path, field_val):
     """
     Translate a keyword argument (field_path=field_val), as used for
     PolymorphicQuerySet.filter()-like functions (and Q objects).
@@ -531,7 +539,10 @@ class PolymorphicModel(models.Model):
     class Meta:
         abstract = True
 
-    polymorphic_ctype = models.ForeignKey(ContentType, null=True, editable=False)        
+    # TODO: %(class)s alone is not really enough, we also need to include app_label - patch for Django needed?
+    # see: django/db/models/fields/related.py/RelatedField
+    polymorphic_ctype = models.ForeignKey(ContentType,
+                            null=True, editable=False, related_name='polymorphic_%(class)s_set')
             
     # some applications want to know the name of the fields that are added to its models
     polymorphic_internal_model_fields = [ 'polymorphic_ctype' ]
@@ -540,8 +551,7 @@ class PolymorphicModel(models.Model):
     base_objects = models.Manager()
 
     def pre_save_polymorphic(self):
-        """
-        Normally not needed.
+        """Normally not needed.
         This function may be called manually in special use-cases. When the object
         is saved for the first time, we store its real class in polymorphic_ctype.
         When the object later is retrieved by PolymorphicQuerySet, it uses this

@@ -190,7 +190,7 @@ Non-Polymorphic Queries
 manage.py dumpdata
 ------------------
     
-    Django's standard ``dumpdata`` requires non-polymorphic
+    Django's standard ``dumpdata`` command requires non-polymorphic
     behaviour from the querysets it uses and produces incomplete
     results with polymorphic models. Django_polymorphic includes
     a slightly modified version, named ``polymorphic_dumpdata``.
@@ -224,7 +224,7 @@ the plain ``PolymorphicManager`` here.
 Manager Inheritance / Propagation
 ---------------------------------
 
-Polymorphic models unconditionally propagate (or inherit) all managers from
+Polymorphic models unconditionally propagate/inherit all managers from
 their base models, as long as these are polymorphic. This means that all
 managers inherited from polymorphic base models work just the same as if
 they were defined in the new model.
@@ -267,21 +267,21 @@ query ::
 performs one SQL query to retrieve ``ModelA`` objects and one additional
 query for each unique derived class occurring in result_objects.
 The best case for retrieving 100 objects is 1 db query if all are
-class ``ModelA``. If 50 objects are ``ModelA`` and 50 are ModelB, then two
-queries are executed. If result_objects contains only the base model
+class ``ModelA``. If 50 objects are ``ModelA`` and 50 are ``ModelB``, then
+two queries are executed. If result_objects contains only the base model
 type (``ModelA``), the polymorphic models are just as efficient as plain
 Django models (in terms of executed queries). The pathological worst
 case is 101 db queries if result_objects contains 100 different
 object types (with all of them subclasses of ``ModelA``).
 
 Performance ist relative: when Django users create their own
-polymorphic ad-hoc solution (without a module like ``polymorphic.py``),
+polymorphic ad-hoc solution (without a tool like ``django_polymorphic``),
 this usually results in a variation of ::
 
     result_objects = [ o.get_real_instance() for o in BaseModel.objects.filter(...) ]
 
-which of has really bad performance. Relative to this, the
-performance of the current ``polymorphic.py`` is pretty good.
+which has really bad performance. Relative to this, the
+performance of the current ``django_polymorphic`` is pretty good.
 It may well be efficient enough for the majority of use cases.
 
 Chunking: The implementation always requests objects in chunks of
@@ -380,7 +380,7 @@ Currently Unsupported Queryset Methods
 Restrictions & Caveats
 ----------------------
 
-+   Diamond shaped inheritance: There seems to be a general problem 
+*   Diamond shaped inheritance: There seems to be a general problem 
     with diamond shaped multiple model inheritance with Django models
     (tested with V1.1).
     An example is here: http://code.djangoproject.com/ticket/10808.
@@ -388,22 +388,25 @@ Restrictions & Caveats
     by subclassing it instead of modifying Django core (as we do here
     with PolymorphicModel).
   
-+   A reference (``ContentType``) to the real/leaf model is stored
+*   A reference (``ContentType``) to the real/leaf model is stored
     in the base model (the base model directly inheriting from
     PolymorphicModel). If a model or an app is renamed, then Django's
     ContentType table needs to be corrected too, if the db content
     should stay usable after the rename.
+    
+*   The use of ContentType together with Django's seralisation or 
+	fixtures seems to pose problems up to Django 1.1. This issue
+	seems to be resolved for Django 1.2	(changeset 11863: Fixed #7052,
+	Added support for natural keys in serialization).
+	http://code.djangoproject.com/ticket/7052
+	http://stackoverflow.com/questions/853796/problems-with-contenttypes-when-loading-a-fixture-in-django
 
-+   The stability of the ``ContentType`` ids when combined with Django's
-	serialisation / fixtures has not yet been sufficiently
-	investigated (please see issue 4 on github).
-
-+   For all objects that are not instances of the base class type, but
+*   For all objects that are not instances of the base class, but
     instances of a subclass, the base class fields are currently
     transferred twice from the database (an artefact of the current
     implementation's simplicity).
 
-+   __getattribute__ hack: For base model inheritance back relation
+*   __getattribute__ hack: For base model inheritance back relation
     fields (like basemodel_ptr), as well as implicit model inheritance
     forward relation fields, Django internally tries to use our
     polymorphic manager/queryset in some places, which of course it

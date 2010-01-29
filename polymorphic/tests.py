@@ -6,6 +6,7 @@ from django.test import TestCase
 from django.db.models.query import QuerySet
 from django.db.models import Q
 from django.db import models
+from django.contrib.contenttypes.models import ContentType
 
 from models import PolymorphicModel, PolymorphicManager, PolymorphicQuerySet, ShowFields, ShowFieldsAndTypes
 
@@ -87,6 +88,12 @@ class MgrInheritB(MgrInheritA):
     field2 = models.CharField(max_length=10)
 class MgrInheritC(ShowFieldsAndTypes, MgrInheritB):
     pass
+
+# validation error: "polymorphic.relatednameclash: Accessor for field 'polymorphic_ctype' clashes
+# with related field 'ContentType.relatednameclash_set'." (reported by Andrew Ingram)
+# fixed with related_name
+class RelatedNameClash(PolymorphicModel):
+    ctype = models.ForeignKey(ContentType, null=True, editable=False)        
 
 
 class testclass(TestCase):
