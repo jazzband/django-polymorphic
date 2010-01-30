@@ -3,7 +3,7 @@
 Fully Polymorphic Django Models
 ===============================
 
-Please see the examples and documentation here:
+For an overview, examples, documentation and updates please see here:
 
     http://bserve.webhop.org/wiki/django_polymorphic
 
@@ -62,6 +62,10 @@ class PolymorphicManager(models.Manager):
 ###################################################################################
 ### PolymorphicQuerySet
 
+# PolymorphicQuerySet Q objects (and filter()) support these additional key words.
+# These are forbidden as field names (a descriptive exception is raised) 
+POLYMORPHIC_SPECIAL_Q_KWORDS = [ 'instance_of', 'not_instance_of']
+
 class PolymorphicQuerySet(QuerySet):
     """
     QuerySet for PolymorphicModel
@@ -73,15 +77,19 @@ class PolymorphicQuerySet(QuerySet):
     """
 
     def instance_of(self, *args):
+        """Filter the queryset to only include the classes in args (and their subclasses).
+        Implementation in _translate_polymorphic_filter_defnition."""
         return self.filter(instance_of=args)
 
     def not_instance_of(self, *args):
+        """Filter the queryset to exclude the classes in args (and their subclasses).
+        Implementation in _translate_polymorphic_filter_defnition."""
         return self.filter(not_instance_of=args)
 
     def _filter_or_exclude(self, negate, *args, **kwargs):
-        """ we override this internal Django functon since it is used for all filtering """
-        _translate_polymorphic_filter_defnitions_in_args(self.model, args) # the Q objects
-        additional_args = _translate_polymorphic_filter_defnitions_in_kwargs(self.model, kwargs) # filter_field='data'
+        "We override this internal Django functon as it is used for all filter member functions."
+        _translate_polymorphic_filter_definitions_in_args(self.model, args) # the Q objects
+        additional_args = _translate_polymorphic_filter_definitions_in_kwargs(self.model, kwargs) # filter_field='data'
         return super(PolymorphicQuerySet, self)._filter_or_exclude(negate, *(list(args) + additional_args), **kwargs)
 
     # these queryset functions are not yet supported
@@ -154,13 +162,13 @@ class PolymorphicQuerySet(QuerySet):
     def iterator(self):
         """
         This function is used by Django for all object retrieval.
-        By overriding it, we modify the objects that ths queryset returns
-        when it is evaluated (or it's get method or other object-returning methods are called).
+        By overriding it, we modify the objects that this queryset returns
+        when it is evaluated (or its get method or other object-returning methods are called).
         
         Here we do the same as:
 
             base_result_objects=list(super(PolymorphicQuerySet, self).iterator())
-            real_results=self._get_get_real_instances(base_result_objects)
+            real_results=self._get_real_instances(base_result_objects)
             for o in real_results: yield o
         
         but it requests the objects in chunks from the database,
@@ -196,9 +204,9 @@ class PolymorphicQuerySet(QuerySet):
 # These functions implement the additional filter- and Q-object functionality.
 # They form a kind of small framework for easily adding more
 # functionality to filters and Q objects.
-# Probably a more general queryset enhancement class could be made out them.
+# Probably a more general queryset enhancement class could be made out of them.
  
-def _translate_polymorphic_filter_defnitions_in_kwargs(queryset_model, kwargs):
+def _translate_polymorphic_filter_definitions_in_kwargs(queryset_model, kwargs):
     """
     Translate the keyword argument list for PolymorphicQuerySet.filter()
     
@@ -214,8 +222,9 @@ def _translate_polymorphic_filter_defnitions_in_kwargs(queryset_model, kwargs):
     """ 
     additional_args = []
     for field_path, val in kwargs.items():
-        # normal filter expression => ignore
+        
         new_expr = _translate_polymorphic_filter_defnition(queryset_model, field_path, val)
+
         if type(new_expr) == tuple:
             # replace kwargs element
             del(kwargs[field_path])
@@ -227,7 +236,7 @@ def _translate_polymorphic_filter_defnitions_in_kwargs(queryset_model, kwargs):
 
     return additional_args
     
-def _translate_polymorphic_filter_defnitions_in_args(queryset_model, args):
+def _translate_polymorphic_filter_definitions_in_args(queryset_model, args):
     """
     Translate the non-keyword argument list for PolymorphicQuerySet.filter()
     
@@ -288,7 +297,7 @@ def _translate_polymorphic_filter_defnition(queryset_model, field_path, field_va
 
 def _translate_polymorphic_field_path(queryset_model, field_path):
     """
-    Translate a field path from keyword argument, as used for
+    Translate a field path from a keyword argument, as used for
     PolymorphicQuerySet.filter()-like functions (and Q objects).
     
     E.g.: ModelC___field3 is translated into modela__modelb__modelc__field3
@@ -412,9 +421,12 @@ class PolymorphicModelBase(ModelBase):
     
     def __new__(self, model_name, bases, attrs):
         #print; print '###', model_name, '- bases:', bases
-        
+
         # create new model
         new_class = self.call_superclass_new_method(model_name, bases, attrs)
+
+        # check if the model fields are all allowed
+        self.validate_model_fields(new_class)
 
         # create list of all managers to be inherited from the base classes
         inherited_managers = new_class.get_inherited_managers(attrs)
@@ -493,6 +505,13 @@ class PolymorphicModelBase(ModelBase):
         new_class = super(PolymorphicModelBase, self).__new__(self, model_name, bases, attrs)
         if do_app_label_workaround: del(meta.app_label)
         return new_class
+
+    def validate_model_fields(self):
+        "check if all fields names are allowed (i.e. not in POLYMORPHIC_SPECIAL_Q_KWORDS)"
+        for f in self._meta.fields:
+            if f.name in POLYMORPHIC_SPECIAL_Q_KWORDS:
+                e = 'PolymorphicModel: "%s" - field name "%s" is not allowed in polymorphic models'
+                raise AssertionError(e % (self.__name__, f.name) )
 
     @classmethod
     def validate_model_manager(self, manager, model_name, manager_name):
@@ -638,7 +657,7 @@ class PolymorphicModel(models.Model):
 
 
 class ShowFields(object):
-    """ mixin that shows the object's class, it's fields and field contents """
+    """ model mixin that shows the object's class, it's fields and field contents """
     def __repr__(self):
         out = 'id %d, ' % (self.id); last = self._meta.fields[-1]
         for f in self._meta.fields:
@@ -654,7 +673,7 @@ class ShowFields(object):
 
 
 class ShowFieldsAndTypes(object):
-    """ like ShowFields, but also show field types """
+    """ model mixin, like ShowFields, but also show field types """
     def __repr__(self):
         out = 'id %d, ' % (self.id); last = self._meta.fields[-1]
         for f in self._meta.fields:

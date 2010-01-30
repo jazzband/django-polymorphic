@@ -89,6 +89,10 @@ class MgrInheritB(MgrInheritA):
 class MgrInheritC(ShowFieldsAndTypes, MgrInheritB):
     pass
 
+# test bad field name
+#class TestBadFieldModel(PolymorphicModel):
+#    instance_of = models.CharField(max_length=10)
+
 # validation error: "polymorphic.relatednameclash: Accessor for field 'polymorphic_ctype' clashes
 # with related field 'ContentType.relatednameclash_set'." (reported by Andrew Ingram)
 # fixed with related_name

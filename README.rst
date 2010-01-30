@@ -1,19 +1,12 @@
-**2010-1-26**
-	IMPORTANT - database schema change (more info in change log).
-	I hope I got this change in early enough before anyone started to use
-	polymorphic.py in earnest. Sorry for any inconvenience.
-	This should be the final DB schema now.
+Release Notes, Usage, Code
+--------------------------
 
+* Please see `here for release notes, news and discussion`_ (Google Group)
+* Installation and usage: `Documentation and Examples`_ (or the short `Overview`_)  
+* The code is on GitHub_ and Bitbucket_ and can also be downloaded as TGZ_ or ZIP_ 
 
-Usage, Examples, Installation & Documentation, Links
-----------------------------------------------------
-
-* Please see the `Documentation and Examples`_ (or the short `Overview`_)  
-* News & comments: `News, Comments, Questions & Discussion`_
-* The code can be found on GitHub_ and Bitbucket_, or downloaded as TGZ_ or ZIP_ 
-
-.. _Documentation and Examples: http://bserve.webhop.org/wiki/django_polymorphic/doc 
-.. _News, Comments, Questions & Discussion: http://groups.google.de/group/django-polymorphic/topics
+.. _here for release notes, news and discussion: http://groups.google.de/group/django-polymorphic/topics
+.. _Documentation and Examples: http://bserve.webhop.org/wiki/django_polymorphic/doc
 .. _GitHub: http://github.com/bconstantin/django_polymorphic
 .. _Bitbucket: http://bitbucket.org/bconstantin/django_polymorphic
 .. _TGZ: http://github.com/bconstantin/django_polymorphic/tarball/master
@@ -24,12 +17,15 @@ Usage, Examples, Installation & Documentation, Links
 What is django_polymorphic good for?
 ------------------------------------
 
-It causes objects being retrieved from the database to always be returned back 
-with the same type/class and fields they were created and saved with.
+It implements seamless polymorphic inheritance for Django models.
 
-Example:
-If the models ``ArtProject`` and ``ResearchProject`` inherit from the model ``Project``,
-and we have saved one of each of them into the database, then we can do::
+This means: objects being retrieved from the database are always returned
+back with the same type/class and fields they were created and saved with.
+
+An example:
+If we defined the model ``Project`` as a base class for our models
+``ArtProject`` and ``ResearchProject``, and we have stored one of
+each into the database, then we can do::
 
 	>>> Project.objects.all()
 	.
@@ -41,23 +37,40 @@ It doesn't matter how these objects are retrieved: be it through the
 model's own managers/querysets, ForeignKeys, ManyToManyFields
 or OneToOneFields.
 
-``django_polymorphic`` does this only for models that explicitly request
-this behaviour (and implicitely for their submodels).
+As seen in this example, the resulting querysets are polymorphic,
+and will typically deliver objects of several different types in
+a single query result.
 
-The resulting querysets are polymorphic, i.e they may deliver
-objects of several different types in a single query result.
+django_polymorphic does this only for models that explicitely enable it
+(and for their submodels).
+
+Please see the `Documentation and Examples`_ for more information
+(also included as the file ``DOCS.rst`` with the source).
 
 
 Status
 ------
 
-It's important to consider that this code is still very new and
-experimental. Please see the docs for current restrictions, caveats,
-and performance implications.
+It's important to consider that this code is very new and
+to some extent still experimental. Please see the docs for
+current restrictions, caveats, and performance implications.
 
-It does seem to work well for a number of people (including me), but
-it's still very early and API changes, code reorganisations or further
-schema changes are still a possibility.
+It does seem to work very well for a number of people, but
+API changes, code reorganisations or further schema changes
+are still a possibility. There may also remain larger bugs
+and problems in the code that have not yet been found.
 
-Right now it's suitable only for the more enterprising early adopters.
 
+License
+-------
+
+django_polymorphic uses the same license as Django (BSD-like).
+
+
+Database Schema Change on January 26
+------------------------------------
+
+| The update from January 26 changed the database schema (more info in the commit-log_).
+| Sorry for any inconvenience. But this should be the final DB schema now.
+
+.. _commit-log: http://github.com/bconstantin/django_polymorphic/commit/c2b420aea06637966a208329ef7ec853889fa4c7

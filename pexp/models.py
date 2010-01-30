@@ -16,3 +16,11 @@ class ModelB(ModelA):
     field2 = models.CharField(max_length=10)
 class ModelC(ModelB):
     field3 = models.CharField(max_length=10)
+
+class SModelA(ShowFieldsAndTypes, PolymorphicModel):
+    field1 = models.CharField(max_length=10)
+class SModelB(SModelA):
+    field2 = models.CharField(max_length=10)
+class SModelC(SModelB):
+    field3 = models.CharField(max_length=10)
+

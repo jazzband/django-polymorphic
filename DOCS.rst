@@ -9,8 +9,6 @@ Requirements
 
 Django 1.1 (or later) and Python 2.5 (or later). This code has been tested
 on Django 1.1.1 / 1.2 alpha and Python 2.5.4 / 2.6.4 on Linux.
-Django's ContentType framework is used (part of Django).
-
 
 Testing
 -------
@@ -32,16 +30,14 @@ to your liking, then run::
 Using polymorphic models in your own projects
 ---------------------------------------------
 
-The best way for now is probably to just copy the ``polymorphic`` directory
-into your project dir. If you want to use the management command
-``polymorphic_dumpdata``, then you also need to add ``polymorphic``
-to your INSTALLED_APPS setting. The ContentType framework 
-(``django.contrib.contenttypes``) needs to be listed in INSTALLED_APPS
-as well (usually it already is). 
+The easiest way for now is to just copy the ``polymorphic`` directory
+(under ``django_polymorphic``) into your Django project dir.
 
-It's also still possible to use ``polymorphic.py`` only, as a single file
-add-on module, copied to somewhere where it can be imported (like your
-own app dir).
+If you want to use the management command ``polymorphic_dumpdata``, then
+you need to add ``polymorphic`` to your INSTALLED_APPS setting as well.
+
+In any case, the ContentType framework (``django.contrib.contenttypes``)
+needs to be listed in INSTALLED_APPS (usually it already is).
 
 
 Defining Polymorphic Models
@@ -193,8 +189,14 @@ manage.py dumpdata
     Django's standard ``dumpdata`` command requires non-polymorphic
     behaviour from the querysets it uses and produces incomplete
     results with polymorphic models. Django_polymorphic includes
-    a slightly modified version, named ``polymorphic_dumpdata``.
-    Just use this command instead of Django's (see "installation/testing").
+    a slightly modified version, named ``polymorphic_dumpdata``
+    that fixes this. Just use this command instead of Django's
+    (see "installation/testing").
+
+    Please note that there are problems using ContentType together
+    with Django's seralisation or fixtures (and all polymorphic models
+    use ContentType). This issue seems to be resolved with Django 1.2
+    (changeset 11863): http://code.djangoproject.com/ticket/7052
     
 
 Custom Managers, Querysets & Inheritance
@@ -221,12 +223,12 @@ Django as automatic manager for several purposes, including accessing
 related objects. It must not filter objects and it's safest to use
 the plain ``PolymorphicManager`` here.
 
-Manager Inheritance / Propagation
----------------------------------
+Manager Inheritance
+-------------------
 
-Polymorphic models unconditionally propagate/inherit all managers from
-their base models, as long as these are polymorphic. This means that all
-managers inherited from polymorphic base models work just the same as if
+Polymorphic models inherit/propagate all managers from their
+base models, as long as these are polymorphic. This means that all
+managers defined in polymorphic base models work just the same as if
 they were defined in the new model.
 
 An example (inheriting from MyModel above)::
@@ -332,18 +334,18 @@ cases. Alternatively, if the SQL query execution time is
 significantly longer even in common use cases, this may still be
 acceptable in exchange for the added functionality.
 
-General 
--------------------
+In General 
+----------
 
 Let's not forget that all of the above is just about optimization.
 The current implementation already works well - and perhaps well
 enough for the majority of applications. 
 
 Also, it seems that further optimization (down to one DB request)
-would be restricted to a small area of the code, straightforward
-to implement, and mostly independent from the rest of the module.
-So this optimization can be done at any later time (like when
-it's needed).
+would be restricted to a relatively small area of the code, and
+be mostly independent from the rest of the module.
+So it seems this optimization can be done at any later time
+(like when it's needed).
 
 
 Unsupported Methods, Restrictions & Caveats
@@ -360,25 +362,30 @@ Currently Unsupported Queryset Methods
     enhancement.
 
 +   ``defer()`` and ``only()``: Full support, including slight polymorphism
-    enhancements, seems to be straighforward
-    (depends on '_get_real_instances'). 
+    enhancements, seems to be straighforward (depends on '_get_real_instances'). 
 
 +   ``extra()``: Does not really work with the current implementation of 
     '_get_real_instances'. It's unclear if it should be supported.
 
-+   ``select_related()``: This would probably need Django core support
-    for traversing the reverse model inheritance OneToOne relations
-    with Django's select_related(), e.g.:
-    ``select_related('modela__modelb__foreignkeyfield')``.
-    Also needs more thought/investigation. 
++	``select_related()`` works just as usual, but it can not (yet) be used
+	to select relations in derived models
+	(like ``ModelA.objects.select_related('ModelC___fieldxy')`` )
 
-+   ``distinct()`` needs more thought and investigation as well
++   ``distinct()`` needs more thought and investigation
 
-+   ``values()`` & ``values_list()``: Implementation seems to be mostly
-    straighforward
++   ``values()`` & ``values_list()``: Implementation seems to be mostly straighforward
+
 
 Restrictions & Caveats
 ----------------------
+
+*   ``Django 1.1 only``: When ContentType is used in models, Django's
+	seralisation or fixtures cannot be used. This issue seems to be
+	resolved for Django 1.2 (changeset 11863: Fixed #7052,
+    Added support for natural keys in serialization).
+    
+    + http://code.djangoproject.com/ticket/7052
+    + http://stackoverflow.com/questions/853796/problems-with-contenttypes-when-loading-a-fixture-in-django
 
 *   Diamond shaped inheritance: There seems to be a general problem 
     with diamond shaped multiple model inheritance with Django models
@@ -394,13 +401,6 @@ Restrictions & Caveats
     ContentType table needs to be corrected too, if the db content
     should stay usable after the rename.
     
-*   The use of ContentType together with Django's seralisation or 
-	fixtures seems to pose problems up to Django 1.1. This issue
-	seems to be resolved for Django 1.2	(changeset 11863: Fixed #7052,
-	Added support for natural keys in serialization).
-	http://code.djangoproject.com/ticket/7052
-	http://stackoverflow.com/questions/853796/problems-with-contenttypes-when-loading-a-fixture-in-django
-
 *   For all objects that are not instances of the base class, but
     instances of a subclass, the base class fields are currently
     transferred twice from the database (an artefact of the current
@@ -411,19 +411,20 @@ Restrictions & Caveats
     forward relation fields, Django internally tries to use our
     polymorphic manager/queryset in some places, which of course it
     should not. Currently this is solved with a hacky __getattribute__
-    in PolymorphicModel, which causes some overhead. A minor patch t
+    in PolymorphicModel, which causes some overhead. A minor patch to
     Django core would probably get rid of that.
 
 In General
 ----------   
  
-It's important to consider that this code is still very new and experimental.
+It's important to consider that this code is very new and
+to some extent still experimental. Please see the docs for
+current restrictions, caveats, and performance implications.
 
-Right now it's suitable only for the more enterprising early adopters.
-
-It does seem to work well for a number of people (including me), but
-it's still very early and API changes, code reorganisations or further
-schema changes are still a possibility.
+It does seem to work very well for a number of people, but
+API changes, code reorganisations or further schema changes
+are still a possibility. There may also remain larger bugs
+and problems in the code that have not yet been found.
 
 
 Links
