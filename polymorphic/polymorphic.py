@@ -105,6 +105,11 @@ class PolymorphicQuerySet(QuerySet):
         additional_args = _translate_polymorphic_filter_definitions_in_kwargs(self.model, kwargs) # filter_field='data'
         return super(PolymorphicQuerySet, self)._filter_or_exclude(negate, *(list(args) + additional_args), **kwargs)
 
+    def order_by(self, *args, **kwargs): 
+        """translate the field paths in the args, then call vanilla order_by."""
+        new_args = [ _translate_polymorphic_field_path(self.model, a) for a in args ]
+        return super(PolymorphicQuerySet, self).order_by(*new_args, **kwargs)
+
     def _process_aggregate_args(self, args, kwargs):
         """for aggregate and annotate kwargs: allow ModelX___field syntax for kwargs, forbid it for args.
         Modifies kwargs if needed (these are Aggregate objects, we translate the lookup member variable)"""
@@ -125,7 +130,7 @@ class PolymorphicQuerySet(QuerySet):
         self._process_aggregate_args(args, kwargs)
         self.polymorphic_disabled = True
         return super(PolymorphicQuerySet, self).aggregate(*args, **kwargs)
-    
+
     def extra(self, *args, **kwargs):
         self.polymorphic_disabled = not kwargs.get('polymorphic',False)
         if 'polymorphic' in kwargs: kwargs.pop('polymorphic')
@@ -345,12 +350,19 @@ def _translate_polymorphic_field_path(queryset_model, field_path):
     """
     Translate a field path from a keyword argument, as used for
     PolymorphicQuerySet.filter()-like functions (and Q objects).
+    Supports leading '-' (for order_by args).
     
     E.g.: ModelC___field3 is translated into modela__modelb__modelc__field3
-    Returns: translated path
+    Returns: translated path (unchanged, if no translation needed)
     """
     classname, sep, pure_field_path = field_path.partition('___')
     if not sep: return field_path
+    assert classname, 'PolymorphicModel: %s: bad field specification' % field_path
+    
+    negated = False
+    if classname[0] == '-':
+        negated = True
+        classname = classname.lstrip('-')
 
     if '__' in classname:
         # the user has app label prepended to class name via __ => use Django's get_model function
@@ -398,7 +410,7 @@ def _translate_polymorphic_field_path(queryset_model, field_path):
         return ''
     
     basepath = _create_base_path(queryset_model, model)
-    newpath = basepath + '__' if basepath else ''
+    newpath = ('-' if negated else '') + basepath + ('__' if basepath else '')
     newpath += pure_field_path
     return newpath
 

@@ -92,7 +92,7 @@ class MgrInheritC(ShowFieldsAndTypes, MgrInheritB):
 class BlogBase(ShowFieldsAndTypes, PolymorphicModel):
     name = models.CharField(max_length=10)
 class BlogA(BlogBase):
-    pass
+    info = models.CharField(max_length=10)
 class BlogB(BlogBase):
     pass
 class BlogA_Entry(ShowFieldsAndTypes, PolymorphicModel):
@@ -119,25 +119,55 @@ class testclass(TestCase):
         print 'DiamondXY fields 2: field_b "%s", field_x "%s", field_y "%s"' % (o.field_b, o.field_x, o.field_y)
         if o.field_b != 'b': print '# Django model inheritance diamond problem detected'
 
-    def test_annotate_aggregate(self):
+    def test_annotate_aggregate_order(self):
         from django.db.models import Count
 
         BlogA.objects.all().delete()
-        blog = BlogA.objects.create(name='B1')
+        blog = BlogA.objects.create(name='B1', info='i1')
         entry1 = blog.bloga_entry_set.create(text='bla')
         entry2 = BlogA_Entry.objects.create(blog=blog, text='bla2')
+
+        # create some BlogB to make the table more diverse
+        o = BlogB.objects.create(name='Bb1')
+        o = BlogB.objects.create(name='Bb2')
+        o = BlogB.objects.create(name='Bb3')
 
         qs = BlogBase.objects.annotate(entrycount=Count('BlogA___bloga_entry'))
         assert qs[0].entrycount == 2
 
         x = BlogBase.objects.aggregate(entrycount=Count('BlogA___bloga_entry'))
         assert x['entrycount'] == 2
+
+        # create some more blogs for next test
+        b2 = BlogA.objects.create(name='B2', info='i2')
+        b2 = BlogA.objects.create(name='B3', info='i3')
+        b2 = BlogA.objects.create(name='B4', info='i4')
+        b2 = BlogA.objects.create(name='B5', info='i5')
+
+        # test ordering
+        expected = '''
+[ <BlogB: id 4, name (CharField): "Bb3", >,
+  <BlogB: id 3, name (CharField): "Bb2", >,
+  <BlogB: id 2, name (CharField): "Bb1", >,
+  <BlogA: id 8, name (CharField): "B5", info (CharField): "i5">,
+  <BlogA: id 7, name (CharField): "B4", info (CharField): "i4">,
+  <BlogA: id 6, name (CharField): "B3", info (CharField): "i3">,
+  <BlogA: id 5, name (CharField): "B2", info (CharField): "i2">,
+  <BlogA: id 1, name (CharField): "B1", info (CharField): "i1"> ]'''
+        x = '\n' + repr(BlogBase.objects.order_by('-name'))
+        assert x == expected
         
-    def test_extra(self):
-        Model2A.objects.create(field1='A1')
-        Model2B.objects.create(field1='B1', field2='B2')
-        Model2C.objects.create(field1='C1', field2='C2', field3='C3')
-        
+        expected='''
+[ <BlogA: id 8, name (CharField): "B5", info (CharField): "i5">,
+  <BlogA: id 7, name (CharField): "B4", info (CharField): "i4">,
+  <BlogA: id 6, name (CharField): "B3", info (CharField): "i3">,
+  <BlogA: id 5, name (CharField): "B2", info (CharField): "i2">,
+  <BlogA: id 1, name (CharField): "B1", info (CharField): "i1">,
+  <BlogB: id 2, name (CharField): "Bb1", >,
+  <BlogB: id 3, name (CharField): "Bb2", >,
+  <BlogB: id 4, name (CharField): "Bb3", > ]'''
+        x = '\n' + repr(BlogBase.objects.order_by('-BlogA___info'))
+        assert x == expected
 
 __test__ = {"doctest": """
 #######################################################

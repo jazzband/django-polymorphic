@@ -173,6 +173,19 @@ ManyToManyField, ForeignKey, OneToOneField
           <ModelB: id 2, field1 (CharField), field2 (CharField)>,
           <ModelC: id 3, field1 (CharField), field2 (CharField), field3 (CharField)> ]
 
+Non-Polymorphic Queries
+-----------------------
+    
+    >>> ModelA.base_objects.all()
+    .
+    [ <ModelA: id 1, field1 (CharField)>,
+      <ModelA: id 2, field1 (CharField)>,
+      <ModelA: id 3, field1 (CharField)> ]
+
+    Each polymorphic model has 'base_objects' defined as a normal
+    Django manager. Of course, arbitrary custom managers may be
+    added to the models as well.
+    
 More Queryset Methods
 ---------------------
 
@@ -180,6 +193,9 @@ More Queryset Methods
     addition that the ``ModelX___field`` syntax can be used for the
     keyword arguments (but not for the non-keyword arguments).
     
++   ``order_by()`` now similarly supports the ``ModelX___field`` syntax
+    for specifying ordering through a field in a submodel.
+
 +   ``distinct()`` works as expected. It only regards the fields of
     the base class, but this should never make a difference.
 
@@ -201,19 +217,6 @@ More Queryset Methods
 +   ``defer()`` and ``only()`` are not yet supported (support will be added
     in the future). 
 
-Non-Polymorphic Queries
------------------------
-    
-    >>> ModelA.base_objects.all()
-    .
-    [ <ModelA: id 1, field1 (CharField)>,
-      <ModelA: id 2, field1 (CharField)>,
-      <ModelA: id 3, field1 (CharField)> ]
-
-    Each polymorphic model has 'base_objects' defined as a normal
-    Django manager. Of course, arbitrary custom managers may be
-    added to the models as well.
-    
 manage.py dumpdata
 ------------------
     
@@ -425,8 +428,8 @@ Restrictions & Caveats
     in PolymorphicModel, which causes some overhead. A minor patch to
     Django core would probably get rid of that.
 
-In General
-----------   
+Project Status
+--------------   
  
 It's important to consider that this code is very new and
 to some extent still experimental. Please see the docs for
