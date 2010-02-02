@@ -150,8 +150,7 @@ class PolymorphicQuerySet(QuerySet):
         for modelclass, idlist in idlist_per_model.items():
             qs = modelclass.base_objects.filter(id__in=idlist)
             # copy select related configuration to new qs
-            # TODO: this does not seem to copy the complete sel_rel-config (field names etc.)
-            self.dup_select_related(qs) 
+            qs.dup_select_related(self) 
             # TODO: defer(), only() and annotate(): support for these would be around here
             for o in qs: results[o.id] = o
         
