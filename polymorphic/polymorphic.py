@@ -530,6 +530,8 @@ class PolymorphicModelBase(ModelBase):
 ###################################################################################
 ### PolymorphicModel
 
+from django import VERSION as django_VERSION
+
 class PolymorphicModel(models.Model):
     """
     Abstract base class that provides polymorphic behaviour
@@ -556,10 +558,14 @@ class PolymorphicModel(models.Model):
     class Meta:
         abstract = True
 
-    # TODO: %(class)s alone is not really enough, we also need to include app_label - patch for Django needed?
-    # see: django/db/models/fields/related.py/RelatedField
-    polymorphic_ctype = models.ForeignKey(ContentType,
-                            null=True, editable=False, related_name='polymorphic_%(class)s_set')
+    # avoid ContentType related field accessor clash (an error emitted by model validation)
+    # we really should use both app_label and model name, but this is only possible since Django 1.2 
+    if django_VERSION[0] <= 1 and django_VERSION[1] <= 1:
+        p_related_name_template = 'polymorphic_%(class)s_set'
+    else:
+        p_related_name_template = 'polymorphic_%(app_label)s.%(class)s_set'
+    polymorphic_ctype = models.ForeignKey(ContentType, null=True, editable=False,
+                                related_name=p_related_name_template)
             
     # some applications want to know the name of the fields that are added to its models
     polymorphic_internal_model_fields = [ 'polymorphic_ctype' ]

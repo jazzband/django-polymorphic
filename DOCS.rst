@@ -379,11 +379,16 @@ Currently Unsupported Queryset Methods
 Restrictions & Caveats
 ----------------------
 
-*   ``Django 1.1 only``: When ContentType is used in models, Django's
-	seralisation or fixtures cannot be used. This issue seems to be
-	resolved for Django 1.2 (changeset 11863: Fixed #7052,
-    Added support for natural keys in serialization).
-    
+*   Django 1.1 only - the names of polymorphic models must be unique
+    in the whole project, even if they are in two different apps.
+    This results from a restriction in the Django 1.1 "related_name"
+    option (fixed in Django 1.2).
+
+*   Django 1.1 only - when ContentType is used in models, Django's
+    seralisation or fixtures cannot be used. This issue seems to be
+    resolved for Django 1.2 (changeset 11863: Fixed #7052, Added support
+    for natural keys in serialization).
+  
     + http://code.djangoproject.com/ticket/7052
     + http://stackoverflow.com/questions/853796/problems-with-contenttypes-when-loading-a-fixture-in-django
 
