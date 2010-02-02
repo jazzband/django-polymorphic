@@ -134,16 +134,15 @@ class PolymorphicQuerySet(QuerySet):
         # - store objects that already have the correct class into "results"
         self_model_content_type_id = ContentType.objects.get_for_model(self.model).pk
         for base_object in base_result_objects:
-            ordered_id_list.append(base_object.id)
-
+            ordered_id_list.append(base_object.pk)
             # this object is not a derived object and already the real instance => store it right away
             if (base_object.polymorphic_ctype_id == self_model_content_type_id):
-                results[base_object.id] = base_object
+                results[base_object.pk] = base_object
 
             # this object is derived and its real instance needs to be retrieved
             # => store it's id into the bin for this model type
             else:
-                idlist_per_model[base_object.get_real_instance_class()].append(base_object.id)
+                idlist_per_model[base_object.get_real_instance_class()].append(base_object.pk)
         
         # for each model in "idlist_per_model" request its objects (the full model)
         # from the db and store them in results[]
@@ -152,7 +151,7 @@ class PolymorphicQuerySet(QuerySet):
             # copy select related configuration to new qs
             qs.dup_select_related(self) 
             # TODO: defer(), only() and annotate(): support for these would be around here
-            for o in qs: results[o.id] = o
+            for o in qs: results[o.pk] = o
         
         # re-create correct order and return result list
         resultlist = [ results[ordered_id] for ordered_id in ordered_id_list if ordered_id in results ]
@@ -603,7 +602,7 @@ class PolymorphicModel(models.Model):
         Each method call executes one db query (if necessary).""" 
         real_model = self.get_real_instance_class()
         if real_model == self.__class__: return self
-        return real_model.objects.get(id=self.id)
+        return real_model.objects.get(pk=self.pk)
     
     # Hack: 
     # For base model back reference fields (like basemodel_ptr),
@@ -647,7 +646,7 @@ class PolymorphicModel(models.Model):
         super(PolymorphicModel, self).__init__(*args, **kwargs)
         
     def __repr__(self):
-        out = self.__class__.__name__ + ': id %d, ' % (self.id or - 1); last = self._meta.fields[-1]
+        out = self.__class__.__name__ + ': id %d, ' % (self.pk or - 1); last = self._meta.fields[-1]
         for f in self._meta.fields:
             if f.name in [ 'id' ] + self.polymorphic_internal_model_fields or 'ptr' in f.name: continue
             out += f.name + ' (' + type(f).__name__ + ')'
@@ -658,7 +657,7 @@ class PolymorphicModel(models.Model):
 class ShowFields(object):
     """ model mixin that shows the object's class, it's fields and field contents """
     def __repr__(self):
-        out = 'id %d, ' % (self.id); last = self._meta.fields[-1]
+        out = 'id %d, ' % (self.pk); last = self._meta.fields[-1]
         for f in self._meta.fields:
             if f.name in [ 'id' ] + self.polymorphic_internal_model_fields or 'ptr' in f.name: continue
             out += f.name
@@ -674,7 +673,7 @@ class ShowFields(object):
 class ShowFieldsAndTypes(object):
     """ model mixin, like ShowFields, but also show field types """
     def __repr__(self):
-        out = 'id %d, ' % (self.id); last = self._meta.fields[-1]
+        out = 'id %d, ' % (self.pk); last = self._meta.fields[-1]
         for f in self._meta.fields:
             if f.name in [ 'id' ] + self.polymorphic_internal_model_fields or 'ptr' in f.name: continue
             out += f.name + ' (' + type(f).__name__ + ')'
