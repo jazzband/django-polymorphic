@@ -170,6 +170,19 @@ ManyToManyField, ForeignKey, OneToOneField
           <ModelB: id 2, field1 (CharField), field2 (CharField)>,
           <ModelC: id 3, field1 (CharField), field2 (CharField), field3 (CharField)> ]
 
+annotate(), aggregate() & extra()
+---------------------------------
+
++	``annotate()`` and ``aggregate()`` work just as usual, with the
+	addition that the ``ModelX___field`` syntax can be used for the
+	keyword arguments (but not for the non-keyword arguments).
+	
++	``extra()`` by default works exactly like the vanilla version,
+	with the resulting queryset not being polymorphic. There is
+	experimental support for polymorphic queries with extra() via
+	the keyword argument ``polymorphic=True`` (then only the
+	``where`` and ``order_by`` arguments of extra() should be used).
+
 Non-Polymorphic Queries
 -----------------------
     
@@ -197,11 +210,6 @@ manage.py dumpdata
     with Django's seralisation or fixtures (and all polymorphic models
     use ContentType). This issue seems to be resolved with Django 1.2
     (changeset 11863): http://code.djangoproject.com/ticket/7052
-
-More Queryset Methods: annotate(), aggregate(), extra()
--------------------------------------------------------
-
-TODO: add info
     
 
 Custom Managers, Querysets & Inheritance
@@ -359,15 +367,8 @@ Unsupported Methods, Restrictions & Caveats
 Currently Unsupported Queryset Methods
 --------------------------------------
 
-+   ``aggregate()`` probably makes only sense in a purely non-OO/relational
-    way. So it seems an implementation would just fall back to the
-    Django vanilla equivalent.
-    
 +   ``defer()`` and ``only()``: Full support, including slight polymorphism
     enhancements, seems to be straighforward (depends on '_get_real_instances'). 
-
-+   ``extra()``: Does not really work with the current implementation of 
-    '_get_real_instances'. It's unclear if it should be supported.
 
 +	``select_related()`` works just as usual, but it can not (yet) be used
 	to select relations in derived models

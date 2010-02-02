@@ -17,9 +17,11 @@ Please see LICENSE and AUTHORS for more information.
 from django.db import models
 from django.db.models.base import ModelBase
 from django.db.models.query import QuerySet
+from django.contrib.contenttypes.models import ContentType
+from django import VERSION as django_VERSION
+
 from collections import defaultdict
 from pprint import pprint
-from django.contrib.contenttypes.models import ContentType
 import sys
 
 # chunk-size: maximum number of objects requested per db-request
@@ -76,6 +78,17 @@ class PolymorphicQuerySet(QuerySet):
     is to be used.
     """
 
+    def __init__(self, *args, **kwargs):
+        "init our queryset object member variables"
+        self.polymorphic_disabled = False
+        super(PolymorphicQuerySet, self).__init__(*args, **kwargs)
+        
+    def _clone(self, *args, **kwargs):
+        "Django's _clone only copies its own variables, so we need to copy ours here"
+        new = super(PolymorphicQuerySet, self)._clone(*args, **kwargs)
+        new.polymorphic_disabled = self.polymorphic_disabled
+        return new
+
     def instance_of(self, *args):
         """Filter the queryset to only include the classes in args (and their subclasses).
         Implementation in _translate_polymorphic_filter_defnition."""
@@ -92,18 +105,35 @@ class PolymorphicQuerySet(QuerySet):
         additional_args = _translate_polymorphic_filter_definitions_in_kwargs(self.model, kwargs) # filter_field='data'
         return super(PolymorphicQuerySet, self)._filter_or_exclude(negate, *(list(args) + additional_args), **kwargs)
 
-    def annotate(self, *args, **kwargs):
+    def _process_aggregate_args(self, args, kwargs):
+        """for aggregate and annotate kwargs: allow ModelX___field syntax for kwargs, forbid it for args.
+        Modifies kwargs if needed (these are Aggregate objects, we translate the lookup member variable)"""
         for a in args:
-            assert not '___' in a.lookup, 'PolymorphicModel: annotate(): ___ model lookup supported for keyword arguments only'
+            assert not '___' in a.lookup, 'PolymorphicModel: annotate()/aggregate(): ___ model lookup supported for keyword arguments only'
         for a in kwargs.values():
             a.lookup = _translate_polymorphic_field_path(self.model, a.lookup)
+
+    def annotate(self, *args, **kwargs):
+        """translate the field paths in the kwargs, then call vanilla annotate.
+        _get_real_instances will do the rest of the job after executing the query."""
+        self._process_aggregate_args(args, kwargs)
         return super(PolymorphicQuerySet, self).annotate(*args, **kwargs)
+
+    def aggregate(self, *args, **kwargs):
+        """translate the field paths in the kwargs, then call vanilla aggregate.
+        We need no polymorphic object retrieval for aggregate => switch it off."""
+        self._process_aggregate_args(args, kwargs)
+        self.polymorphic_disabled = True
+        return super(PolymorphicQuerySet, self).aggregate(*args, **kwargs)
     
+    def extra(self, *args, **kwargs):
+        self.polymorphic_disabled = not kwargs.get('polymorphic',False)
+        if 'polymorphic' in kwargs: kwargs.pop('polymorphic')
+        return super(PolymorphicQuerySet, self).extra(*args, **kwargs)
+
     # these queryset functions are not yet supported
     def defer(self, *args, **kwargs): raise NotImplementedError
     def only(self, *args, **kwargs): raise NotImplementedError
-    def aggregate(self, *args, **kwargs): raise NotImplementedError
-
 
     def _get_real_instances(self, base_result_objects):
         """
@@ -126,8 +156,10 @@ class PolymorphicQuerySet(QuerySet):
         
         First, we sort the result objects in base_result_objects for their
         subclass (from o.polymorphic_ctype), and then we execute one db query per
-        subclass of objects. Finally we re-sort the resulting objects into the
-        correct order and return them as a list.
+        subclass of objects. Here, we handle any annotations from annotate().
+        
+        Finally we re-sort the resulting objects into the correct order and
+        return them as a list.
         """
         ordered_id_list = []    # list of ids of result-objects in correct order
         results = {}            # polymorphic dict of result-objects, keyed with their id (no order)
@@ -188,6 +220,11 @@ class PolymorphicQuerySet(QuerySet):
         with Polymorphic_QuerySet_objects_per_request per chunk
         """
         base_iter = super(PolymorphicQuerySet, self).iterator()
+
+        # disabled => work just like a normal queryset
+        if self.polymorphic_disabled:
+            for o in base_iter: yield o
+            raise StopIteration
 
         while True:
             base_result_objects = []
@@ -544,8 +581,6 @@ class PolymorphicModelBase(ModelBase):
 
 ###################################################################################
 ### PolymorphicModel
-
-from django import VERSION as django_VERSION
 
 class PolymorphicModel(models.Model):
     """

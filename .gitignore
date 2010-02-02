@@ -6,14 +6,14 @@
 .pydevproject
 .settings
 
-mypoly.py
-
 tmp
 libraries-local
 
 pushgit
 pushhg
 pushreg
+pbackup
+mcmd.py
 
 ppreadme.py
 ppdocs.py
