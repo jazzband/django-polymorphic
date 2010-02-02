@@ -197,6 +197,11 @@ manage.py dumpdata
     with Django's seralisation or fixtures (and all polymorphic models
     use ContentType). This issue seems to be resolved with Django 1.2
     (changeset 11863): http://code.djangoproject.com/ticket/7052
+
+More Queryset Methods: annotate(), aggregate(), extra()
+-------------------------------------------------------
+
+TODO: add info
     
 
 Custom Managers, Querysets & Inheritance
@@ -358,9 +363,6 @@ Currently Unsupported Queryset Methods
     way. So it seems an implementation would just fall back to the
     Django vanilla equivalent.
     
-+   ``annotate()``: The current '_get_real_instances' would need minor
-    enhancement.
-
 +   ``defer()`` and ``only()``: Full support, including slight polymorphism
     enhancements, seems to be straighforward (depends on '_get_real_instances'). 
 

@@ -89,6 +89,16 @@ class MgrInheritB(MgrInheritA):
 class MgrInheritC(ShowFieldsAndTypes, MgrInheritB):
     pass
 
+class BlogBase(ShowFieldsAndTypes, PolymorphicModel):
+    name = models.CharField(max_length=10)
+class BlogA(BlogBase):
+    pass
+class BlogB(BlogBase):
+    pass
+class BlogA_Entry(ShowFieldsAndTypes, PolymorphicModel):
+    blog = models.ForeignKey(BlogA)
+    text = models.CharField(max_length=10)
+
 # test bad field name
 #class TestBadFieldModel(PolymorphicModel):
 #    instance_of = models.CharField(max_length=10)
@@ -108,6 +118,16 @@ class testclass(TestCase):
         o = DiamondXY.objects.get()
         print 'DiamondXY fields 2: field_b "%s", field_x "%s", field_y "%s"' % (o.field_b, o.field_x, o.field_y)
         if o.field_b != 'b': print '# Django model inheritance diamond problem detected'
+
+    def test_annotate(self):
+        from django.db.models import Count
+
+        blog = BlogA.objects.create(name='B1')
+        entry1 = blog.bloga_entry_set.create(text='bla')
+        entry2 = BlogA_Entry.objects.create(blog=blog, text='bla2')
+
+        qs = BlogBase.objects.annotate(entrycount=Count('BlogA___bloga_entry'))
+        assert qs[0].entrycount == 2
 
 __test__ = {"doctest": """
 #######################################################

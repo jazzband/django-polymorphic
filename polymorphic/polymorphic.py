@@ -92,11 +92,18 @@ class PolymorphicQuerySet(QuerySet):
         additional_args = _translate_polymorphic_filter_definitions_in_kwargs(self.model, kwargs) # filter_field='data'
         return super(PolymorphicQuerySet, self)._filter_or_exclude(negate, *(list(args) + additional_args), **kwargs)
 
+    def annotate(self, *args, **kwargs):
+        for a in args:
+            assert not '___' in a.lookup, 'PolymorphicModel: annotate(): ___ model lookup supported for keyword arguments only'
+        for a in kwargs.values():
+            a.lookup = _translate_polymorphic_field_path(self.model, a.lookup)
+        return super(PolymorphicQuerySet, self).annotate(*args, **kwargs)
+    
     # these queryset functions are not yet supported
     def defer(self, *args, **kwargs): raise NotImplementedError
     def only(self, *args, **kwargs): raise NotImplementedError
     def aggregate(self, *args, **kwargs): raise NotImplementedError
-    def annotate(self, *args, **kwargs): raise NotImplementedError
+
 
     def _get_real_instances(self, base_result_objects):
         """
@@ -132,9 +139,12 @@ class PolymorphicQuerySet(QuerySet):
         # - sort base_result_object ids into idlist_per_model lists, depending on their real class;
         # - also record the correct result order in "ordered_id_list"
         # - store objects that already have the correct class into "results"
+        base_result_objects_by_id = {}
         self_model_content_type_id = ContentType.objects.get_for_model(self.model).pk
         for base_object in base_result_objects:
             ordered_id_list.append(base_object.pk)
+            base_result_objects_by_id[base_object.pk] = base_object
+            
             # this object is not a derived object and already the real instance => store it right away
             if (base_object.polymorphic_ctype_id == self_model_content_type_id):
                 results[base_object.pk] = base_object
@@ -144,14 +154,19 @@ class PolymorphicQuerySet(QuerySet):
             else:
                 idlist_per_model[base_object.get_real_instance_class()].append(base_object.pk)
         
-        # for each model in "idlist_per_model" request its objects (the full model)
-        # from the db and store them in results[]
+        # For each model in "idlist_per_model" request its objects (the real model)
+        # from the db and store them in results[].
+        # Then we copy the annotate fields from the base objects to the real objects.
+        # TODO: defer(), only(): support for these would be around here
         for modelclass, idlist in idlist_per_model.items():
             qs = modelclass.base_objects.filter(id__in=idlist)
-            # copy select related configuration to new qs
-            qs.dup_select_related(self) 
-            # TODO: defer(), only() and annotate(): support for these would be around here
-            for o in qs: results[o.pk] = o
+            qs.dup_select_related(self)    # copy select related configuration to new qs 
+            for o in qs:
+                if self.query.aggregates:
+                    for anno in self.query.aggregates.keys():
+                        attr = getattr(base_result_objects_by_id[o.pk], anno)
+                        setattr(o, anno, attr)
+                results[o.pk] = o
         
         # re-create correct order and return result list
         resultlist = [ results[ordered_id] for ordered_id in ordered_id_list if ordered_id in results ]
@@ -302,7 +317,7 @@ def _translate_polymorphic_field_path(queryset_model, field_path):
     Returns: translated path
     """
     classname, sep, pure_field_path = field_path.partition('___')
-    assert sep == '___'
+    if not sep: return field_path
 
     if '__' in classname:
         # the user has app label prepended to class name via __ => use Django's get_model function
