@@ -2,11 +2,15 @@ Release Notes, Usage, Code
 --------------------------
 
 * Please see `here for release notes, news and discussion`_ (Google Group)
-* Installation and usage: `Documentation and Examples`_ (or the short `Overview`_)  
-* The code is on GitHub_ and Bitbucket_ and can also be downloaded as TGZ_ or ZIP_ 
+* `Many Examples`_, or full `Installation and Usage Docs`_ (or the short `Overview`_)   
+* Download from GitHub_ or Bitbucket_, or as TGZ_ or ZIP_
+* Improve django_polymorphic: Report issues, discuss, post patch, or fork the code (GitHub_, Bitbucket_, Newsgroup_, Mail_) 
 
 .. _here for release notes, news and discussion: http://groups.google.de/group/django-polymorphic/topics
-.. _Documentation and Examples: http://bserve.webhop.org/wiki/django_polymorphic/doc
+.. _Newsgroup: http://groups.google.de/group/django-polymorphic/topics
+.. _Mail: http://github.com/bconstantin/django_polymorphic/tree/master/setup.py
+.. _Installation and Usage Docs: http://bserve.webhop.org/wiki/django_polymorphic/doc
+.. _Many Examples: http://bserve.webhop.org/wiki/django_polymorphic/doc#defining-polymorphic-models
 .. _GitHub: http://github.com/bconstantin/django_polymorphic
 .. _Bitbucket: http://bitbucket.org/bconstantin/django_polymorphic
 .. _TGZ: http://github.com/bconstantin/django_polymorphic/tarball/master
@@ -17,14 +21,8 @@ Release Notes, Usage, Code
 What is django_polymorphic good for?
 ------------------------------------
 
-It implements seamless polymorphic inheritance for Django models.
-
-This means: objects being retrieved from the database are always returned
-back with the same type/class and fields they were created and saved with.
-
-An example:
-If we defined the model ``Project`` as a base class for our models
-``ArtProject`` and ``ResearchProject``, and we have stored one of
+**Example**: If we define the model ``Project`` as the base class for
+our models ``ArtProject`` and ``ResearchProject``, and we store one of
 each into the database, then we can do::
 
 	>>> Project.objects.all()
@@ -32,7 +30,12 @@ each into the database, then we can do::
 	[ <Project:         id 1, topic: "John's Gathering">,
 	  <ArtProject:      id 2, topic: "Sculpting with Tim", artist: "T. Turner">,
 	  <ResearchProject: id 3, topic: "Swallow Aerodynamics", supervisor: "Dr. Winter"> ]
-	
+
+In general: django_polymorphic implements seamless polymorphic inheritance for Django models.
+
+The effect: objects are always returned back from the database just
+as you created them, with the same type/class and fields.
+
 It doesn't matter how these objects are retrieved: be it through the
 model's own managers/querysets, ForeignKeys, ManyToManyFields
 or OneToOneFields.
@@ -45,8 +48,10 @@ django_polymorphic does this only for models that explicitely enable it
 (and for their submodels).
 
 Please see the `Documentation and Examples`_ for more information
-(also included as the file ``DOCS.rst`` with the source).
+or directly look at `more Examples`_. 
 
+.. _Documentation and Examples: http://bserve.webhop.org/wiki/django_polymorphic/doc
+.. _more Examples: http://bserve.webhop.org/wiki/django_polymorphic/doc#defining-polymorphic-models
 
 Status
 ------

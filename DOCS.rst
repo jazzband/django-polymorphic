@@ -7,18 +7,18 @@ Installation / Testing
 Requirements
 ------------
 
-Django 1.1 (or later) and Python 2.5 (or later). This code has been tested
-on Django 1.1.1 / 1.2 alpha and Python 2.5.4 / 2.6.4 on Linux.
+Django 1.1 (or later) and Python 2.5/2.6. This code has been tested
+on Django 1.1.1 / 1.2 beta and Python 2.5.4 / 2.6.4 on Linux.
 
 Testing
 -------
 
-The repository (or tar file)  contains a complete Django project
-that may be used for tests or experiments.
+The repository (or tar file) contains a complete Django project
+that may be used for tests or experiments (without any installation needed).
 
 To run the included test suite, execute::
 
-    ./manage test polymorphic
+    ./manage test
 
 The management command ``pcmd.py`` in the app ``pexp`` (Polymorphic EXPerimenting)
 can be used for experiments - modify this file (pexp/management/commands/pcmd.py)
@@ -394,9 +394,9 @@ Restrictions & Caveats
     option (fixed in Django 1.2).
 
 *   Django 1.1 only - when ContentType is used in models, Django's
-    seralisation or fixtures cannot be used. This issue seems to be
-    resolved for Django 1.2 (changeset 11863: Fixed #7052, Added support
-    for natural keys in serialization).
+    seralisation or fixtures cannot be used (all polymorphic models
+    use ContentType). This issue seems to be resolved for Django 1.2
+    (changeset 11863: Fixed #7052, Added support for natural keys in serialization).
   
     + http://code.djangoproject.com/ticket/7052
     + http://stackoverflow.com/questions/853796/problems-with-contenttypes-when-loading-a-fixture-in-django
@@ -408,7 +408,14 @@ Restrictions & Caveats
     This problem is aggravated when trying to enhance models.Model
     by subclassing it instead of modifying Django core (as we do here
     with PolymorphicModel).
-  
+
+*   It must be possible to instantiate the base model objects, even if your
+    application never does this itself. This is needed by the current
+    implementation of polymorphic querysets but (likely) also by Django internals.
+    Example: If ModelB and ModelC inherit from ModelA, and you never create
+    ModelA objects, django_polymorphic and Django core will still instantiate
+    ModelA objects for temporary purposes (and fail, if this isn't possible).
+
 *   A reference (``ContentType``) to the real/leaf model is stored
     in the base model (the base model directly inheriting from
     PolymorphicModel). If a model or an app is renamed, then Django's
@@ -428,17 +435,16 @@ Restrictions & Caveats
     in PolymorphicModel, which causes some overhead. A minor patch to
     Django core would probably get rid of that.
 
+
 Project Status
---------------   
+==============   
  
 It's important to consider that this code is very new and
-to some extent still experimental. Please see the docs for
-current restrictions, caveats, and performance implications.
-
-It does seem to work very well for a number of people, but
-API changes, code reorganisations or further schema changes
-are still a possibility. There may also remain larger bugs
-and problems in the code that have not yet been found.
+to some extent still experimental. It does seem to work very
+well for a number of people, but API changes, code reorganisations
+or further schema changes are still a possibility. There may also
+remain larger bugs and problems in the code that have not yet
+been found.
 
 
 Links

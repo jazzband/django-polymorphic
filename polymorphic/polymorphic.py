@@ -710,42 +710,39 @@ class PolymorphicModel(models.Model):
         super(PolymorphicModel, self).__init__(*args, **kwargs)
         
     def __repr__(self):
-        out = self.__class__.__name__ + ': id %d, ' % (self.pk or - 1); last = self._meta.fields[-1]
+        out = self.__class__.__name__ + ': id %d' % (self.pk or - 1)
         for f in self._meta.fields:
             if f.name in [ 'id' ] + self.polymorphic_internal_model_fields or 'ptr' in f.name: continue
-            out += f.name + ' (' + type(f).__name__ + ')'
-            if f != last:  out += ', '
+            out += ', ' + f.name + ' (' + type(f).__name__ + ')'
         return '<' + out + '>'
 
 
 class ShowFields(object):
     """ model mixin that shows the object's class, it's fields and field contents """
     def __repr__(self):
-        out = 'id %d, ' % (self.pk); last = self._meta.fields[-1]
+        out = 'id %d, ' % (self.pk)
         for f in self._meta.fields:
             if f.name in [ 'id' ] + self.polymorphic_internal_model_fields or 'ptr' in f.name: continue
-            out += f.name
+            out += ', ' + f.name
             if isinstance(f, (models.ForeignKey)):
                 o = getattr(self, f.name)
                 out += ': "' + ('None' if o == None else o.__class__.__name__) + '"'
             else:
                 out += ': "' + getattr(self, f.name) + '"'
-            if f != last:  out += ', '
         return '<' + (self.__class__.__name__ + ': ') + out + '>'
 
 
 class ShowFieldsAndTypes(object):
     """ model mixin, like ShowFields, but also show field types """
     def __repr__(self):
-        out = 'id %d, ' % (self.pk); last = self._meta.fields[-1]
+        out = 'id %d' % (self.pk)
         for f in self._meta.fields:
             if f.name in [ 'id' ] + self.polymorphic_internal_model_fields or 'ptr' in f.name: continue
-            out += f.name + ' (' + type(f).__name__ + ')'
+            out += ', ' + f.name + ' (' + type(f).__name__ + ')'
             if isinstance(f, (models.ForeignKey)):
                 o = getattr(self, f.name)
                 out += ': "' + ('None' if o == None else o.__class__.__name__) + '"'
             else:
                 out += ': "' + getattr(self, f.name) + '"'
-            if f != last:  out += ', '
         return '<' + self.__class__.__name__ + ': ' + out + '>'
 

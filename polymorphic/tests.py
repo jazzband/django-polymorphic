@@ -146,9 +146,9 @@ class testclass(TestCase):
 
         # test ordering
         expected = '''
-[ <BlogB: id 4, name (CharField): "Bb3", >,
-  <BlogB: id 3, name (CharField): "Bb2", >,
-  <BlogB: id 2, name (CharField): "Bb1", >,
+[ <BlogB: id 4, name (CharField): "Bb3">,
+  <BlogB: id 3, name (CharField): "Bb2">,
+  <BlogB: id 2, name (CharField): "Bb1">,
   <BlogA: id 8, name (CharField): "B5", info (CharField): "i5">,
   <BlogA: id 7, name (CharField): "B4", info (CharField): "i4">,
   <BlogA: id 6, name (CharField): "B3", info (CharField): "i3">,
@@ -163,9 +163,9 @@ class testclass(TestCase):
   <BlogA: id 6, name (CharField): "B3", info (CharField): "i3">,
   <BlogA: id 5, name (CharField): "B2", info (CharField): "i2">,
   <BlogA: id 1, name (CharField): "B1", info (CharField): "i1">,
-  <BlogB: id 2, name (CharField): "Bb1", >,
-  <BlogB: id 3, name (CharField): "Bb2", >,
-  <BlogB: id 4, name (CharField): "Bb3", > ]'''
+  <BlogB: id 2, name (CharField): "Bb1">,
+  <BlogB: id 3, name (CharField): "Bb2">,
+  <BlogB: id 4, name (CharField): "Bb3"> ]'''
         x = '\n' + repr(BlogBase.objects.order_by('-BlogA___info'))
         assert x == expected
 
