@@ -27,17 +27,20 @@ to your liking, then run::
     ./manage syncdb      # db is created in /var/tmp/... (settings.py)
     ./manage pcmd
     
-Using polymorphic models in your own projects
----------------------------------------------
+Installation
+------------
 
-The easiest way for now is to just copy the ``polymorphic`` directory
-(under ``django_polymorphic``) into your Django project dir.
+In the directory "django_polymorphic", execute ``sudo python setup.py install``.
+
+Alternatively you can simply copy the ``polymorphic`` directory
+(under "django_polymorphic") into your Django project dir.
 
 If you want to use the management command ``polymorphic_dumpdata``, then
-you need to add ``polymorphic`` to your INSTALLED_APPS setting as well.
+you need to add ``polymorphic`` to your INSTALLED_APPS setting.
 
-In any case, the ContentType framework (``django.contrib.contenttypes``)
+In any case, Django's ContentType framework (``django.contrib.contenttypes``)
 needs to be listed in INSTALLED_APPS (usually it already is).
+
 
 
 Defining Polymorphic Models

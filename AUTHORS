@@ -1,4 +1,4 @@
-django_polymorphic was initially created by Bert Constantin in 2009/2010.
+django_polymorphic was created by Bert Constantin in 2009/2010.
 
-If you contributed code, test cases etc., your name should
-appear here as well.
+setup.py contributed by Andrew Ingram
+
