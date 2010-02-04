@@ -131,10 +131,6 @@ class PolymorphicQuerySet(QuerySet):
         if 'polymorphic' in kwargs: kwargs.pop('polymorphic')
         return super(PolymorphicQuerySet, self).extra(*args, **kwargs)
 
-    # these queryset functions are not yet supported
-    def defer(self, *args, **kwargs): raise NotImplementedError
-    def only(self, *args, **kwargs): raise NotImplementedError
-
     def _get_real_instances(self, base_result_objects):
         """
         Polymorphic object loader

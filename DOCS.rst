@@ -1,5 +1,5 @@
 .. contents:: Table of Contents
-	:depth: 1
+    :depth: 1
 
 Installation / Testing
 ======================
@@ -173,18 +173,33 @@ ManyToManyField, ForeignKey, OneToOneField
           <ModelB: id 2, field1 (CharField), field2 (CharField)>,
           <ModelC: id 3, field1 (CharField), field2 (CharField), field3 (CharField)> ]
 
-annotate(), aggregate() & extra()
----------------------------------
+More Queryset Methods
+---------------------
 
-+	``annotate()`` and ``aggregate()`` work just as usual, with the
-	addition that the ``ModelX___field`` syntax can be used for the
-	keyword arguments (but not for the non-keyword arguments).
-	
-+	``extra()`` by default works exactly like the vanilla version,
-	with the resulting queryset not being polymorphic. There is
-	experimental support for polymorphic queries with extra() via
-	the keyword argument ``polymorphic=True`` (then only the
-	``where`` and ``order_by`` arguments of extra() should be used).
++   ``annotate()`` and ``aggregate()`` work just as usual, with the
+    addition that the ``ModelX___field`` syntax can be used for the
+    keyword arguments (but not for the non-keyword arguments).
+    
++   ``distinct()`` works as expected. It only regards the fields of
+    the base class, but this should never make a difference.
+
++   ``select_related()`` works just as usual, but it can not (yet) be used
+    to select relations in derived models
+    (like ``ModelA.objects.select_related('ModelC___fieldxy')`` )
+
++   ``extra()`` by default works exactly like the original version,
+    with the resulting queryset not being polymorphic. There is
+    experimental support for a polymorphic extra() via the keyword
+    argument ``polymorphic=True`` (only the ``where`` and
+    ``order_by`` arguments of extra() should be used then).
+
++   ``values()`` & ``values_list()`` currently do not return polymorphic
+    results. This may change in the future however. If you want to use these
+    methods now, it's best if you use ``Model.base_objects.values...`` as
+    this is guaranteed to not change. 
+
++   ``defer()`` and ``only()`` are not yet supported (support will be added
+    in the future). 
 
 Non-Polymorphic Queries
 -----------------------
@@ -364,26 +379,11 @@ So it seems this optimization can be done at any later time
 (like when it's needed).
 
 
-Unsupported Methods, Restrictions & Caveats
-===========================================
-
-Currently Unsupported Queryset Methods
---------------------------------------
-
-+   ``defer()`` and ``only()``: Full support, including slight polymorphism
-    enhancements, seems to be straighforward (depends on '_get_real_instances'). 
-
-+	``select_related()`` works just as usual, but it can not (yet) be used
-	to select relations in derived models
-	(like ``ModelA.objects.select_related('ModelC___fieldxy')`` )
-
-+   ``distinct()`` needs more thought and investigation
-
-+   ``values()`` & ``values_list()``: Implementation seems to be mostly straighforward
-
-
 Restrictions & Caveats
-----------------------
+======================
+
+*   The queryset methods ``values()``, ``values_list()``, ``select_related()``, 
+    ``defer()`` and ``only()`` are not yet fully supported (see above)
 
 *   Django 1.1 only - the names of polymorphic models must be unique
     in the whole project, even if they are in two different apps.
