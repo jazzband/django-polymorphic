@@ -5,6 +5,7 @@
 .project
 .pydevproject
 .settings
+nbproject
 
 tmp
 libraries-local

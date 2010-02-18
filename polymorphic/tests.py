@@ -99,6 +99,9 @@ class BlogA_Entry(ShowFieldsAndTypes, PolymorphicModel):
     blog = models.ForeignKey(BlogA)
     text = models.CharField(max_length=10)
 
+class ModelFieldNameTest(PolymorphicModel):
+    modelfieldnametest = models.CharField(max_length=10)
+
 # test bad field name
 #class TestBadFieldModel(PolymorphicModel):
 #    instance_of = models.CharField(max_length=10)
@@ -303,11 +306,16 @@ __test__ = {"doctest": """
 >>> type(MROBase2._default_manager)
 <class 'polymorphic.tests.MyManager'>
 
+### fixed issue in PolymorphicModel.__getattribute__: field name same as model name
+>>> ModelFieldNameTest.objects.create(modelfieldnametest='1')
+<ModelFieldNameTest: id 1, modelfieldnametest (CharField)>
+
 ### Django model inheritance diamond problem, fails for Django 1.1
 
 #>>> o=DiamondXY.objects.create(field_b='b', field_x='x', field_y='y')
 #>>> print 'DiamondXY fields 1: field_b "%s", field_x "%s", field_y "%s"' % (o.field_b, o.field_x, o.field_y)
 #DiamondXY fields 1: field_b "a", field_x "x", field_y "y"
+
 
 >>> settings.DEBUG=False
 

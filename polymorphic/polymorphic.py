@@ -678,11 +678,11 @@ class PolymorphicModel(models.Model):
     def __getattribute__(self, name):
         if name != '__class__':
             #if name.endswith('_ptr_cache'): # unclear if this should be handled as well
-            if name.endswith('_ptr'): name = name[:-4]
             model = self.__class__.sub_and_superclass_dict.get(name, None)
-            if model: 
+            if model:
                 id = super(PolymorphicModel, self).__getattribute__('id')
                 attr = model.base_objects.get(id=id)
+                #print '---',self.__class__.__name__,name
                 return attr
         return super(PolymorphicModel, self).__getattribute__(name)
 
@@ -690,23 +690,28 @@ class PolymorphicModel(models.Model):
     # containing all model attribute names we need to intercept
     # (do this once here instead of in __getattribute__ every time)
     def __init__(self, *args, **kwargs):
-        if not getattr(self.__class__, 'sub_and_superclass_dict', None):
+        if not self.__class__.__dict__.get('sub_and_superclass_dict', None):
+
+            def add_if_regular_sub_or_super_class(model, as_ptr, result):
+                if ( issubclass(model, models.Model) and model != models.Model
+                    and model != self.__class__ and model != PolymorphicModel):
+                    name = model.__name__.lower()
+                    if as_ptr: name+='_ptr'
+                    result[name] = model
             def add_all_base_models(model, result):
-                if issubclass(model, models.Model) and model != models.Model:
-                    result[model.__name__.lower()] = model
+                add_if_regular_sub_or_super_class(model, True, result)
                 for b in model.__bases__:
                     add_all_base_models(b, result)
-            def add_all_sub_models(model, result):
-                if issubclass(model, models.Model) and model != models.Model:
-                    result[model.__name__.lower()] = model
+            def add_sub_models(model, result):
                 for b in model.__subclasses__():
-                    add_all_sub_models(b, result)
-                                    
+                    add_if_regular_sub_or_super_class(b, False, result)
+
             result = {}
-            add_all_base_models(self.__class__, result)
-            add_all_sub_models(self.__class__, result)
+            add_all_base_models(self.__class__,result)
+            add_sub_models(self.__class__,result)
+            #print '##',self.__class__.__name__,' - ',result
             self.__class__.sub_and_superclass_dict = result
-            
+
         super(PolymorphicModel, self).__init__(*args, **kwargs)
         
     def __repr__(self):
