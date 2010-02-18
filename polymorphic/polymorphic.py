@@ -676,9 +676,33 @@ class PolymorphicModel(models.Model):
     # django.db.models.base._collect_sub_objects: parent_obj = getattr(self, link.name)
     # TODO: investigate Django how this can be avoided
     def __getattribute__(self, name):
-        if name != '__class__':
-            #if name.endswith('_ptr_cache'): # unclear if this should be handled as well
-            model = self.__class__.sub_and_superclass_dict.get(name, None)
+        if not name.startswith('__'):         # do not intercept __class__ etc.
+
+            # for efficiency: create a dict containing all model attribute names we need to intercept
+            # (do this only once and store the result into self.__class__.inheritance_relation_fields_dict)
+            if not self.__class__.__dict__.get('inheritance_relation_fields_dict', None):
+
+                def add_if_regular_sub_or_super_class(model, as_ptr, result):
+                    if ( issubclass(model, models.Model) and model != models.Model
+                        and model != self.__class__ and model != PolymorphicModel):
+                        name = model.__name__.lower()
+                        if as_ptr: name+='_ptr'
+                        result[name] = model
+                def add_all_base_models(model, result):
+                    add_if_regular_sub_or_super_class(model, True, result)
+                    for b in model.__bases__:
+                        add_all_base_models(b, result)
+                def add_sub_models(model, result):
+                    for b in model.__subclasses__():
+                        add_if_regular_sub_or_super_class(b, False, result)
+
+                result = {}
+                add_all_base_models(self.__class__,result)
+                add_sub_models(self.__class__,result)
+                #print '##',self.__class__.__name__,' - ',result
+                self.__class__.inheritance_relation_fields_dict = result
+
+            model = self.__class__.inheritance_relation_fields_dict.get(name, None)
             if model:
                 id = super(PolymorphicModel, self).__getattribute__('id')
                 attr = model.base_objects.get(id=id)
@@ -686,34 +710,7 @@ class PolymorphicModel(models.Model):
                 return attr
         return super(PolymorphicModel, self).__getattribute__(name)
 
-    # support for __getattribute__ hack: create sub_and_superclass_dict,
-    # containing all model attribute names we need to intercept
-    # (do this once here instead of in __getattribute__ every time)
-    def __init__(self, *args, **kwargs):
-        if not self.__class__.__dict__.get('sub_and_superclass_dict', None):
 
-            def add_if_regular_sub_or_super_class(model, as_ptr, result):
-                if ( issubclass(model, models.Model) and model != models.Model
-                    and model != self.__class__ and model != PolymorphicModel):
-                    name = model.__name__.lower()
-                    if as_ptr: name+='_ptr'
-                    result[name] = model
-            def add_all_base_models(model, result):
-                add_if_regular_sub_or_super_class(model, True, result)
-                for b in model.__bases__:
-                    add_all_base_models(b, result)
-            def add_sub_models(model, result):
-                for b in model.__subclasses__():
-                    add_if_regular_sub_or_super_class(b, False, result)
-
-            result = {}
-            add_all_base_models(self.__class__,result)
-            add_sub_models(self.__class__,result)
-            #print '##',self.__class__.__name__,' - ',result
-            self.__class__.sub_and_superclass_dict = result
-
-        super(PolymorphicModel, self).__init__(*args, **kwargs)
-        
     def __repr__(self):
         out = self.__class__.__name__ + ': id %d' % (self.pk or - 1)
         for f in self._meta.fields:

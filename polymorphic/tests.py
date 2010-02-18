@@ -102,6 +102,15 @@ class BlogA_Entry(ShowFieldsAndTypes, PolymorphicModel):
 class ModelFieldNameTest(PolymorphicModel):
     modelfieldnametest = models.CharField(max_length=10)
 
+class InitTestModel(PolymorphicModel):
+    bar = models.CharField(max_length=100)
+    def __init__(self, *args, **kwargs):
+        kwargs['bar'] = self.x()
+        super(InitTestModel, self).__init__(*args, **kwargs)
+class InitTestModelSubclass(InitTestModel):
+    def x(self):
+        return 'XYZ'
+
 # test bad field name
 #class TestBadFieldModel(PolymorphicModel):
 #    instance_of = models.CharField(max_length=10)
@@ -309,6 +318,13 @@ __test__ = {"doctest": """
 ### fixed issue in PolymorphicModel.__getattribute__: field name same as model name
 >>> ModelFieldNameTest.objects.create(modelfieldnametest='1')
 <ModelFieldNameTest: id 1, modelfieldnametest (CharField)>
+
+### fixed issue in PolymorphicModel.__getattribute__:
+# if subclass defined __init__ and accessed class members, __getattribute__ had a problem: "...has no attribute 'sub_and_superclass_dict'"
+#>>> o
+>>> o = InitTestModelSubclass.objects.create()
+>>> o.bar
+'XYZ'
 
 ### Django model inheritance diamond problem, fails for Django 1.1
 

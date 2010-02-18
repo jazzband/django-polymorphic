@@ -34,3 +34,4 @@ if not (django_VERSION[0]<=1 and django_VERSION[1]<=1):
         field2 = models.CharField(max_length=10)
     class Model2C(Model2B):
         field3 = models.CharField(max_length=10)
+
