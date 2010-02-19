@@ -4,10 +4,10 @@ Release Notes, Usage, Code
 * Please see `here for release notes, news and discussion`_ (Google Group)
 * `Many Examples`_, or full `Installation and Usage Docs`_ (or the short `Overview`_)   
 * Download from GitHub_ or Bitbucket_, or as TGZ_ or ZIP_
-* Improve django_polymorphic: Report issues, discuss, post patch, or fork the code (GitHub_, Bitbucket_, Newsgroup_, Mail_) 
+* Improve django_polymorphic: Report issues, discuss, post patch, or fork (GitHub_, Bitbucket_, Group_, Mail_)
 
 .. _here for release notes, news and discussion: http://groups.google.de/group/django-polymorphic/topics
-.. _Newsgroup: http://groups.google.de/group/django-polymorphic/topics
+.. _Group: http://groups.google.de/group/django-polymorphic/topics
 .. _Mail: http://github.com/bconstantin/django_polymorphic/tree/master/setup.py
 .. _Installation and Usage Docs: http://bserve.webhop.org/wiki/django_polymorphic/doc
 .. _Many Examples: http://bserve.webhop.org/wiki/django_polymorphic/doc#defining-polymorphic-models
@@ -70,6 +70,30 @@ License
 -------
 
 django_polymorphic uses the same license as Django (BSD-like).
+
+
+API Change on February 22, plus Installation Note
+-------------------------------------------------
+
+The django_polymorphic source code has been restructured
+and as a result needs to be installed like a normal Django App
+- either via copying the "polymorphic" directory into your
+Django project or by running setup.py. Adding 'polymorphic'
+to INSTALLED_APPS in settings.py is still optional, however.
+
+The file `polymorphic.py` cannot be used as a standalone
+extension module anymore (as is has been split into a number
+of smaller files).
+
+Importing works slightly different now: All relevant symbols are
+imported directly from 'polymorphic' instead from
+'polymorphic.models'::
+
+    # new way
+    from polymorphic import PolymorphicModel, ...
+
+    # old way, doesn't work anymore
+    from polymorphic.models import PolymorphicModel, ...
 
 
 Database Schema Change on January 26

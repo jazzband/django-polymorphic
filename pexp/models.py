@@ -1,6 +1,8 @@
+# -*- coding: utf-8 -*-
+
 from django.db import models
 
-from polymorphic.models import PolymorphicModel, PolymorphicManager, PolymorphicQuerySet, ShowFields, ShowFieldsAndTypes
+from polymorphic import PolymorphicModel, PolymorphicManager, PolymorphicQuerySet, ShowFields, ShowFieldsAndTypes
 
 
 class Project(ShowFields, PolymorphicModel):

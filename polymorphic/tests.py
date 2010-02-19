@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+""" Test Cases
+    Please see README.rst or DOCS.rst or http://bserve.webhop.org/wiki/django_polymorphic
+"""
 
 import settings
 
@@ -8,7 +11,7 @@ from django.db.models import Q
 from django.db import models
 from django.contrib.contenttypes.models import ContentType
 
-from models import PolymorphicModel, PolymorphicManager, PolymorphicQuerySet, ShowFields, ShowFieldsAndTypes
+from polymorphic import PolymorphicModel, PolymorphicManager, PolymorphicQuerySet, ShowFields, ShowFieldsAndTypes, get_version
 
 class PlainA(models.Model):
     field1 = models.CharField(max_length=10)
@@ -181,11 +184,17 @@ class testclass(TestCase):
         x = '\n' + repr(BlogBase.objects.order_by('-BlogA___info'))
         assert x == expected
 
+        #assert False
+
+        
 __test__ = {"doctest": """
 #######################################################
 ### Tests
 
 >>> settings.DEBUG=True
+
+>>> get_version()
+'0.5 beta'
 
 ### simple inheritance
 
@@ -219,8 +228,17 @@ __test__ = {"doctest": """
 [ <Model2B: id 2, field1 (CharField), field2 (CharField)>,
   <Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)> ]
 
+>>> Model2A.objects.filter(instance_of=Model2B)
+[ <Model2B: id 2, field1 (CharField), field2 (CharField)>,
+  <Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)> ]
+
+>>> Model2A.objects.filter(Q(instance_of=Model2B))
+[ <Model2B: id 2, field1 (CharField), field2 (CharField)>,
+  <Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)> ]
+
 >>> Model2A.objects.not_instance_of(Model2B)
 [ <Model2A: id 1, field1 (CharField)> ]
+
 
 ### polymorphic filtering
 

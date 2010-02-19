@@ -14,7 +14,7 @@ Testing
 -------
 
 The repository (or tar file) contains a complete Django project
-that may be used for tests or experiments (without any installation needed).
+that may be used for tests or experiments, without any installation needed.
 
 To run the included test suite, execute::
 
@@ -36,11 +36,11 @@ Alternatively you can simply copy the ``polymorphic`` directory
 (under "django_polymorphic") into your Django project dir.
 
 If you want to use the management command ``polymorphic_dumpdata``, then
-you need to add ``polymorphic`` to your INSTALLED_APPS setting.
+you need to add ``polymorphic`` to your INSTALLED_APPS setting. This is also
+needed if you want to run the test cases in `polymorphic/tests.py`.
 
 In any case, Django's ContentType framework (``django.contrib.contenttypes``)
 needs to be listed in INSTALLED_APPS (usually it already is).
-
 
 
 Defining Polymorphic Models
@@ -50,7 +50,7 @@ To make models polymorphic, use ``PolymorphicModel`` instead of Django's
 ``models.Model`` as the superclass of your base model. All models
 inheriting from your base class will be polymorphic as well::
 
-    from polymorphic.models import PolymorphicModel    
+    from polymorphic import PolymorphicModel
 
     class ModelA(PolymorphicModel):
         field1 = models.CharField(max_length=10)
@@ -244,6 +244,8 @@ from ``PolymorphicManager`` instead of ``models.Manager``. In your model
 class, explicitly add the default manager first, and then your
 custom manager::
 
+        from polymorphic import PolymorphicModel, PolymorphicManager
+
         class MyOrderedManager(PolymorphicManager):
             def get_query_set(self):
                 return super(MyOrderedManager,self).get_query_set().order_by('some_field')
@@ -281,6 +283,8 @@ Using a Custom Queryset Class
 The ``PolymorphicManager`` class accepts one initialization argument,
 which is the queryset class the manager should use. A custom
 custom queryset class can be defined and used like this::
+
+        from polymorphic import PolymorphicModel, PolymorphicManager, PolymorphicQuerySet
 
         class MyQuerySet(PolymorphicQuerySet):
             def my_queryset_method(...):
@@ -408,6 +412,10 @@ Restrictions & Caveats
     This problem is aggravated when trying to enhance models.Model
     by subclassing it instead of modifying Django core (as we do here
     with PolymorphicModel).
+
+*   Django Admin Integration: There currently is no admin integration,
+    but it surely would be nice to have one. There is a discussion about it here:
+    http://groups.google.de/group/django-polymorphic/browse_thread/thread/84290fe76c40c12d
 
 *   It must be possible to instantiate the base model objects, even if your
     application never does this itself. This is needed by the current

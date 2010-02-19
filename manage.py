@@ -7,6 +7,9 @@ import sys, os
 project_path = os.path.dirname(os.path.abspath(__file__))
 libs_local_path = os.path.join(project_path, 'libraries-local')
 if libs_local_path not in sys.path: sys.path.insert(1, libs_local_path)
+
+sys.stderr.write( 'using Python version: %s\n' % sys.version[:5])
+
 import django
 sys.stderr.write( 'using Django version: %s, from %s\n' % (
         django.get_version(),

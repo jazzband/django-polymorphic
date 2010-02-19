@@ -1,0 +1,14 @@
+#!/bin/bash
+
+function testit {
+    if which $1 ; then
+        if ! $1 manage.py test ; then echo ERROR ; exit 10 ; fi
+    else
+        echo "### $1 is not installed!"
+    fi
+}
+
+testit python2.4
+testit python2.5
+testit python2.6
+
