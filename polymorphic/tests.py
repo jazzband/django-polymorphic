@@ -357,10 +357,14 @@ __test__ = {"doctest": """
 ### extra() method
 
 >>> Model2A.objects.extra(where=['id IN (2, 3)'])
+[ <Model2B: id 2, field1 (CharField), field2 (CharField)>,
+  <Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)> ]
+
+>>> Model2A.objects.extra(where=['id IN (2, 3)'], select={'dummy_attribute':'1'})
 [ <Model2A: id 2, field1 (CharField)>,
   <Model2A: id 3, field1 (CharField)> ]
 
->>> Model2A.objects.extra(polymorphic=True, where=['id IN (2, 3)'])
+>>> Model2A.objects.extra(polymorphic=True, where=['id IN (2, 3)'], select={'dummy_attribute':'1'})
 [ <Model2B: id 2, field1 (CharField), field2 (CharField)>,
   <Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)> ]
 

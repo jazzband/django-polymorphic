@@ -85,11 +85,18 @@ class PolymorphicQuerySet(QuerySet):
         return super(PolymorphicQuerySet, self).aggregate(*args, **kwargs)
 
     def extra(self, *args, **kwargs):
-        """only return polymorphic results if we get "polymorphic=True" as a keyword arg."""
-        #for key in kwargs.keys():
-        #    if key not in ['where','order_by', 'params']:
-        #        assert False,"""django_polymorphic: extras() does not support keyword argument %s.
-        self.polymorphic_disabled = not bool(kwargs.pop('polymorphic', False))
+        #
+        # Disable polymorphic, but only if arg that is currently not handled
+        # polymorphically is passed in.
+        #
+        # Allow this to be overridden with 'polymorphic' arg
+        #
+        polymorphic_by_default = True
+        for key in kwargs.keys():
+            if key not in ['where','order_by', 'polymorphic']: # FIXME: also add 'params' here?
+                polymorphic_by_default = False
+        
+        self.polymorphic_disabled = not bool(kwargs.pop('polymorphic', polymorphic_by_default))
         return super(PolymorphicQuerySet, self).extra(*args, **kwargs)
 
     def get_real_instances(self, base_result_objects):
