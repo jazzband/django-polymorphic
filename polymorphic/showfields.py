@@ -12,7 +12,7 @@ def _represent_foreign_key(o):
 class ShowFieldsAndTypes(object):
     """ model mixin, like ShowFields, but also show field types """
     def __repr__(self):
-        out = 'id %d' % (self.pk)
+        out = 'id ' + str(self.pk)
         for f in self._meta.fields:
             if f.name in [ 'id' ] + self.polymorphic_internal_model_fields or 'ptr' in f.name: continue
             out += ', ' + f.name + ' (' + type(f).__name__ + ')'
@@ -26,7 +26,7 @@ class ShowFieldsAndTypes(object):
 class ShowFields(object):
     """ model mixin that shows the object's class, it's fields and field contents """
     def __repr__(self):
-        out = 'id %d, ' % (self.pk)
+        out = 'id ' + str(self.pk) + ', '
         for f in self._meta.fields:
             if f.name in [ 'id' ] + self.polymorphic_internal_model_fields or 'ptr' in f.name: continue
             out += ', ' + f.name
@@ -42,7 +42,7 @@ class ShowFieldTypes(object):
     This mixin is already used by default by PolymorphicModel.
     (model mixin that shows the object's class and it's field types) """
     def __repr__(self):
-        out = self.__class__.__name__ + ': id %d' % (self.pk or - 1)
+        out = self.__class__.__name__ + ': id ' + str(self.pk)
         for f in self._meta.fields:
             if f.name in [ 'id' ] + self.polymorphic_internal_model_fields or 'ptr' in f.name: continue
             out += ', ' + f.name + ' (' + type(f).__name__ + ')'
