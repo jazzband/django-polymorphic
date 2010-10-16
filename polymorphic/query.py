@@ -144,6 +144,7 @@ class PolymorphicQuerySet(QuerySet):
         for modelclass, idlist in idlist_per_model.items():
             qs = modelclass.base_objects.filter(id__in=idlist)
             qs.dup_select_related(self)    # copy select related configuration to new qs
+
             for o in qs:
                 if self.query.aggregates:
                     for anno in self.query.aggregates.keys():
@@ -153,6 +154,13 @@ class PolymorphicQuerySet(QuerySet):
 
         # re-create correct order and return result list
         resultlist = [ results[ordered_id] for ordered_id in ordered_id_list if ordered_id in results ]
+
+        # set polymorphic_annotate_names in all objects (currently just used for debugging/printing)
+        if self.query.aggregates:
+            annotate_names=self.query.aggregates.keys() # get annotate fields list
+            for o in resultlist:
+                o.polymorphic_annotate_names=annotate_names
+
         return resultlist
 
     def iterator(self):
@@ -182,7 +190,9 @@ class PolymorphicQuerySet(QuerySet):
             reached_end = False
 
             for i in range(Polymorphic_QuerySet_objects_per_request):
-                try: base_result_objects.append(base_iter.next())
+                try:
+                    o=base_iter.next()
+                    base_result_objects.append(o)
                 except StopIteration:
                     reached_end = True
                     break
@@ -194,8 +204,10 @@ class PolymorphicQuerySet(QuerySet):
 
             if reached_end: raise StopIteration
 
-    def __repr__(self):
-        result = [ repr(o) for o in self.all() ]
-        return  '[ ' + ',\n  '.join(result) + ' ]'
-
+    def __repr__(self, *args, **kwargs):
+        if self.model.polymorphic_query_multiline_output:
+            result = [ repr(o) for o in self.all() ]
+            return  '[ ' + ',\n  '.join(result) + ' ]'
+        else:
+            return super(PolymorphicQuerySet,self).__repr__(*args, **kwargs)
 

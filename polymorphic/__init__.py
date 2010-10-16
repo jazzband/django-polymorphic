@@ -10,7 +10,8 @@ Please see LICENSE and AUTHORS for more information.
 from polymorphic_model import PolymorphicModel
 from manager import PolymorphicManager
 from query import PolymorphicQuerySet
-from showfields import ShowFields, ShowFieldsAndTypes
+from showfields import ShowFieldContent, ShowFieldType, ShowFieldTypeAndContent
+#from showfields import ShowFieldTypes, ShowFields, ShowFieldsAndTypes # import old names for compatibility
 
 
 VERSION = (0, 5, 0, 'beta')

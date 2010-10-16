@@ -2,29 +2,24 @@
 
 from django.db import models
 
-from polymorphic import PolymorphicModel, PolymorphicManager, PolymorphicQuerySet, ShowFields, ShowFieldsAndTypes
+from polymorphic import PolymorphicModel, PolymorphicManager, PolymorphicQuerySet
+from polymorphic.showfields import ShowFieldContent, ShowFieldType, ShowFieldTypeAndContent
 
 
-class Project(ShowFields, PolymorphicModel):
+class Project(ShowFieldContent, PolymorphicModel):
     topic = models.CharField(max_length=30)
 class ArtProject(Project):
     artist = models.CharField(max_length=30)
 class ResearchProject(Project):
     supervisor = models.CharField(max_length=30)
 
-class ModelA(PolymorphicModel):
+class ModelA(ShowFieldType, PolymorphicModel):
     field1 = models.CharField(max_length=10)
 class ModelB(ModelA):
     field2 = models.CharField(max_length=10)
 class ModelC(ModelB):
     field3 = models.CharField(max_length=10)
 
-class SModelA(ShowFieldsAndTypes, PolymorphicModel):
-    field1 = models.CharField(max_length=10)
-class SModelB(SModelA):
-    field2 = models.CharField(max_length=10)
-class SModelC(SModelB):
-    field3 = models.CharField(max_length=10)
 
 # for Django 1.2+, test models with same names in different apps
 # (the other models with identical names are in polymorphic/tests.py)

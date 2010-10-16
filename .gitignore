@@ -15,11 +15,14 @@ pushhg
 pushreg
 pbackup
 mcmd.py
+dbconfig_local.py
 
 pip-log.txt
 build
 ppreadme.py
 ppdocs.py
+common.css
+screen.css
 README.html
 DOCS.html
 

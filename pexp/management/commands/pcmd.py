@@ -22,13 +22,15 @@ class Command(NoArgsCommand):
     def handle_noargs(self, **options):
         print 'polycmd - sqlite test db is stored in:',settings.DATABASE_NAME
         print
-        
+
+        """
         ModelA.objects.all().delete()
         o=ModelA.objects.create(field1='A1')
         o=ModelB.objects.create(field1='B1', field2='B2')
         o=ModelC.objects.create(field1='C1', field2='C2', field3='C3')
         print ModelA.objects.all()
         print
+        """
 
         Project.objects.all().delete()
         o=Project.objects.create(topic="John's gathering")

@@ -26,13 +26,13 @@ from django import VERSION as django_VERSION
 from base import PolymorphicModelBase
 from manager import PolymorphicManager
 from query import PolymorphicQuerySet
-from showfields import ShowFieldTypes
+from showfields import ShowFieldType
 
  
 ###################################################################################
 ### PolymorphicModel
 
-class PolymorphicModel(ShowFieldTypes, models.Model):
+class PolymorphicModel(models.Model):
     """
     Abstract base class that provides polymorphic behaviour
     for any model directly or indirectly derived from it.
@@ -53,7 +53,11 @@ class PolymorphicModel(ShowFieldTypes, models.Model):
     """
     __metaclass__ = PolymorphicModelBase
 
-    polymorphic_model_marker = True   # for PolymorphicModelBase
+    # for PolymorphicModelBase, so it can tell which models are polymorphic and which are not (duck typing)
+    polymorphic_model_marker = True
+
+    # for PolymorphicQuery, True => an overloaded __repr__ with nicer multi-line output is used by PolymorphicQuery
+    polymorphic_query_multiline_output = False
 
     class Meta:
         abstract = True
@@ -66,7 +70,7 @@ class PolymorphicModel(ShowFieldTypes, models.Model):
         p_related_name_template = 'polymorphic_%(app_label)s.%(class)s_set'
     polymorphic_ctype = models.ForeignKey(ContentType, null=True, editable=False,
                                 related_name=p_related_name_template)
-            
+    
     # some applications want to know the name of the fields that are added to its models
     polymorphic_internal_model_fields = [ 'polymorphic_ctype' ]
 
@@ -130,10 +134,12 @@ class PolymorphicModel(ShowFieldTypes, models.Model):
                         name = model.__name__.lower()
                         if as_ptr: name+='_ptr'
                         result[name] = model
+
                 def add_all_base_models(model, result):
                     add_if_regular_sub_or_super_class(model, True, result)
                     for b in model.__bases__:
                         add_all_base_models(b, result)
+
                 def add_sub_models(model, result):
                     for b in model.__subclasses__():
                         add_if_regular_sub_or_super_class(b, False, result)
@@ -150,6 +156,6 @@ class PolymorphicModel(ShowFieldTypes, models.Model):
                 attr = model.base_objects.get(id=id)
                 #print '---',self.__class__.__name__,name
                 return attr
-        return super(PolymorphicModel, self).__getattribute__(name)
 
+        return super(PolymorphicModel, self).__getattribute__(name)
 
