@@ -8,12 +8,14 @@ from compatibility_tools import defaultdict
 from django.db.models.query import QuerySet
 from django.contrib.contenttypes.models import ContentType
 
-from query_translate import translate_polymorphic_filter_definitions_in_kwargs, translate_polymorphic_filter_definitions_in_args, translate_polymorphic_field_path
+from query_translate import translate_polymorphic_filter_definitions_in_kwargs, translate_polymorphic_filter_definitions_in_args
+from query_translate import translate_polymorphic_field_path
 
 # chunk-size: maximum number of objects requested per db-request
 # by the polymorphic queryset.iterator() implementation; we use the same chunk size as Django
 from django.db.models.query import CHUNK_SIZE               # this is 100 for Django 1.1/1.2
 Polymorphic_QuerySet_objects_per_request = CHUNK_SIZE
+
 
 
 ###################################################################################

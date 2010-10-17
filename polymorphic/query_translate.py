@@ -47,6 +47,27 @@ def translate_polymorphic_filter_definitions_in_kwargs(queryset_model, kwargs):
 
     return additional_args
 
+def translate_polymorphic_Q_object(queryset_model, potential_q_object):
+    def tree_node_correct_field_specs(my_model, node):
+        " process all children of this Q node "
+        for i in range(len(node.children)):
+            child = node.children[i]
+
+            if type(child) == tuple:
+                # this Q object child is a tuple => a kwarg like Q( instance_of=ModelB )
+                key, val = child
+                new_expr = _translate_polymorphic_filter_definition(my_model, key, val)
+                if new_expr:
+                    node.children[i] = new_expr
+            else:
+                # this Q object child is another Q object, recursively process this as well
+                tree_node_correct_field_specs(my_model, child)
+
+    if isinstance(potential_q_object, models.Q):
+        tree_node_correct_field_specs(queryset_model, potential_q_object)
+
+    return potential_q_object
+
 def translate_polymorphic_filter_definitions_in_args(queryset_model, args):
     """
     Translate the non-keyword argument list for PolymorphicQuerySet.filter()
@@ -60,24 +81,8 @@ def translate_polymorphic_filter_definitions_in_args(queryset_model, args):
     Modifies: args list
     """
 
-    def tree_node_correct_field_specs(node):
-        " process all children of this Q node "
-        for i in range(len(node.children)):
-            child = node.children[i]
-
-            if type(child) == tuple:
-                # this Q object child is a tuple => a kwarg like Q( instance_of=ModelB )
-                key, val = child
-                new_expr = _translate_polymorphic_filter_definition(queryset_model, key, val)
-                if new_expr:
-                    node.children[i] = new_expr
-            else:
-                # this Q object child is another Q object, recursively process this as well
-                tree_node_correct_field_specs(child)
-
     for q in args:
-        if isinstance(q, models.Q):
-            tree_node_correct_field_specs(q)
+        translate_polymorphic_Q_object(queryset_model, q)
 
 
 def _translate_polymorphic_filter_definition(queryset_model, field_path, field_val):

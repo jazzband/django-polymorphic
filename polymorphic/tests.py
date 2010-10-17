@@ -12,7 +12,9 @@ from django.db import models
 from django.contrib.contenttypes.models import ContentType
 from pprint import pprint
 
-from polymorphic import PolymorphicModel, PolymorphicManager, PolymorphicQuerySet, ShowFieldContent, ShowFieldType, ShowFieldTypeAndContent, get_version
+from polymorphic import PolymorphicModel, PolymorphicManager, PolymorphicQuerySet
+from polymorphic import ShowFieldContent, ShowFieldType, ShowFieldTypeAndContent, get_version
+from polymorphic import translate_polymorphic_Q_object
 
 class PlainA(models.Model):
     field1 = models.CharField(max_length=10)
@@ -113,6 +115,10 @@ class BlogEntry(ShowFieldTypeAndContent, PolymorphicModel):
     blog = models.ForeignKey(BlogA)
     text = models.CharField(max_length=10)
 
+class BlogEntry_limit_choices_to(ShowFieldTypeAndContent, PolymorphicModel):
+    blog = models.ForeignKey(BlogBase, limit_choices_to=translate_polymorphic_Q_object(BlogBase,  Q(instance_of=BlogA) ) )
+    text = models.CharField(max_length=10)
+
 class ModelFieldNameTest(ShowFieldType, PolymorphicModel):
     modelfieldnametest = models.CharField(max_length=10)
 
@@ -124,6 +130,7 @@ class InitTestModel(ShowFieldType, PolymorphicModel):
 class InitTestModelSubclass(InitTestModel):
     def x(self):
         return 'XYZ'
+
 
 # test bad field name
 #class TestBadFieldModel(ShowFieldType, PolymorphicModel):
@@ -219,6 +226,15 @@ class testclass(TestCase):
         assert x == expected1 or x == expected2
 
         #assert False
+
+    def test_limit_choices_to(self):
+        "this is not really a testcase, as limit_choices_to only affects the Django admin"
+        # create a blog of type BlogA
+        blog_a = BlogA.objects.create(name='aa', info='aa')
+        blog_b = BlogB.objects.create(name='bb')
+        # create two blog entries
+        entry1 = BlogEntry_limit_choices_to.objects.create(blog=blog_b, text='bla2')
+        entry2 = BlogEntry_limit_choices_to.objects.create(blog=blog_b, text='bla2')
 
         
 __test__ = {"doctest": """
