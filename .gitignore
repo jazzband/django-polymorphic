@@ -17,6 +17,7 @@ pbackup
 mcmd.py
 dbconfig_local.py
 diffmanagement
+scrapbook.py
 
 pip-log.txt
 build

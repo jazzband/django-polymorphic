@@ -73,6 +73,9 @@ class PolymorphicModelBase(ModelBase):
         # validate resulting default manager
         self.validate_model_manager(new_class._default_manager, model_name, '_default_manager')
 
+        # for __init__ function of this class (monkeypatching inheritance accessors)
+        new_class.polymorphic_super_sub_accessors_replaced = False
+
         return new_class
 
     def get_inherited_managers(self, attrs):
@@ -153,6 +156,7 @@ class PolymorphicModelBase(ModelBase):
             raise AssertionError(e)
         return manager
 
+
     # hack: a small patch to Django would be a better solution.
     # Django's management command 'dumpdata' relies on non-polymorphic
     # behaviour of the _default_manager. Therefore, we catch any access to _default_manager
@@ -173,6 +177,4 @@ class PolymorphicModelBase(ModelBase):
                 #if caller_mod_name == 'django.core.management.commands.dumpdata':
 
         return super(PolymorphicModelBase, self).__getattribute__(name)
-
-
 

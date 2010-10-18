@@ -249,8 +249,8 @@ __test__ = {"doctest": """
 
 >>> settings.DEBUG=True
 
->>> get_version()
-'1.0 rc1'
+#>>> get_version()
+#'1.0 rc1'
 
 
 ### simple inheritance

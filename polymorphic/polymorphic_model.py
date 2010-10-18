@@ -113,49 +113,75 @@ class PolymorphicModel(models.Model):
         real_model = self.get_real_instance_class()
         if real_model == self.__class__: return self
         return real_model.objects.get(pk=self.pk)
-    
-    # hack: a small patch to Django would be a better solution.
-    # For base model back reference fields (like basemodel_ptr),
-    # Django definitely must =not= use our polymorphic manager/queryset.
-    # For now, we catch objects attribute access here and handle back reference fields manually.
-    # This problem is triggered by delete(), like here:
-    # django.db.models.base._collect_sub_objects: parent_obj = getattr(self, link.name)
-    # TODO: investigate Django how this can be avoided
-    def __getattribute__(self, name):
-        if not name.startswith('__'):         # do not intercept __class__ etc.
 
-            # for efficiency: create a dict containing all model attribute names we need to intercept
-            # (do this only once and store the result into self.__class__.inheritance_relation_fields_dict)
-            if not self.__class__.__dict__.get('inheritance_relation_fields_dict', None):
 
-                def add_if_regular_sub_or_super_class(model, as_ptr, result):
-                    if ( issubclass(model, models.Model) and model != models.Model
-                        and model != self.__class__ and model != PolymorphicModel):
-                        name = model.__name__.lower()
-                        if as_ptr: name+='_ptr'
-                        result[name] = model
+    def __init__(self, * args, ** kwargs):
+        """Replace Django's inheritance accessors member functions for our model
+        (self.__class__) with our own versions.
+        We monkey patch them until a patch can be added to Django
+        (which would probably be very small and make all of this obsolete).
 
-                def add_all_base_models(model, result):
-                    add_if_regular_sub_or_super_class(model, True, result)
-                    for b in model.__bases__:
-                        add_all_base_models(b, result)
+        If we have inheritance of the form ModelA -> ModelB ->ModelC then
+        Django creates accessors like this:
+        - ModelA: modelb
+        - ModelB: modela_ptr, modelb, modelc
+        - ModelC: modela_ptr, modelb, modelb_ptr, modelc
 
-                def add_sub_models(model, result):
-                    for b in model.__subclasses__():
-                        add_if_regular_sub_or_super_class(b, False, result)
+        These accessors allow Django (and everyone else) to travel up and down
+        the inheritance tree for the db object at hand.
 
-                result = {}
-                add_all_base_models(self.__class__,result)
-                add_sub_models(self.__class__,result)
-                #print '##',self.__class__.__name__,' - ',result
-                self.__class__.inheritance_relation_fields_dict = result
+        The original Django accessors use our polymorphic manager.
+        But they should not. So we replace them with our own accessors that use
+        our appropriate base_objects manager.
+        """
+        super(PolymorphicModel, self).__init__(*args, ** kwargs)
+        if self.__class__.polymorphic_super_sub_accessors_replaced: return
+        self.__class__.polymorphic_super_sub_accessors_replaced = True
 
-            model = self.__class__.inheritance_relation_fields_dict.get(name, None)
-            if model:
-                id = super(PolymorphicModel, self).__getattribute__('id')
-                attr = model.base_objects.get(id=id)
-                #print '---',self.__class__.__name__,name
+        def create_accessor_function_for_model(model):
+            def accessor_function(self):
+                attr = model.base_objects.get(pk=self.pk)
                 return attr
+            return accessor_function
 
-        return super(PolymorphicModel, self).__getattribute__(name)
+        subclasses_and_superclasses_accessors = self.get_inheritance_relation_fields_and_models()
+        #print '###',self.__class__.__name__,subclasses_and_superclasses_accessors
 
+        from django.db.models.fields.related import SingleRelatedObjectDescriptor, ReverseSingleRelatedObjectDescriptor
+
+        for name,model in subclasses_and_superclasses_accessors.iteritems():
+            orig_accessor = getattr(self.__class__, name, None)
+            if type(orig_accessor) in [SingleRelatedObjectDescriptor,ReverseSingleRelatedObjectDescriptor]:
+                #print 'replacing',name, orig_accessor
+                setattr(self.__class__, name, property(create_accessor_function_for_model(model)) )
+
+    def get_inheritance_relation_fields_and_models(self):
+        """helper function for __init__:
+        determine names of all Django inheritance accessor member functions for type(self)"""
+
+        def add_model(model, as_ptr, result):
+            name = model.__name__.lower()
+            if as_ptr: name+='_ptr'
+            result[name] = model
+
+        def add_model_if_regular(model, as_ptr, result):
+            if ( issubclass(model, models.Model) and model != models.Model
+                and model != self.__class__
+                and model != PolymorphicModel ):
+                add_model(model,as_ptr,result)
+
+        def add_all_super_models(model, result):
+            add_model_if_regular(model, True, result)
+            for b in model.__bases__:
+                add_all_super_models(b, result)
+
+        def add_all_sub_models(model, result):
+            for b in model.__subclasses__():
+                add_model_if_regular(b, False, result)
+
+        result = {}
+        add_all_super_models(self.__class__,result)
+        add_all_sub_models(self.__class__,result)
+        return result
+
+        

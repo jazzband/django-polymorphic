@@ -20,6 +20,13 @@ class ModelB(ModelA):
 class ModelC(ModelB):
     field3 = models.CharField(max_length=10)
 
+class nModelA(models.Model):
+    field1 = models.CharField(max_length=10)
+class nModelB(nModelA):
+    field2 = models.CharField(max_length=10)
+class nModelC(nModelB):
+    field3 = models.CharField(max_length=10)
+
 
 # for Django 1.2+, test models with same names in different apps
 # (the other models with identical names are in polymorphic/tests.py)
