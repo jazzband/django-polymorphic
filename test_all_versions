@@ -21,8 +21,19 @@ function restore_django {
 }
 
 function test_python_version {
+    echo ; echo ; echo
+    echo "#########################################################################"
+    echo "### Testing Python $1, Django $2"
+    echo "#########################################################################"
+    echo
+
     if which python$1 ; then
-        if ! python$1 manage.py test ; then
+        if ! python$1 manage.py test polymorphic; then
+            echo ERROR
+            restore_django
+            exit 10
+        fi
+        if ! ./test_dumpdata $1 ; then
             echo ERROR
             restore_django
             exit 10
@@ -35,9 +46,9 @@ function test_python_version {
 }
 
 function test_all_python_versions {
-    test_python_version 2.4
-    test_python_version 2.5
-    test_python_version 2.6
+    test_python_version 2.4 $1
+    test_python_version 2.5 $1
+    test_python_version 2.6 $1
 }
 
 function test_django_version {
@@ -51,7 +62,7 @@ function test_django_version {
     rm -f django
     ln -s django-versions/django$1 django
     cd ..
-    test_all_python_versions
+    test_all_python_versions $1
 }
 
 test_django_version 1.1

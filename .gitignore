@@ -16,6 +16,7 @@ pushreg
 pbackup
 mcmd.py
 dbconfig_local.py
+diffmanagement
 
 pip-log.txt
 build

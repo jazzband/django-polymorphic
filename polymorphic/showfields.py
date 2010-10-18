@@ -27,7 +27,12 @@ class ShowFieldBase(object):
                 o = getattr(self, f.name)
 
                 if isinstance(f, (models.ForeignKey)):
-                    out += ': ' + ( '"None"' if o is None else '"' + o.__class__.__name__ + '"' )
+                    #out += ': ' + ( '"None"' if o is None else '"' + o.__class__.__name__ + '"' )
+                    out += ': '
+                    if o is None:
+                        out += '"None"'
+                    else:
+                        out += '"' + o.__class__.__name__ + '"'
 
                 elif isinstance(f, (models.ManyToManyField)):
                     out += ': %d' % o.count()

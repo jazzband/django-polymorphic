@@ -21,12 +21,12 @@ if django.VERSION[:2][0]>=1 and django.VERSION[:2][1]>=3:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': '/var/tmp/django-polymorphic-test-db.sqlite3'
+            'NAME': SQLITE_DB_PATH
         }
     }
 else:
     DATABASE_ENGINE = 'sqlite3'           # 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
-    DATABASE_NAME = '/var/tmp/django-polymorphic-test-db.sqlite3'             # Or path to database file if using sqlite3.
+    DATABASE_NAME = SQLITE_DB_PATH             # Or path to database file if using sqlite3.
     DATABASE_USER = ''             # Not used with sqlite3.
     DATABASE_PASSWORD = ''         # Not used with sqlite3.
     DATABASE_HOST = ''             # Set to empty string for localhost. Not used with sqlite3.

@@ -1,19 +1,9 @@
 """
-polymorphic_dumpdata is just a slightly modified version
-of Django's dumpdata. In the long term, patching Django's
-dumpdata definitely is a better solution.
-
-Use the Django 1.1 or 1.2 variant of dumpdata, depending of the
-Django version used.
+polymorphic_dumpdata has been disabled since it's no longer needed
+(this is now handled by polymorphic.base.PolymorphicModelBase).
 """
 
-import django
-
-if django.VERSION[:2]==(1,1):
-    from polymorphic_dumpdata_11 import Command
-
-elif django.VERSION[:2]==(1,2):
-    from polymorphic_dumpdata_12 import Command
-
-else:
-    assert False, 'Django version not supported'
+assert False, """
+ERROR: The management command polymorphic_dumpdata is no longer supported or needed.
+       Please use the standard Django dumpdata management command instead!
+"""

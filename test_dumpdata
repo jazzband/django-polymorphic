@@ -2,6 +2,7 @@
 
 rm -f /var/tmp/django-polymorphic-test-db.sqlite3
 rm -f /ram/django-polymorphic-test-db.sqlite3
+
 TMPFILE=/tmp/django-polymorphic-test.dump
 
 PYCMD="python$1"

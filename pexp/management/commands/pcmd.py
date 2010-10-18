@@ -20,7 +20,7 @@ class Command(NoArgsCommand):
     help = ""
 
     def handle_noargs(self, **options):
-        print 'polycmd - sqlite test db is stored in:',settings.DATABASE_NAME
+        print 'polycmd - sqlite test db is stored in:',settings.SQLITE_DB_PATH
         print
 
         """

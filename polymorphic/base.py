@@ -3,6 +3,9 @@
     Please see README.rst or DOCS.rst or http://bserve.webhop.org/wiki/django_polymorphic
 """
 
+import sys
+import inspect
+
 from django.db import models
 from django.db.models.base import ModelBase
 
@@ -75,7 +78,7 @@ class PolymorphicModelBase(ModelBase):
     def get_inherited_managers(self, attrs):
         """
         Return list of all managers to be inherited/propagated from the base classes;
-        use correct mro, only use managers with _inherited==False,
+        use correct mro, only use managers with _inherited==False (they are of no use),
         skip managers that are overwritten by the user with same-named class attributes (in attrs)
         """
         add_managers = []; add_managers_keys = set()
@@ -149,4 +152,27 @@ class PolymorphicModelBase(ModelBase):
             e += ' not a subclass of PolymorphicQuerySet (which is required)'
             raise AssertionError(e)
         return manager
+
+    # hack: a small patch to Django would be a better solution.
+    # Django's management command 'dumpdata' relies on non-polymorphic
+    # behaviour of the _default_manager. Therefore, we catch any access to _default_manager
+    # here and return the non-polymorphic default manager instead if we are called from 'dumpdata.py'
+    # (non-polymorphic default manager is 'base_objects' for polymorphic models).
+    # This way we don't need to patch django.core.management.commands.dumpdata
+    # for all supported Django versions.
+    # TODO: investigate Django how this can be avoided
+    _dumpdata_command_running = False
+    if len(sys.argv)>1: _dumpdata_command_running = ( sys.argv[1] == 'dumpdata' )
+    def __getattribute__(self, name):
+        if name=='_default_manager':
+            if self._dumpdata_command_running:
+                frm = inspect.stack()[1] # frm[1] is caller file name, frm[3] is caller function name
+                if 'django/core/management/commands/dumpdata.py' in frm[1]:
+                    return self.base_objects
+                #caller_mod_name = inspect.getmodule(frm[0]).__name__  # does not work with python 2.4
+                #if caller_mod_name == 'django.core.management.commands.dumpdata':
+
+        return super(PolymorphicModelBase, self).__getattribute__(name)
+
+
 
