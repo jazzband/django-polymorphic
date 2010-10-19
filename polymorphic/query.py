@@ -92,13 +92,15 @@ class PolymorphicQuerySet(QuerySet):
         self.polymorphic_disabled = not bool(kwargs.pop('polymorphic', False))
         return super(PolymorphicQuerySet, self).extra(*args, **kwargs)
 
-    def _get_real_instances(self, base_result_objects):
+    def get_real_instances(self, base_result_objects):
         """
         Polymorphic object loader
 
         Does the same as:
 
             return [ o.get_real_instance() for o in base_result_objects ]
+
+        but more efficiently.
 
         The list base_result_objects contains the objects from the executed
         base class query. The class of all of them is self.model (our base model).
@@ -203,7 +205,7 @@ class PolymorphicQuerySet(QuerySet):
                     reached_end = True
                     break
 
-            real_results = self._get_real_instances(base_result_objects)
+            real_results = self.get_real_instances(base_result_objects)
 
             for o in real_results:
                 yield o
