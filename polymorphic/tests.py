@@ -40,6 +40,12 @@ class ModelShow3(ShowFieldTypeAndContent, PolymorphicModel):
     field1 = models.CharField(max_length=10)
     m2m = models.ManyToManyField('self')
 
+class ModelShow1_plain(PolymorphicModel):
+    field1 = models.CharField(max_length=10)
+class ModelShow2_plain(ModelShow1_plain):
+    field2 = models.CharField(max_length=10)
+
+
 class Base(ShowFieldType, PolymorphicModel):
     field_b = models.CharField(max_length=10)
 class ModelX(Base):
@@ -244,7 +250,7 @@ __test__ = {"doctest": """
 >>> settings.DEBUG=True
 
 >>> get_version()
-'0.5 beta'
+'1.0 rc1'
 
 
 ### simple inheritance
@@ -253,8 +259,7 @@ __test__ = {"doctest": """
 >>> o=Model2B.objects.create(field1='B1', field2='B2')
 >>> o=Model2C.objects.create(field1='C1', field2='C2', field3='C3')
 
->>> Model2A.objects.all()
-[ <Model2A: id 1, field1 (CharField)>,
+ [ <Model2A: id 1, field1 (CharField)>,
   <Model2B: id 2, field1 (CharField), field2 (CharField)>,
   <Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)> ]
 
@@ -287,7 +292,13 @@ __test__ = {"doctest": """
 [ <ModelShow2: id 1, field1: "abc", m2m: 1 - Ann: m2m__count: "1"> ]
 >>> ModelShow3.objects.all().annotate(Count('m2m'))
 [ <ModelShow3: id 1, field1 (CharField): "abc", m2m (ManyToManyField): 1 - Ann: m2m__count (int): "1"> ]
- 
+
+# no pretty printing
+>>> o=ModelShow1_plain.objects.create(field1='abc')
+>>> o=ModelShow2_plain.objects.create(field1='abc', field2='def')
+>>> ModelShow1_plain.objects.all()
+[<ModelShow1_plain: ModelShow1_plain object>, <ModelShow2_plain: ModelShow2_plain object>]
+
 
 ### extra() method
 

@@ -1,0 +1,8 @@
+#!/bin/bash
+
+colordiff -u -w libraries-local/django-versions/django1.1/core/management/commands/dumpdata.py polymorphic/management/commands/polymorphic_dumpdata_11.py
+
+colordiff -u -w libraries-local/django-versions/django1.2/core/management/commands/dumpdata.py polymorphic/management/commands/polymorphic_dumpdata_12.py
+
+colordiff -u -w libraries-local/django-versions/django1.3/core/management/commands/dumpdata.py polymorphic/management/commands/polymorphic_dumpdata_13.py
+

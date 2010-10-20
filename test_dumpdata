@@ -1,0 +1,26 @@
+#!/bin/bash
+
+rm -f /var/tmp/django-polymorphic-test-db.sqlite3
+rm -f /ram/django-polymorphic-test-db.sqlite3
+TMPFILE=/tmp/django-polymorphic-test.dump
+
+PYCMD="python$1"
+
+echo
+echo "#####################################################################"
+echo "### Testing dumpdata"
+echo
+
+$PYCMD ./manage.py syncdb
+$PYCMD ./manage.py polymorphic_create_test_data
+
+$PYCMD ./manage.py dumpdata --indent=4 pexp >$TMPFILE
+
+if ! diff -w $TMPFILE pexp/dumpdata_test_correct_output.txt ; then
+    echo "#####################################################################"
+    echo "ERROR: test_dumpdata failed!"    
+    exit 10
+fi
+echo "#####################################################################"
+echo 'SUCCESS!'
+

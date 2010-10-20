@@ -12,10 +12,10 @@ from manager import PolymorphicManager
 from query import PolymorphicQuerySet
 from query_translate import translate_polymorphic_Q_object
 from showfields import ShowFieldContent, ShowFieldType, ShowFieldTypeAndContent
-#from showfields import ShowFieldTypes, ShowFields, ShowFieldsAndTypes # import old names for compatibility
+from showfields import ShowFields, ShowFieldTypes, ShowFieldsAndTypes # import old names for compatibility
 
 
-VERSION = (0, 5, 0, 'beta')
+VERSION = (1, 0 , 0, 'beta')
 
 def get_version():
     version = '%s.%s' % VERSION[0:2]

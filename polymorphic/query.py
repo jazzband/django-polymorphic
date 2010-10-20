@@ -72,19 +72,23 @@ class PolymorphicQuerySet(QuerySet):
             a.lookup = translate_polymorphic_field_path(self.model, a.lookup)
 
     def annotate(self, *args, **kwargs):
-        """translate the field paths in the kwargs, then call vanilla annotate.
+        """translate the polymorphic field paths in the kwargs, then call vanilla annotate.
         _get_real_instances will do the rest of the job after executing the query."""
         self._process_aggregate_args(args, kwargs)
         return super(PolymorphicQuerySet, self).annotate(*args, **kwargs)
 
     def aggregate(self, *args, **kwargs):
-        """translate the field paths in the kwargs, then call vanilla aggregate.
+        """translate the polymorphic field paths in the kwargs, then call vanilla aggregate.
         We need no polymorphic object retrieval for aggregate => switch it off."""
         self._process_aggregate_args(args, kwargs)
         self.polymorphic_disabled = True
         return super(PolymorphicQuerySet, self).aggregate(*args, **kwargs)
 
     def extra(self, *args, **kwargs):
+        """only return polymorphic results if we get "polymorphic=True" as a keyword arg."""
+        #for key in kwargs.keys():
+        #    if key not in ['where','order_by', 'params']:
+        #        assert False,"""django_polymorphic: extras() does not support keyword argument %s.
         self.polymorphic_disabled = not bool(kwargs.pop('polymorphic', False))
         return super(PolymorphicQuerySet, self).extra(*args, **kwargs)
 
