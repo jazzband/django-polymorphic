@@ -85,19 +85,22 @@ class PolymorphicQuerySet(QuerySet):
         return super(PolymorphicQuerySet, self).aggregate(*args, **kwargs)
 
     def extra(self, *args, **kwargs):
-        #
-        # Disable polymorphic, but only if arg that is currently not handled
-        # polymorphically is passed in.
-        #
-        # Allow this to be overridden with 'polymorphic' arg
-        #
-        polymorphic_by_default = True
-        for key in kwargs.keys():
-            if key not in ['where','order_by', 'polymorphic']: # FIXME: also add 'params' here?
-                polymorphic_by_default = False
-        
-        self.polymorphic_disabled = not bool(kwargs.pop('polymorphic', polymorphic_by_default))
-        return super(PolymorphicQuerySet, self).extra(*args, **kwargs)
+        """since django_polymorphic 'V1.0 beta2' extra() returns polymorphic results by default.
+        Currently, for polymorphic queries, only the parameters 'where','order_by', 'params' are
+        supported and an error is thrown if other parameters are given.
+
+        For Django V1.1, extra() is not supported anymore (however it still works and returns
+        non-polymorphic results as this is needed in django.db.models.base.save_base)."""
+
+        polymorphic_by_default = not ( django_VERSION[0] <= 1 and django_VERSION[1] <= 1 )
+        self.polymorphic_disabled = not kwargs.pop('polymorphic',polymorphic_by_default)
+        if not self.polymorphic_disabled:
+            for key in kwargs.keys():
+                if key not in ['where','order_by', 'params']:
+                    assert False,("django_polymorphic: extras() does not yet support keyword argument '%s'."
+                        + "You may use 'base_objects.extra()' instead - please see 'extra(' and 'get_real_instances' in DOCS.rst.") % (key,)
+
+    return super(PolymorphicQuerySet, self).extra(*args, **kwargs)
 
     def get_real_instances(self, base_result_objects):
         """
