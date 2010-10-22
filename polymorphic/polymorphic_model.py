@@ -135,25 +135,24 @@ class PolymorphicModel(models.Model):
         our appropriate base_objects manager.
         """
         super(PolymorphicModel, self).__init__(*args, ** kwargs)
+
         if self.__class__.polymorphic_super_sub_accessors_replaced: return
         self.__class__.polymorphic_super_sub_accessors_replaced = True
 
-        def create_accessor_function_for_model(model):
+        def create_accessor_function_for_model(model, accessor_name):
             def accessor_function(self):
                 attr = model.base_objects.get(pk=self.pk)
                 return attr
             return accessor_function
 
         subclasses_and_superclasses_accessors = self.get_inheritance_relation_fields_and_models()
-        #print '###',self.__class__.__name__,subclasses_and_superclasses_accessors
 
         from django.db.models.fields.related import SingleRelatedObjectDescriptor, ReverseSingleRelatedObjectDescriptor
-
         for name,model in subclasses_and_superclasses_accessors.iteritems():
             orig_accessor = getattr(self.__class__, name, None)
             if type(orig_accessor) in [SingleRelatedObjectDescriptor,ReverseSingleRelatedObjectDescriptor]:
-                #print 'replacing',name, orig_accessor
-                setattr(self.__class__, name, property(create_accessor_function_for_model(model)) )
+                #print >>sys.stderr, '---------- replacing',name, orig_accessor
+                setattr(self.__class__, name, property(create_accessor_function_for_model(model, name)) )
 
     def get_inheritance_relation_fields_and_models(self):
         """helper function for __init__:

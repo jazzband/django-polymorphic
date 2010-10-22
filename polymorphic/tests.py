@@ -4,6 +4,7 @@
 """
 
 import settings
+import sys
 
 from django.test import TestCase
 from django.db.models.query import QuerySet
@@ -29,6 +30,8 @@ class Model2B(Model2A):
     field2 = models.CharField(max_length=10)
 class Model2C(Model2B):
     field3 = models.CharField(max_length=10)
+class Model2D(Model2C):
+    field4 = models.CharField(max_length=10)
 
 class ModelShow1(ShowFieldType,PolymorphicModel):
     field1 = models.CharField(max_length=10)
@@ -84,6 +87,13 @@ class RelationBC(RelationB):
 class RelatingModel(models.Model):
     many2many = models.ManyToManyField(Model2A)
 
+class One2OneRelatingModel(PolymorphicModel):
+    one2one = models.OneToOneField(Model2A)
+    field1 = models.CharField(max_length=10)
+
+class One2OneRelatingModelDerived(One2OneRelatingModel):
+    field2 = models.CharField(max_length=10)
+    
 class MyManager(PolymorphicManager):
     def get_query_set(self):
         return super(MyManager, self).get_query_set().order_by('-field1')
@@ -242,6 +252,9 @@ class testclass(TestCase):
         entry1 = BlogEntry_limit_choices_to.objects.create(blog=blog_b, text='bla2')
         entry2 = BlogEntry_limit_choices_to.objects.create(blog=blog_b, text='bla2')
 
+
+def show_base_manager(model):
+    print type(model._base_manager),model._base_manager.model
         
 __test__ = {"doctest": """
 #######################################################
@@ -249,24 +262,65 @@ __test__ = {"doctest": """
 
 >>> settings.DEBUG=True
 
-#>>> get_version()
-#'1.0 rc1'
-
 
 ### simple inheritance
 
 >>> o=Model2A.objects.create(field1='A1')
 >>> o=Model2B.objects.create(field1='B1', field2='B2')
 >>> o=Model2C.objects.create(field1='C1', field2='C2', field3='C3')
-
- [ <Model2A: id 1, field1 (CharField)>,
+>>> o=Model2D.objects.create(field1='D1', field2='D2', field3='D3', field4='D4')
+>>> Model2A.objects.all()
+[ <Model2A: id 1, field1 (CharField)>,
   <Model2B: id 2, field1 (CharField), field2 (CharField)>,
-  <Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)> ]
+  <Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)>,
+  <Model2D: id 4, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField)> ]
 
 # manual get_real_instance()
 >>> o=Model2A.base_objects.get(field1='C1')
 >>> o.get_real_instance()
 <Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)>
+
+
+### test inheritance pointers & _base_managers
+
+>>> show_base_manager(PlainA)
+<class 'django.db.models.manager.Manager'> <class 'polymorphic.tests.PlainA'>
+>>> show_base_manager(PlainB)
+<class 'django.db.models.manager.Manager'> <class 'polymorphic.tests.PlainB'>
+>>> show_base_manager(PlainC)
+<class 'django.db.models.manager.Manager'> <class 'polymorphic.tests.PlainC'>
+>>> show_base_manager(Model2A)
+<class 'polymorphic.manager.PolymorphicManager'> <class 'polymorphic.tests.Model2A'>
+>>> show_base_manager(Model2B)
+<class 'django.db.models.manager.Manager'> <class 'polymorphic.tests.Model2B'>
+>>> show_base_manager(Model2C)
+<class 'django.db.models.manager.Manager'> <class 'polymorphic.tests.Model2C'>
+>>> show_base_manager(One2OneRelatingModel)
+<class 'polymorphic.manager.PolymorphicManager'> <class 'polymorphic.tests.One2OneRelatingModel'>
+>>> show_base_manager(One2OneRelatingModelDerived)
+<class 'django.db.models.manager.Manager'> <class 'polymorphic.tests.One2OneRelatingModelDerived'>
+
+>>> o=Model2A.base_objects.get(field1='C1')
+>>> o.model2b
+<Model2B: id 3, field1 (CharField), field2 (CharField)>
+
+>>> o=Model2B.base_objects.get(field1='C1')
+>>> o.model2c
+<Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)>
+
+
+### OneToOneField, test both directions for polymorphism
+
+>>> a=Model2A.base_objects.get(field1='C1')
+>>> b=One2OneRelatingModelDerived.objects.create(one2one=a, field1='f1', field2='f2')
+>>> b.one2one  # this result is basically wrong, probably due to Django cacheing (we used base_objects), but should not be a problem
+<Model2A: id 3, field1 (CharField)>
+>>> c=One2OneRelatingModelDerived.objects.get(field1='f1')
+>>> c.one2one
+<Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)>
+
+>>> a.one2onerelatingmodel
+<One2OneRelatingModelDerived: One2OneRelatingModelDerived object>
 
 
 ### ShowFieldContent, ShowFieldType, ShowFieldTypeAndContent, also with annotate()
@@ -315,15 +369,18 @@ __test__ = {"doctest": """
 
 >>> Model2A.objects.instance_of(Model2B)
 [ <Model2B: id 2, field1 (CharField), field2 (CharField)>,
-  <Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)> ]
+  <Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)>,
+  <Model2D: id 4, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField)> ]
 
 >>> Model2A.objects.filter(instance_of=Model2B)
 [ <Model2B: id 2, field1 (CharField), field2 (CharField)>,
-  <Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)> ]
+  <Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)>,
+  <Model2D: id 4, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField)> ]
 
 >>> Model2A.objects.filter(Q(instance_of=Model2B))
 [ <Model2B: id 2, field1 (CharField), field2 (CharField)>,
-  <Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)> ]
+  <Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)>,
+  <Model2D: id 4, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField)> ]
 
 >>> Model2A.objects.not_instance_of(Model2B)
 [ <Model2A: id 1, field1 (CharField)> ]
@@ -345,7 +402,8 @@ __test__ = {"doctest": """
 >>> oa.delete()
 >>> Model2A.objects.all()
 [ <Model2A: id 1, field1 (CharField)>,
-  <Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)> ]
+  <Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)>,
+  <Model2D: id 4, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField)> ]
 
 
 ### queryset combining
@@ -405,8 +463,8 @@ __test__ = {"doctest": """
 >>> o=ModelWithMyManager.objects.create(field1='D1b', field4='D4b')
 
 >>> ModelWithMyManager.objects.all()
-[ <ModelWithMyManager: id 5, field1 (CharField): "D1b", field4 (CharField): "D4b">,
-  <ModelWithMyManager: id 4, field1 (CharField): "D1a", field4 (CharField): "D4a"> ]
+[ <ModelWithMyManager: id 6, field1 (CharField): "D1b", field4 (CharField): "D4b">,
+  <ModelWithMyManager: id 5, field1 (CharField): "D1a", field4 (CharField): "D4a"> ]
 
 >>> type(ModelWithMyManager.objects)
 <class 'polymorphic.tests.MyManager'>

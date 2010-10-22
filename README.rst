@@ -1,7 +1,6 @@
 Polymorphic Models for Django
 =============================
 
-.
 
 Quick Start, Docs, Contributing
 -------------------------------

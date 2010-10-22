@@ -92,9 +92,11 @@ class PolymorphicModelBase(ModelBase):
             for key, manager in base.__dict__.items():
                 if type(manager) == models.manager.ManagerDescriptor: manager = manager.manager
                 if not isinstance(manager, models.Manager): continue
+                if key in ['_base_manager']: continue       # let Django handle _base_manager
                 if key in attrs: continue
                 if key in add_managers_keys: continue       # manager with that name already added, skip
-                if manager._inherited: continue             # inherited managers have no significance, they are just copies
+                if manager._inherited: continue             # inherited managers (on the bases) have no significance, they are just copies
+                #print >>sys.stderr,'##',self.__name__, key
                 if isinstance(manager, PolymorphicManager): # validate any inherited polymorphic managers
                     self.validate_model_manager(manager, self.__name__, key)
                 add_managers.append((base.__name__, key, manager))
