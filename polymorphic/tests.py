@@ -289,6 +289,13 @@ __test__ = {"doctest": """
 >>> o.get_real_instance()
 <Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)>
 
+# non_polymorphic()
+>>> Model2A.objects.all().non_polymorphic()
+[ <Model2A: id 1, field1 (CharField)>,
+  <Model2A: id 2, field1 (CharField)>,
+  <Model2A: id 3, field1 (CharField)>,
+  <Model2A: id 4, field1 (CharField)> ]
+
 
 ### test inheritance pointers & _base_managers
 

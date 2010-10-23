@@ -42,6 +42,13 @@ class PolymorphicQuerySet(QuerySet):
         new.polymorphic_disabled = self.polymorphic_disabled
         return new
 
+    def non_polymorphic(self, *args, **kwargs):
+        """switch off polymorphic behaviour for this query.
+        When the queryset is evaluated, only objects of the type of the
+        base class used for this query are returned."""
+        self.polymorphic_disabled = True
+        return self
+
     def instance_of(self, *args):
         """Filter the queryset to only include the classes in args (and their subclasses).
         Implementation in _translate_polymorphic_filter_defnition."""

@@ -234,16 +234,16 @@ existing polymorphic inheritance tree::
 
 Non-Polymorphic Queries
 -----------------------
-    
->>> ModelA.base_objects.all()
+
+>>> ModelA.objects.all().non_polymorphic()
 .
 [ <ModelA: id 1, field1 (CharField)>,
   <ModelA: id 2, field1 (CharField)>,
   <ModelA: id 3, field1 (CharField)> ]
 
-Each polymorphic model has 'base_objects' defined as a normal
-Django manager. Of course, arbitrary custom managers may be
-added to the models as well.
+Except for the return of the of the base class objects, there are no
+changes in the behaviour of the queryset (i.e. the enhancements
+for ``filter()`` or ``instance_of()`` etc. still work as expected).
     
 About Queryset Methods
 ----------------------
@@ -270,8 +270,8 @@ About Queryset Methods
 
 +   ``get_real_instances(base_objects_list_or_queryset)`` allows you to turn a
     queryset or list  of base model objects efficiently into the real objects.
-    For example, you could do ``base_objects=ModelA.base_objects.extra(...)`` and
-    then call ``real_objects=ModelA.objects.get_real_instances(base_objects)``.
+    For example, you could do ``base_objects=ModelA.extra(...).non_polymorphic()``
+    and then call ``real_objects=ModelA.objects.get_real_instances(base_objects)``.
 
 *   ``values()`` & ``values_list()`` currently do not return polymorphic
     results. This may change in the future however. If you want to use these
