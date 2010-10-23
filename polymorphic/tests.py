@@ -33,6 +33,15 @@ class Model2C(Model2B):
 class Model2D(Model2C):
     field4 = models.CharField(max_length=10)
 
+class ModelExtraA(ShowFieldTypeAndContent, PolymorphicModel):
+    field1 = models.CharField(max_length=10)
+class ModelExtraB(ModelExtraA):
+    field2 = models.CharField(max_length=10)
+class ModelExtraC(ModelExtraB):
+    field3 = models.CharField(max_length=10)
+class ModelExtraExternal(models.Model):
+    topic = models.CharField(max_length=10)
+
 class ModelShow1(ShowFieldType,PolymorphicModel):
     field1 = models.CharField(max_length=10)
     m2m = models.ManyToManyField('self')
@@ -359,6 +368,21 @@ __test__ = {"doctest": """
 >>> Model2A.objects.extra(where=['id IN (2, 3)'])
 [ <Model2B: id 2, field1 (CharField), field2 (CharField)>,
   <Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)> ]
+
+>>> Model2A.objects.extra(select={"select_test": "field1 = 'A1'"}, where=["field1 = 'A1' OR field1 = 'B1'"], order_by = ['-id'] )
+[ <Model2B: id 2, field1 (CharField), field2 (CharField) - Extra: select_test (int)>,
+  <Model2A: id 1, field1 (CharField) - Extra: select_test (int)> ]
+
+>>> o=ModelExtraA.objects.create(field1='A1')
+>>> o=ModelExtraB.objects.create(field1='B1', field2='B2')
+>>> o=ModelExtraC.objects.create(field1='C1', field2='C2', field3='C3')
+>>> o=ModelExtraExternal.objects.create(topic='extra1')
+>>> o=ModelExtraExternal.objects.create(topic='extra2')
+>>> o=ModelExtraExternal.objects.create(topic='extra3')
+>>> ModelExtraA.objects.extra(tables=["polymorphic_modelextraexternal"], select={"topic":"polymorphic_modelextraexternal.topic"}, where=["polymorphic_modelextraa.id = polymorphic_modelextraexternal.id"] )
+[ <ModelExtraA: id 1, field1 (CharField): "A1" - Extra: topic (unicode): "extra1">,
+  <ModelExtraB: id 2, field1 (CharField): "B1", field2 (CharField): "B2" - Extra: topic (unicode): "extra2">,
+  <ModelExtraC: id 3, field1 (CharField): "C1", field2 (CharField): "C2", field3 (CharField): "C3" - Extra: topic (unicode): "extra3"> ]
 
 
 ### class filtering, instance_of, not_instance_of

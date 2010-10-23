@@ -30,11 +30,10 @@ class Command(NoArgsCommand):
         print Project.objects.all()
         print
 
-        """
         ModelA.objects.all().delete()
         a=ModelA.objects.create(field1='A1')
         b=ModelB.objects.create(field1='B1', field2='B2')
         c=ModelC.objects.create(field1='C1', field2='C2', field3='C3')
         print ModelA.objects.all()
         print
-        """
+

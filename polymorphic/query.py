@@ -84,23 +84,11 @@ class PolymorphicQuerySet(QuerySet):
         self.polymorphic_disabled = True
         return super(PolymorphicQuerySet, self).aggregate(*args, **kwargs)
 
-    def extra(self, *args, **kwargs):
-        """since django_polymorphic 'V1.0 beta2' extra() returns polymorphic results by default.
-        Currently, for polymorphic queries, only the parameters 'where','order_by', 'params' are
-        supported and an error is thrown if other parameters are given.
-
-        For Django V1.1, extra() is not supported anymore (however it still works and returns
-        non-polymorphic results as this is needed in django.db.models.base.save_base)."""
-
-        polymorphic_by_default = not ( django_VERSION[0] <= 1 and django_VERSION[1] <= 1 )
-        self.polymorphic_disabled = not kwargs.pop('polymorphic',polymorphic_by_default)
-        if not self.polymorphic_disabled:
-            for key in kwargs.keys():
-                if key not in ['where','order_by', 'params']:
-                    assert False,("django_polymorphic: extras() does not yet support keyword argument '%s'."
-                        + "You may use 'base_objects.extra()' instead - please see 'extra(' and 'get_real_instances' in DOCS.rst.") % (key,)
-
-    return super(PolymorphicQuerySet, self).extra(*args, **kwargs)
+    # Since django_polymorphic 'V1.0 beta2', extra() always returns polymorphic results.
+    # The resulting objects are required to have a unique primary key within the result set
+    # (otherwise an error is thrown).
+    # The "polymorphic" keyword argument is not supported anymore.
+    #def extra(self, *args, **kwargs):
 
     def get_real_instances(self, base_result_objects):
         """
@@ -144,6 +132,11 @@ class PolymorphicQuerySet(QuerySet):
         self_model_content_type_id = ContentType.objects.get_for_model(self.model).pk
         for base_object in base_result_objects:
             ordered_id_list.append(base_object.pk)
+
+            # check if id of the result object occeres more than once - this can happen e.g. with base_objects.extra(tables=...)
+            assert not base_object.pk in base_result_objects_by_id, (
+                "django_polymorphic: result objects do not have unique primary keys - model "+unicode(self.model) )
+
             base_result_objects_by_id[base_object.pk] = base_object
 
             # this object is not a derived object and already the real instance => store it right away
@@ -158,6 +151,7 @@ class PolymorphicQuerySet(QuerySet):
         # For each model in "idlist_per_model" request its objects (the real model)
         # from the db and store them in results[].
         # Then we copy the annotate fields from the base objects to the real objects.
+        # Then we copy the extra() select fields from the base objects to the real objects.
         # TODO: defer(), only(): support for these would be around here
         for modelclass, idlist in idlist_per_model.items():
             qs = modelclass.base_objects.filter(id__in=idlist)
@@ -165,9 +159,15 @@ class PolymorphicQuerySet(QuerySet):
 
             for o in qs:
                 if self.query.aggregates:
-                    for anno in self.query.aggregates.keys():
-                        attr = getattr(base_result_objects_by_id[o.pk], anno)
-                        setattr(o, anno, attr)
+                    for anno_field_name in self.query.aggregates.keys():
+                        attr = getattr(base_result_objects_by_id[o.pk], anno_field_name)
+                        setattr(o, anno_field_name, attr)
+
+                if self.query.extra_select:
+                    for select_field_name in self.query.extra_select.keys():
+                        attr = getattr(base_result_objects_by_id[o.pk], select_field_name)
+                        setattr(o, select_field_name, attr)
+                    
                 results[o.pk] = o
 
         # re-create correct order and return result list
@@ -175,9 +175,16 @@ class PolymorphicQuerySet(QuerySet):
 
         # set polymorphic_annotate_names in all objects (currently just used for debugging/printing)
         if self.query.aggregates:
-            annotate_names=self.query.aggregates.keys() # get annotate fields list
+            annotate_names=self.query.aggregates.keys() # get annotate field list
             for o in resultlist:
                 o.polymorphic_annotate_names=annotate_names
+
+        # set polymorphic_extra_select_names in all objects (currently just used for debugging/printing)
+        if self.query.extra_select:
+            extra_select_names=self.query.extra_select.keys() # get extra select field list
+            for o in resultlist:
+                o.polymorphic_extra_select_names=extra_select_names
+            
 
         return resultlist
 

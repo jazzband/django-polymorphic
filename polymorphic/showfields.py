@@ -40,16 +40,23 @@ class ShowFieldBase(object):
                 else:
                     out += ': "' + unicode(o) + '"'
 
-        if hasattr(self,'polymorphic_annotate_names'):
-            out += ' - Ann: '
-            for an in self.polymorphic_annotate_names:
-                if an != self.polymorphic_annotate_names[0]:
+        def get_dynamic_fields(field_list, title):
+            out = ' - '+title+': '
+            for an in field_list:
+                if an != field_list[0]:
                     out += ', '
                 out += an
                 if self.polymorphic_showfield_type:
                     out += ' (' + type(getattr(self, an)).__name__ + ')'
                 if self.polymorphic_showfield_content:
                     out += ': "' + unicode(getattr(self, an)) + '"'
+            return out
+
+        if hasattr(self,'polymorphic_annotate_names'):
+            out+=get_dynamic_fields(self.polymorphic_annotate_names, 'Ann')
+
+        if hasattr(self,'polymorphic_extra_select_names'):
+            out+=get_dynamic_fields(self.polymorphic_extra_select_names, 'Extra')
 
         return out+'>'
 

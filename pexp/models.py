@@ -13,7 +13,7 @@ class ArtProject(Project):
 class ResearchProject(Project):
     supervisor = models.CharField(max_length=30)
 
-class ModelA(ShowFieldType, PolymorphicModel):
+class ModelA(ShowFieldTypeAndContent, PolymorphicModel):
     field1 = models.CharField(max_length=10)
 class ModelB(ModelA):
     field2 = models.CharField(max_length=10)

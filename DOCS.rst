@@ -262,14 +262,11 @@ About Queryset Methods
     to select relations in derived models
     (like ``ModelA.objects.select_related('ModelC___fieldxy')`` )
 
-*   ``extra()`` by default works exactly like the original version,
-    with the resulting queryset not being polymorphic. There is
-    experimental support for a polymorphic extra() via the keyword
-    argument ``polymorphic=True`` (only the ``where`` and
-    ``order_by`` and ``params`` arguments of extra() should be used then).
-    The behaviour of extra() may change in the future, so it's best if you use
-    ``base_objects=ModelA.base_objects.extra(...)`` instead if you want to
-    sure to get non-polymorphic behaviour.
+*   ``extra()`` works as expected (returns polymorphic results) but
+    currently has one restriction: The resulting objects are required to have
+    a unique primary key within the result set - otherwise an error is thrown
+    (this case could be made to work, however it may be mostly unneeded)..
+    The keyword-argument "polymorphic" is no longer supported.
 
 +   ``get_real_instances(base_objects_list_or_queryset)`` allows you to turn a
     queryset or list  of base model objects efficiently into the real objects.
@@ -488,19 +485,6 @@ Restrictions & Caveats
     for the methods of the polymorphic querysets. Please see above
     for ``translate_polymorphic_Q_object``.
 
-*   Django 1.1 only - the names of polymorphic models must be unique
-    in the whole project, even if they are in two different apps.
-    This results from a restriction in the Django 1.1 "related_name"
-    option (fixed in Django 1.2).
-
-+   Django 1.1 only - when ContentType is used in models, Django's
-    seralisation or fixtures cannot be used (all polymorphic models
-    use ContentType). This issue seems to be resolved for Django 1.2
-    (changeset 11863: Fixed #7052, Added support for natural keys in serialization).
-
-    + http://code.djangoproject.com/ticket/7052
-    + http://stackoverflow.com/questions/853796/problems-with-contenttypes-when-loading-a-fixture-in-django
-
 *   A reference (``ContentType``) to the real/leaf model is stored
     in the base model (the base model directly inheriting from
     PolymorphicModel). You need to be aware of this when using the
@@ -509,6 +493,20 @@ Restrictions & Caveats
     objects from one database to another, then Django's ContentType
     table needs to be corrected/copied too. This is of course generally
     the case for any models using Django's ContentType.
+
++   Django 1.1 only - the names of polymorphic models must be unique
+    in the whole project, even if they are in two different apps.
+    This results from a restriction in the Django 1.1 "related_name"
+    option (fixed in Django 1.2).
+
+*   Django 1.1 only - when ContentType is used in models, Django's
+    seralisation or fixtures cannot be used (all polymorphic models
+    use ContentType). This issue seems to be resolved for Django 1.2
+    (changeset 11863: Fixed #7052, Added support for natural keys in serialization).
+
+    + http://code.djangoproject.com/ticket/7052
+    + http://stackoverflow.com/questions/853796/problems-with-contenttypes-when-loading-a-fixture-in-django
+
 
 
 
