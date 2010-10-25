@@ -91,13 +91,14 @@ class PolymorphicQuerySet(QuerySet):
         self.polymorphic_disabled = True
         return super(PolymorphicQuerySet, self).aggregate(*args, **kwargs)
 
-    # Since django_polymorphic 'V1.0 beta2', extra() always returns polymorphic results.
+    # Since django_polymorphic 'V1.0 beta2', extra() always returns polymorphic results.^
     # The resulting objects are required to have a unique primary key within the result set
     # (otherwise an error is thrown).
     # The "polymorphic" keyword argument is not supported anymore.
     #def extra(self, *args, **kwargs):
 
-    def get_real_instances(self, base_result_objects):
+
+    def _get_real_instances(self, base_result_objects):
         """
         Polymorphic object loader
 
@@ -229,7 +230,7 @@ class PolymorphicQuerySet(QuerySet):
                     reached_end = True
                     break
 
-            real_results = self.get_real_instances(base_result_objects)
+            real_results = self._get_real_instances(base_result_objects)
 
             for o in real_results:
                 yield o
@@ -242,4 +243,18 @@ class PolymorphicQuerySet(QuerySet):
             return  '[ ' + ',\n  '.join(result) + ' ]'
         else:
             return super(PolymorphicQuerySet,self).__repr__(*args, **kwargs)
+
+    class _p_list_class(list):
+        def __repr__(self, *args, **kwargs):
+            result = [ repr(o) for o in self ]
+            return  '[ ' + ',\n  '.join(result) + ' ]'
+
+    def get_real_instances(self, base_result_objects=None):
+        "same as _get_real_instances, but make sure that __repr__ for ShowField... creates correct output"
+        if not base_result_objects: base_result_objects=self
+        olist = self._get_real_instances(base_result_objects)
+        if not self.model.polymorphic_query_multiline_output:
+            return olist
+        clist=PolymorphicQuerySet._p_list_class(olist)
+        return clist
 

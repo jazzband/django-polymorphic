@@ -285,7 +285,7 @@ __test__ = {"doctest": """
   <Model2D: id 4, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField)> ]
 
 # manual get_real_instance()
->>> o=Model2A.base_objects.get(field1='C1')
+>>> o=Model2A.objects.non_polymorphic().get(field1='C1')
 >>> o.get_real_instance()
 <Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)>
 
@@ -295,6 +295,20 @@ __test__ = {"doctest": """
   <Model2A: id 2, field1 (CharField)>,
   <Model2A: id 3, field1 (CharField)>,
   <Model2A: id 4, field1 (CharField)> ]
+
+# get_real_instances()
+>>> qs.get_real_instances()
+[ <Model2A: id 1, field1 (CharField)>,
+  <Model2B: id 2, field1 (CharField), field2 (CharField)>,
+  <Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)>,
+  <Model2D: id 4, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField)> ]
+
+>>> l=list(qs)
+>>> Model2A.objects.get_real_instances(l)
+[ <Model2A: id 1, field1 (CharField)>,
+  <Model2B: id 2, field1 (CharField), field2 (CharField)>,
+  <Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)>,
+  <Model2D: id 4, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField)> ]
 
 
 ### test inheritance pointers & _base_managers

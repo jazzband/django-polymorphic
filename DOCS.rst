@@ -235,16 +235,22 @@ existing polymorphic inheritance tree::
 Non-Polymorphic Queries
 -----------------------
 
->>> ModelA.objects.all().non_polymorphic()
-.
-[ <ModelA: id 1, field1 (CharField)>,
-  <ModelA: id 2, field1 (CharField)>,
-  <ModelA: id 3, field1 (CharField)> ]
+If you insert ``.non_polymorphic()`` anywhere into the query chain, then
+django_polymorphic will simply leave out the final step of retrieving the
+real objects, and the manager/queryset will return objects of the type of
+the base class you used for the query, like vanilla Django would
+(``ModelA`` in this example). 
 
-Except for the return of the of the base class objects, there are no
-changes in the behaviour of the queryset (i.e. the enhancements
-for ``filter()`` or ``instance_of()`` etc. still work as expected).
-    
+There are no other changes in the behaviour of the queryset. For example,
+enhancements for ``filter()`` or ``instance_of()`` etc. still work as expected.
+If you do the final step yourself, you get the usual polymorphic result:
+
+>>> qs.get_real_instances()
+[ <ModelA: id 1, field1 (CharField)>,
+  <ModelB: id 2, field1 (CharField), field2 (CharField)>,
+  <ModelC: id 3, field1 (CharField), field2 (CharField), field3 (CharField)> ]
+
+
 About Queryset Methods
 ----------------------
 
@@ -268,10 +274,11 @@ About Queryset Methods
     (this case could be made to work, however it may be mostly unneeded)..
     The keyword-argument "polymorphic" is no longer supported.
 
-+   ``get_real_instances(base_objects_list_or_queryset)`` allows you to turn a
++   ``get_real_instances()`` allows you to turn a
     queryset or list  of base model objects efficiently into the real objects.
-    For example, you could do ``base_objects=ModelA.extra(...).non_polymorphic()``
-    and then call ``real_objects=ModelA.objects.get_real_instances(base_objects)``.
+    For example, you could do ``base_objects_queryset=ModelA.extra(...).non_polymorphic()``
+    and then call ``real_objects=base_objects_queryset.get_real_instances()``.Or alternatively
+    .``real_objects=ModelA.objects..get_real_instances(base_objects_queryset_or_object_list)``
 
 *   ``values()`` & ``values_list()`` currently do not return polymorphic
     results. This may change in the future however. If you want to use these
