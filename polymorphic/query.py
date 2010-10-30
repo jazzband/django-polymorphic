@@ -156,27 +156,36 @@ class PolymorphicQuerySet(QuerySet):
             else:
                 idlist_per_model[base_object.get_real_instance_class()].append(base_object.pk)
 
+        # django's automatic ".pk" field does not always work correctly for
+        # custom fields in derived objects (unclear yet who to put the blame on).
+        # We get different type(o.pk) in this case.
+        # We work around this by using the real name of the field directly
+        # for accessing the primary key of the the derived objects.
+        pk_name = self.model._meta.pk.name
+
         # For each model in "idlist_per_model" request its objects (the real model)
         # from the db and store them in results[].
         # Then we copy the annotate fields from the base objects to the real objects.
         # Then we copy the extra() select fields from the base objects to the real objects.
         # TODO: defer(), only(): support for these would be around here
         for modelclass, idlist in idlist_per_model.items():
-            qs = modelclass.base_objects.filter(id__in=idlist)
+            qs = modelclass.base_objects.filter(pk__in=idlist) # use pk__in instead ####
             qs.dup_select_related(self)    # copy select related configuration to new qs
 
             for o in qs:
+                o_pk=getattr(o,pk_name)
+                
                 if self.query.aggregates:
                     for anno_field_name in self.query.aggregates.keys():
-                        attr = getattr(base_result_objects_by_id[o.pk], anno_field_name)
+                        attr = getattr(base_result_objects_by_id[o_pk], anno_field_name)
                         setattr(o, anno_field_name, attr)
 
                 if self.query.extra_select:
                     for select_field_name in self.query.extra_select.keys():
-                        attr = getattr(base_result_objects_by_id[o.pk], select_field_name)
+                        attr = getattr(base_result_objects_by_id[o_pk], select_field_name)
                         setattr(o, select_field_name, attr)
                     
-                results[o.pk] = o
+                results[o_pk] = o
 
         # re-create correct order and return result list
         resultlist = [ results[ordered_id] for ordered_id in ordered_id_list if ordered_id in results ]
@@ -193,7 +202,6 @@ class PolymorphicQuerySet(QuerySet):
             for o in resultlist:
                 o.polymorphic_extra_select_names=extra_select_names
             
-
         return resultlist
 
     def iterator(self):

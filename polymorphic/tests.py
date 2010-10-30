@@ -71,8 +71,7 @@ class Enhance_Base(ShowFieldTypeAndContent, PolymorphicModel):
     field_b = models.CharField(max_length=10)
 class Enhance_Inherit(Enhance_Base, Enhance_Plain):
     field_i = models.CharField(max_length=10)
-        
-    
+
 class DiamondBase(models.Model):
     field_b = models.CharField(max_length=10)
 class DiamondX(DiamondBase):
@@ -102,7 +101,7 @@ class One2OneRelatingModel(PolymorphicModel):
 
 class One2OneRelatingModelDerived(One2OneRelatingModel):
     field2 = models.CharField(max_length=10)
-    
+
 class MyManager(PolymorphicManager):
     def get_query_set(self):
         return super(MyManager, self).get_query_set().order_by('-field1')
@@ -113,18 +112,18 @@ class ModelWithMyManager(ShowFieldTypeAndContent, Model2A):
 class MROBase1(ShowFieldType, PolymorphicModel):
     objects = MyManager()
     field1 = models.CharField(max_length=10) # needed as MyManager uses it
-class MROBase2(MROBase1):  
+class MROBase2(MROBase1):
     pass # Django vanilla inheritance does not inherit MyManager as _default_manager here
 class MROBase3(models.Model):
     objects = PolymorphicManager()
-class MRODerived(MROBase2, MROBase3):  
+class MRODerived(MROBase2, MROBase3):
     pass
 
 class MgrInheritA(models.Model):
     mgrA = models.Manager()
     mgrA2 = models.Manager()
     field1 = models.CharField(max_length=10)
-class MgrInheritB(MgrInheritA):  
+class MgrInheritB(MgrInheritA):
     mgrB = models.Manager()
     field2 = models.CharField(max_length=10)
 class MgrInheritC(ShowFieldTypeAndContent, MgrInheritB):
@@ -156,6 +155,19 @@ class InitTestModelSubclass(InitTestModel):
     def x(self):
         return 'XYZ'
 
+try: from polymorphic.test_tools  import UUIDField
+except: pass
+if 'UUIDField' in globals():
+    import uuid
+    class UUIDProject(ShowFieldTypeAndContent, PolymorphicModel):
+            id = UUIDField(primary_key = True)
+            topic = models.CharField(max_length = 30)
+    class UUIDArtProject(UUIDProject):
+            artist = models.CharField(max_length = 30)
+    class UUIDResearchProject(UUIDProject):
+            supervisor = models.CharField(max_length = 30)
+
+
 
 # test bad field name
 #class TestBadFieldModel(ShowFieldType, PolymorphicModel):
@@ -165,17 +177,19 @@ class InitTestModelSubclass(InitTestModel):
 # with related field 'ContentType.relatednameclash_set'." (reported by Andrew Ingram)
 # fixed with related_name
 class RelatedNameClash(ShowFieldType, PolymorphicModel):
-    ctype = models.ForeignKey(ContentType, null=True, editable=False)        
+    ctype = models.ForeignKey(ContentType, null=True, editable=False)
 
 
 class testclass(TestCase):
-    def test_diamond_inheritance(self):    
+    def test_diamond_inheritance(self):
         # Django diamond problem
         o = DiamondXY.objects.create(field_b='b', field_x='x', field_y='y')
         print 'DiamondXY fields 1: field_b "%s", field_x "%s", field_y "%s"' % (o.field_b, o.field_x, o.field_y)
         o = DiamondXY.objects.get()
         print 'DiamondXY fields 2: field_b "%s", field_x "%s", field_y "%s"' % (o.field_b, o.field_x, o.field_y)
-        if o.field_b != 'b': print '# Django model inheritance diamond problem detected'
+        if o.field_b != 'b':
+            print
+            print '# known django model inheritance diamond problem detected'
 
     def test_annotate_aggregate_order(self):
 
@@ -199,7 +213,7 @@ class testclass(TestCase):
                 assert o.entrycount == 2
             else:
                 assert o.entrycount == 0
-            
+
         x = BlogBase.objects.aggregate(entrycount=Count('BlogA___blogentry'))
         assert x['entrycount'] == 2
 
@@ -250,7 +264,6 @@ class testclass(TestCase):
         x = '\n' + repr(BlogBase.objects.order_by('-BlogA___info'))
         assert x == expected1 or x == expected2
 
-        #assert False
 
     def test_limit_choices_to(self):
         "this is not really a testcase, as limit_choices_to only affects the Django admin"
@@ -262,9 +275,34 @@ class testclass(TestCase):
         entry2 = BlogEntry_limit_choices_to.objects.create(blog=blog_b, text='bla2')
 
 
+    def test_primary_key_custom_field_problem(self):
+        "object retrieval problem occuring with some custom primary key fields (UUIDField as test case)"
+        if not 'UUIDField' in globals(): return
+        a=UUIDProject.objects.create(topic="John's gathering")
+        b=UUIDArtProject.objects.create(topic="Sculpting with Tim", artist="T. Turner")
+        c=UUIDResearchProject.objects.create(topic="Swallow Aerodynamics", supervisor="Dr. Winter")
+        qs=UUIDProject.objects.all()
+        ol=list(qs)
+        a=qs[0]
+        b=qs[1]
+        c=qs[2]
+        assert len(qs)==3
+        assert type(a.id)==uuid.UUID and type(a.pk)==uuid.UUID
+        res=repr(qs)
+        import re
+        res=re.sub(' id ...................................., topic',' id, topic',res)
+        res_exp="""[ <UUIDProject: id, topic (CharField): "John's gathering">,
+  <UUIDArtProject: id, topic (CharField): "Sculpting with Tim", artist (CharField): "T. Turner">,
+  <UUIDResearchProject: id, topic (CharField): "Swallow Aerodynamics", supervisor (CharField): "Dr. Winter"> ]"""
+        assert res==res_exp
+        if (a.pk!= uuid.UUID or c.pk!= uuid.UUID):
+            print
+            print '# known django object inconstency with custom primary key field detected'
+
+
 def show_base_manager(model):
     print type(model._base_manager),model._base_manager.model
-        
+
 __test__ = {"doctest": """
 #######################################################
 ### Tests
@@ -480,7 +518,7 @@ __test__ = {"doctest": """
   <RelationA: id 2, field_base (CharField): "A1", fk (ForeignKey): "RelationBase", field_a (CharField): "A2", m2m (ManyToManyField): 2>,
   <RelationB: id 3, field_base (CharField): "B1", fk (ForeignKey): "RelationA", field_b (CharField): "B2", m2m (ManyToManyField): 1>,
   <RelationBC: id 4, field_base (CharField): "C1", fk (ForeignKey): "RelationA", field_b (CharField): "C2", field_c (CharField): "C3", m2m (ManyToManyField): 0> ]
-      
+
 >>> oa=RelationBase.objects.get(id=2)
 >>> oa.fk
 <RelationBase: id 1, field_base (CharField): "base", fk (ForeignKey): "None", m2m (ManyToManyField): 0>
@@ -521,7 +559,7 @@ __test__ = {"doctest": """
 # check for correct default manager
 >>> type(MROBase1._default_manager)
 <class 'polymorphic.tests.MyManager'>
- 
+
 # Django vanilla inheritance does not inherit MyManager as _default_manager here
 >>> type(MROBase2._default_manager)
 <class 'polymorphic.tests.MyManager'>
@@ -550,4 +588,4 @@ __test__ = {"doctest": """
 >>> settings.DEBUG=False
 
 """}
-        
+
