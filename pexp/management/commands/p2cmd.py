@@ -35,7 +35,11 @@ class Command(NoArgsCommand):
         a=ModelA.objects.create(field1='A1')
         b=ModelB.objects.create(field1='B1', field2='B2')
         c=ModelC.objects.create(field1='C1', field2='C2', field3='C3')
+<<<<<<< HEAD:pexp/management/commands/p2cmd.py
         print ModelA.objects.extra( select={"select1": "field1 = 'A1'", "select2": "field1 = 'A0'"} )
+=======
+        print ModelA.objects.extra( select={"select1": "field1 = 'A1'", "select2": "field1 != 'A1'"} )
+>>>>>>> 7c2be35... pexp:pexp/management/commands/p2cmd.py
         print
 
         if not 'UUIDField' in globals(): return

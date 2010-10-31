@@ -11,7 +11,7 @@ Quickstart
 Install
 -------
 
-After uncompressing (if necessary), in the directory "django_polymorphic",
+After uncompressing (if necessary), in the directory "...django_polymorphic",
 execute  (on Unix-like systems)::
 
     sudo python setup.py install
@@ -37,47 +37,61 @@ All models inheriting from your polymorphic models will be polymorphic as well.
 Create some objects
 -------------------
 
->>> Project.objects.create(topic="John's Gathering")
->>> ArtProject.objects.create(topic="Sculpting with Tim", artist="T. Turner")
+>>> Project.objects.create(topic="Office Meeting")
+>>> ArtProject.objects.create(topic="Painting with Tim", artist="T. Turner")
 >>> ResearchProject.objects.create(topic="Swallow Aerodynamics", supervisor="Dr. Winter")
 
 Get polymorphic query results
 -----------------------------
 
 >>> Project.objects.all()
-[ <Project:         id 1, topic: "John's Gathering">,
-  <ArtProject:      id 2, topic: "Sculpting with Tim", artist: "T. Turner">,
-  <ResearchProject: id 3, topic: "Swallow Aerodynamics", supervisor: "Dr. Winter"> ]
+[ <Project:         id 1, topic "John's Gathering">,
+  <ArtProject:      id 2, topic "Painting with Tim", artist "T. Turner">,
+  <ResearchProject: id 3, topic "Swallow Aerodynamics", supervisor "Dr. Winter"> ]
 
-using instance_of and not_instance_of for narrowing the result to specific subtypes:
+use ``instance_of`` or ``not_instance_of`` for narrowing the result to specific subtypes:
 
 >>> Project.objects.instance_of(ArtProject)
-[ <ArtProject:      id 2, topic: "Sculpting with Tim", artist: "T. Turner"> ]
+[ <ArtProject:      id 2, topic "Painting with Tim", artist "T. Turner"> ]
 
 >>> Project.objects.instance_of(ArtProject) | Project.objects.instance_of(ResearchProject)
-[ <ArtProject:      id 2, topic: "Sculpting with Tim", artist: "T. Turner">,
-  <ResearchProject: id 3, topic: "Swallow Aerodynamics", supervisor: "Dr. Winter"> ]
+[ <ArtProject:      id 2, topic "Painting with Tim", artist "T. Turner">,
+  <ResearchProject: id 3, topic "Swallow Aerodynamics", supervisor "Dr. Winter"> ]
 
-Polymorphic filtering: Let's get all projects where Mr. Turner is involved as an artist
+Polymorphic filtering: Get all projects where Mr. Turner is involved as an artist
 or supervisor (note the three underscores):
 
 >>> Project.objects.filter(  Q(ArtProject___artist = 'T. Turner') | Q(ResearchProject___supervisor = 'T. Turner')  )
-[ <ArtProject:      id 2, topic: "Sculpting with Tim", artist: "T. Turner">,
-  <ResearchProject: id 3, topic: "History of Sculpting", supervisor: "T. Turner"> ]
+[ <ArtProject:      id 2, topic "Painting with Tim", artist "T. Turner">,
+  <ResearchProject: id 4, topic "Color Use in Late Cubism", supervisor "T. Turner"> ]
 
-What's More?
--------------
-
-Most of Django's standard ORM functionality is available and works as expected.
-ForeignKeys, ManyToManyFields and OneToToneFields to your polymorphic
-models work as shey should (polymorphic).
-
-In short, with django_polymorphic the Django models are much more "pythonic", i.e.
-they just work as you expect them to work: very similar to ordinary python classes
-(which is not the case with vanilla Django model inheritance).
+This is basically all you need to know, as django_polymorphic mostly
+works fully automatic and just delivers the expected ("pythonic") results.
 
 Note: In all example output, above and below, for a nicer and more informative
-output the `ShowFieldType` mixin has been used (documented below).
+output the ``ShowFieldType`` mixin has been used (documented below).
+
+
+List of Features
+================
+
+*   Fully automatic - generally makes sure that the same objects are
+    returned from the database that were stored there, regardless how
+    they are retrieved
+*   Only on models that request polymorphic behaviour however (and the
+    models inheriting from them)
+*   Full support for ForeignKeys, ManyToManyFields and OneToToneFields
+*   Filtering for classes, equivalent to python's isinstance():
+    ``instance_of(...)`` and ``not_instance_of(...)``
+*   Polymorphic filtering/ordering etc., allowing the use of fields of
+    derived models ("ArtProject___artist")
+*   Support for user-defined custom managers
+*   Automatic inheritance of custom managers
+*   Support for user-defined custom queryset classes
+*   Non-polymorphic queries if needed, with no other change in
+    features/behaviour
+*   Combining querysets of different types/models ("qs3 = qs1 | qs2")
+*   Nice/informative display of polymorphic queryset results
 
 
 More about Installation / Testing
@@ -86,8 +100,8 @@ More about Installation / Testing
 Requirements
 ------------
 
-Django 1.1 (or later) and Python 2.4 / 2.5 / 2.6. This code has been tested
-on Django 1.1.1 / 1.2 beta and Python 2.4.6 / 2.5.4 / 2.6.4 on Linux.
+Django 1.1 (or later) and Python 2.4 or later. This code has been tested
+on Django 1.1 / 1.2 / 1.3 and Python 2.4.6 / 2.5.4 / 2.6.4 on Linux.
 
 Included Test Suite
 -------------------
@@ -95,31 +109,30 @@ Included Test Suite
 The repository (or tar file) contains a complete Django project
 that may be used for tests or experiments, without any installation needed.
 
-To run the included test suite, execute::
+To run the included test suite, in the directory "...django_polymorphic" execute::
 
     ./manage test polymorphic
 
-The management command ``pcmd.py`` in the app ``pexp`` can be used for
-experiments - modify this file (pexp/management/commands/pcmd.py)
+The management command ``pcmd.py`` in the app ``pexp`` can be used
+for quick tests or experiments - modify this file (pexp/management/commands/pcmd.py)
 to your liking, then run::
 
     ./manage syncdb      # db is created in /var/tmp/... (settings.py)
     ./manage pcmd
-    
+
 Installation
 ------------
 
-In the directory "django_polymorphic", execute ``sudo python setup.py install``.
+In the directory "...django_polymorphic", execute ``sudo python setup.py install``.
 
-Alternatively you can simply copy the ``polymorphic`` directory
+Alternatively you can simply copy the ``polymorphic`` subdirectory
 (under "django_polymorphic") into your Django project dir
 (e.g. if you want to distribute your project with more 'batteries included').
 
-If you want to use the management command ``polymorphic_dumpdata``, then
-you need to add ``polymorphic`` to your INSTALLED_APPS setting. This is also
-needed if you want to run the test cases in `polymorphic/tests.py`.
+If you want to run the test cases in `polymorphic/tests.py`, you need to add
+``polymorphic`` to your INSTALLED_APPS setting.
 
-In any case, Django's ContentType framework (``django.contrib.contenttypes``)
+Django's ContentType framework (``django.contrib.contenttypes``)
 needs to be listed in INSTALLED_APPS (usually it already is).
 
 
@@ -139,6 +152,7 @@ In the examples below, these models are being used::
     class ModelC(ModelB):
         field3 = models.CharField(max_length=10)
 
+
 Filtering for classes (equivalent to python's isinstance() ):
 -------------------------------------------------------------
 
@@ -156,6 +170,7 @@ You can also use this feature in Q-objects (with the same result as above):
 
 >>> ModelA.objects.filter( Q(instance_of=ModelB) )
 
+
 Polymorphic filtering (for fields in derived classes)
 -----------------------------------------------------
 
@@ -168,18 +183,20 @@ syntax: ``exact model name + three _ + field name``):
 [ <ModelB: id 2, field1 (CharField), field2 (CharField)>,
   <ModelC: id 3, field1 (CharField), field2 (CharField), field3 (CharField)> ]
 
-Combining Querysets of different types/models
----------------------------------------------
 
-Querysets may now be regarded as object containers that allow the
-aggregation of  different object types - very similar to python
-lists (as long as the objects are accessed through the manager of
-a common base class):
+Combining Querysets / Querysets as "Object Containers"
+------------------------------------------------------
+
+Querysets could now be regarded as object containers that allow the
+aggregation of different object types, very similar to python
+lists - as long as the objects are accessed through the manager of
+a common base class:
 
 >>> Base.objects.instance_of(ModelX) | Base.objects.instance_of(ModelY)
 .
 [ <ModelX: id 1, field_x (CharField)>,
   <ModelY: id 2, field_y (CharField)> ]
+
 
 ManyToManyField, ForeignKey, OneToOneField
 ------------------------------------------
@@ -211,6 +228,7 @@ A ManyToManyField example::
       <ModelB: id 2, field1 (CharField), field2 (CharField)>,
       <ModelC: id 3, field1 (CharField), field2 (CharField), field3 (CharField)> ]
 
+
 Using Third Party Models (without modifying them)
 -------------------------------------------------
 
@@ -220,17 +238,18 @@ model as the root of a polymorphic inheritance tree::
 
     from thirdparty import ThirdPartyModel
 
-    class MyThirdPartyModel(PolymorhpicModel, ThirdPartyModel):
+    class MyThirdPartyBaseModel(PolymorhpicModel, ThirdPartyModel):
         pass    # or add fields
 
 Or instead integrating the third party model anywhere into an
 existing polymorphic inheritance tree::
 
-    class MyModel(SomePolymorphicModel):
+    class MyBaseModel(SomePolymorphicModel):
         my_field = models.CharField(max_length=10)
 
-    class MyModelWithThirdParty(MyModel, ThirdPartyModel):
+    class MyModelWithThirdParty(MyBaseModel, ThirdPartyModel):
         pass    # or add fields
+
 
 Non-Polymorphic Queries
 -----------------------
@@ -241,11 +260,17 @@ real objects, and the manager/queryset will return objects of the type of
 the base class you used for the query, like vanilla Django would
 (``ModelA`` in this example). 
 
+>>> qs=ModelA.objects.non_polymorphic().all()
+>>> qs
+[ <ModelA: id 1, field1 (CharField)>,
+  <ModelA: id 2, field1 (CharField)>,
+  <ModelA: id 3, field1 (CharField)> ]
+
 There are no other changes in the behaviour of the queryset. For example,
 enhancements for ``filter()`` or ``instance_of()`` etc. still work as expected.
 If you do the final step yourself, you get the usual polymorphic result:
 
->>> qs.get_real_instances()
+>>> ModelA.objects.get_real_instances(qs)
 [ <ModelA: id 1, field1 (CharField)>,
   <ModelB: id 2, field1 (CharField), field2 (CharField)>,
   <ModelC: id 3, field1 (CharField), field2 (CharField), field3 (CharField)> ]
@@ -258,23 +283,25 @@ About Queryset Methods
     addition that the ``ModelX___field`` syntax can be used for the
     keyword arguments (but not for the non-keyword arguments).
 
-+   ``order_by()`` now similarly supports the ``ModelX___field`` syntax
+*   ``order_by()`` now similarly supports the ``ModelX___field`` syntax
     for specifying ordering through a field in a submodel.
 
 *   ``distinct()`` works as expected. It only regards the fields of
     the base class, but this should never make a difference.
 
-+   ``select_related()`` works just as usual, but it can not (yet) be used
+*   ``select_related()`` works just as usual, but it can not (yet) be used
     to select relations in derived models
     (like ``ModelA.objects.select_related('ModelC___fieldxy')`` )
 
-*   ``extra()`` works as expected (returns polymorphic results) but
+*   ``extra()`` works as expected (it returns polymorphic results) but
     currently has one restriction: The resulting objects are required to have
     a unique primary key within the result set - otherwise an error is thrown
     (this case could be made to work, however it may be mostly unneeded)..
     The keyword-argument "polymorphic" is no longer supported.
+    You can get back the old non-polymorphic behaviour (before V1.0)
+    by using ``ModelA.objects.non_polymorphic().extra(...)``.
 
-+   ``get_real_instances()`` allows you to turn a
+*   ``get_real_instances()`` allows you to turn a
     queryset or list  of base model objects efficiently into the real objects.
     For example, you could do ``base_objects_queryset=ModelA.extra(...).non_polymorphic()``
     and then call ``real_objects=base_objects_queryset.get_real_instances()``.Or alternatively
@@ -285,8 +312,9 @@ About Queryset Methods
     methods now, it's best if you use ``Model.base_objects.values...`` as
     this is guaranteed to not change. 
 
-+   ``defer()`` and ``only()`` are not yet supported (support will be added
+*   ``defer()`` and ``only()`` are not yet supported (support will be added
     in the future). 
+
 
 Using enhanced Q-objects in any Places
 --------------------------------------
@@ -308,6 +336,7 @@ vanilla django function ``ForeignKey`` cannot process. In such cases  you can do
         somekey = model.ForeignKey(Model2A,
             limit_choices_to = translate_polymorphic_Q_object( Model2A, Q(instance_of=Model2B) ) )
 
+
 Nicely Displaying Polymorphic Querysets
 ---------------------------------------
 
@@ -322,6 +351,15 @@ ShowFieldType class mixin::
 You may also use ShowFieldContent or ShowFieldTypeAndContent to display
 additional information when printing querysets (or converting them to text).
 
+When showing field contents, they will be truncated to 20 characters. You can
+modify this behaviour by setting a class variable in your model like this::
+
+    class ModelA(ShowFieldType, PolymorphicModel):
+        polymorphic_showfield_max_field_width = 20
+        ...
+
+Similarly, pre-V1.0 output formatting can be re-estated by using
+``polymorphic_showfield_old_format = True``.
 
 Custom Managers, Querysets & Manager Inheritance
 ================================================
@@ -332,18 +370,24 @@ Using a Custom Manager
 A nice feature of Django is the possibility to define one's own custom object managers.
 This is fully supported with django_polymorphic: For creating a custom polymorphic
 manager class, just derive your manager from ``PolymorphicManager`` instead of
-``models.Manager``. Just as with vanilla Django, in your model class, you should
+``models.Manager``. As with vanilla Django, in your model class, you should
 explicitly add the default manager first, and then your custom manager::
 
-        from polymorphic import PolymorphicModel, PolymorphicManager
+    from polymorphic import PolymorphicModel, PolymorphicManager
 
-        class MyOrderedManager(PolymorphicManager):
-            def get_query_set(self):
-                return super(MyOrderedManager,self).get_query_set().order_by('some_field')
-                
-        class MyModel(PolymorphicModel):
-            objects = PolymorphicManager()    # add the default polymorphic manager first
-            ordered_objects = MyOrderedManager()    # then add your own manager
+   class TimeOrderedManager(PolymorphicManager):
+        def get_query_set(self):
+            qs = super(TimeOrderedManager,self).get_query_set()
+            return qs.order_by('-start_date')        # order the queryset
+
+        def most_recent(self):
+            qs = self.get_query_set()                # get my ordered queryset
+            return qs[:10]                           # limit => get ten most recent entries
+
+    class Project(PolymorphicModel):
+        objects = PolymorphicManager()               # add the default polymorphic manager first
+        objects_ordered = TimeOrderedManager()       # then add your own manager
+        start_date = DateTimeField()                 # project start is this date/time
 
 The first manager defined ('objects' in the example) is used by
 Django as automatic manager for several purposes, including accessing
@@ -355,18 +399,34 @@ Manager Inheritance
 
 Polymorphic models inherit/propagate all managers from their
 base models, as long as these are polymorphic. This means that all
-managers defined in polymorphic base models work just the same as if
-they were defined in the new model.
+managers defined in polymorphic base models continue to work as
+expected in models inheriting from this base model::
 
-An example (inheriting from MyModel above)::
+   from polymorphic import PolymorphicModel, PolymorphicManager
 
-    class MyModel2(MyModel):
-        pass
+   class TimeOrderedManager(PolymorphicManager):
+        def get_query_set(self):
+            qs = super(TimeOrderedManager,self).get_query_set()
+            return qs.order_by('-start_date')        # order the queryset
 
-    # Managers inherited from MyModel:
-    # the regular 'objects' manager and the custom 'ordered_objects' manager
-    >>> MyModel2.objects.all()
-    >>> MyModel2.ordered_objects.all()
+        def most_recent(self):
+            qs = self.get_query_set()                # get my ordered queryset
+            return qs[:10]                           # limit => get ten most recent entries
+
+    class Project(PolymorphicModel):
+        objects = PolymorphicManager()               # add the default polymorphic manager first
+        objects_ordered = TimeOrderedManager()       # then add your own manager
+        start_date = DateTimeField()                 # project start is this date/time
+
+    class ArtProject(Project):                       # inherit from Project, inheriting its fields and managers
+        artist = models.CharField(max_length=30)
+
+ArtProject inherited the managers ``objects`` and ``objects_ordered`` from Project.
+
+``ArtProject.objects_ordered.all()`` will return all art projects ordered
+regarding their start time and ``ArtProject.objects_ordered.most_recent()``
+will return the ten most recent art projects.
+.
 
 Using a Custom Queryset Class
 -----------------------------
@@ -385,14 +445,23 @@ instead of Django's QuerySet as the base class::
         class MyModel(PolymorphicModel):
             my_objects=PolymorphicManager(MyQuerySet)
             ...
-    
 
+            
 Performance Considerations
 ==========================
 
-The current implementation is pretty simple and does not use any
+The current implementation is rather simple and does not use any
 custom SQL or Django DB layer internals - it is purely based on the
-standard Django ORM. Right now the query ::
+standard Django ORM.
+
+The advantages are that the implementation naturally works on all
+supported database management systems, and consists of rather
+clean source code which can be easily understood and enhanced.
+
+The disadvantage is that this approach can not deliver the optimum
+performance as it introduces additional database queries.
+
+Specifically, the query::
 
     result_objects = list( ModelA.objects.filter(...) )
 
@@ -404,48 +473,68 @@ two queries are executed. The pathological worst case is 101 db queries if
 result_objects contains 100 different object types (with all of them
 subclasses of ``ModelA``).
 
-Performance ist relative: when Django users create their own
-polymorphic ad-hoc solution (without a tool like ``django_polymorphic``),
-this usually results in a variation of ::
+Usually, when Django users create their own polymorphic ad-hoc solution
+without a tool like django_polymorphic, this usually results in a variation of ::
 
     result_objects = [ o.get_real_instance() for o in BaseModel.objects.filter(...) ]
 
-which has really bad performance. Relative to this, the
-performance of the current ``django_polymorphic`` is pretty good.
-It's probably efficient enough for the majority of use cases.
+which has exceptionally bad performance, as it introduces one additional
+SQL query for every object in the result which is not of class ``BaseModel``.
+Relative to this, the performance of the current django_polymorphic
+implementation is very good.
 
-Chunking: The implementation always requests objects in chunks of
-size ``Polymorphic_QuerySet_objects_per_request``. This limits the
-complexity/duration for each query, including the pathological cases.
+If your project however needs perfect performance and the current
+performance implications of django_polymorphic are not acceptable, then
+basically there are the two options of either foregoing of an essential aspect
+of object oriented programming or optimizing django_polymorphic.
+
+Foregoing the benefits of this aspect of object oriented programming
+for projects that could benefit from it will however usually lead to bloated code,
+unnecessary complexity and considerably more of the programmer's time to
+create and update the implementation, together with the disadvantages
+of a less flexible and less future-proof solution. Throwing a little more
+hardware on the problem might be the least expensive solution in most cases.
 
 
 Possible Optimizations
 ======================
 
-``PolymorphicQuerySet`` can be optimized to require only one SQL query
-for the queryset evaluation and retrieval of all objects.
+Django_polymorphic can be optimized to require only one
+SQL query for the queryset evaluation and retrieval of all objects.
 
-Basically, what ist needed is a possibility to pull in the fields
-from all relevant sub-models with one SQL query. However, some deeper
-digging into the Django database layer will be required in order to
-make this happen.
+Probably all that would be needed seems support for an additional
+queryset function in Django's database layer, like::
 
-An optimized version might require an SQL database. For non-SQL databases
-the implementation could fall back to the current ORM-only
-implementation.
+    ModelA.objects.join_models(on="field_name", models=[ModelB, ModelC])
+
+or, less general but more simple::
+
+    ModelA.objects.join_tables(on="field_name", tables=['myapp_modelb','myapp_modelc'])
+
+This would add additional left outer joins to the query and then add
+the resulting fields from this join to the result objects.
+E.g. a query for ``ModelA`` objects would need to join the ``ModelB``
+and ``ModelC`` tables on the the field ``id`` and add the fields ``field2``
+and ``field3`` from the joined tables to the resulting objects.
+
+An optimization like this might require an SQL database.
+For non-SQL databases the implementation could fall back to
+the current ORM-only implementation.
 
 SQL Complexity of an Optimized Implementation
 ---------------------------------------------
 
 With only one SQL query, one SQL join for each possible subclass
 would be needed (``BaseModel.__subclasses__()``, recursively).
+
 With two SQL queries, the number of joins could be reduced to the
-number of actuallly occurring subclasses in the result. A final
-implementation might want to use one query only if the number of
-possible subclasses (and therefore joins) is not too large, and
-two queries otherwise (using the first query to determine the
-actually occurring subclasses, reducing the number of joins for
-the second).
+number of actuallly occurring subclasses in the specific result.
+
+A perfect implementation might want to use one query only
+if the number of possible subclasses (and therefore joins) is not
+too large, and two queries otherwise (using the first query to
+determine the actually occurring subclasses, reducing the number
+of joins for the second).
 
 The number of joins needed for polymorphic object retrieval might
 raise concerns regarding the efficiency of these database
@@ -455,18 +544,10 @@ Should the number of joins of the more extreme use cases turn out to
 be problematic, it is possible to split any problematic query into, for example,
 two queries with only half the number of joins each.
 
-In General 
-----------
-
-Let's not forget that the above is just about optimization.
-The current implementation already works well - and perhaps well
-enough for the majority of applications. 
-
-Also, it seems that further optimization (down to one DB request)
-would be restricted to a relatively small area of the code, and
-be mostly independent from the rest of the module.
-So it seems this optimization can be done at any later time
-(like when it's needed).
+It seems that further optimization (down to one DB request)
+of django_polymorphic would be restricted to a relatively small area of
+the code ("query.py"), and be pretty much independent from the rest of the module.
+Such an optimization can be done at any later time (like when it's needed).
 
 
 .. _restrictions:
@@ -474,10 +555,12 @@ So it seems this optimization can be done at any later time
 Restrictions & Caveats
 ======================
 
-*   The queryset methods ``values()``, ``values_list()``, ``select_related()``, 
-    ``defer()`` and ``only()`` are not yet fully supported (see above)
+*   Queryset methods ``values()``, ``values_list()``, ``select_related()``,
+    ``defer()`` and ``only()`` are not yet fully supported (see above).
+    ``extra()`` has one restriction: the resulting objects are required to have
+    a unique primary key within the result set
 
-+   Django Admin Integration: There currently is no specific admin integration,
+*   Django Admin Integration: There currently is no specific admin integration,
     but it would most likely make sense to have one.
 
 *   Diamond shaped inheritance: There seems to be a general problem 
@@ -488,7 +571,7 @@ Restrictions & Caveats
     by subclassing it instead of modifying Django core (as we do here
     with PolymorphicModel).
 
-+   The enhanced filter-definitions/Q-objects only work as arguments
+*   The enhanced filter-definitions/Q-objects only work as arguments
     for the methods of the polymorphic querysets. Please see above
     for ``translate_polymorphic_Q_object``.
 
@@ -501,7 +584,7 @@ Restrictions & Caveats
     table needs to be corrected/copied too. This is of course generally
     the case for any models using Django's ContentType.
 
-+   Django 1.1 only - the names of polymorphic models must be unique
+*   Django 1.1 only - the names of polymorphic models must be unique
     in the whole project, even if they are in two different apps.
     This results from a restriction in the Django 1.1 "related_name"
     option (fixed in Django 1.2).
@@ -515,14 +598,12 @@ Restrictions & Caveats
     + http://stackoverflow.com/questions/853796/problems-with-contenttypes-when-loading-a-fixture-in-django
 
 
-
-
 Project Status
 ==============   
  
 Django_polymorphic works well for a considerable number of users now,
 and no major problems have shown up for many months.
-The API can be considered stable beginning with this release.
+The API can be considered stable beginning with the V1.0 release.
 
 
 Links

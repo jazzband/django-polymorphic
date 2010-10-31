@@ -10,7 +10,7 @@ import settings
 import sys
 from pexp.models import *
 
-num_objects=15000
+num_objects=1000
 
 def reset_queries():
     connection.queries=[]

@@ -43,11 +43,10 @@ class PolymorphicModel(models.Model):
     and provides a polymorphic manager as the default manager
     (and as 'objects').
     
-    PolymorphicModel overrides the save() method.
+    PolymorphicModel overrides the save() and __init__ methods.
     
-    If your derived class overrides save() as well, then you need
-    to take care that you correctly call the save() method of
-    the superclass, like:
+    If your derived class overrides any of these methods as well, then you need
+    to take care that you correctly call the method of the superclass, like:
     
         super(YourClass,self).save(*args,**kwargs)
     """
@@ -116,7 +115,7 @@ class PolymorphicModel(models.Model):
 
 
     def __init__(self, * args, ** kwargs):
-        """Replace Django's inheritance accessors member functions for our model
+        """Replace Django's inheritance accessor member functions for our model
         (self.__class__) with our own versions.
         We monkey patch them until a patch can be added to Django
         (which would probably be very small and make all of this obsolete).
@@ -145,7 +144,7 @@ class PolymorphicModel(models.Model):
                 return attr
             return accessor_function
 
-        subclasses_and_superclasses_accessors = self.get_inheritance_relation_fields_and_models()
+        subclasses_and_superclasses_accessors = self._get_inheritance_relation_fields_and_models()
 
         from django.db.models.fields.related import SingleRelatedObjectDescriptor, ReverseSingleRelatedObjectDescriptor
         for name,model in subclasses_and_superclasses_accessors.iteritems():
@@ -154,7 +153,7 @@ class PolymorphicModel(models.Model):
                 #print >>sys.stderr, '---------- replacing',name, orig_accessor
                 setattr(self.__class__, name, property(create_accessor_function_for_model(model, name)) )
 
-    def get_inheritance_relation_fields_and_models(self):
+    def _get_inheritance_relation_fields_and_models(self):
         """helper function for __init__:
         determine names of all Django inheritance accessor member functions for type(self)"""
 

@@ -5,7 +5,6 @@ from django.db import models
 from polymorphic import PolymorphicModel, PolymorphicManager, PolymorphicQuerySet
 from polymorphic.showfields import ShowFieldContent, ShowFieldType, ShowFieldTypeAndContent
 
-
 class Project(ShowFieldContent, PolymorphicModel):
     topic = models.CharField(max_length=30)
 class ArtProject(Project):
@@ -26,7 +25,6 @@ class nModelB(nModelA):
     field2 = models.CharField(max_length=10)
 class nModelC(nModelB):
     field3 = models.CharField(max_length=10)
-
 
 # for Django 1.2+, test models with same names in different apps
 # (the other models with identical names are in polymorphic/tests.py)

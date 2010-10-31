@@ -7,13 +7,22 @@
 <title></title>
 <style type="text/css">
 
-h1, h2, h3, h4 {
+h1, h2, h3, h4,
+#table-of-contents
+{
     color: #47c;
 }
+h1 { padding-top: 15px; }
+h2 { padding-top: 10px; }
+h3 { padding-top: 7px; }
 
 a:hover { border-bottom: 1px solid #0066cc; }
 a {color: #0066cc; text-decoration: none;}
 
+li {
+    padding-top: 5px;
+    padding-bottom: 5px;
+}
 
 tt {
   color: #080;
@@ -245,15 +254,15 @@ from the model <tt class="docutils literal">Project</tt>, and let's store one of
 </pre>
 <p>Using django_polymorphic, we simply get what we stored:</p>
 <pre class="literal-block">
-[ &lt;Project:         id 1, topic: &quot;John's Gathering&quot;&gt;,
-  &lt;ArtProject:      id 2, topic: &quot;Sculpting with Tim&quot;, artist: &quot;T. Turner&quot;&gt;,
-  &lt;ResearchProject: id 3, topic: &quot;Swallow Aerodynamics&quot;, supervisor: &quot;Dr. Winter&quot;&gt; ]
+[ &lt;Project:         id 1, topic &quot;John's Gathering&quot;&gt;,
+  &lt;ArtProject:      id 2, topic &quot;Painting with Tim&quot;, artist &quot;T. Turner&quot;&gt;,
+  &lt;ResearchProject: id 3, topic &quot;Swallow Aerodynamics&quot;, supervisor &quot;Dr. Winter&quot;&gt; ]
 </pre>
 <p>Using vanilla Django, we get incomplete objects, which is probably not what we wanted:</p>
 <pre class="literal-block">
-[ &lt;Project: id 1, topic: &quot;John's Gathering&quot;&gt;,
-  &lt;Project: id 2, topic: &quot;Sculpting with Tim&quot;&gt;,
-  &lt;Project: id 3, topic: &quot;Swallow Aerodynamics&quot;&gt; ]
+[ &lt;Project: id 1, topic &quot;John's Gathering&quot;&gt;,
+  &lt;Project: id 2, topic &quot;Painting with Tim&quot;&gt;,
+  &lt;Project: id 3, topic &quot;Swallow Aerodynamics&quot;&gt; ]
 </pre>
 <p>It's very similar for ForeignKeys, ManyToManyFields or OneToOneFields.</p>
 <p>In general, the effect of django_polymorphic is twofold:</p>
@@ -261,33 +270,26 @@ from the model <tt class="docutils literal">Project</tt>, and let's store one of
 as you expect, by simply ensuring that you always get back exactly the same
 objects from the database you stored there - regardless how you access them.
 This can save you a lot of unpleasant workarounds.</p>
-<p>On the other hand, together with only few small API additions to the Django ORM,
+<p>On the other hand, together with a few small API additions to the Django ORM,
 django_polymorphic enables a much more expressive and intuitive
 programming style and also very advanced object oriented
 designs that are not possible with vanilla Django.</p>
 <p>Fortunately, most of the heavy duty machinery that is needed for this
 functionality is already present in the original Django database layer.
-Django_polymorphic merely adds a rather thin layer above that, which is
-all that is required to make real OO fully automatic and very easy to use,
-with only minimal additions to Django's API.</p>
+Django_polymorphic adds a rather small layer above that, which is
+all that is required to make real OO fully automatic and very easy to use.</p>
 <p>For more information, please look at <a class="reference external" href="http://bserve.webhop.org/django_polymorphic/DOCS.html#quickstart">Quickstart</a> or the complete
 <a class="reference external" href="http://bserve.webhop.org/django_polymorphic/DOCS.html">Installation and Usage Docs</a>. Please also see the <a class="reference external" href="http://bserve.webhop.org/django_polymorphic/DOCS.html#restrictions">restrictions and caveats</a>.</p>
 </div>
 <div class="section" id="this-is-a-v1-0-beta-testing-release">
 <h2>This is a V1.0 Beta/Testing Release</h2>
-<p>This release is mostly a cleanup and maintenance release that also
-improves a number of minor things and fixes one (non-critical) bug.</p>
-<p>Some pending API changes and corrections have been folded into this release
-in order to make the upcoming V1.0 API as stable as possible.</p>
-<p>This release is also about getting feedback from you in case you don't
-approve of any of these changes or would like to get additional
-API fixes into V1.0.</p>
 <p>The release contains a considerable amount of changes in some of the more
 critical parts of the software. It's intended for testing and development
 environments and not for production environments. For these, it's best to
 wait a few weeks for the proper V1.0 release, to allow some time for any
 potential problems to turn up (if they exist).</p>
-<p>If you encounter any problems please post them in the <a class="reference external" href="http://groups.google.de/group/django-polymorphic/topics">discussion group</a>
+<p>If you encounter any problems or have suggestions regarding the API or the
+changes in this beta, please post them in the <a class="reference external" href="http://groups.google.de/group/django-polymorphic/topics">discussion group</a>
 or open an issue on <a class="reference external" href="http://github.com/bconstantin/django_polymorphic">GitHub</a> or <a class="reference external" href="http://bitbucket.org/bconstantin/django_polymorphic">BitBucket</a> (or send me an email).</p>
 </div>
 </div>
@@ -295,15 +297,18 @@ or open an issue on <a class="reference external" href="http://github.com/bconst
 <h1>License</h1>
 <p>Django_polymorphic uses the same license as Django (BSD-like).</p>
 </div>
-<div class="section" id="api-changes">
-<h1>API Changes</h1>
-<div class="section" id="october-18-2010">
-<h2>October 18 2010</h2>
-<div class="section" id="polymorphic-dumpdata">
-<h3>polymorphic_dumpdata</h3>
-<p>The polymorphic_dumpdata management command is not needed anymore
-and has been removed, as the regular Django dumpdata command now automatically
-works correctly with polymorphic models (for all supported versions of Django).</p>
+<div class="section" id="api-changes-additions">
+<h1>API Changes &amp; Additions</h1>
+<div class="section" id="october-26-2010-v1-0-api-changes">
+<h2>October 26 2010, V1.0 API Changes</h2>
+<div class="section" id="extra-queryset-method">
+<h3>extra() queryset method</h3>
+<p><tt class="docutils literal">.extra()</tt> has been re-implemented. Now it's polymorphic by
+default and works (nearly) without restrictions (please see docs). This is an
+incompatible API change regarding previous versions of django_polymorphic.
+Support for the <tt class="docutils literal">polymorphic</tt> keyword parameter has been removed.
+You can get back the non-polymorphic behaviour by using
+<tt class="docutils literal"><span class="pre">ModelA.objects.non_polymorphic().extra()</span></tt>.</p>
 </div>
 <div class="section" id="output-of-queryset-or-object-printing">
 <h3>Output of Queryset or Object Printing</h3>
@@ -325,11 +330,44 @@ To get the old behaviour when printing querysets, you need to replace your model
 <tt class="docutils literal">ShowFieldType, ShowFieldContent and ShowFieldTypeAndContent</tt></blockquote>
 <p>(the old ones still exist for compatibility)</p>
 </div>
+<div class="section" id="polymorphic-dumpdata">
+<h3>polymorphic_dumpdata</h3>
+<p>The <tt class="docutils literal">polymorphic_dumpdata</tt> management command is not needed anymore
+and has been disabled, as the regular Django dumpdata command now automatically
+works correctly with polymorphic models (for all supported versions of Django).</p>
+</div>
 <div class="section" id="running-the-test-suite-with-django-1-3">
 <h3>Running the Test suite with Django 1.3</h3>
 <p>Django 1.3 requires <tt class="docutils literal">python manage.py test polymorphic</tt> instead of
 just <tt class="docutils literal">python manage.py test</tt>.</p>
 </div>
+</div>
+<div class="section" id="october-26-2010-v1-0-api-additions">
+<h2>October 26 2010, V1.0 API Additions</h2>
+<ul>
+<li><p class="first"><tt class="docutils literal">.non_polymorphic()</tt> queryset member function added. This is preferable to
+using <tt class="docutils literal"><span class="pre">.base_objects...</span></tt>, as it just makes the resulting queryset non-polymorphic
+and does not change anything else in the behaviour of the manager used (while
+<tt class="docutils literal">.base_objects</tt> is just a different manager).</p>
+</li>
+<li><p class="first"><tt class="docutils literal">.get_real_instances()</tt> has been elevated to an official part of the API.
+It allows you to turn a queryset or list of base objects into a list of the real instances.
+This is useful if e.g. you use <tt class="docutils literal"><span class="pre">ModelA.objects.non_polymorphic().extra(...)</span></tt> and then want to
+transform the result to its polymorphic equivalent:</p>
+<pre class="doctest-block">
+&gt;&gt;&gt; qs = ModelA.objects.all().non_polymorphic()
+&gt;&gt;&gt; real_objects = qs.get_real_instances()
+</pre>
+<p>is equivalent to:</p>
+<pre class="doctest-block">
+&gt;&gt;&gt; real_objects = ModelA.objects.all()
+</pre>
+<p>Instead of <tt class="docutils literal">qs.get_real_instances()</tt>, <tt class="docutils literal">ModelA.objects.get_real_instances(qs)</tt> may be used
+as well. In the latter case, <tt class="docutils literal">qs</tt> may be any list of objects of type ModelA.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">translate_polymorphic_Q_object</tt>  (see DOCS)</p>
+</li>
+</ul>
 </div>
 <div class="section" id="february-22-2010-installation-note">
 <h2>February 22 2010, Installation Note</h2>
@@ -354,10 +392,8 @@ from polymorphic.models import PolymorphicModel, ...
 </div>
 <div class="section" id="january-26-2010-database-schema-change">
 <h2>January 26 2010: Database Schema Change</h2>
-<div class="line-block">
-<div class="line">The update from January 26 changed the database schema (more info in the <a class="reference external" href="http://github.com/bconstantin/django_polymorphic/commit/c2b420aea06637966a208329ef7ec853889fa4c7">commit-log</a>).</div>
-<div class="line">Sorry for any inconvenience. But this should be the final DB schema now.</div>
-</div>
+<p>The update from January 26 changed the database schema (more info in the <a class="reference external" href="http://github.com/bconstantin/django_polymorphic/commit/c2b420aea06637966a208329ef7ec853889fa4c7">commit-log</a>).
+Sorry for any inconvenience. But this should be the final DB schema now.</p>
 </div>
 </div>
 </div>

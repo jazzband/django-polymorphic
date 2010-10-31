@@ -3,12 +3,67 @@
 Changelog
 ++++++++++
 
-.
+2010-11-01 V1.0 Beta 2
+======================
+
+This is a V1.0 Beta/Testing Release
+-----------------------------------
+
+Beta 2 accumulated somewhat more changes than intended. It's still
+intended for testing and development environments and not for production
+(it's best to wait for the final V1.0 for production servers).
+
+New Features and API changes since Beta 1
+-----------------------------------------
+
+*   API CHANGE: ``.extra()`` has been re-implemented. Now it's polymorphic by
+    default and works (nearly) without restrictions (please see docs). This is an
+    incompatible API change regarding previous versions of django_polymorphic.
+    Support for the ``polymorphic`` keyword parameter has been removed.
+    You can get back the non-polymorphic behaviour by using
+    ``ModelA.objects.non_polymorphic().extra(...)``.
+
+*   API CHANGE: ``ShowFieldContent`` and ``ShowFieldTypeAndContent`` now
+    use a slightly different output format. If this causes too much trouble for
+    your test cases, you can get the old behaviour back (mostly) by adding
+    ``polymorphic_showfield_old_format = True`` to your model definitions.
+    ``ShowField...`` also produces more informative output for custom
+    primary keys.
+
+*   ``.non_polymorphic()`` queryset member function added. This is preferable to
+    using ``.base_objects...``, as it just makes the resulting queryset non-polymorphic
+    and does not change anything else in the behaviour of the manager used (while
+    ``.base_objects`` is just a different manager).
+
+*   ``.get_real_instances()``: implementation modified to allow the following
+    more simple and intuitive use::
+    
+    >>> qs = ModelA.objects.all().non_polymorphic()
+    >>> qs.get_real_instances()
+
+    which is equivalent to::
+
+    >>> ModelA.objects.all()
+
+*   misc changes/improvements
+
+Bugfixes
+------------------------
+
+*   Custom fields could cause problems when used as the primary key.
+    In derived models, Django's automatic ".pk" field does not always work
+    correctly for such custom fields: "some_object.pk" and "some_object.id"
+    return different results (which they shouldn't, as pk should always be just
+    an alias for the primary key field). It's unclear yet if the problem lies in
+    Django or the affected custom fields. Regardless, the problem resulting
+    from this has been fixed with a small workaround.
+    "python manage.py test polymorphic" also tests and reports on this problem now.
+
 
 ------------------------------------------------------------------
 
-2010-10-18
-==========
+2010-10-18 V1.0 Beta 1
+======================
 
 This is a V1.0 Beta/Testing Release
 -----------------------------------
@@ -27,7 +82,7 @@ The release contains a considerable amount of changes in some of the more
 critical parts of the software. It's intended for testing and development
 environments and not for production environments. For these, it's best to
 wait a few weeks for the proper V1.0 release, to allow some time for any
-potential problems to turn up (if they exist).
+potential problems to show up (if they exist).
 
 If you encounter any such problems, please post them in the discussion group
 or open an issue on GitHub or BitBucket (or send me an email).
@@ -41,15 +96,14 @@ New Features
 *   official Django 1.3 alpha compatibility
 
 *   ``PolymorphicModel.__getattribute__`` hack removed.
-    The python __getattribute__ hack generally causes a considerable
-    overhead and to have this in the performance-sensitive PolymorphicModel
-    class was somewhat problematic. It's gone for good now.
+    This improves performance considerably as python's __getattribute__
+    generally causes a pretty large processing overhead. It's gone now.
 
-*   ``polymorphic_dumpdata`` management command functionality removed:
-    The regular Django dumpdata command now automatically works correctly
-    for polymorphic models with all Django versions.
+*   the ``polymorphic_dumpdata`` management command is not needed anymore
+    and has been disabled, as the regular Django dumpdata command now automatically
+    works correctly with polymorphic models (for all supported versions of Django).
 
-*   .get_real_instances() has been elevated to an official part of the API::
+*   ``.get_real_instances()`` has been elevated to an official part of the API::
 
         real_objects = ModelA.objects.get_real_instances(base_objects_list_or_queryset)
 
@@ -66,21 +120,19 @@ New Features
 Bugfixes
 ------------------------
 
-*   removed requirement for primary key to be an IntegerField.
+*   Removed requirement for primary key to be an IntegerField.
     Thanks to Mathieu Steele and Malthe Borch.
 
 API Changes
 -----------
 
-polymorphic_dumpdata
-####################
+**polymorphic_dumpdata**
 
-The polymorphic_dumpdata management command is not needed anymore
-and has been removed, as the regular Django dumpdata command now automatically
+The management command ``polymorphic_dumpdata`` is not needed anymore
+and has been disabled, as the regular Django dumpdata command now automatically
 works correctly with polymorphic models (for all supported versions of Django).
 
-Output of Queryset or Object Printing
-#####################################
+**Output of Queryset or Object Printing**
 
 In order to improve compatibility with vanilla Django, printing quersets does not use
 django_polymorphic's pretty printing by default anymore.
@@ -102,8 +154,7 @@ are now:
 
 (the old ones still exist for compatibility)
 
-Running the Test suite with Django 1.3
-######################################
+**Running the Test suite with Django 1.3**
 
 Django 1.3 requires ``python manage.py test polymorphic`` instead of
 just ``python manage.py test``.

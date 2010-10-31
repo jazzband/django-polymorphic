@@ -11,6 +11,10 @@ h1, h2, h3, h4 {
     color: #47c;
 }
 
+h1 { padding-top: 15px; }
+h2 { padding-top: 10px; }
+h3 { padding-top: 7px; }
+
 a:hover { border-bottom: 1px solid #0066cc; }
 a {color: #0066cc; text-decoration: none;}
 
@@ -216,11 +220,54 @@ ul.auto-toc {
 </div>
 <div class="section" id="changelog">
 <h1>Changelog</h1>
-<p>.</p>
-<hr class="docutils" />
-<div class="section" id="id1">
-<h2>2010-10-18</h2>
+<div class="section" id="v1-0-beta-2">
+<h2>2010-10-25 V1.0 Beta 2</h2>
 <div class="section" id="this-is-a-v1-0-beta-testing-release">
+<h3>This is a V1.0 Beta/Testing Release</h3>
+<p>The release contains a considerable amount of changes in some of the more
+critical parts of the software. It's intended for testing and development
+environments and not for production environments. For these, it's best to
+wait a few weeks for the proper V1.0 release, to allow some time for any
+potential problems to show up (if they exist).</p>
+</div>
+<div class="section" id="new-features-and-api-changes-since-beta-1">
+<h3>New Features and API changes since Beta 1</h3>
+<ul class="simple">
+<li>API CHANGE: <tt class="docutils literal">.extra()</tt> has been re-implemented. Now it's polymorphic by
+default and works (nearly) without restrictions (please see docs). This is an
+incompatible API change regarding previous versions of django_polymorphic.
+Support for the <tt class="docutils literal">polymorphic</tt> keyword parameter has been removed.
+You can get back the non-polymorphic behaviour by using
+<tt class="docutils literal"><span class="pre">ModelA.objects.non_polymorphic().extra()</span></tt>.</li>
+</ul>
+<ul class="simple">
+<li><tt class="docutils literal">.non_polymorphic()</tt> queryset member function added. This is preferable to
+using <tt class="docutils literal"><span class="pre">.base_objects...</span></tt>, as it just makes the resulting queryset non-polymorphic
+and does not change anything else in the behaviour of the manager used (while
+<tt class="docutils literal">.base_objects</tt> is just a different manager).</li>
+</ul>
+<ul>
+<li><p class="first"><tt class="docutils literal">.get_real_instances()</tt>: implementation modified to allow the following
+more simple and intuitive use:</p>
+<pre class="literal-block">
+&gt;&gt;&gt; qs = ModelA.objects.all().non_polymorphic()
+&gt;&gt;&gt; qs.get_real_instances()
+</pre>
+<p>which is equivalent to:</p>
+<pre class="literal-block">
+&gt;&gt;&gt; ModelA.objects.all()
+</pre>
+</li>
+</ul>
+<ul class="simple">
+<li>misc changes/improvements</li>
+</ul>
+</div>
+</div>
+<hr class="docutils" />
+<div class="section" id="v1-0-beta-1">
+<h2>2010-10-18 V1.0 Beta 1</h2>
+<div class="section" id="id1">
 <h3>This is a V1.0 Beta/Testing Release</h3>
 <p>This release is mostly a cleanup and maintenance release that also
 improves a number of minor things and fixes one (non-critical) bug.</p>
@@ -233,7 +280,7 @@ API fixes into V1.0.</p>
 critical parts of the software. It's intended for testing and development
 environments and not for production environments. For these, it's best to
 wait a few weeks for the proper V1.0 release, to allow some time for any
-potential problems to turn up (if they exist).</p>
+potential problems to show up (if they exist).</p>
 <p>If you encounter any such problems, please post them in the discussion group
 or open an issue on GitHub or BitBucket (or send me an email).</p>
 <p>There also have been a number of minor API changes.
@@ -245,15 +292,14 @@ Please see the README for more information.</p>
 <li><p class="first">official Django 1.3 alpha compatibility</p>
 </li>
 <li><p class="first"><tt class="docutils literal">PolymorphicModel.__getattribute__</tt> hack removed.
-The python __getattribute__ hack generally causes a considerable
-overhead and to have this in the performance-sensitive PolymorphicModel
-class was somewhat problematic. It's gone for good now.</p>
+This improves performance considerably as python's __getattribute__
+generally causes a pretty large processing overhead. It's gone now.</p>
 </li>
-<li><p class="first"><tt class="docutils literal">polymorphic_dumpdata</tt> management command functionality removed:
-The regular Django dumpdata command now automatically works correctly
-for polymorphic models with all Django versions.</p>
+<li><p class="first">the <tt class="docutils literal">polymorphic_dumpdata</tt> management command is not needed anymore
+and has been disabled, as the regular Django dumpdata command now automatically
+works correctly with polymorphic models (for all supported versions of Django).</p>
 </li>
-<li><p class="first">.get_real_instances() has been elevated to an official part of the API:</p>
+<li><p class="first"><tt class="docutils literal">.get_real_instances()</tt> has been elevated to an official part of the API:</p>
 <pre class="literal-block">
 real_objects = ModelA.objects.get_real_instances(base_objects_list_or_queryset)
 </pre>
@@ -278,14 +324,11 @@ Thanks to Mathieu Steele and Malthe Borch.</li>
 </div>
 <div class="section" id="api-changes">
 <h3>API Changes</h3>
-<div class="section" id="polymorphic-dumpdata">
-<h4>polymorphic_dumpdata</h4>
-<p>The polymorphic_dumpdata management command is not needed anymore
-and has been removed, as the regular Django dumpdata command now automatically
+<p><strong>polymorphic_dumpdata</strong></p>
+<p>The management command <tt class="docutils literal">polymorphic_dumpdata</tt> is not needed anymore
+and has been disabled, as the regular Django dumpdata command now automatically
 works correctly with polymorphic models (for all supported versions of Django).</p>
-</div>
-<div class="section" id="output-of-queryset-or-object-printing">
-<h4>Output of Queryset or Object Printing</h4>
+<p><strong>Output of Queryset or Object Printing</strong></p>
 <p>In order to improve compatibility with vanilla Django, printing quersets does not use
 django_polymorphic's pretty printing by default anymore.
 To get the old behaviour when printing querysets, you need to replace your model definition:</p>
@@ -303,12 +346,9 @@ To get the old behaviour when printing querysets, you need to replace your model
 <blockquote>
 <tt class="docutils literal">ShowFieldType, ShowFieldContent and ShowFieldTypeAndContent</tt></blockquote>
 <p>(the old ones still exist for compatibility)</p>
-</div>
-<div class="section" id="running-the-test-suite-with-django-1-3">
-<h4>Running the Test suite with Django 1.3</h4>
+<p><strong>Running the Test suite with Django 1.3</strong></p>
 <p>Django 1.3 requires <tt class="docutils literal">python manage.py test polymorphic</tt> instead of
 just <tt class="docutils literal">python manage.py test</tt>.</p>
-</div>
 </div>
 </div>
 <hr class="docutils" />

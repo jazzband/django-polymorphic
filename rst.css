@@ -1,10 +1,19 @@
-h1, h2, h3, h4 {
+h1, h2, h3, h4,
+#table-of-contents
+{
     color: #47c;
 }
+h1 { padding-top: 15px; }
+h2 { padding-top: 10px; }
+h3 { padding-top: 7px; }
 
 a:hover { border-bottom: 1px solid #0066cc; }
 a {color: #0066cc; text-decoration: none;}
 
+li {
+    padding-top: 5px;
+    padding-bottom: 5px;
+}
 
 tt {
   color: #080;

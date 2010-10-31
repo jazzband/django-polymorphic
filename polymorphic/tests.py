@@ -348,7 +348,8 @@ __test__ = {"doctest": """
 <Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)>
 
 # non_polymorphic()
->>> Model2A.objects.all().non_polymorphic()
+>>> qs=Model2A.objects.all().non_polymorphic()
+>>> qs
 [ <Model2A: id 1, field1 (CharField)>,
   <Model2A: id 2, field1 (CharField)>,
   <Model2A: id 3, field1 (CharField)>,
