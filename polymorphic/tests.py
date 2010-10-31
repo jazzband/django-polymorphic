@@ -5,13 +5,14 @@
 
 import settings
 import sys
+from pprint import pprint
 
+from django import VERSION as django_VERSION
 from django.test import TestCase
 from django.db.models.query import QuerySet
 from django.db.models import Q,Count
 from django.db import models
 from django.contrib.contenttypes.models import ContentType
-from pprint import pprint
 
 from polymorphic import PolymorphicModel, PolymorphicManager, PolymorphicQuerySet
 from polymorphic import ShowFieldContent, ShowFieldType, ShowFieldTypeAndContent, get_version
@@ -155,18 +156,29 @@ class InitTestModelSubclass(InitTestModel):
     def x(self):
         return 'XYZ'
 
-try: from polymorphic.test_tools  import UUIDField
-except: pass
-if 'UUIDField' in globals():
-    import uuid
-    class UUIDProject(ShowFieldTypeAndContent, PolymorphicModel):
-            id = UUIDField(primary_key = True)
-            topic = models.CharField(max_length = 30)
-    class UUIDArtProject(UUIDProject):
-            artist = models.CharField(max_length = 30)
-    class UUIDResearchProject(UUIDProject):
-            supervisor = models.CharField(max_length = 30)
 
+# UUID tests won't work with Django 1.1
+if not (django_VERSION[0] <= 1 and django_VERSION[1] <= 1):
+    try: from polymorphic.test_tools  import UUIDField
+    except: pass
+    if 'UUIDField' in globals():
+        import uuid
+
+        class UUIDProject(ShowFieldTypeAndContent, PolymorphicModel):
+                uuid_primary_key = UUIDField(primary_key = True)
+                topic = models.CharField(max_length = 30)
+        class UUIDArtProject(UUIDProject):
+                artist = models.CharField(max_length = 30)
+        class UUIDResearchProject(UUIDProject):
+                supervisor = models.CharField(max_length = 30)
+
+        class UUIDPlainA(models.Model):
+            uuid_primary_key = UUIDField(primary_key = True)
+            field1 = models.CharField(max_length=10)
+        class UUIDPlainB(UUIDPlainA):
+            field2 = models.CharField(max_length=10)
+        class UUIDPlainC(UUIDPlainB):
+            field3 = models.CharField(max_length=10)
 
 
 # test bad field name
@@ -226,14 +238,14 @@ class testclass(TestCase):
         ### test ordering for field in all entries
 
         expected = '''
-[ <BlogB: id 4, name (CharField): "Bb3">,
-  <BlogB: id 3, name (CharField): "Bb2">,
-  <BlogB: id 2, name (CharField): "Bb1">,
-  <BlogA: id 8, name (CharField): "B5", info (CharField): "i5">,
-  <BlogA: id 7, name (CharField): "B4", info (CharField): "i4">,
-  <BlogA: id 6, name (CharField): "B3", info (CharField): "i3">,
-  <BlogA: id 5, name (CharField): "B2", info (CharField): "i2">,
-  <BlogA: id 1, name (CharField): "B1", info (CharField): "i1"> ]'''
+[ <BlogB: id 4, name (CharField) "Bb3">,
+  <BlogB: id 3, name (CharField) "Bb2">,
+  <BlogB: id 2, name (CharField) "Bb1">,
+  <BlogA: id 8, name (CharField) "B5", info (CharField) "i5">,
+  <BlogA: id 7, name (CharField) "B4", info (CharField) "i4">,
+  <BlogA: id 6, name (CharField) "B3", info (CharField) "i3">,
+  <BlogA: id 5, name (CharField) "B2", info (CharField) "i2">,
+  <BlogA: id 1, name (CharField) "B1", info (CharField) "i1"> ]'''
         x = '\n' + repr(BlogBase.objects.order_by('-name'))
         assert x == expected
 
@@ -241,25 +253,25 @@ class testclass(TestCase):
 
         # MySQL and SQLite return this order
         expected1='''
-[ <BlogA: id 8, name (CharField): "B5", info (CharField): "i5">,
-  <BlogA: id 7, name (CharField): "B4", info (CharField): "i4">,
-  <BlogA: id 6, name (CharField): "B3", info (CharField): "i3">,
-  <BlogA: id 5, name (CharField): "B2", info (CharField): "i2">,
-  <BlogA: id 1, name (CharField): "B1", info (CharField): "i1">,
-  <BlogB: id 2, name (CharField): "Bb1">,
-  <BlogB: id 3, name (CharField): "Bb2">,
-  <BlogB: id 4, name (CharField): "Bb3"> ]'''
+[ <BlogA: id 8, name (CharField) "B5", info (CharField) "i5">,
+  <BlogA: id 7, name (CharField) "B4", info (CharField) "i4">,
+  <BlogA: id 6, name (CharField) "B3", info (CharField) "i3">,
+  <BlogA: id 5, name (CharField) "B2", info (CharField) "i2">,
+  <BlogA: id 1, name (CharField) "B1", info (CharField) "i1">,
+  <BlogB: id 2, name (CharField) "Bb1">,
+  <BlogB: id 3, name (CharField) "Bb2">,
+  <BlogB: id 4, name (CharField) "Bb3"> ]'''
 
         # PostgreSQL returns this order
         expected2='''
-[ <BlogB: id 2, name (CharField): "Bb1">,
-  <BlogB: id 3, name (CharField): "Bb2">,
-  <BlogB: id 4, name (CharField): "Bb3">,
-  <BlogA: id 8, name (CharField): "B5", info (CharField): "i5">,
-  <BlogA: id 7, name (CharField): "B4", info (CharField): "i4">,
-  <BlogA: id 6, name (CharField): "B3", info (CharField): "i3">,
-  <BlogA: id 5, name (CharField): "B2", info (CharField): "i2">,
-  <BlogA: id 1, name (CharField): "B1", info (CharField): "i1"> ]'''
+[ <BlogB: id 2, name (CharField) "Bb1">,
+  <BlogB: id 3, name (CharField) "Bb2">,
+  <BlogB: id 4, name (CharField) "Bb3">,
+  <BlogA: id 8, name (CharField) "B5", info (CharField) "i5">,
+  <BlogA: id 7, name (CharField) "B4", info (CharField) "i4">,
+  <BlogA: id 6, name (CharField) "B3", info (CharField) "i3">,
+  <BlogA: id 5, name (CharField) "B2", info (CharField) "i2">,
+  <BlogA: id 1, name (CharField) "B1", info (CharField) "i1"> ]'''
 
         x = '\n' + repr(BlogBase.objects.order_by('-BlogA___info'))
         assert x == expected1 or x == expected2
@@ -287,17 +299,25 @@ class testclass(TestCase):
         b=qs[1]
         c=qs[2]
         assert len(qs)==3
-        assert type(a.id)==uuid.UUID and type(a.pk)==uuid.UUID
+        assert type(a.uuid_primary_key)==uuid.UUID and type(a.pk)==uuid.UUID
         res=repr(qs)
         import re
-        res=re.sub(' id ...................................., topic',' id, topic',res)
-        res_exp="""[ <UUIDProject: id, topic (CharField): "John's gathering">,
-  <UUIDArtProject: id, topic (CharField): "Sculpting with Tim", artist (CharField): "T. Turner">,
-  <UUIDResearchProject: id, topic (CharField): "Swallow Aerodynamics", supervisor (CharField): "Dr. Winter"> ]"""
-        assert res==res_exp
+        res=re.sub(' "(.*?)..", topic',', topic',res)
+        res_exp="""[ <UUIDProject: uuid_primary_key (UUIDField/pk), topic (CharField) "John's gathering">,
+  <UUIDArtProject: uuid_primary_key (UUIDField/pk), topic (CharField) "Sculpting with Tim", artist (CharField) "T. Turner">,
+  <UUIDResearchProject: uuid_primary_key (UUIDField/pk), topic (CharField) "Swallow Aerodynamics", supervisor (CharField) "Dr. Winter"> ]"""
+        assert res==res_exp, res
+        #if (a.pk!= uuid.UUID or c.pk!= uuid.UUID):
+        #    print
+        #    print '# known inconstency with custom primary key field detected (django problem?)'
+
+        a=UUIDPlainA.objects.create(field1='A1')
+        b=UUIDPlainB.objects.create(field1='B1', field2='B2')
+        c=UUIDPlainC.objects.create(field1='C1', field2='C2', field3='C3')
+        qs=UUIDPlainA.objects.all()
         if (a.pk!= uuid.UUID or c.pk!= uuid.UUID):
             print
-            print '# known django object inconstency with custom primary key field detected'
+            print '# known type inconstency with custom primary key field detected (django problem?)'
 
 
 def show_base_manager(model):
@@ -401,19 +421,19 @@ __test__ = {"doctest": """
 >>> o=ModelShow2.objects.create(field1='abc')
 >>> o.m2m.add(o) ; o.save()
 >>> ModelShow2.objects.all()
-[ <ModelShow2: id 1, field1: "abc", m2m: 1> ]
+[ <ModelShow2: id 1, field1 "abc", m2m 1> ]
 
 >>> o=ModelShow3.objects.create(field1='abc')
 >>> o.m2m.add(o) ; o.save()
 >>> ModelShow3.objects.all()
-[ <ModelShow3: id 1, field1 (CharField): "abc", m2m (ManyToManyField): 1> ]
+[ <ModelShow3: id 1, field1 (CharField) "abc", m2m (ManyToManyField) 1> ]
 
 >>> ModelShow1.objects.all().annotate(Count('m2m'))
 [ <ModelShow1: id 1, field1 (CharField), m2m (ManyToManyField) - Ann: m2m__count (int)> ]
 >>> ModelShow2.objects.all().annotate(Count('m2m'))
-[ <ModelShow2: id 1, field1: "abc", m2m: 1 - Ann: m2m__count: "1"> ]
+[ <ModelShow2: id 1, field1 "abc", m2m 1 - Ann: m2m__count 1> ]
 >>> ModelShow3.objects.all().annotate(Count('m2m'))
-[ <ModelShow3: id 1, field1 (CharField): "abc", m2m (ManyToManyField): 1 - Ann: m2m__count (int): "1"> ]
+[ <ModelShow3: id 1, field1 (CharField) "abc", m2m (ManyToManyField) 1 - Ann: m2m__count (int) 1> ]
 
 # no pretty printing
 >>> o=ModelShow1_plain.objects.create(field1='abc')
@@ -439,10 +459,9 @@ __test__ = {"doctest": """
 >>> o=ModelExtraExternal.objects.create(topic='extra2')
 >>> o=ModelExtraExternal.objects.create(topic='extra3')
 >>> ModelExtraA.objects.extra(tables=["polymorphic_modelextraexternal"], select={"topic":"polymorphic_modelextraexternal.topic"}, where=["polymorphic_modelextraa.id = polymorphic_modelextraexternal.id"] )
-[ <ModelExtraA: id 1, field1 (CharField): "A1" - Extra: topic (unicode): "extra1">,
-  <ModelExtraB: id 2, field1 (CharField): "B1", field2 (CharField): "B2" - Extra: topic (unicode): "extra2">,
-  <ModelExtraC: id 3, field1 (CharField): "C1", field2 (CharField): "C2", field3 (CharField): "C3" - Extra: topic (unicode): "extra3"> ]
-
+[ <ModelExtraA: id 1, field1 (CharField) "A1" - Extra: topic (unicode) "extra1">,
+  <ModelExtraB: id 2, field1 (CharField) "B1", field2 (CharField) "B2" - Extra: topic (unicode) "extra2">,
+  <ModelExtraC: id 3, field1 (CharField) "C1", field2 (CharField) "C2", field3 (CharField) "C3" - Extra: topic (unicode) "extra3"> ]
 
 ### class filtering, instance_of, not_instance_of
 
@@ -501,8 +520,8 @@ __test__ = {"doctest": """
 >>> o = Enhance_Inherit.objects.create(field_b='b-inherit', field_p='p', field_i='i')
 
 >>> Enhance_Base.objects.all()
-[ <Enhance_Base: id 1, field_b (CharField): "b-base">,
-  <Enhance_Inherit: id 2, field_b (CharField): "b-inherit", field_p (CharField): "p", field_i (CharField): "i"> ]
+[ <Enhance_Base: id 1, field_b (CharField) "b-base">,
+  <Enhance_Inherit: id 2, field_b (CharField) "b-inherit", field_p (CharField) "p", field_i (CharField) "i"> ]
 
 
 ### ForeignKey, ManyToManyField
@@ -514,27 +533,27 @@ __test__ = {"doctest": """
 >>> oa.m2m.add(oa); oa.m2m.add(ob)
 
 >>> RelationBase.objects.all()
-[ <RelationBase: id 1, field_base (CharField): "base", fk (ForeignKey): "None", m2m (ManyToManyField): 0>,
-  <RelationA: id 2, field_base (CharField): "A1", fk (ForeignKey): "RelationBase", field_a (CharField): "A2", m2m (ManyToManyField): 2>,
-  <RelationB: id 3, field_base (CharField): "B1", fk (ForeignKey): "RelationA", field_b (CharField): "B2", m2m (ManyToManyField): 1>,
-  <RelationBC: id 4, field_base (CharField): "C1", fk (ForeignKey): "RelationA", field_b (CharField): "C2", field_c (CharField): "C3", m2m (ManyToManyField): 0> ]
+[ <RelationBase: id 1, field_base (CharField) "base", fk (ForeignKey) None, m2m (ManyToManyField) 0>,
+  <RelationA: id 2, field_base (CharField) "A1", fk (ForeignKey) RelationBase, field_a (CharField) "A2", m2m (ManyToManyField) 2>,
+  <RelationB: id 3, field_base (CharField) "B1", fk (ForeignKey) RelationA, field_b (CharField) "B2", m2m (ManyToManyField) 1>,
+  <RelationBC: id 4, field_base (CharField) "C1", fk (ForeignKey) RelationA, field_b (CharField) "C2", field_c (CharField) "C3", m2m (ManyToManyField) 0> ]
 
 >>> oa=RelationBase.objects.get(id=2)
 >>> oa.fk
-<RelationBase: id 1, field_base (CharField): "base", fk (ForeignKey): "None", m2m (ManyToManyField): 0>
+<RelationBase: id 1, field_base (CharField) "base", fk (ForeignKey) None, m2m (ManyToManyField) 0>
 
 >>> oa.relationbase_set.all()
-[ <RelationB: id 3, field_base (CharField): "B1", fk (ForeignKey): "RelationA", field_b (CharField): "B2", m2m (ManyToManyField): 1>,
-  <RelationBC: id 4, field_base (CharField): "C1", fk (ForeignKey): "RelationA", field_b (CharField): "C2", field_c (CharField): "C3", m2m (ManyToManyField): 0> ]
+[ <RelationB: id 3, field_base (CharField) "B1", fk (ForeignKey) RelationA, field_b (CharField) "B2", m2m (ManyToManyField) 1>,
+  <RelationBC: id 4, field_base (CharField) "C1", fk (ForeignKey) RelationA, field_b (CharField) "C2", field_c (CharField) "C3", m2m (ManyToManyField) 0> ]
 
 >>> ob=RelationBase.objects.get(id=3)
 >>> ob.fk
-<RelationA: id 2, field_base (CharField): "A1", fk (ForeignKey): "RelationBase", field_a (CharField): "A2", m2m (ManyToManyField): 2>
+<RelationA: id 2, field_base (CharField) "A1", fk (ForeignKey) RelationBase, field_a (CharField) "A2", m2m (ManyToManyField) 2>
 
 >>> oa=RelationA.objects.get()
 >>> oa.m2m.all()
-[ <RelationA: id 2, field_base (CharField): "A1", fk (ForeignKey): "RelationBase", field_a (CharField): "A2", m2m (ManyToManyField): 2>,
-  <RelationB: id 3, field_base (CharField): "B1", fk (ForeignKey): "RelationA", field_b (CharField): "B2", m2m (ManyToManyField): 1> ]
+[ <RelationA: id 2, field_base (CharField) "A1", fk (ForeignKey) RelationBase, field_a (CharField) "A2", m2m (ManyToManyField) 2>,
+  <RelationB: id 3, field_base (CharField) "B1", fk (ForeignKey) RelationA, field_b (CharField) "B2", m2m (ManyToManyField) 1> ]
 
 ### user-defined manager
 
@@ -542,8 +561,8 @@ __test__ = {"doctest": """
 >>> o=ModelWithMyManager.objects.create(field1='D1b', field4='D4b')
 
 >>> ModelWithMyManager.objects.all()
-[ <ModelWithMyManager: id 6, field1 (CharField): "D1b", field4 (CharField): "D4b">,
-  <ModelWithMyManager: id 5, field1 (CharField): "D1a", field4 (CharField): "D4a"> ]
+[ <ModelWithMyManager: id 6, field1 (CharField) "D1b", field4 (CharField) "D4b">,
+  <ModelWithMyManager: id 5, field1 (CharField) "D1a", field4 (CharField) "D4a"> ]
 
 >>> type(ModelWithMyManager.objects)
 <class 'polymorphic.tests.MyManager'>

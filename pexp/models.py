@@ -39,3 +39,13 @@ if not (django_VERSION[0]<=1 and django_VERSION[1]<=1):
     class Model2C(Model2B):
         field3 = models.CharField(max_length=10)
 
+try: from polymorphic.test_tools  import UUIDField
+except: pass
+if 'UUIDField' in globals():
+    class UUIDModelA(ShowFieldTypeAndContent, PolymorphicModel):
+        uuid_primary_key = UUIDField(primary_key = True)
+        field1 = models.CharField(max_length=10)
+    class UUIDModelB(UUIDModelA):
+        field2 = models.CharField(max_length=10)
+    class UUIDModelC(UUIDModelB):
+        field3 = models.CharField(max_length=10)
