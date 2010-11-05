@@ -42,13 +42,13 @@ If we want to retrieve all our projects, we do:
 
 Using django_polymorphic, we simply get what we stored::
 
-    [ <Project:         id 1, topic "Weekly Office Meeting">,
+    [ <Project:         id 1, topic "Department Party">,
       <ArtProject:      id 2, topic "Painting with Tim", artist "T. Turner">,
       <ResearchProject: id 3, topic "Swallow Aerodynamics", supervisor "Dr. Winter"> ]
 
 Using vanilla Django, we get incomplete objects, which is probably not what we wanted::
 
-    [ <Project: id 1, topic "Weekly Office Meeting">,
+    [ <Project: id 1, topic "Department Party">,
       <Project: id 2, topic "Painting with Tim">,
       <Project: id 3, topic "Swallow Aerodynamics"> ]
 

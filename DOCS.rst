@@ -37,7 +37,7 @@ All models inheriting from your polymorphic models will be polymorphic as well.
 Create some objects
 -------------------
 
->>> Project.objects.create(topic="Office Meeting")
+>>> Project.objects.create(topic="Department Party")
 >>> ArtProject.objects.create(topic="Painting with Tim", artist="T. Turner")
 >>> ResearchProject.objects.create(topic="Swallow Aerodynamics", supervisor="Dr. Winter")
 
@@ -45,7 +45,7 @@ Get polymorphic query results
 -----------------------------
 
 >>> Project.objects.all()
-[ <Project:         id 1, topic "John's Gathering">,
+[ <Project:         id 1, topic "Department Party">,
   <ArtProject:      id 2, topic "Painting with Tim", artist "T. Turner">,
   <ResearchProject: id 3, topic "Swallow Aerodynamics", supervisor "Dr. Winter"> ]
 
