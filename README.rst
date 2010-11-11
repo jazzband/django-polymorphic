@@ -9,7 +9,7 @@ Quick Start, Docs, Contributing
 * `Quickstart`_, or the complete `Installation and Usage Docs`_
 * `Release Notes, News and Discussion`_ (Google Group) or Changelog_
 * Download from GitHub_ or Bitbucket_, or as TGZ_ or ZIP_
-* Improve django_polymorphic, report issues, participate, discuss, patch or fork (GitHub_, Bitbucket_, Group_, Mail_)
+* Improve django_polymorphic, report issues, discuss, patch or fork (GitHub_, Bitbucket_, Group_, Mail_)
 
 .. _What is django_polymorphic good for?: #good-for
 .. _release notes, news and discussion: http://groups.google.de/group/django-polymorphic/topics
@@ -32,8 +32,8 @@ What is django_polymorphic good for?
 Let's assume the models ``ArtProject`` and ``ResearchProject`` are derived
 from the model ``Project``, and let's store one of each into the database:
 
->>> Project.objects.create(topic="John's Gathering")
->>> ArtProject.objects.create(topic="Sculpting with Tim", artist="T. Turner")
+>>> Project.objects.create(topic="Department Party")
+>>> ArtProject.objects.create(topic="Painting with Tim", artist="T. Turner")
 >>> ResearchProject.objects.create(topic="Swallow Aerodynamics", supervisor="Dr. Winter")
 
 If we want to retrieve all our projects, we do:
@@ -57,7 +57,7 @@ It's very similar for ForeignKeys, ManyToManyFields or OneToOneFields.
 In general, the effect of django_polymorphic is twofold:
 
 On one hand it makes sure that model inheritance just works as you
-expect, by simply ensuring that you always get back exactly thesame
+expect, by simply ensuring that you always get back exactly the same
 objects from the database you stored there - regardless how you access
 them, making model inheritance much more "pythonic".
 This can save you a lot of unpleasant workarounds that tend to
@@ -70,11 +70,17 @@ that are not possible with vanilla Django.
 
 Fortunately, most of the heavy duty machinery that is needed for this
 functionality is already present in the original Django database layer.
-Django_polymorphic adds a rather thin layer above that, which is
-all that is required to make real OO fully automatic and very easy to use.
+Django_polymorphic adds a rather thin layer above that in order
+to make real OO fully automatic and very easy to use.
+
+There is a catch however, which applies to concrete model inheritance
+in general: Current DBM systems like PostgreSQL or MySQL are not very
+good at processing the required sql queries and can be rather slow in
+many cases. Concrete benchmarks are forthcoming (please see
+discussion forum).
 
 For more information, please look at `Quickstart`_ or at the complete
-`Installation and Usage Docs`_.Please also see the `restrictions and caveats`_.
+`Installation and Usage Docs`_ and also see the `restrictions and caveats`_.
 
 .. _restrictions and caveats: http://bserve.webhop.org/django_polymorphic/DOCS.html#restrictions
 
@@ -105,14 +111,14 @@ API Changes & Additions
 =======================
 
 
-November 01 2010, V1.0 API Changes
+November 11 2010, V1.0 API Changes
 -------------------------------------------------------------------
 
 extra() queryset method
 +++++++++++++++++++++++
 
 ``.extra()`` has been re-implemented. Now it's polymorphic by
-default and works (nearly) without restrictions (please see docs). This is an
+default and works (nearly) without restrictions (please see docs). This is a (very)
 incompatible API change regarding previous versions of django_polymorphic.
 Support for the ``polymorphic`` keyword parameter has been removed.
 You can get back the non-polymorphic behaviour by using
@@ -121,9 +127,10 @@ You can get back the non-polymorphic behaviour by using
 No Pretty-Printing of Querysets by default
 ++++++++++++++++++++++++++++++++++++++++++
 
-In order to improve compatibility with vanilla Django, printing quersets does not use
-django_polymorphic's pretty printing by default anymore.
-To get the old behaviour when printing querysets, you need to replace your model definition:
+In order to improve compatibility with vanilla Django, printing quersets
+(__repr__ and __unicode__) does not use django_polymorphic's pretty printing
+by default anymore. To get the old behaviour when printing querysets,
+you need to replace your model definition:
 
 >>> class Project(PolymorphicModel):
 
@@ -148,7 +155,7 @@ Pretty-Printing Output Format Changed
 use a slightly different output format. If this causes too much trouble for
 your test cases, you can get the old behaviour back (mostly) by adding
 ``polymorphic_showfield_old_format = True`` to your model definitions.
-``ShowField...`` also produces more informative output for custom
+``ShowField...`` now also produces more informative output for custom
 primary keys.
 
 polymorphic_dumpdata

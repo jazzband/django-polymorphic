@@ -229,23 +229,16 @@ ul.auto-toc {
 <li><a class="reference external" href="http://bserve.webhop.org/django_polymorphic/DOCS.html#quickstart">Quickstart</a>, or the complete <a class="reference external" href="http://bserve.webhop.org/django_polymorphic/DOCS.html">Installation and Usage Docs</a></li>
 <li><a class="reference external" href="http://groups.google.de/group/django-polymorphic/topics">Release Notes, News and Discussion</a> (Google Group) or <a class="reference external" href="http://bserve.webhop.org/django_polymorphic/CHANGES.html">Changelog</a></li>
 <li>Download from <a class="reference external" href="http://github.com/bconstantin/django_polymorphic">GitHub</a> or <a class="reference external" href="http://bitbucket.org/bconstantin/django_polymorphic">Bitbucket</a>, or as <a class="reference external" href="http://github.com/bconstantin/django_polymorphic/tarball/master">TGZ</a> or <a class="reference external" href="http://github.com/bconstantin/django_polymorphic/zipball/master">ZIP</a></li>
-<li>Improve django_polymorphic, report issues, participate, discuss, patch or fork (<a class="reference external" href="http://github.com/bconstantin/django_polymorphic">GitHub</a>, <a class="reference external" href="http://bitbucket.org/bconstantin/django_polymorphic">Bitbucket</a>, <a class="reference external" href="http://groups.google.de/group/django-polymorphic/topics">Group</a>, <a class="reference external" href="http://github.com/bconstantin/django_polymorphic/tree/master/setup.py">Mail</a>)</li>
+<li>Improve django_polymorphic, report issues, discuss, patch or fork (<a class="reference external" href="http://github.com/bconstantin/django_polymorphic">GitHub</a>, <a class="reference external" href="http://bitbucket.org/bconstantin/django_polymorphic">Bitbucket</a>, <a class="reference external" href="http://groups.google.de/group/django-polymorphic/topics">Group</a>, <a class="reference external" href="http://github.com/bconstantin/django_polymorphic/tree/master/setup.py">Mail</a>)</li>
 </ul>
 </div>
 <div class="section" id="id1">
 <span id="good-for"></span><h2>What is django_polymorphic good for?</h2>
-<p>If you work with Django's model inheritance, django_polymorphic might
-save you from implementing unpleasant workarounds that make your code
-messy, error-prone, and slow. Model inheritance becomes much more &quot;pythonic&quot;
-and now just works as you as a Python programmer expect.</p>
-</div>
-<div class="section" id="it-s-best-to-look-at-an-example">
-<h2>It's best to Look at an Example</h2>
 <p>Let's assume the models <tt class="docutils literal">ArtProject</tt> and <tt class="docutils literal">ResearchProject</tt> are derived
 from the model <tt class="docutils literal">Project</tt>, and let's store one of each into the database:</p>
 <pre class="doctest-block">
-&gt;&gt;&gt; Project.objects.create(topic=&quot;John's Gathering&quot;)
-&gt;&gt;&gt; ArtProject.objects.create(topic=&quot;Sculpting with Tim&quot;, artist=&quot;T. Turner&quot;)
+&gt;&gt;&gt; Project.objects.create(topic=&quot;Department Party&quot;)
+&gt;&gt;&gt; ArtProject.objects.create(topic=&quot;Painting with Tim&quot;, artist=&quot;T. Turner&quot;)
 &gt;&gt;&gt; ResearchProject.objects.create(topic=&quot;Swallow Aerodynamics&quot;, supervisor=&quot;Dr. Winter&quot;)
 </pre>
 <p>If we want to retrieve all our projects, we do:</p>
@@ -254,32 +247,39 @@ from the model <tt class="docutils literal">Project</tt>, and let's store one of
 </pre>
 <p>Using django_polymorphic, we simply get what we stored:</p>
 <pre class="literal-block">
-[ &lt;Project:         id 1, topic &quot;John's Gathering&quot;&gt;,
+[ &lt;Project:         id 1, topic &quot;Department Party&quot;&gt;,
   &lt;ArtProject:      id 2, topic &quot;Painting with Tim&quot;, artist &quot;T. Turner&quot;&gt;,
   &lt;ResearchProject: id 3, topic &quot;Swallow Aerodynamics&quot;, supervisor &quot;Dr. Winter&quot;&gt; ]
 </pre>
 <p>Using vanilla Django, we get incomplete objects, which is probably not what we wanted:</p>
 <pre class="literal-block">
-[ &lt;Project: id 1, topic &quot;John's Gathering&quot;&gt;,
+[ &lt;Project: id 1, topic &quot;Department Party&quot;&gt;,
   &lt;Project: id 2, topic &quot;Painting with Tim&quot;&gt;,
   &lt;Project: id 3, topic &quot;Swallow Aerodynamics&quot;&gt; ]
 </pre>
 <p>It's very similar for ForeignKeys, ManyToManyFields or OneToOneFields.</p>
 <p>In general, the effect of django_polymorphic is twofold:</p>
-<p>On one hand it makes sure that model inheritance just works
-as you expect, by simply ensuring that you always get back exactly the same
-objects from the database you stored there - regardless how you access them.
-This can save you a lot of unpleasant workarounds.</p>
-<p>On the other hand, together with a few small API additions to the Django ORM,
-django_polymorphic enables a much more expressive and intuitive
-programming style and also very advanced object oriented
-designs that are not possible with vanilla Django.</p>
+<p>On one hand it makes sure that model inheritance just works as you
+expect, by simply ensuring that you always get back exactly the same
+objects from the database you stored there - regardless how you access
+them, making model inheritance much more &quot;pythonic&quot;.
+This can save you a lot of unpleasant workarounds that tend to
+make your code messy, error-prone, and slow.</p>
+<p>On the other hand, together with some small API additions to the Django
+ORM, django_polymorphic enables a much more expressive and intuitive
+programming style and also very advanced object oriented designs
+that are not possible with vanilla Django.</p>
 <p>Fortunately, most of the heavy duty machinery that is needed for this
 functionality is already present in the original Django database layer.
-Django_polymorphic adds a rather small layer above that, which is
-all that is required to make real OO fully automatic and very easy to use.</p>
-<p>For more information, please look at <a class="reference external" href="http://bserve.webhop.org/django_polymorphic/DOCS.html#quickstart">Quickstart</a> or the complete
-<a class="reference external" href="http://bserve.webhop.org/django_polymorphic/DOCS.html">Installation and Usage Docs</a>. Please also see the <a class="reference external" href="http://bserve.webhop.org/django_polymorphic/DOCS.html#restrictions">restrictions and caveats</a>.</p>
+Django_polymorphic adds a rather thin layer above that in order
+to make real OO fully automatic and very easy to use.</p>
+<p>There is a catch however, which applies to concrete model inheritance
+in general: Current DBM systems like PostgreSQL or MySQL are not very
+good at processing the required sql queries and can be rather slow in
+many cases. Concrete benchmarks are forthcoming (please see
+discussion forum).</p>
+<p>For more information, please look at <a class="reference external" href="http://bserve.webhop.org/django_polymorphic/DOCS.html#quickstart">Quickstart</a> or at the complete
+<a class="reference external" href="http://bserve.webhop.org/django_polymorphic/DOCS.html">Installation and Usage Docs</a> and also see the <a class="reference external" href="http://bserve.webhop.org/django_polymorphic/DOCS.html#restrictions">restrictions and caveats</a>.</p>
 </div>
 <div class="section" id="this-is-a-v1-0-beta-testing-release">
 <h2>This is a V1.0 Beta/Testing Release</h2>
@@ -299,22 +299,23 @@ or open an issue on <a class="reference external" href="http://github.com/bconst
 </div>
 <div class="section" id="api-changes-additions">
 <h1>API Changes &amp; Additions</h1>
-<div class="section" id="october-26-2010-v1-0-api-changes">
-<h2>October 26 2010, V1.0 API Changes</h2>
+<div class="section" id="november-11-2010-v1-0-api-changes">
+<h2>November 11 2010, V1.0 API Changes</h2>
 <div class="section" id="extra-queryset-method">
 <h3>extra() queryset method</h3>
 <p><tt class="docutils literal">.extra()</tt> has been re-implemented. Now it's polymorphic by
-default and works (nearly) without restrictions (please see docs). This is an
+default and works (nearly) without restrictions (please see docs). This is a (very)
 incompatible API change regarding previous versions of django_polymorphic.
 Support for the <tt class="docutils literal">polymorphic</tt> keyword parameter has been removed.
 You can get back the non-polymorphic behaviour by using
 <tt class="docutils literal"><span class="pre">ModelA.objects.non_polymorphic().extra()</span></tt>.</p>
 </div>
-<div class="section" id="output-of-queryset-or-object-printing">
-<h3>Output of Queryset or Object Printing</h3>
-<p>In order to improve compatibility with vanilla Django, printing quersets does not use
-django_polymorphic's pretty printing by default anymore.
-To get the old behaviour when printing querysets, you need to replace your model definition:</p>
+<div class="section" id="no-pretty-printing-of-querysets-by-default">
+<h3>No Pretty-Printing of Querysets by default</h3>
+<p>In order to improve compatibility with vanilla Django, printing quersets
+(__repr__ and __unicode__) does not use django_polymorphic's pretty printing
+by default anymore. To get the old behaviour when printing querysets,
+you need to replace your model definition:</p>
 <pre class="doctest-block">
 &gt;&gt;&gt; class Project(PolymorphicModel):
 </pre>
@@ -330,6 +331,15 @@ To get the old behaviour when printing querysets, you need to replace your model
 <tt class="docutils literal">ShowFieldType, ShowFieldContent and ShowFieldTypeAndContent</tt></blockquote>
 <p>(the old ones still exist for compatibility)</p>
 </div>
+<div class="section" id="pretty-printing-output-format-changed">
+<h3>Pretty-Printing Output Format Changed</h3>
+<p><tt class="docutils literal">ShowFieldContent</tt> and <tt class="docutils literal">ShowFieldTypeAndContent</tt> now
+use a slightly different output format. If this causes too much trouble for
+your test cases, you can get the old behaviour back (mostly) by adding
+<tt class="docutils literal">polymorphic_showfield_old_format = True</tt> to your model definitions.
+<tt class="docutils literal"><span class="pre">ShowField...</span></tt> now also produces more informative output for custom
+primary keys.</p>
+</div>
 <div class="section" id="polymorphic-dumpdata">
 <h3>polymorphic_dumpdata</h3>
 <p>The <tt class="docutils literal">polymorphic_dumpdata</tt> management command is not needed anymore
@@ -342,8 +352,8 @@ works correctly with polymorphic models (for all supported versions of Django).<
 just <tt class="docutils literal">python manage.py test</tt>.</p>
 </div>
 </div>
-<div class="section" id="october-26-2010-v1-0-api-additions">
-<h2>October 26 2010, V1.0 API Additions</h2>
+<div class="section" id="november-01-2010-v1-0-api-additions">
+<h2>November 01 2010, V1.0 API Additions</h2>
 <ul>
 <li><p class="first"><tt class="docutils literal">.non_polymorphic()</tt> queryset member function added. This is preferable to
 using <tt class="docutils literal"><span class="pre">.base_objects...</span></tt>, as it just makes the resulting queryset non-polymorphic

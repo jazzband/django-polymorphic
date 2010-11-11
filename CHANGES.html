@@ -7,10 +7,11 @@
 <title></title>
 <style type="text/css">
 
-h1, h2, h3, h4 {
+h1, h2, h3, h4,
+#table-of-contents
+{
     color: #47c;
 }
-
 h1 { padding-top: 15px; }
 h2 { padding-top: 10px; }
 h3 { padding-top: 7px; }
@@ -18,6 +19,10 @@ h3 { padding-top: 7px; }
 a:hover { border-bottom: 1px solid #0066cc; }
 a {color: #0066cc; text-decoration: none;}
 
+li {
+    padding-top: 5px;
+    padding-bottom: 5px;
+}
 
 tt {
   color: #080;
@@ -221,32 +226,45 @@ ul.auto-toc {
 <div class="section" id="changelog">
 <h1>Changelog</h1>
 <div class="section" id="v1-0-beta-2">
-<h2>2010-10-25 V1.0 Beta 2</h2>
-<div class="section" id="this-is-a-v1-0-beta-testing-release">
-<h3>This is a V1.0 Beta/Testing Release</h3>
-<p>The release contains a considerable amount of changes in some of the more
-critical parts of the software. It's intended for testing and development
-environments and not for production environments. For these, it's best to
-wait a few weeks for the proper V1.0 release, to allow some time for any
-potential problems to show up (if they exist).</p>
+<h2>2010-11-11 V1.0 Beta 2</h2>
+<div class="section" id="this-is-a-v1-0-testing-release">
+<h3>This is a V1.0 Testing Release</h3>
+<p>Beta 2 accumulated somewhat more changes than intended, and also
+has been delayed by DBMS benchmark testing I wanted to do on model
+inheritance. These benchmarks show that there are considerable
+problems with concrete model inheritance and contemporary DBM systems.
+The results will be forthcoming on the google discussion forum.</p>
+<p>Please also see:
+<a class="reference external" href="http://www.jacobian.org/writing/concrete-inheritance/">http://www.jacobian.org/writing/concrete-inheritance/</a></p>
+<p>The API should be stable now with Beta 2, so it's just about potential
+bugfixes from now on regarding V1.0.</p>
+<p>Beta 2 is still intended for testing and development environments and not
+for production. No complaints have been heard regarding Beta 1 however,
+and Beta 1 is used on a few production sites by some enterprising users.</p>
+<p>There will be a release candidate for V1.0 in the very near future.</p>
 </div>
-<div class="section" id="new-features-and-api-changes-since-beta-1">
-<h3>New Features and API changes since Beta 1</h3>
-<ul class="simple">
-<li>API CHANGE: <tt class="docutils literal">.extra()</tt> has been re-implemented. Now it's polymorphic by
-default and works (nearly) without restrictions (please see docs). This is an
+<div class="section" id="new-features-and-api-changes-in-beta-2-since-beta-1">
+<h3>New Features and API changes in Beta 2 since Beta 1</h3>
+<ul>
+<li><p class="first">API CHANGE: <tt class="docutils literal">.extra()</tt> has been re-implemented. Now it's polymorphic by
+default and works (nearly) without restrictions (please see docs). This is a (very)
 incompatible API change regarding previous versions of django_polymorphic.
 Support for the <tt class="docutils literal">polymorphic</tt> keyword parameter has been removed.
 You can get back the non-polymorphic behaviour by using
-<tt class="docutils literal"><span class="pre">ModelA.objects.non_polymorphic().extra()</span></tt>.</li>
-</ul>
-<ul class="simple">
-<li><tt class="docutils literal">.non_polymorphic()</tt> queryset member function added. This is preferable to
+<tt class="docutils literal"><span class="pre">ModelA.objects.non_polymorphic().extra(...)</span></tt>.</p>
+</li>
+<li><p class="first">API CHANGE: <tt class="docutils literal">ShowFieldContent</tt> and <tt class="docutils literal">ShowFieldTypeAndContent</tt> now
+use a slightly different output format. If this causes too much trouble for
+your test cases, you can get the old behaviour back (mostly) by adding
+<tt class="docutils literal">polymorphic_showfield_old_format = True</tt> to your model definitions.
+<tt class="docutils literal"><span class="pre">ShowField...</span></tt> now also produces more informative output for custom
+primary keys.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">.non_polymorphic()</tt> queryset member function added. This is preferable to
 using <tt class="docutils literal"><span class="pre">.base_objects...</span></tt>, as it just makes the resulting queryset non-polymorphic
 and does not change anything else in the behaviour of the manager used (while
-<tt class="docutils literal">.base_objects</tt> is just a different manager).</li>
-</ul>
-<ul>
+<tt class="docutils literal">.base_objects</tt> is just a different manager).</p>
+</li>
 <li><p class="first"><tt class="docutils literal">.get_real_instances()</tt>: implementation modified to allow the following
 more simple and intuitive use:</p>
 <pre class="literal-block">
@@ -258,16 +276,29 @@ more simple and intuitive use:</p>
 &gt;&gt;&gt; ModelA.objects.all()
 </pre>
 </li>
+<li><p class="first">misc changes/improvements</p>
+</li>
 </ul>
+</div>
+<div class="section" id="bugfixes">
+<h3>Bugfixes</h3>
 <ul class="simple">
-<li>misc changes/improvements</li>
+<li>Custom fields could cause problems when used as the primary key.
+In derived models, Django's automatic &quot;.pk&quot; field does not always work
+correctly for such custom fields: &quot;some_object.pk&quot; and &quot;some_object.id&quot;
+return different results (which they shouldn't, as pk should always be just
+an alias for the primary key field). It's unclear yet if the problem lies in
+Django or the affected custom fields. Regardless, the problem resulting
+from this has been fixed with a small workaround.
+&quot;python manage.py test polymorphic&quot; also tests and reports on this problem now.
+Thanks to Mathieu Steele for reporting and the test case.</li>
 </ul>
 </div>
 </div>
 <hr class="docutils" />
 <div class="section" id="v1-0-beta-1">
 <h2>2010-10-18 V1.0 Beta 1</h2>
-<div class="section" id="id1">
+<div class="section" id="this-is-a-v1-0-beta-testing-release">
 <h3>This is a V1.0 Beta/Testing Release</h3>
 <p>This release is mostly a cleanup and maintenance release that also
 improves a number of minor things and fixes one (non-critical) bug.</p>
@@ -315,10 +346,10 @@ transform the result to its polymorphic equivalent.</p>
 </li>
 </ul>
 </div>
-<div class="section" id="bugfixes">
+<div class="section" id="id1">
 <h3>Bugfixes</h3>
 <ul class="simple">
-<li>removed requirement for primary key to be an IntegerField.
+<li>Removed requirement for primary key to be an IntegerField.
 Thanks to Mathieu Steele and Malthe Borch.</li>
 </ul>
 </div>
@@ -329,9 +360,10 @@ Thanks to Mathieu Steele and Malthe Borch.</li>
 and has been disabled, as the regular Django dumpdata command now automatically
 works correctly with polymorphic models (for all supported versions of Django).</p>
 <p><strong>Output of Queryset or Object Printing</strong></p>
-<p>In order to improve compatibility with vanilla Django, printing quersets does not use
-django_polymorphic's pretty printing by default anymore.
-To get the old behaviour when printing querysets, you need to replace your model definition:</p>
+<p>In order to improve compatibility with vanilla Django, printing quersets
+(__repr__ and __unicode__) does not use django_polymorphic's pretty printing
+by default anymore. To get the old behaviour when printing querysets,
+you need to replace your model definition:</p>
 <pre class="doctest-block">
 &gt;&gt;&gt; class Project(PolymorphicModel):
 </pre>

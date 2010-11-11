@@ -184,8 +184,8 @@ syntax: ``exact model name + three _ + field name``):
   <ModelC: id 3, field1 (CharField), field2 (CharField), field3 (CharField)> ]
 
 
-Combining Querysets / Querysets as "Object Containers"
-------------------------------------------------------
+Combining Querysets
+-------------------
 
 Querysets could now be regarded as object containers that allow the
 aggregation of different object types, very similar to python
@@ -446,20 +446,13 @@ instead of Django's QuerySet as the base class::
             my_objects=PolymorphicManager(MyQuerySet)
             ...
 
-            
+
 Performance Considerations
 ==========================
 
 The current implementation is rather simple and does not use any
 custom SQL or Django DB layer internals - it is purely based on the
 standard Django ORM.
-
-The advantages are that the implementation naturally works on all
-supported database management systems, and consists of rather
-clean source code which can be easily understood and enhanced.
-
-The disadvantage is that this approach can not deliver the optimum
-performance as it introduces additional database queries.
 
 Specifically, the query::
 
@@ -478,82 +471,38 @@ without a tool like django_polymorphic, this usually results in a variation of :
 
     result_objects = [ o.get_real_instance() for o in BaseModel.objects.filter(...) ]
 
-which has exceptionally bad performance, as it introduces one additional
+which has very bad performance, as it introduces one additional
 SQL query for every object in the result which is not of class ``BaseModel``.
-Relative to this, the performance of the current django_polymorphic
-implementation is very good.
 
-If your project however needs perfect performance and the current
-performance implications of django_polymorphic are not acceptable, then
-basically there are the two options of either foregoing of an essential aspect
-of object oriented programming or optimizing django_polymorphic.
+Compared to these solutions, django_polymorphic has the advantage
+that it only needs one sql request per *object type*, and not *per object*.
 
-Foregoing the benefits of this aspect of object oriented programming
-for projects that could benefit from it will however usually lead to bloated code,
-unnecessary complexity and considerably more of the programmer's time to
-create and update the implementation, together with the disadvantages
-of a less flexible and less future-proof solution. Throwing a little more
-hardware on the problem might be the least expensive solution in most cases.
+.. _performance:
 
+Performance Problems with PostgreSQL, MySQL and SQLite3
+-------------------------------------------------------
 
-Possible Optimizations
-======================
+Current relational DBM systems seem to be have general problems with
+the SQL queries produced by object relational mappers like the Django
+ORM, if these use multi-table inheritance like Django's ORM does.
+The "inner joins" in these queries can perform very badly.
+This is independent of django_polymorphic and affects all uses of
+multi table Model inheritance.
 
-Django_polymorphic can be optimized to require only one
-SQL query for the queryset evaluation and retrieval of all objects.
+Concrete benchmark results are forthcoming (please see discussion forum).
 
-Probably all that would be needed seems support for an additional
-queryset function in Django's database layer, like::
+Please also see this `post (and comments) from Jacob Kaplan-Moss`_.
 
-    ModelA.objects.join_models(on="field_name", models=[ModelB, ModelC])
-
-or, less general but more simple::
-
-    ModelA.objects.join_tables(on="field_name", tables=['myapp_modelb','myapp_modelc'])
-
-This would add additional left outer joins to the query and then add
-the resulting fields from this join to the result objects.
-E.g. a query for ``ModelA`` objects would need to join the ``ModelB``
-and ``ModelC`` tables on the the field ``id`` and add the fields ``field2``
-and ``field3`` from the joined tables to the resulting objects.
-
-An optimization like this might require an SQL database.
-For non-SQL databases the implementation could fall back to
-the current ORM-only implementation.
-
-SQL Complexity of an Optimized Implementation
----------------------------------------------
-
-With only one SQL query, one SQL join for each possible subclass
-would be needed (``BaseModel.__subclasses__()``, recursively).
-
-With two SQL queries, the number of joins could be reduced to the
-number of actuallly occurring subclasses in the specific result.
-
-A perfect implementation might want to use one query only
-if the number of possible subclasses (and therefore joins) is not
-too large, and two queries otherwise (using the first query to
-determine the actually occurring subclasses, reducing the number
-of joins for the second).
-
-The number of joins needed for polymorphic object retrieval might
-raise concerns regarding the efficiency of these database
-queries. It seems likely however, that the increased number of joins
-is no problem for the supported DBM systems in all realistic use cases.
-Should the number of joins of the more extreme use cases turn out to
-be problematic, it is possible to split any problematic query into, for example,
-two queries with only half the number of joins each.
-
-It seems that further optimization (down to one DB request)
-of django_polymorphic would be restricted to a relatively small area of
-the code ("query.py"), and be pretty much independent from the rest of the module.
-Such an optimization can be done at any later time (like when it's needed).
+.. _post (and comments) from Jacob Kaplan-Moss: http://www.jacobian.org/writing/concrete-inheritance/
 
 
 .. _restrictions:
 
 Restrictions & Caveats
 ======================
+
+*   Database Performance regarding concrete Model inheritance in general
+    Please see "Performance Problems" above.
 
 *   Queryset methods ``values()``, ``values_list()``, ``select_related()``,
     ``defer()`` and ``only()`` are not yet fully supported (see above).

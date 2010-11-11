@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-This module is a scratchpad for general development, testing & debugging
+This module is a scratchpad for general development, testing & debugging.
 """
 
 from django.core.management.base import NoArgsCommand

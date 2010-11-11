@@ -3,21 +3,36 @@
 Changelog
 ++++++++++
 
-2010-11-01 V1.0 Beta 2
+2010-11-11 V1.0 Beta 2
 ======================
 
-This is a V1.0 Beta/Testing Release
------------------------------------
+This is a V1.0 Testing Release
+------------------------------
 
-Beta 2 accumulated somewhat more changes than intended. It's still
-intended for testing and development environments and not for production
-(it's best to wait for the final V1.0 for production servers).
+Beta 2 accumulated somewhat more changes than intended, and also
+has been delayed by DBMS benchmark testing I wanted to do on model
+inheritance. These benchmarks show that there are considerable
+problems with concrete model inheritance and contemporary DBM systems.
+The results will be forthcoming on the google discussion forum.
 
-New Features and API changes since Beta 1
------------------------------------------
+Please also see:
+http://www.jacobian.org/writing/concrete-inheritance/
+
+The API should be stable now with Beta 2, so it's just about potential
+bugfixes from now on regarding V1.0.
+
+Beta 2 is still intended for testing and development environments and not
+for production. No complaints have been heard regarding Beta 1 however,
+and Beta 1 is used on a few production sites by some enterprising users.
+
+There will be a release candidate for V1.0 in the very near future.
+
+
+New Features and API changes in Beta 2 since Beta 1
+---------------------------------------------------
 
 *   API CHANGE: ``.extra()`` has been re-implemented. Now it's polymorphic by
-    default and works (nearly) without restrictions (please see docs). This is an
+    default and works (nearly) without restrictions (please see docs). This is a (very)
     incompatible API change regarding previous versions of django_polymorphic.
     Support for the ``polymorphic`` keyword parameter has been removed.
     You can get back the non-polymorphic behaviour by using
@@ -27,7 +42,7 @@ New Features and API changes since Beta 1
     use a slightly different output format. If this causes too much trouble for
     your test cases, you can get the old behaviour back (mostly) by adding
     ``polymorphic_showfield_old_format = True`` to your model definitions.
-    ``ShowField...`` also produces more informative output for custom
+    ``ShowField...`` now also produces more informative output for custom
     primary keys.
 
 *   ``.non_polymorphic()`` queryset member function added. This is preferable to
@@ -58,6 +73,7 @@ Bugfixes
     Django or the affected custom fields. Regardless, the problem resulting
     from this has been fixed with a small workaround.
     "python manage.py test polymorphic" also tests and reports on this problem now.
+    Thanks to Mathieu Steele for reporting and the test case.
 
 
 ------------------------------------------------------------------
@@ -134,9 +150,10 @@ works correctly with polymorphic models (for all supported versions of Django).
 
 **Output of Queryset or Object Printing**
 
-In order to improve compatibility with vanilla Django, printing quersets does not use
-django_polymorphic's pretty printing by default anymore.
-To get the old behaviour when printing querysets, you need to replace your model definition:
+In order to improve compatibility with vanilla Django, printing quersets
+(__repr__ and __unicode__) does not use django_polymorphic's pretty printing
+by default anymore. To get the old behaviour when printing querysets,
+you need to replace your model definition:
 
 >>> class Project(PolymorphicModel):
 
