@@ -78,7 +78,7 @@ List of Features
 *   Fully automatic - generally makes sure that the same objects are
     returned from the database that were stored there, regardless how
     they are retrieved
-*   Only on models that request polymorphic behaviour however (and the
+*   Only on models that request polymorphic behaviour (and the
     models inheriting from them)
 *   Full support for ForeignKeys, ManyToManyFields and OneToToneFields
 *   Filtering for classes, equivalent to python's isinstance():
@@ -319,22 +319,17 @@ About Queryset Methods
 Using enhanced Q-objects in any Places
 --------------------------------------
 
-Sometimes it would be nice to be able to use the enhanced filter-definitions/Q-objects
-outside of polymorphic models/querysets. Example (using ``limit_choices_to``
-to filter the selection of objects in the admin)::
+The queryset enhancements (e.g. ``instance_of``) only work as arguments
+to the member functions of a polymorphic queryset.  Occationally it may
+be useful to be able to use Q objects with these enhancements in other places.
+As Django doesn't understand these enhanced Q objects, you need to
+transform them manually into normal Q objects before you can feed them
+to a Django queryset or function::
 
-    class MyModel(models.Model):
-        somekey = model.ForeignKey(Model2A,
-            limit_choices_to = Q(instance_of=Model2B) )
+    normal_q_object = ModelA.translate_polymorphic_Q_object( Q(instance_of=Model2B) )
 
-``instance_of`` is a django_polymorphic-specific enhancement of  Q objects, which the
-vanilla django function ``ForeignKey`` cannot process. In such cases  you can do::
-
-    from polymorphic import translate_polymorphic_Q_object
-
-    class MyModel(models.Model):
-        somekey = model.ForeignKey(Model2A,
-            limit_choices_to = translate_polymorphic_Q_object( Model2A, Q(instance_of=Model2B) ) )
+This function cannot be used at model creation time however (in models.py),
+as it may need to access the ContentTypes database table.
 
 
 Nicely Displaying Polymorphic Querysets
@@ -482,7 +477,7 @@ that it only needs one sql request per *object type*, and not *per object*.
 Performance Problems with PostgreSQL, MySQL and SQLite3
 -------------------------------------------------------
 
-Current relational DBM systems seem to be have general problems with
+Current relational DBM systems seem to have general problems with
 the SQL queries produced by object relational mappers like the Django
 ORM, if these use multi-table inheritance like Django's ORM does.
 The "inner joins" in these queries can perform very badly.
@@ -501,13 +496,13 @@ Please also see this `post (and comments) from Jacob Kaplan-Moss`_.
 Restrictions & Caveats
 ======================
 
-*   Database Performance regarding concrete Model inheritance in general
+*   Database Performance regarding concrete Model inheritance in general.
     Please see "Performance Problems" above.
 
 *   Queryset methods ``values()``, ``values_list()``, ``select_related()``,
     ``defer()`` and ``only()`` are not yet fully supported (see above).
     ``extra()`` has one restriction: the resulting objects are required to have
-    a unique primary key within the result set
+    a unique primary key within the result set.
 
 *   Django Admin Integration: There currently is no specific admin integration,
     but it would most likely make sense to have one.

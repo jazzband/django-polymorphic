@@ -141,7 +141,7 @@ class BlogEntry(ShowFieldTypeAndContent, PolymorphicModel):
     text = models.CharField(max_length=10)
 
 class BlogEntry_limit_choices_to(ShowFieldTypeAndContent, PolymorphicModel):
-    blog = models.ForeignKey(BlogBase, limit_choices_to=translate_polymorphic_Q_object(BlogBase,  Q(instance_of=BlogA) ) )
+    blog = models.ForeignKey(BlogBase)
     text = models.CharField(max_length=10)
 
 class ModelFieldNameTest(ShowFieldType, PolymorphicModel):
@@ -159,7 +159,7 @@ class InitTestModelSubclass(InitTestModel):
 
 # UUID tests won't work with Django 1.1
 if not (django_VERSION[0] <= 1 and django_VERSION[1] <= 1):
-    try: from polymorphic.test_tools  import UUIDField
+    try: from polymorphic.tools_for_tests  import UUIDField
     except: pass
     if 'UUIDField' in globals():
         import uuid
@@ -367,6 +367,12 @@ __test__ = {"doctest": """
 [ <Model2A: id 1, field1 (CharField)>,
   <Model2B: id 2, field1 (CharField), field2 (CharField)>,
   <Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)>,
+  <Model2D: id 4, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField)> ]
+
+# translate_polymorphic_Q_object
+>>> q=Model2A.translate_polymorphic_Q_object( Q(instance_of=Model2C) )
+>>> Model2A.objects.filter(q)
+[ <Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)>,
   <Model2D: id 4, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField)> ]
 
 

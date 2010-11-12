@@ -82,7 +82,7 @@ class UUIDField(models.CharField):
         else:
             raise UUIDVersionError("UUID version %s is not valid." % self.version)
 
-    def db_type(self):
+    def db_type(self, connection):
         from django.conf import settings
         return UUIDField._CREATE_COLUMN_TYPES.get(settings.DATABASE_ENGINE, "char(%s)" % self.max_length)
 
@@ -122,7 +122,7 @@ class UUIDField(models.CharField):
                 setattr(model_instance, self.attname, value)
         return value
 
-    def get_db_prep_value(self, value):
+    def get_db_prep_value(self, value, connection, prepared):
         """Casts uuid.UUID values into the format expected by the back end for use in queries"""
         if isinstance(value, uuid.UUID):
             return smart_unicode(value)

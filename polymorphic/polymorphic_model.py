@@ -27,6 +27,7 @@ from base import PolymorphicModelBase
 from manager import PolymorphicManager
 from query import PolymorphicQuerySet
 from showfields import ShowFieldType
+from query_translate import translate_polymorphic_Q_object
 
  
 ###################################################################################
@@ -75,6 +76,10 @@ class PolymorphicModel(models.Model):
 
     objects = PolymorphicManager()
     base_objects = models.Manager()
+
+    @classmethod
+    def translate_polymorphic_Q_object(self_class,q):
+        return translate_polymorphic_Q_object(self_class,q)
 
     def pre_save_polymorphic(self):
         """Normally not needed.

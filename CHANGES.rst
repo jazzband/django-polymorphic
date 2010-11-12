@@ -60,6 +60,9 @@ New Features and API changes in Beta 2 since Beta 1
 
     >>> ModelA.objects.all()
 
+*   added member function:
+    ``normal_q_object = ModelA.translate_polymorphic_Q_object(enhanced_q_object)``
+
 *   misc changes/improvements
 
 Bugfixes
