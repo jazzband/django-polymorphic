@@ -3,6 +3,18 @@
 Changelog
 ++++++++++
 
+2011-01-24 V1.0 Release Candidate 1
+===================================
+
+Bugfixes
+------------------------
+
+*   Fixed GitHub issue 15 (query result incomplete with inheritance).
+    Thanks to John Debs for reporting and the test case.
+
+
+------------------------------------------------------------------
+
 2010-11-11 V1.0 Beta 2
 ======================
 

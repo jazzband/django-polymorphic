@@ -161,7 +161,9 @@ class PolymorphicQuerySet(QuerySet):
         # We get different type(o.pk) in this case.
         # We work around this by using the real name of the field directly
         # for accessing the primary key of the the derived objects.
-        pk_name = self.model._meta.pk.name
+        # We might assume that self.model._meta.pk.name gives us the name of the primary key field,
+        # but it doesn't. Therefore we use polymorphic_primary_key_name, which we set up in base.py.
+        pk_name = self.model.polymorphic_primary_key_name
 
         # For each model in "idlist_per_model" request its objects (the real model)
         # from the db and store them in results[].
@@ -184,7 +186,7 @@ class PolymorphicQuerySet(QuerySet):
                     for select_field_name in self.query.extra_select.keys():
                         attr = getattr(base_result_objects_by_id[o_pk], select_field_name)
                         setattr(o, select_field_name, attr)
-                    
+
                 results[o_pk] = o
 
         # re-create correct order and return result list

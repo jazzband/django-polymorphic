@@ -156,6 +156,14 @@ class InitTestModelSubclass(InitTestModel):
     def x(self):
         return 'XYZ'
 
+# models from github issue
+class Top(PolymorphicModel):
+    name = models.CharField(max_length=50)
+class Middle(Top):
+    description = models.TextField()
+class Bottom(Middle):
+    author = models.CharField(max_length=50)
+
 
 # UUID tests won't work with Django 1.1
 if not (django_VERSION[0] <= 1 and django_VERSION[1] <= 1):
@@ -609,6 +617,20 @@ __test__ = {"doctest": """
 #>>> o=DiamondXY.objects.create(field_b='b', field_x='x', field_y='y')
 #>>> print 'DiamondXY fields 1: field_b "%s", field_x "%s", field_y "%s"' % (o.field_b, o.field_x, o.field_y)
 #DiamondXY fields 1: field_b "a", field_x "x", field_y "y"
+
+# test for github issue
+>>> t = Top()
+>>> t.save()
+>>> m = Middle()
+>>> m.save()
+>>> b = Bottom()
+>>> b.save()
+>>> Top.objects.all()
+[<Top: Top object>, <Middle: Middle object>, <Bottom: Bottom object>]
+>>> Middle.objects.all()
+[<Middle: Middle object>, <Bottom: Bottom object>]
+>>> Bottom.objects.all()
+[<Bottom: Bottom object>]
 
 
 >>> settings.DEBUG=False
