@@ -7,7 +7,7 @@ setup(
     author = 'Bert Constantin',
     author_email = 'bert.constantin@gmx.de',
     maintainer = 'Christopher Glass',
-    maintainer_email = 'tribaal@gmail.com'
+    maintainer_email = 'tribaal@gmail.com',
     url = 'http://bserve.webhop.org/wiki/django_polymorphic',
     packages = [ 'polymorphic' ],
     classifiers=[
