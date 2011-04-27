@@ -33,4 +33,5 @@ htmlcov/
 include/
 lib/
 
-
+MANIFEST
+dist/
