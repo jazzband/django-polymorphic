@@ -15,18 +15,12 @@ This code and affiliated files are (C) by Bert Constantin and individual contrib
 Please see LICENSE and AUTHORS for more information. 
 """
 
-from pprint import pprint
-import sys
-from compatibility_tools import defaultdict
-
 from django.db import models
 from django.contrib.contenttypes.models import ContentType
 from django import VERSION as django_VERSION
 
 from base import PolymorphicModelBase
 from manager import PolymorphicManager
-from query import PolymorphicQuerySet
-from showfields import ShowFieldType
 from query_translate import translate_polymorphic_Q_object
 
  

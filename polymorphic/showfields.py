@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 from django.db import models
-from pprint import pformat
 
 class ShowFieldBase(object):
     """ base class for the ShowField... model mixins, does the work """
