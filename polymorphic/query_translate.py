@@ -123,7 +123,8 @@ def translate_polymorphic_field_path(queryset_model, field_path):
     Returns: translated path (unchanged, if no translation needed)
     """
     classname, sep, pure_field_path = compat_partition(field_path, '___')
-    if not sep: return field_path
+    if not sep:
+        return field_path
     assert classname, 'PolymorphicModel: %s: bad field specification' % field_path
 
     negated = False
@@ -173,16 +174,20 @@ def translate_polymorphic_field_path(queryset_model, field_path):
             if b == baseclass:
                 return myclass.__name__.lower()
             path = _create_base_path(baseclass, b)
-            if path: return path + '__' + myclass.__name__.lower()
+            if path:
+                return path + '__' + myclass.__name__.lower()
         return ''
 
     basepath = _create_base_path(queryset_model, model)
 
-    if negated: newpath = '-'
-    else: newpath = ''
+    if negated:
+        newpath = '-'
+    else:
+        newpath = ''
     
     newpath += basepath
-    if basepath: newpath += '__'
+    if basepath:
+        newpath += '__'
 
     newpath += pure_field_path
     return newpath
@@ -201,7 +206,8 @@ def _create_model_filter_Q(modellist, not_instance_of=False):
     be needed.
     """
 
-    if not modellist: return None
+    if not modellist:
+        return None
 
     from polymorphic_model import PolymorphicModel
 
@@ -220,6 +226,7 @@ def _create_model_filter_Q(modellist, not_instance_of=False):
     qlist = [  q_class_with_subclasses(m)  for m in modellist  ]
 
     q_ored = reduce(lambda a, b: a | b, qlist)
-    if not_instance_of: q_ored = ~q_ored
+    if not_instance_of:
+        q_ored = ~q_ored
     return q_ored
 

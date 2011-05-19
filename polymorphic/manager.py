@@ -16,8 +16,10 @@ class PolymorphicManager(models.Manager):
     use_for_related_fields = True
 
     def __init__(self, queryset_class=None, *args, **kwrags):
-        if not queryset_class: self.queryset_class = PolymorphicQuerySet
-        else: self.queryset_class = queryset_class
+        if not queryset_class:
+            self.queryset_class = PolymorphicQuerySet
+        else:
+            self.queryset_class = queryset_class
         super(PolymorphicManager, self).__init__(*args, **kwrags)
 
     def get_query_set(self):
@@ -28,9 +30,10 @@ class PolymorphicManager(models.Manager):
     # The advantage of this method is that not yet known member functions of derived querysets will be proxied as well.
     # We exclude any special functions (__) from this automatic proxying.
     def __getattr__(self, name):
-        if name.startswith('__'): return super(PolymorphicManager, self).__getattr__(self, name)
+        if name.startswith('__'):
+            return super(PolymorphicManager, self).__getattr__(self, name)
         return getattr(self.get_query_set(), name)
 
     def __unicode__(self):
-        return self.__class__.__name__ + ' (PolymorphicManager) using ' + self.queryset_class.__name__
+        return u'%s (PolymorphicManager) using %s' % (self.__class__.__name__, self.queryset_class.__name__)
 
