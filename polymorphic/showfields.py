@@ -22,11 +22,15 @@ class ShowFieldBase(object):
     def _showfields_get_content(self, field_name, field_type=type(None)):
         "helper for __unicode__"
         content = getattr(self, field_name)
-        if self.polymorphic_showfield_old_format: out = ': '
-        else: out = ' '
+        if self.polymorphic_showfield_old_format:
+            out = ': '
+        else:
+            out = ' '
         if issubclass(field_type, models.ForeignKey):
-            if content is None: out += 'None'
-            else: out += content.__class__.__name__
+            if content is None:
+                out += 'None'
+            else:
+                out += content.__class__.__name__
         elif issubclass(field_type, models.ManyToManyField):
             out += '%d' % content.count()
         elif type(content) in (int,long):
@@ -44,8 +48,10 @@ class ShowFieldBase(object):
         "helper for __unicode__"
         done_fields = set()
         for field in self._meta.fields + self._meta.many_to_many:
-            if field.name in self.polymorphic_internal_model_fields or '_ptr' in field.name: continue
-            if field.name in done_fields: continue # work around django diamond inheritance problem
+            if field.name in self.polymorphic_internal_model_fields or '_ptr' in field.name:
+                continue
+            if field.name in done_fields:
+                continue # work around django diamond inheritance problem
             done_fields.add(field.name)
             
             out = field.name
@@ -58,7 +64,8 @@ class ShowFieldBase(object):
             else:
                 if self.polymorphic_showfield_type:
                     out += ' (' + type(field).__name__
-                    if field.primary_key: out += '/pk'
+                    if field.primary_key:
+                        out += '/pk'
                     out += ')'
 
                 if self.polymorphic_showfield_content:
