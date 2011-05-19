@@ -140,7 +140,8 @@ class PolymorphicModel(models.Model):
         """
         super(PolymorphicModel, self).__init__(*args, ** kwargs)
 
-        if self.__class__.polymorphic_super_sub_accessors_replaced: return
+        if self.__class__.polymorphic_super_sub_accessors_replaced:
+            return
         self.__class__.polymorphic_super_sub_accessors_replaced = True
 
         def create_accessor_function_for_model(model, accessor_name):
