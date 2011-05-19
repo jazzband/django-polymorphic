@@ -91,18 +91,27 @@ class PolymorphicModelBase(ModelBase):
         use correct mro, only use managers with _inherited==False (they are of no use),
         skip managers that are overwritten by the user with same-named class attributes (in attrs)
         """
-        add_managers = []; add_managers_keys = set()
+        add_managers = []
+        add_managers_keys = set()
         for base in self.__mro__[1:]:
-            if not issubclass(base, models.Model): continue
-            if not getattr(base, 'polymorphic_model_marker', None): continue # leave managers of non-polym. models alone
+            if not issubclass(base, models.Model):
+                continue
+            if not getattr(base, 'polymorphic_model_marker', None):
+                continue # leave managers of non-polym. models alone
 
             for key, manager in base.__dict__.items():
-                if type(manager) == models.manager.ManagerDescriptor: manager = manager.manager
-                if not isinstance(manager, models.Manager): continue
-                if key in ['_base_manager']: continue       # let Django handle _base_manager
-                if key in attrs: continue
-                if key in add_managers_keys: continue       # manager with that name already added, skip
-                if manager._inherited: continue             # inherited managers (on the bases) have no significance, they are just copies
+                if type(manager) == models.manager.ManagerDescriptor:
+                    manager = manager.manager
+                if not isinstance(manager, models.Manager):
+                    continue
+                if key in ['_base_manager']:
+                    continue       # let Django handle _base_manager
+                if key in attrs:
+                    continue
+                if key in add_managers_keys:
+                    continue       # manager with that name already added, skip
+                if manager._inherited:
+                    continue             # inherited managers (on the bases) have no significance, they are just copies
                 #print >>sys.stderr,'##',self.__name__, key
                 if isinstance(manager, PolymorphicManager): # validate any inherited polymorphic managers
                     self.validate_model_manager(manager, self.__name__, key)
