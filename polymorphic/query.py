@@ -225,7 +225,8 @@ class PolymorphicQuerySet(QuerySet):
 
         # disabled => work just like a normal queryset
         if self.polymorphic_disabled:
-            for o in base_iter: yield o
+            for o in base_iter:
+                yield o
             raise StopIteration
 
         while True:
@@ -234,7 +235,7 @@ class PolymorphicQuerySet(QuerySet):
 
             for i in range(Polymorphic_QuerySet_objects_per_request):
                 try:
-                    o=base_iter.next()
+                    o = base_iter.next()
                     base_result_objects.append(o)
                 except StopIteration:
                     reached_end = True
@@ -245,7 +246,8 @@ class PolymorphicQuerySet(QuerySet):
             for o in real_results:
                 yield o
 
-            if reached_end: raise StopIteration
+            if reached_end:
+                raise StopIteration
 
     def __repr__(self, *args, **kwargs):
         if self.model.polymorphic_query_multiline_output:
@@ -261,10 +263,11 @@ class PolymorphicQuerySet(QuerySet):
 
     def get_real_instances(self, base_result_objects=None):
         "same as _get_real_instances, but make sure that __repr__ for ShowField... creates correct output"
-        if not base_result_objects: base_result_objects=self
+        if not base_result_objects:
+            base_result_objects = self
         olist = self._get_real_instances(base_result_objects)
         if not self.model.polymorphic_query_multiline_output:
             return olist
-        clist=PolymorphicQuerySet._p_list_class(olist)
+        clist = PolymorphicQuerySet._p_list_class(olist)
         return clist
 
