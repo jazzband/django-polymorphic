@@ -19,6 +19,8 @@ Polymorphic_QuerySet_objects_per_request = CHUNK_SIZE
 
 ###################################################################################
 ### PolymorphicQuerySet
+from threading import local
+
 
 class PolymorphicQuerySet(QuerySet):
     """
@@ -29,10 +31,11 @@ class PolymorphicQuerySet(QuerySet):
     Usually not explicitly needed, except if a custom queryset class
     is to be used.
     """
+    _polymorphic = local()
 
     def __init__(self, *args, **kwargs):
         "init our queryset object member variables"
-        self.polymorphic_disabled = False
+        self.polymorphic_disabled = getattr(self.__class__._polymorphic, 'disabled', False)
         super(PolymorphicQuerySet, self).__init__(*args, **kwargs)
 
     def _clone(self, *args, **kwargs):
@@ -40,6 +43,15 @@ class PolymorphicQuerySet(QuerySet):
         new = super(PolymorphicQuerySet, self)._clone(*args, **kwargs)
         new.polymorphic_disabled = self.polymorphic_disabled
         return new
+
+    def delete(self, *args, **kwargs):
+        self.polymorphic_disabled = True
+        _polymorphic_disabled = getattr(self.__class__._polymorphic, 'disabled', False)
+        self.__class__._polymorphic.disabled = self.polymorphic_disabled
+        try:
+            super(PolymorphicQuerySet, self).delete(*args, **kwargs)
+        finally:
+            self.__class__._polymorphic.disabled = _polymorphic_disabled
 
     def non_polymorphic(self, *args, **kwargs):
         """switch off polymorphic behaviour for this query.
