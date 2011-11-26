@@ -47,6 +47,46 @@ class PolymorphicModelBase(ModelBase):
     def __new__(self, model_name, bases, attrs):
         #print; print '###', model_name, '- bases:', bases
 
+        # Setup as proxied model if possible
+        parents = [b for b in bases if isinstance(b, ModelBase)]
+        if parents:
+            is_proxy = True
+
+            if is_proxy:
+                attr_meta = attrs.get('Meta', None)
+                abstract = getattr(attr_meta, 'abstract', False)
+                if abstract:
+                    is_proxy = False
+
+            if is_proxy:
+                base = None
+                for parent in [cls for cls in parents if hasattr(cls, '_meta')]:
+                    if parent._meta.abstract:
+                        if parent._meta.fields:
+                            is_proxy = False  # Abstract parent classes with fields cannot be proxied
+                            break
+                    if base is not None:
+                        is_proxy = False
+                        break
+                    else:
+                        base = parent
+                if base is None:
+                    is_proxy = False
+
+            if is_proxy:
+                fields = [f for f in attrs.values() if isinstance(f, models.Field)]
+                if fields:
+                    is_proxy = False
+
+            if is_proxy:
+                if 'Meta' in attrs:
+                    parent = (attrs['Meta'], object,)
+                else:
+                    parent = (object,)
+                meta = type('Meta', parent, {'proxy': True})
+                #print '** model %s proxied' % model_name
+                attrs['Meta'] = meta
+
         # create new model
         new_class = self.call_superclass_new_method(model_name, bases, attrs)
 
