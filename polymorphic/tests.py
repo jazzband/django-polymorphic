@@ -553,6 +553,10 @@ __test__ = {"doctest": """
   <Model2D: id 4, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField)>,
   <Model2E: id 5, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField)> ]
 
+>>> Model2D.objects.all().delete()
+>>> Model2A.objects.all()
+[ <Model2A: id 1, field1 (CharField)>,
+  <Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)> ]
 
 ### queryset combining
 
@@ -611,8 +615,8 @@ __test__ = {"doctest": """
 >>> o=ModelWithMyManager.objects.create(field1='D1b', field4='D4b')
 
 >>> ModelWithMyManager.objects.all()
-[ <ModelWithMyManager: id 7, field1 (CharField) "D1b", field4 (CharField) "D4b">,
-  <ModelWithMyManager: id 6, field1 (CharField) "D1a", field4 (CharField) "D4a"> ]
+[ <ModelWithMyManager: id 5, field1 (CharField) "D1b", field4 (CharField) "D4b">,
+  <ModelWithMyManager: id 4, field1 (CharField) "D1a", field4 (CharField) "D4a"> ]
 
 >>> type(ModelWithMyManager.objects)
 <class 'polymorphic.tests.MyManager'>
@@ -671,4 +675,3 @@ __test__ = {"doctest": """
 >>> settings.DEBUG=False
 
 """}
-
