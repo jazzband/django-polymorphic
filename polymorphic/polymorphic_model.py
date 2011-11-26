@@ -15,6 +15,8 @@ This code and affiliated files are (C) by Bert Constantin and individual contrib
 Please see LICENSE and AUTHORS for more information.
 """
 
+from threading import local
+
 from django.db import models
 from django.contrib.contenttypes.models import ContentType
 from django import VERSION as django_VERSION
@@ -113,7 +115,7 @@ class PolymorphicModel(models.Model):
             return self
         return real_model.objects.get(pk=self.pk)
 
-    def __init__(self, * args, ** kwargs):
+    def __init__(self, *args, **kwargs):
         """Replace Django's inheritance accessor member functions for our model
         (self.__class__) with our own versions.
         We monkey patch them until a patch can be added to Django
@@ -132,7 +134,7 @@ class PolymorphicModel(models.Model):
         But they should not. So we replace them with our own accessors that use
         our appropriate base_objects manager.
         """
-        super(PolymorphicModel, self).__init__(*args, ** kwargs)
+        super(PolymorphicModel, self).__init__(*args, **kwargs)
 
         if self.__class__.polymorphic_super_sub_accessors_replaced:
             return
@@ -183,3 +185,14 @@ class PolymorphicModel(models.Model):
         add_all_super_models(self.__class__, result)
         add_all_sub_models(self.__class__, result)
         return result
+
+    _polymorphic_disabled = local()
+
+    def _get_polymorphic_disabled(self):
+        """Polymorphic behavior can be disabled for each model at any time by setting `polymorphic_disabled` to True."""
+        return getattr(self._polymorphic_disabled, 'disabled', False)
+
+    def _set_polymorphic_disabled(self, disabled):
+        self._polymorphic_disabled.disabled = disabled
+
+    polymorphic_disabled = property(_get_polymorphic_disabled, _set_polymorphic_disabled, doc=_get_polymorphic_disabled.__doc__)

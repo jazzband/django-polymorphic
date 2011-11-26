@@ -19,7 +19,6 @@ Polymorphic_QuerySet_objects_per_request = CHUNK_SIZE
 
 ###################################################################################
 ### PolymorphicQuerySet
-from threading import local
 
 
 class PolymorphicQuerySet(QuerySet):
@@ -31,12 +30,11 @@ class PolymorphicQuerySet(QuerySet):
     Usually not explicitly needed, except if a custom queryset class
     is to be used.
     """
-    _polymorphic = local()
 
     def __init__(self, *args, **kwargs):
         "init our queryset object member variables"
-        self.polymorphic_disabled = getattr(self.__class__._polymorphic, 'disabled', False)
         super(PolymorphicQuerySet, self).__init__(*args, **kwargs)
+        self.polymorphic_disabled = self.model.polymorphic_disabled
 
     def _clone(self, *args, **kwargs):
         "Django's _clone only copies its own variables, so we need to copy ours here"
@@ -45,13 +43,15 @@ class PolymorphicQuerySet(QuerySet):
         return new
 
     def delete(self, *args, **kwargs):
+        """deletes the records in the current QuerySet.
+        We need non-polymorphic object retrieval for aggregate => switch it off."""
         self.polymorphic_disabled = True
-        _polymorphic_disabled = getattr(self.__class__._polymorphic, 'disabled', False)
-        self.__class__._polymorphic.disabled = self.polymorphic_disabled
+        _polymorphic_disabled = self.model.polymorphic_disabled
+        self.model.polymorphic_disabled = self.polymorphic_disabled
         try:
             super(PolymorphicQuerySet, self).delete(*args, **kwargs)
         finally:
-            self.__class__._polymorphic.disabled = _polymorphic_disabled
+            self.model.polymorphic_disabled = _polymorphic_disabled
 
     def non_polymorphic(self, *args, **kwargs):
         """switch off polymorphic behaviour for this query.
@@ -97,7 +97,7 @@ class PolymorphicQuerySet(QuerySet):
 
     def aggregate(self, *args, **kwargs):
         """translate the polymorphic field paths in the kwargs, then call vanilla aggregate.
-        We need no polymorphic object retrieval for aggregate => switch it off."""
+        We need non-polymorphic object retrieval for aggregate => switch it off."""
         self._process_aggregate_args(args, kwargs)
         self.polymorphic_disabled = True
         return super(PolymorphicQuerySet, self).aggregate(*args, **kwargs)
