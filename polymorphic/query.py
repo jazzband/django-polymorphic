@@ -60,13 +60,13 @@ class PolymorphicQuerySet(QuerySet):
 
     def _filter_or_exclude(self, negate, *args, **kwargs):
         "We override this internal Django functon as it is used for all filter member functions."
-        translate_polymorphic_filter_definitions_in_args(self.model, args) # the Q objects
-        additional_args = translate_polymorphic_filter_definitions_in_kwargs(self.model, kwargs) # filter_field='data'
+        translate_polymorphic_filter_definitions_in_args(self.model, args)  # the Q objects
+        additional_args = translate_polymorphic_filter_definitions_in_kwargs(self.model, kwargs)  # filter_field='data'
         return super(PolymorphicQuerySet, self)._filter_or_exclude(negate, *(list(args) + additional_args), **kwargs)
 
     def order_by(self, *args, **kwargs):
         """translate the field paths in the args, then call vanilla order_by."""
-        new_args = [ translate_polymorphic_field_path(self.model, a) for a in args ]
+        new_args = [translate_polymorphic_field_path(self.model, a) for a in args]
         return super(PolymorphicQuerySet, self).order_by(*new_args, **kwargs)
 
     def _process_aggregate_args(self, args, kwargs):
@@ -170,12 +170,12 @@ class PolymorphicQuerySet(QuerySet):
         # Then we copy the extra() select fields from the base objects to the real objects.
         # TODO: defer(), only(): support for these would be around here
         for modelclass, idlist in idlist_per_model.items():
-            qs = modelclass.base_objects.filter(pk__in=idlist) # use pk__in instead ####
-            qs.dup_select_related(self)    # copy select related configuration to new qs
+            qs = modelclass.base_objects.filter(pk__in=idlist)  # use pk__in instead ####
+            qs.dup_select_related(self)  # copy select related configuration to new qs
 
             for o in qs:
-                o_pk=getattr(o,pk_name)
-                
+                o_pk = getattr(o, pk_name)
+
                 if self.query.aggregates:
                     for anno_field_name in self.query.aggregates.keys():
                         attr = getattr(base_result_objects_by_id[o_pk], anno_field_name)
@@ -189,20 +189,20 @@ class PolymorphicQuerySet(QuerySet):
                 results[o_pk] = o
 
         # re-create correct order and return result list
-        resultlist = [ results[ordered_id] for ordered_id in ordered_id_list if ordered_id in results ]
+        resultlist = [results[ordered_id] for ordered_id in ordered_id_list if ordered_id in results]
 
         # set polymorphic_annotate_names in all objects (currently just used for debugging/printing)
         if self.query.aggregates:
-            annotate_names=self.query.aggregates.keys() # get annotate field list
+            annotate_names = self.query.aggregates.keys()  # get annotate field list
             for o in resultlist:
-                o.polymorphic_annotate_names=annotate_names
+                o.polymorphic_annotate_names = annotate_names
 
         # set polymorphic_extra_select_names in all objects (currently just used for debugging/printing)
         if self.query.extra_select:
-            extra_select_names=self.query.extra_select.keys() # get extra select field list
+            extra_select_names = self.query.extra_select.keys()  # get extra select field list
             for o in resultlist:
-                o.polymorphic_extra_select_names=extra_select_names
-            
+                o.polymorphic_extra_select_names = extra_select_names
+
         return resultlist
 
     def iterator(self):
@@ -250,14 +250,14 @@ class PolymorphicQuerySet(QuerySet):
 
     def __repr__(self, *args, **kwargs):
         if self.model.polymorphic_query_multiline_output:
-            result = [ repr(o) for o in self.all() ]
+            result = [repr(o) for o in self.all()]
             return  '[ ' + ',\n  '.join(result) + ' ]'
         else:
-            return super(PolymorphicQuerySet,self).__repr__(*args, **kwargs)
+            return super(PolymorphicQuerySet, self).__repr__(*args, **kwargs)
 
     class _p_list_class(list):
         def __repr__(self, *args, **kwargs):
-            result = [ repr(o) for o in self ]
+            result = [repr(o) for o in self]
             return  '[ ' + ',\n  '.join(result) + ' ]'
 
     def get_real_instances(self, base_result_objects=None):
