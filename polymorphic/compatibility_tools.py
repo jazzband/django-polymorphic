@@ -20,36 +20,43 @@ except:
                 raise TypeError('first argument must be callable')
             dict.__init__(self, *a, **kw)
             self.default_factory = default_factory
+
         def __getitem__(self, key):
             try:
                 return dict.__getitem__(self, key)
             except KeyError:
                 return self.__missing__(key)
+
         def __missing__(self, key):
             if self.default_factory is None:
                 raise KeyError(key)
             self[key] = value = self.default_factory()
             return value
+
         def __reduce__(self):
             if self.default_factory is None:
                 args = tuple()
             else:
                 args = self.default_factory,
             return type(self), args, None, None, self.items()
+
         def copy(self):
             return self.__copy__()
+
         def __copy__(self):
             return type(self)(self.default_factory, self)
+
         def __deepcopy__(self, memo):
             import copy
-            return type(self)(self.default_factory,
-                              copy.deepcopy(self.items()))
+            return type(self)(self.default_factory, copy.deepcopy(self.items()))
+
         def __repr__(self):
             return 'defaultdict(%s, %s)' % (self.default_factory, dict.__repr__(self))
 
 
-if getattr(str,'partition',None):
-    def compat_partition(s,sep): return s.partition(sep)
+if getattr(str, 'partition', None):
+    def compat_partition(s, sep):
+        return s.partition(sep)
 else:
     """ from:
     http://mail.python.org/pipermail/python-dev/2005-September/055962.html
@@ -82,4 +89,3 @@ else:
         assert ''.join(result) == s
         assert result[1] == '' or result[1] is sep
         return result
-

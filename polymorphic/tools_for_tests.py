@@ -4,14 +4,14 @@
 
 import uuid
 
-from django.forms.util import ValidationError
 from django import forms
 from django.db import models
 from django.utils.encoding import smart_unicode
-from django.utils.translation import ugettext_lazy
+
 
 class UUIDVersionError(Exception):
     pass
+
 
 class UUIDField(models.CharField):
     """Encode and stores a Python uuid.UUID in a manner that is appropriate
@@ -60,24 +60,24 @@ class UUIDField(models.CharField):
 
         self.auto = auto
         self.version = version
-        if version==1:
+        if version == 1:
             self.node, self.clock_seq = node, clock_seq
-        elif version==3 or version==5:
+        elif version == 3 or version == 5:
             self.namespace, self.name = namespace, name
 
         super(UUIDField, self).__init__(verbose_name=verbose_name,
             name=name, **kwargs)
 
     def create_uuid(self):
-        if not self.version or self.version==4:
+        if not self.version or self.version == 4:
             return uuid.uuid4()
-        elif self.version==1:
+        elif self.version == 1:
             return uuid.uuid1(self.node, self.clock_seq)
-        elif self.version==2:
+        elif self.version == 2:
             raise UUIDVersionError("UUID version 2 is not supported.")
-        elif self.version==3:
+        elif self.version == 3:
             return uuid.uuid3(self.namespace, self.name)
-        elif self.version==5:
+        elif self.version == 5:
             return uuid.uuid5(self.namespace, self.name)
         else:
             raise UUIDVersionError("UUID version %s is not valid." % self.version)
@@ -116,7 +116,7 @@ class UUIDField(models.CharField):
             value = self.create_uuid()
             setattr(model_instance, self.attname, value)
         else:
-            value = super(UUIDField, self).pre_save(model_instance,add)
+            value = super(UUIDField, self).pre_save(model_instance, add)
             if self.auto and not value:
                 value = self.create_uuid()
                 setattr(model_instance, self.attname, value)

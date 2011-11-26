@@ -14,7 +14,7 @@ from query import PolymorphicQuerySet
 
 # PolymorphicQuerySet Q objects (and filter()) support these additional key words.
 # These are forbidden as field names (a descriptive exception is raised)
-POLYMORPHIC_SPECIAL_Q_KWORDS = [ 'instance_of', 'not_instance_of']
+POLYMORPHIC_SPECIAL_Q_KWORDS = ['instance_of', 'not_instance_of']
 
 
 ###################################################################################
@@ -79,8 +79,8 @@ class PolymorphicModelBase(ModelBase):
         # determine the name of the primary key field and store it into the class variable
         # polymorphic_primary_key_name (it is needed by query.py)
         for f in new_class._meta.fields:
-            if f.primary_key and type(f)!=models.OneToOneField:
-                new_class.polymorphic_primary_key_name=f.name
+            if f.primary_key and type(f) != models.OneToOneField:
+                new_class.polymorphic_primary_key_name = f.name
                 break
 
         return new_class
@@ -97,7 +97,7 @@ class PolymorphicModelBase(ModelBase):
             if not issubclass(base, models.Model):
                 continue
             if not getattr(base, 'polymorphic_model_marker', None):
-                continue # leave managers of non-polym. models alone
+                continue  # leave managers of non-polym. models alone
 
             for key, manager in base.__dict__.items():
                 if type(manager) == models.manager.ManagerDescriptor:
@@ -113,7 +113,7 @@ class PolymorphicModelBase(ModelBase):
                 if manager._inherited:
                     continue             # inherited managers (on the bases) have no significance, they are just copies
                 #print >>sys.stderr,'##',self.__name__, key
-                if isinstance(manager, PolymorphicManager): # validate any inherited polymorphic managers
+                if isinstance(manager, PolymorphicManager):  # validate any inherited polymorphic managers
                     self.validate_model_manager(manager, self.__name__, key)
                 add_managers.append((base.__name__, key, manager))
                 add_managers_keys.add(key)
@@ -148,7 +148,7 @@ class PolymorphicModelBase(ModelBase):
         do_app_label_workaround = (meta
                                     and model_module_name == 'polymorphic'
                                     and model_name == 'PolymorphicModel'
-                                    and getattr(meta, 'app_label', None) is None )
+                                    and getattr(meta, 'app_label', None) is None)
 
         if do_app_label_workaround:
             meta.app_label = 'poly_dummy_app_label'
@@ -162,7 +162,7 @@ class PolymorphicModelBase(ModelBase):
         for f in self._meta.fields:
             if f.name in POLYMORPHIC_SPECIAL_Q_KWORDS:
                 e = 'PolymorphicModel: "%s" - field name "%s" is not allowed in polymorphic models'
-                raise AssertionError(e % (self.__name__, f.name) )
+                raise AssertionError(e % (self.__name__, f.name))
 
     @classmethod
     def validate_model_manager(self, manager, model_name, manager_name):
@@ -192,9 +192,9 @@ class PolymorphicModelBase(ModelBase):
         _dumpdata_command_running = (sys.argv[1] == 'dumpdata')
 
     def __getattribute__(self, name):
-        if name=='_default_manager':
+        if name == '_default_manager':
             if self._dumpdata_command_running:
-                frm = inspect.stack()[1] # frm[1] is caller file name, frm[3] is caller function name
+                frm = inspect.stack()[1]  # frm[1] is caller file name, frm[3] is caller function name
                 if 'django/core/management/commands/dumpdata.py' in frm[1]:
                     return self.base_objects
                 #caller_mod_name = inspect.getmodule(frm[0]).__name__  # does not work with python 2.4
