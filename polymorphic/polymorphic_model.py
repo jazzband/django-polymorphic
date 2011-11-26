@@ -183,4 +183,3 @@ class PolymorphicModel(models.Model):
         add_all_super_models(self.__class__,result)
         add_all_sub_models(self.__class__,result)
         return result
-
