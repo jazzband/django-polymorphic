@@ -62,7 +62,7 @@ class PolymorphicModel(models.Model):
         p_related_name_template = 'polymorphic_%(class)s_set'
     else:
         p_related_name_template = 'polymorphic_%(app_label)s.%(class)s_set'
-    polymorphic_ctype = models.ForeignKey(ContentType, null=True, editable=False,
+    polymorphic_ctype = models.ForeignKey(ContentType, editable=False,
                                 related_name=p_related_name_template)
     
     # some applications want to know the name of the fields that are added to its models
