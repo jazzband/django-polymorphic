@@ -219,7 +219,7 @@ class PolymorphicQuerySet(QuerySet):
                     for k, v in base_result_objects_by_id[o_pk].__dict__.items():
                         o.__dict__[k] = v
 
-                results[o_pk] = o
+                    results[o_pk] = o
 
         # re-create correct order and return result list
         resultlist = [results[ordered_id] for ordered_id in ordered_id_list if ordered_id in results]
