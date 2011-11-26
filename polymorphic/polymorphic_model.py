@@ -119,7 +119,7 @@ class PolymorphicModel(models.Model):
         We monkey patch them until a patch can be added to Django
         (which would probably be very small and make all of this obsolete).
 
-        If we have inheritance of the form ModelA -> ModelB ->ModelC then
+        If we have inheritance of the form ModelA -> ModelB -> ModelC then
         Django creates accessors like this:
         - ModelA: modelb
         - ModelB: modela_ptr, modelb, modelc

@@ -163,9 +163,10 @@ class PolymorphicQuerySet(QuerySet):
             if (base_object.polymorphic_ctype_id == self_model_content_type_id):
                 results[base_object.pk] = base_object
 
-            # this object is a proxied object of the real instence and already has all the data it needs
             else:
                 modelclass = base_object.get_real_instance_class()
+
+                # this object is a proxied object of the real instence and already has all the data it needs
                 if (ContentType.objects.get_for_model(modelclass).pk == self_model_unproxied_content_type_id):
                     o = modelclass()
                     for k, v in base_object.__dict__.items():
