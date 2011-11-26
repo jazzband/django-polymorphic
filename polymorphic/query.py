@@ -269,4 +269,3 @@ class PolymorphicQuerySet(QuerySet):
             return olist
         clist = PolymorphicQuerySet._p_list_class(olist)
         return clist
-

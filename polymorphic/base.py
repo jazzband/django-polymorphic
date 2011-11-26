@@ -123,10 +123,11 @@ class PolymorphicModelBase(ModelBase):
     def get_first_user_defined_manager(self, model_name, attrs):
         mgr_list = []
         for key, val in attrs.items():
-            if not isinstance(val, models.Manager): continue
+            if not isinstance(val, models.Manager):
+                continue
             mgr_list.append((val.creation_counter, key, val))
         # if there are user defined managers, use first one as _default_manager
-        if mgr_list:                        #
+        if mgr_list:
             _, manager_name, manager = sorted(mgr_list)[0]
             #sys.stderr.write( '\n# first user defined manager for model "{model}":\n#  "{mgrname}": {mgr}\n#  manager model: {mgrmodel}\n\n'
             #    .format( model=model_name, mgrname=manager_name, mgr=manager, mgrmodel=manager.model ) )
@@ -149,9 +150,11 @@ class PolymorphicModelBase(ModelBase):
                                     and model_name == 'PolymorphicModel'
                                     and getattr(meta, 'app_label', None) is None )
 
-        if do_app_label_workaround: meta.app_label = 'poly_dummy_app_label'
+        if do_app_label_workaround:
+            meta.app_label = 'poly_dummy_app_label'
         new_class = super(PolymorphicModelBase, self).__new__(self, model_name, bases, attrs)
-        if do_app_label_workaround: del(meta.app_label)
+        if do_app_label_workaround:
+            del(meta.app_label)
         return new_class
 
     def validate_model_fields(self):
@@ -176,7 +179,6 @@ class PolymorphicModelBase(ModelBase):
             raise AssertionError(e)
         return manager
 
-
     # hack: a small patch to Django would be a better solution.
     # Django's management command 'dumpdata' relies on non-polymorphic
     # behaviour of the _default_manager. Therefore, we catch any access to _default_manager
@@ -186,7 +188,9 @@ class PolymorphicModelBase(ModelBase):
     # for all supported Django versions.
     # TODO: investigate Django how this can be avoided
     _dumpdata_command_running = False
-    if len(sys.argv)>1: _dumpdata_command_running = ( sys.argv[1] == 'dumpdata' )
+    if len(sys.argv) > 1:
+        _dumpdata_command_running = (sys.argv[1] == 'dumpdata')
+
     def __getattribute__(self, name):
         if name=='_default_manager':
             if self._dumpdata_command_running:
@@ -197,4 +201,3 @@ class PolymorphicModelBase(ModelBase):
                 #if caller_mod_name == 'django.core.management.commands.dumpdata':
 
         return super(PolymorphicModelBase, self).__getattribute__(name)
-
