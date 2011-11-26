@@ -24,4 +24,3 @@ if ! diff -w $TMPFILE pexp/dumpdata_test_correct_output.txt ; then
 fi
 echo "#####################################################################"
 echo 'SUCCESS!'
-

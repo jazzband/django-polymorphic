@@ -10,25 +10,30 @@ import settings
 
 from pexp.models import *
 
+
 def reset_queries():
-    connection.queries=[]
+    connection.queries = []
+
 
 def show_queries():
-    print; print 'QUERIES:',len(connection.queries); pprint(connection.queries); print; connection.queries=[]
-    
+    print
+    print 'QUERIES:', len(connection.queries)
+    pprint(connection.queries)
+    print
+    connection.queries = []
+
+
 class Command(NoArgsCommand):
     help = ""
 
     def handle_noargs(self, **options):
-        print 'polycmd - sqlite test db is stored in:',settings.SQLITE_DB_PATH
+        print 'polycmd - sqlite test db is stored in:', settings.SQLITE_DB_PATH
         print
 
         Project.objects.all().delete()
-        o=Project.objects.create(topic="John's gathering")
-        o=ArtProject.objects.create(topic="Sculpting with Tim", artist="T. Turner")
-        o=ResearchProject.objects.create(topic="Swallow Aerodynamics", supervisor="Dr. Winter")
+        Project.objects.create(topic="John's gathering")
+        ArtProject.objects.create(topic="Sculpting with Tim", artist="T. Turner")
+        ResearchProject.objects.create(topic="Swallow Aerodynamics", supervisor="Dr. Winter")
+        XProject.objects.create(topic="UFO Research")
         print Project.objects.all()
         print
-        
-
-

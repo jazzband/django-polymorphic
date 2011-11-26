@@ -17,7 +17,7 @@ if os.path.ismount('/ram'):
 else:
     SQLITE_DB_PATH = '/var/tmp/django-polymorphic-test-db.sqlite3'
 
-if django.VERSION[:2][0]>=1 and django.VERSION[:2][1]>=3:
+if django.VERSION[:2][0] >= 1 and django.VERSION[:2][1] >= 3:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
