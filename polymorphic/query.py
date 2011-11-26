@@ -148,6 +148,7 @@ class PolymorphicQuerySet(QuerySet):
         # - store objects that already have the correct class into "results"
         base_result_objects_by_id = {}
         self_model_content_type_id = ContentType.objects.get_for_proxied_model(self.model).pk
+        self_model_unproxied_content_type_id = ContentType.objects.get_for_model(self.model).pk
         for base_object in base_result_objects:
             ordered_id_list.append(base_object.pk)
 
@@ -162,10 +163,20 @@ class PolymorphicQuerySet(QuerySet):
             if (base_object.polymorphic_ctype_id == self_model_content_type_id):
                 results[base_object.pk] = base_object
 
-            # this object is derived and its real instance needs to be retrieved
-            # => store it's id into the bin for this model type
+            # this object is a proxied object of the real instence and already has all the data it needs
             else:
-                idlist_per_model[base_object.get_real_instance_class()].append(base_object.pk)
+                modelclass = base_object.get_real_instance_class()
+                if (ContentType.objects.get_for_model(modelclass).pk == self_model_unproxied_content_type_id):
+                    o = modelclass()
+                    for k, v in base_object.__dict__.items():
+                        o.__dict__[k] = v
+
+                    results[base_object.pk] = o
+
+                # this object is derived and its real instance needs to be retrieved
+                # => store it's id into the bin for this model type
+                else:
+                    idlist_per_model[modelclass].append(base_object.pk)
 
         # django's automatic ".pk" field does not always work correctly for
         # custom fields in derived objects (unclear yet who to put the blame on).
