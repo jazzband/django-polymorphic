@@ -84,7 +84,7 @@ class PolymorphicModel(models.Model):
         (used by PolymorphicQuerySet._get_real_instances)
         """
         if not self.polymorphic_ctype_id:
-            self.polymorphic_ctype_id = ContentType.objects.get_for_proxied_model(self).id
+            self.polymorphic_ctype_id = ContentType.objects.get_for_proxied_model(self).pk
 
     def save(self, *args, **kwargs):
         """Overridden model save function which supports the polymorphism
