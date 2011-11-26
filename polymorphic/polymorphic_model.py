@@ -150,7 +150,7 @@ class PolymorphicModel(models.Model):
         for name,model in subclasses_and_superclasses_accessors.iteritems():
             orig_accessor = getattr(self.__class__, name, None)
             if type(orig_accessor) in [SingleRelatedObjectDescriptor,ReverseSingleRelatedObjectDescriptor]:
-                #print >>sys.stderr, '---------- replacing',name, orig_accessor
+                #print >>sys.stderr, '---------- replacing', name, orig_accessor, '->', model
                 setattr(self.__class__, name, property(create_accessor_function_for_model(model, name)) )
 
     def _get_inheritance_relation_fields_and_models(self):
