@@ -12,7 +12,7 @@ http://bitbucket.org/bconstantin/django_polymorphic
 
 Copyright:
 This code and affiliated files are (C) by Bert Constantin and individual contributors.
-Please see LICENSE and AUTHORS for more information. 
+Please see LICENSE and AUTHORS for more information.
 """
 
 from django.db import models
@@ -23,7 +23,7 @@ from base import PolymorphicModelBase
 from manager import PolymorphicManager
 from query_translate import translate_polymorphic_Q_object
 
- 
+
 ###################################################################################
 ### PolymorphicModel
 
@@ -31,18 +31,18 @@ class PolymorphicModel(models.Model):
     """
     Abstract base class that provides polymorphic behaviour
     for any model directly or indirectly derived from it.
-    
+
     For usage instructions & examples please see documentation.
-    
+
     PolymorphicModel declares one field for internal use (polymorphic_ctype)
     and provides a polymorphic manager as the default manager
     (and as 'objects').
-    
+
     PolymorphicModel overrides the save() and __init__ methods.
-    
+
     If your derived class overrides any of these methods as well, then you need
     to take care that you correctly call the method of the superclass, like:
-    
+
         super(YourClass,self).save(*args,**kwargs)
     """
     __metaclass__ = PolymorphicModelBase
@@ -57,23 +57,23 @@ class PolymorphicModel(models.Model):
         abstract = True
 
     # avoid ContentType related field accessor clash (an error emitted by model validation)
-    # we really should use both app_label and model name, but this is only possible since Django 1.2 
+    # we really should use both app_label and model name, but this is only possible since Django 1.2
     if django_VERSION[0] <= 1 and django_VERSION[1] <= 1:
         p_related_name_template = 'polymorphic_%(class)s_set'
     else:
         p_related_name_template = 'polymorphic_%(app_label)s.%(class)s_set'
     polymorphic_ctype = models.ForeignKey(ContentType, editable=False,
                                 related_name=p_related_name_template)
-    
+
     # some applications want to know the name of the fields that are added to its models
-    polymorphic_internal_model_fields = [ 'polymorphic_ctype' ]
+    polymorphic_internal_model_fields = ['polymorphic_ctype']
 
     objects = PolymorphicManager()
     base_objects = models.Manager()
 
     @classmethod
-    def translate_polymorphic_Q_object(self_class,q):
-        return translate_polymorphic_Q_object(self_class,q)
+    def translate_polymorphic_Q_object(self_class, q):
+        return translate_polymorphic_Q_object(self_class, q)
 
     def pre_save_polymorphic(self):
         """Normally not needed.
@@ -96,18 +96,18 @@ class PolymorphicModel(models.Model):
         """Normally not needed.
         If a non-polymorphic manager (like base_objects) has been used to
         retrieve objects, then the real class/type of these objects may be
-        determined using this method.""" 
+        determined using this method."""
         # the following line would be the easiest way to do this, but it produces sql queries
         #return self.polymorphic_ctype.model_class()
         # so we use the following version, which uses the CopntentType manager cache
         return ContentType.objects.get_for_id(self.polymorphic_ctype_id).model_class()
-    
+
     def get_real_instance(self):
         """Normally not needed.
         If a non-polymorphic manager (like base_objects) has been used to
         retrieve objects, then the complete object with it's real class/type
         and all fields may be retrieved with this method.
-        Each method call executes one db query (if necessary).""" 
+        Each method call executes one db query (if necessary)."""
         real_model = self.get_real_instance_class()
         if real_model == self.__class__:
             return self
@@ -147,11 +147,11 @@ class PolymorphicModel(models.Model):
         subclasses_and_superclasses_accessors = self._get_inheritance_relation_fields_and_models()
 
         from django.db.models.fields.related import SingleRelatedObjectDescriptor, ReverseSingleRelatedObjectDescriptor
-        for name,model in subclasses_and_superclasses_accessors.iteritems():
+        for name, model in subclasses_and_superclasses_accessors.iteritems():
             orig_accessor = getattr(self.__class__, name, None)
-            if type(orig_accessor) in [SingleRelatedObjectDescriptor,ReverseSingleRelatedObjectDescriptor]:
+            if type(orig_accessor) in [SingleRelatedObjectDescriptor, ReverseSingleRelatedObjectDescriptor]:
                 #print >>sys.stderr, '---------- replacing', name, orig_accessor, '->', model
-                setattr(self.__class__, name, property(create_accessor_function_for_model(model, name)) )
+                setattr(self.__class__, name, property(create_accessor_function_for_model(model, name)))
 
     def _get_inheritance_relation_fields_and_models(self):
         """helper function for __init__:
@@ -167,8 +167,8 @@ class PolymorphicModel(models.Model):
             if (issubclass(model, models.Model)
                 and model != models.Model
                 and model != self.__class__
-                and model != PolymorphicModel ):
-                add_model(model,as_ptr,result)
+                and model != PolymorphicModel):
+                add_model(model, as_ptr, result)
 
         def add_all_super_models(model, result):
             add_model_if_regular(model, True, result)
@@ -180,6 +180,6 @@ class PolymorphicModel(models.Model):
                 add_model_if_regular(b, False, result)
 
         result = {}
-        add_all_super_models(self.__class__,result)
-        add_all_sub_models(self.__class__,result)
+        add_all_super_models(self.__class__, result)
+        add_all_sub_models(self.__class__, result)
         return result

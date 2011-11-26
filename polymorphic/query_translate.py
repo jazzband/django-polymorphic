@@ -47,6 +47,7 @@ def translate_polymorphic_filter_definitions_in_kwargs(queryset_model, kwargs):
 
     return additional_args
 
+
 def translate_polymorphic_Q_object(queryset_model, potential_q_object):
     def tree_node_correct_field_specs(my_model, node):
         " process all children of this Q node "
@@ -67,6 +68,7 @@ def translate_polymorphic_Q_object(queryset_model, potential_q_object):
         tree_node_correct_field_specs(queryset_model, potential_q_object)
 
     return potential_q_object
+
 
 def translate_polymorphic_filter_definitions_in_args(queryset_model, args):
     """
@@ -104,7 +106,7 @@ def _translate_polymorphic_filter_definition(queryset_model, field_path, field_v
     elif field_path == 'not_instance_of':
         return _create_model_filter_Q(field_val, not_instance_of=True)
     elif not '___' in field_path:
-        return None #no change
+        return None  # no change
 
     # filter expression contains '___' (i.e. filter for polymorphic field)
     # => get the model class specified in the filter expression
@@ -184,7 +186,7 @@ def translate_polymorphic_field_path(queryset_model, field_path):
         newpath = '-'
     else:
         newpath = ''
-    
+
     newpath += basepath
     if basepath:
         newpath += '__'
@@ -223,10 +225,9 @@ def _create_model_filter_Q(modellist, not_instance_of=False):
             q = q | q_class_with_subclasses(subclass)
         return q
 
-    qlist = [  q_class_with_subclasses(m)  for m in modellist  ]
+    qlist = [q_class_with_subclasses(m)  for m in modellist]
 
     q_ored = reduce(lambda a, b: a | b, qlist)
     if not_instance_of:
         q_ored = ~q_ored
     return q_ored
-

@@ -41,4 +41,3 @@ class PolymorphicManager(models.Manager):
 
     def __unicode__(self):
         return u'%s (PolymorphicManager) using %s' % (self.__class__.__name__, self.queryset_class.__name__)
-
