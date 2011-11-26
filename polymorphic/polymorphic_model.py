@@ -109,9 +109,9 @@ class PolymorphicModel(models.Model):
         and all fields may be retrieved with this method.
         Each method call executes one db query (if necessary).""" 
         real_model = self.get_real_instance_class()
-        if real_model == self.__class__: return self
+        if real_model == self.__class__:
+            return self
         return real_model.objects.get(pk=self.pk)
-
 
     def __init__(self, * args, ** kwargs):
         """Replace Django's inheritance accessor member functions for our model
@@ -159,11 +159,13 @@ class PolymorphicModel(models.Model):
 
         def add_model(model, as_ptr, result):
             name = model.__name__.lower()
-            if as_ptr: name+='_ptr'
+            if as_ptr:
+                name += '_ptr'
             result[name] = model
 
         def add_model_if_regular(model, as_ptr, result):
-            if ( issubclass(model, models.Model) and model != models.Model
+            if (issubclass(model, models.Model)
+                and model != models.Model
                 and model != self.__class__
                 and model != PolymorphicModel ):
                 add_model(model,as_ptr,result)
@@ -182,4 +184,3 @@ class PolymorphicModel(models.Model):
         add_all_sub_models(self.__class__,result)
         return result
 
-        
