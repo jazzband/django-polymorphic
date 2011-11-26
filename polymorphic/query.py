@@ -17,7 +17,6 @@ from django.db.models.query import CHUNK_SIZE               # this is 100 for Dj
 Polymorphic_QuerySet_objects_per_request = CHUNK_SIZE
 
 
-
 ###################################################################################
 ### PolymorphicQuerySet
 
@@ -97,7 +96,6 @@ class PolymorphicQuerySet(QuerySet):
     # The "polymorphic" keyword argument is not supported anymore.
     #def extra(self, *args, **kwargs):
 
-
     def _get_real_instances(self, base_result_objects):
         """
         Polymorphic object loader
@@ -143,7 +141,8 @@ class PolymorphicQuerySet(QuerySet):
 
             # check if id of the result object occeres more than once - this can happen e.g. with base_objects.extra(tables=...)
             assert not base_object.pk in base_result_objects_by_id, (
-                "django_polymorphic: result objects do not have unique primary keys - model "+unicode(self.model) )
+                "django_polymorphic: result objects do not have unique primary keys - model " + unicode(self.model)
+            )
 
             base_result_objects_by_id[base_object.pk] = base_object
 
