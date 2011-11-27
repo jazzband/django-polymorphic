@@ -553,6 +553,12 @@ __test__ = {"doctest": """
   <Model2D: id 4, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField)>,
   <Model2E: id 5, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField)> ]
 
+>>> Model2E.objects.all().delete()
+>>> Model2A.objects.all()
+[ <Model2A: id 1, field1 (CharField)>,
+  <Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)>,
+  <Model2D: id 4, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField)> ]
+
 >>> Model2D.objects.all().delete()
 >>> Model2A.objects.all()
 [ <Model2A: id 1, field1 (CharField)>,

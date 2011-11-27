@@ -27,7 +27,7 @@ class PolymorphicManager(models.Manager):
     def get_query_set(self):
         queryset = self.queryset_class(self.model)
         if self.model._meta.proxy and 'polymorphic_ctype' in self.model._meta.get_all_field_names():
-            queryset = queryset.filter(polymorphic_ctype=ContentType.objects.get_for_proxied_model(self.model))
+            queryset = queryset.filter(instance_of=self.model)
         return queryset
 
     # Proxy all unknown method calls to the queryset, so that its members are

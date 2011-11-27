@@ -33,6 +33,8 @@ class nModelB(nModelA):
 class nModelC(nModelB):
     field3 = models.CharField(max_length=10)
 class nModelD(nModelC):
+    field4 = models.CharField(max_length=10)
+class nModelE(nModelD):
     pass
 
 # for Django 1.2+, test models with same names in different apps
@@ -46,7 +48,10 @@ if not (django_VERSION[0] <= 1 and django_VERSION[1] <= 1):
     class Model2C(Model2B):
         field3 = models.CharField(max_length=10)
     class Model2D(Model2C):
+        field4 = models.CharField(max_length=10)
+    class Model2E(Model2D):
         pass
+
 
 try:
     from polymorphic.test_tools  import UUIDField
