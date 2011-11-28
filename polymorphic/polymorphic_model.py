@@ -15,7 +15,10 @@ This code and affiliated files are (C) by Bert Constantin and individual contrib
 Please see LICENSE and AUTHORS for more information.
 """
 
-from threading import local
+try:
+    from threading import local
+except ImportError:
+    from django.utils._threading_local import local
 
 from django.db import models
 from django.contrib.contenttypes.models import ContentType
