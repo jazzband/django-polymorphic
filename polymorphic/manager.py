@@ -4,7 +4,6 @@
 """
 
 from django.db import models
-from django.contrib.contenttypes.models import ContentType
 from query import PolymorphicQuerySet
 
 
@@ -26,7 +25,7 @@ class PolymorphicManager(models.Manager):
 
     def get_query_set(self):
         queryset = self.queryset_class(self.model)
-        if self.model._meta.proxy and 'polymorphic_ctype' in self.model._meta.get_all_field_names():
+        if self.model._meta.proxy:
             queryset = queryset.filter(instance_of=self.model)
         return queryset
 
