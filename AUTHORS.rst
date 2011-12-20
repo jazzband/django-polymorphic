@@ -10,4 +10,5 @@ Contributors
 
 * Andrew Ingram (contributed setup.py)
 * Charles Leifer (python 2.4 compatibility)
+* Germán M. Bravo
 * Martin Brochhaus
