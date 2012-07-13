@@ -166,9 +166,10 @@ The polymorphic admin interface works in a simple way:
 * The list screen still displays all objects of the base class.
 
 The polymorphic admin is implemented via a parent admin that forwards the *edit* and *delete* views
-to the ``ModelAdmin`` of the derived child model. Hence, both the parent model and child model
-need to have a ``ModelAdmin`` class.  Only the ``ModelAdmin`` class of the parent/base model
-has to be registered in the Django admin site.
+to the ``ModelAdmin`` of the derived child model. The *list* page is still implemented by the parent model admin.
+
+Both the parent model and child model need to have a ``ModelAdmin`` class.
+Only the ``ModelAdmin`` class of the parent/base model has to be registered in the Django admin site.
 
 The parent model
 ~~~~~~~~~~~~~~~~
@@ -176,12 +177,14 @@ The parent model
 The parent model needs to inherit ``PolymorphicParentModelAdmin``, and implement the following:
 
 * ``base_model`` should be set
-* ``get_admin_for_model()`` should return the model class for the child model.
-* ``get_child_model_classes()`` should return a list of all child model classes.
+* ``child_models`` should be set, or:
+
+ * ``get_admin_for_model()`` should return the model class for the child model.
+ * ``get_child_model_classes()`` should return a list of all child model classes.
 
 The exact implementation can depend on the way your module is structured.
-Either a plugin registration system, or configuration setting could be used.
-The parent admin redirects it's change and delete views to the child admin.
+For simple inheritance situations, ``child_models`` is best suited.
+For large applications, this leaves room for a plugin registration system.
 
 The child models
 ~~~~~~~~~~~~~~~~
@@ -213,22 +216,6 @@ Example
     from polymorphic.admin import PolymorphicParentModelAdmin, PolymorphicChildModelAdmin
 
 
-    class ModelAParentAdmin(PolymorphicParentModelAdmin):
-        """ The parent model admin """
-        base_model = ModelA
-
-        def get_admin_for_model(self, model):
-            # just `return ModelAChildAdmin` would also work, if you don't customize anything.
-            return CHILD_ADMINS[model]
-
-        def get_child_model_classes(self, model):
-            return CHILD_ADMINS.keys()
-
-
-    # Only the parent needs to be registered:
-    admin.site.register(ModelA, ModelAParentAdmin)
-
-
     class ModelAChildAdmin(PolymorphicChildModelAdmin):
         """ Base admin class for all child models """
         base_model = ModelA
@@ -247,11 +234,16 @@ Example
         # define custom features here
 
 
-    # This could be replaced with a registration system:
-    CHILD_ADMINS = {
-        ModelB: ModelBAdmin,
-        ModelC: ModelCAdmin,
-    }
+    class ModelAParentAdmin(PolymorphicParentModelAdmin):
+        """ The parent model admin """
+        base_model = ModelA
+        child_models = (
+            (ModelB, ModelBAdmin),
+            (ModelC, ModelCAdmin),
+        }
+
+    # Only the parent needs to be registered:
+    admin.site.register(ModelA, ModelAParentAdmin)
 
 
 Filtering for classes (equivalent to python's isinstance() ):
@@ -604,9 +596,6 @@ Restrictions & Caveats
     ``defer()`` and ``only()`` are not yet fully supported (see above).
     ``extra()`` has one restriction: the resulting objects are required to have
     a unique primary key within the result set.
-
-*   Django Admin Integration: There currently is no specific admin integration,
-    but it would most likely make sense to have one.
 
 *   Diamond shaped inheritance: There seems to be a general problem 
     with diamond shaped multiple model inheritance with Django models

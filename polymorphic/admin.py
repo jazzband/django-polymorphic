@@ -5,6 +5,7 @@ from django import forms
 from django.conf.urls.defaults import patterns, url
 from django.contrib import admin
 from django.contrib.admin.helpers import AdminForm, AdminErrorList
+from django.contrib.admin.sites import AdminSite
 from django.contrib.admin.widgets import AdminRadioSelect
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import PermissionDenied
@@ -12,6 +13,7 @@ from django.core.urlresolvers import RegexURLResolver
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext
+from django.utils.datastructures import SortedDict
 from django.utils.encoding import force_unicode
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
@@ -31,18 +33,50 @@ class PolymorphicModelChoiceForm(forms.Form):
 class PolymorphicParentModelAdmin(admin.ModelAdmin):
     """
     A admin interface that can displays different change/delete pages, depending on the polymorphic model.
-    To use this class, two methods need to be defined:
+    To use this class, two variables need to be defined:
+
+    * :attr:`base_model` should
+    * :attr:`child_models` should be a list of (Model, Admin) tuples
+
+    Alternatively, the following methods can be implemented:
 
     * :func:`get_admin_for_model` should return a ModelAdmin instance for the derived model.
-    * :func:`get_polymorphic_model_classes` should return the available derived models.
-    * optionally, :func:`get_polymorphic_type_choices` can be overwritten to refine the choices for the add dialog.
+    * :func:`get_child_model_classes` should return the available derived models.
+    * optionally, :func:`get_child_type_choices` can be overwritten to refine the choices for the add dialog.
 
     This class needs to be inherited by the model admin base class that is registered in the site.
     The derived models should *not* register the ModelAdmin, but instead it should be returned by :func:`get_admin_for_model`.
     """
+
+    #: The base model that the class uses
     base_model = None
+
+    #: The child models that should be displayed
+    child_models = None
+
+    #: Whether the list should be polymorphic too, leave to ``False`` to optimize
+    polymorphic_list = False
+
     add_type_template = None
     add_type_form = PolymorphicModelChoiceForm
+
+
+    def __init__(self, model, admin_site, *args, **kwargs):
+        super(PolymorphicParentModelAdmin, self).__init__(model, admin_site, *args, **kwargs)
+        self.initialized_child_models = None
+        self.child_admin_site = AdminSite(name=self.admin_site.name)
+
+        # Allow to declaratively define the child models + admin classes
+        if self.child_models is not None:
+            self.initialized_child_models = SortedDict()
+            for Model, Admin in self.child_models:
+                assert issubclass(Model, self.base_model), "{0} should be a subclass of {1}".format(Model.__name__, self.base_model.__name__)
+                assert issubclass(Admin, admin.ModelAdmin), "{0} should be a subclass of {1}".format(Admin.__name__, admin.ModelAdmin.__name__)
+                self.child_admin_site.register(Model, Admin)
+
+                # HACK: need to get admin instance.
+                admin_instance = self.child_admin_site._registry[Model]
+                self.initialized_child_models[Model] = admin_instance
 
 
     @abc.abstractmethod
@@ -50,7 +84,10 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
         """
         Return the polymorphic admin interface for a given model.
         """
-        raise NotImplementedError("Implement get_admin_for_model()")
+        if self.initialized_child_models is None:
+            raise NotImplementedError("Implement get_admin_for_model() or child_models")
+
+        return self.initialized_child_models[model]
 
 
     @abc.abstractmethod
@@ -61,7 +98,10 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
         This could either be implemented as ``base_model.__subclasses__()``,
         a setting in a config file, or a query of a plugin registration system.
         """
-        raise NotImplementedError("Implement get_child_model_classes()")
+        if self.initialized_child_models is None:
+            raise NotImplementedError("Implement get_child_model_classes() or child_models")
+
+        return self.initialized_child_models.keys()
 
 
     def get_child_type_choices(self):
@@ -99,7 +139,11 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
 
 
     def queryset(self, request):
-        return super(PolymorphicParentModelAdmin, self).queryset(request).non_polymorphic()  # optimize the list display.
+        # optimize the list display.
+        qs = super(PolymorphicParentModelAdmin, self).queryset(request)
+        if not self.polymorphic_list:
+            qs = qs.non_polymorphic()
+        return qs
 
 
     def add_view(self, request, form_url='', extra_context=None):
@@ -147,9 +191,8 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
 
         # Add reverse names for all polymorphic models, so the delete button and "save and add" just work.
         # These definitions are masked by the definition above, since it needs special handling (and a ct_id parameter).
-        from fluent_pages.extensions import page_type_pool
         dummy_urls = []
-        for model in page_type_pool.get_model_classes():
+        for model in self.get_child_model_classes():
             admin = self.get_admin_for_model(model)
             dummy_urls += admin.get_urls()
 
@@ -229,8 +272,28 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
         return render_to_response(self.add_type_template or [
             "admin/%s/%s/add_type_form.html" % (app_label, opts.object_name.lower()),
             "admin/%s/add_type_form.html" % app_label,
+            "admin/polymorphic/add_type_form.html",  # added default here
             "admin/add_type_form.html"
         ], context, context_instance=context_instance)
+
+
+    @property
+    def change_list_template(self):
+        opts = self.model._meta
+        app_label = opts.app_label
+
+        # Pass the base options
+        base_opts = self.base_model._meta
+        base_app_label = base_opts.app_label
+
+        return [
+            "admin/%s/%s/change_list.html" % (app_label, opts.object_name.lower()),
+            "admin/%s/change_list.html" % app_label,
+            # Added base class:
+            "admin/%s/%s/change_list.html" % (base_app_label, base_opts.object_name.lower()),
+            "admin/%s/change_list.html" % base_app_label,
+            "admin/change_list.html"
+        ]
 
 
 
@@ -324,7 +387,7 @@ class PolymorphicChildModelAdmin(admin.ModelAdmin):
 
     def get_fieldsets(self, request, obj=None):
         # If subclass declares fieldsets, this is respected
-        if self.declared_fieldsets:
+        if self.declared_fieldsets or not self.base_fieldsets:
             return super(PolymorphicChildModelAdmin, self).get_fieldsets(request, obj)
 
         # Have a reasonable default fieldsets,
