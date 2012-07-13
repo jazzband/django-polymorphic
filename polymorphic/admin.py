@@ -17,7 +17,6 @@ from django.utils.datastructures import SortedDict
 from django.utils.encoding import force_unicode
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
-import abc
 
 __all__ = ('PolymorphicModelChoiceForm', 'PolymorphicParentModelAdmin', 'PolymorphicChildModelAdmin')
 
@@ -79,7 +78,6 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
                 self.initialized_child_models[Model] = admin_instance
 
 
-    @abc.abstractmethod
     def get_admin_for_model(self, model):
         """
         Return the polymorphic admin interface for a given model.
@@ -90,7 +88,6 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
         return self.initialized_child_models[model]
 
 
-    @abc.abstractmethod
     def get_child_model_classes(self):
         """
         Return the derived model classes which this admin should handle.
