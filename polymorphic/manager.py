@@ -4,7 +4,8 @@
 """
 
 from django.db import models
-from query import PolymorphicQuerySet
+from polymorphic.query import PolymorphicQuerySet
+
 
 
 class PolymorphicManager(models.Manager):

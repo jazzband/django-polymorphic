@@ -3,6 +3,23 @@
 Changelog
 ++++++++++
 
+
+2011-12-20 Renaming, refactoring, new maintainer
+================================================
+
+Since the original author diseappeared from the internet, we undertook to
+maintain and upgrade this piece of software.
+
+It works really well, but we cannot guarantee or otherwise support its current
+state.
+
+The latest "legacy" tag should be V1.0-RC-1. Anything above that should be
+considered experimental and unstable until further notice (there be dragons).
+
+New features, bug fixes and other improvements will be added to trunk from now
+on.
+
+
 2011-01-24 V1.0 Release Candidate 1
 ===================================
 
