@@ -5,6 +5,11 @@
 
 import sys
 
+try:
+    from threading import local
+except ImportError:
+    from django.utils._threading_local import local
+
 from django.db import models
 from django.db.models.base import ModelBase
 
@@ -222,7 +227,7 @@ class PolymorphicModelBase(ModelBase):
 
     def __getattribute__(self, name):
         if name in ('_default_manager', '_base_manager'):
-            if isinstance(self.polymorphic_disabled, bool) and self.polymorphic_disabled:
+            if self.polymorphic_disabled:
                 return self.base_objects
         return super(PolymorphicModelBase, self).__getattribute__(name)
 
@@ -236,3 +241,14 @@ class PolymorphicModelBase(ModelBase):
         # TODO: investigate Django how this can be avoided
         self.polymorphic_disabled = ('dumpdata' in sys.argv)
         super(PolymorphicModelBase, self).__init__(*args, **kwargs)
+
+    _polymorphic_disabled = local()
+
+    def _get_polymorphic_disabled(self):
+        """Polymorphic behavior can be disabled for each model at any time by setting `polymorphic_disabled` to True."""
+        return getattr(self.__class__._polymorphic_disabled, 'disabled', False)
+
+    def _set_polymorphic_disabled(self, disabled):
+        self.__class__._polymorphic_disabled.disabled = disabled
+
+    polymorphic_disabled = property(_get_polymorphic_disabled, _set_polymorphic_disabled, doc=_get_polymorphic_disabled.__doc__)

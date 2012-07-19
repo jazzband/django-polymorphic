@@ -7,7 +7,6 @@ from django.db import models
 from polymorphic.query import PolymorphicQuerySet
 
 
-
 class PolymorphicManager(models.Manager):
     """
     Manager for PolymorphicModel

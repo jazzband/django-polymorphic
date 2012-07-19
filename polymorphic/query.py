@@ -152,32 +152,33 @@ class PolymorphicQuerySet(QuerySet):
         for base_object in base_result_objects:
             ordered_id_list.append(base_object.pk)
 
-            # check if id of the result object occeres more than once - this can happen e.g. with base_objects.extra(tables=...)
-            assert not base_object.pk in base_result_objects_by_id, (
-                "django_polymorphic: result objects do not have unique primary keys - model " + unicode(self.model)
-            )
+            # # check if id of the result object occures more than once - this can happen e.g. with base_objects.extra(tables=...)
+            # assert base_object.pk not in base_result_objects_by_id, (
+            #     "django_polymorphic: result objects do not have unique primary keys - model " + unicode(self.model)
+            # )
 
-            base_result_objects_by_id[base_object.pk] = base_object
+            if base_object.pk not in base_result_objects_by_id:
+                base_result_objects_by_id[base_object.pk] = base_object
 
-            # this object is not a derived object and already the real instance => store it right away
-            if (base_object.polymorphic_ctype_id == self_model_content_type_id):
-                results[base_object.pk] = base_object
+                # this object is not a derived object and already the real instance => store it right away
+                if (base_object.polymorphic_ctype_id == self_model_content_type_id):
+                    results[base_object.pk] = base_object
 
-            else:
-                modelclass = base_object.get_real_instance_class()
-
-                # this object is a proxied object of the real instence and already has all the data it needs
-                if (ContentType.objects.get_for_model(modelclass).pk == self_model_unproxied_content_type_id):
-                    o = modelclass()
-                    for k, v in base_object.__dict__.items():
-                        o.__dict__[k] = v
-
-                    results[base_object.pk] = o
-
-                # this object is derived and its real instance needs to be retrieved
-                # => store it's id into the bin for this model type
                 else:
-                    idlist_per_model[modelclass].append(base_object.pk)
+                    modelclass = base_object.get_real_instance_class()
+
+                    # this object is a proxied object of the real instence and already has all the data it needs
+                    if (ContentType.objects.get_for_model(modelclass).pk == self_model_unproxied_content_type_id):
+                        o = modelclass()
+                        for k, v in base_object.__dict__.items():
+                            o.__dict__[k] = v
+
+                        results[base_object.pk] = o
+
+                    # this object is derived and its real instance needs to be retrieved
+                    # => store it's id into the bin for this model type
+                    else:
+                        idlist_per_model[modelclass].append(base_object.pk)
 
         # django's automatic ".pk" field does not always work correctly for
         # custom fields in derived objects (unclear yet who to put the blame on).
@@ -218,6 +219,8 @@ class PolymorphicQuerySet(QuerySet):
                     o = modelclass()
                     for k, v in base_result_objects_by_id[o_pk].__dict__.items():
                         o.__dict__[k] = v
+
+                    o.save()
 
                     results[o_pk] = o
 

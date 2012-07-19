@@ -15,11 +15,6 @@ This code and affiliated files are (C) by Bert Constantin and individual contrib
 Please see LICENSE and AUTHORS for more information.
 """
 
-try:
-    from threading import local
-except ImportError:
-    from django.utils._threading_local import local
-
 from django.db import models
 from django.contrib.contenttypes.models import ContentType
 from django import VERSION as django_VERSION
@@ -76,6 +71,10 @@ class PolymorphicModel(models.Model):
     objects = PolymorphicManager()
     base_objects = models.Manager()
 
+    @property
+    def type(self):
+        return self.__class__.__name__.lower()
+
     @classmethod
     def translate_polymorphic_Q_object(self_class, q):
         return translate_polymorphic_Q_object(self_class, q)
@@ -83,8 +82,9 @@ class PolymorphicModel(models.Model):
     def __getattribute__(self, name):
         if name == 'polymorphic_ctype':
             """Avoid SQL queries and instead use the ContentType manager cache"""
-            if self.polymorphic_ctype_id:
-                return ContentType.objects.get_for_id(self.polymorphic_ctype_id)
+            polymorphic_ctype_id = super(PolymorphicModel, self).__getattribute__('polymorphic_ctype_id')
+            if polymorphic_ctype_id:
+                return ContentType.objects.get_for_id(polymorphic_ctype_id)
             else:
                 return ContentType.objects.get_for_proxied_model(self)
         return super(PolymorphicModel, self).__getattribute__(name)
@@ -194,14 +194,3 @@ class PolymorphicModel(models.Model):
         add_all_super_models(self.__class__, result)
         add_all_sub_models(self.__class__, result)
         return result
-
-    _polymorphic_disabled = local()
-
-    def _get_polymorphic_disabled(self):
-        """Polymorphic behavior can be disabled for each model at any time by setting `polymorphic_disabled` to True."""
-        return getattr(self._polymorphic_disabled, 'disabled', False)
-
-    def _set_polymorphic_disabled(self, disabled):
-        self._polymorphic_disabled.disabled = disabled
-
-    polymorphic_disabled = property(_get_polymorphic_disabled, _set_polymorphic_disabled, doc=_get_polymorphic_disabled.__doc__)
