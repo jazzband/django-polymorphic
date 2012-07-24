@@ -13,12 +13,20 @@ from django.core.urlresolvers import RegexURLResolver
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext
-from django.utils.datastructures import SortedDict
 from django.utils.encoding import force_unicode
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
 
 __all__ = ('PolymorphicModelChoiceForm', 'PolymorphicParentModelAdmin', 'PolymorphicChildModelAdmin')
+
+
+class RegistrationClosed(RuntimeError):
+    "The admin model can't be registered anymore at this point."
+    pass
+
+class ChildAdminNotRegistered(RuntimeError):
+    "The admin site for the model is not registered."
+    pass
 
 
 class PolymorphicModelChoiceForm(forms.Form):
@@ -47,12 +55,11 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
 
     Alternatively, the following methods can be implemented:
 
-    * :func:`get_admin_for_model` should return a ModelAdmin instance for the derived model.
-    * :func:`get_child_model_classes` should return the available derived models.
+    * :func:`get_child_models` should return a list of (Model, ModelAdmin) tuples
     * optionally, :func:`get_child_type_choices` can be overwritten to refine the choices for the add dialog.
 
     This class needs to be inherited by the model admin base class that is registered in the site.
-    The derived models should *not* register the ModelAdmin, but instead it should be returned by :func:`get_admin_for_model`.
+    The derived models should *not* register the ModelAdmin, but instead it should be returned by :func:`get_child_models`.
     """
 
     #: The base model that the class uses
@@ -70,43 +77,61 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
 
     def __init__(self, model, admin_site, *args, **kwargs):
         super(PolymorphicParentModelAdmin, self).__init__(model, admin_site, *args, **kwargs)
-        self.initialized_child_models = None
-        self.child_admin_site = AdminSite(name=self.admin_site.name)
-
-        # Allow to declaratively define the child models + admin classes
-        if self.child_models is not None:
-            self.initialized_child_models = SortedDict()
-            for Model, Admin in self.child_models:
-                assert issubclass(Model, self.base_model), "{0} should be a subclass of {1}".format(Model.__name__, self.base_model.__name__)
-                assert issubclass(Admin, admin.ModelAdmin), "{0} should be a subclass of {1}".format(Admin.__name__, admin.ModelAdmin.__name__)
-                self.child_admin_site.register(Model, Admin)
-
-                # HACK: need to get admin instance.
-                admin_instance = self.child_admin_site._registry[Model]
-                self.initialized_child_models[Model] = admin_instance
+        self._child_admin_site = AdminSite(name=self.admin_site.name)
+        self._is_setup = False
 
 
-    def get_admin_for_model(self, model):
+    def _lazy_setup(self):
+        if self._is_setup:
+            return
+
+        # By not having this in __init__() there is less stress on import dependencies as well,
+        # considering an advanced use cases where a plugin system scans for the child models.
+        child_models = self.get_child_models()
+        for Model, Admin in child_models:
+            self.register_child(Model, Admin)
+        self._child_models = dict(child_models)
+
+        # This is needed to deal with the improved ForeignKeyRawIdWidget in Django 1.4 and perhaps other widgets too.
+        # The ForeignKeyRawIdWidget checks whether the referenced model is registered in the admin, otherwise it displays itself as a textfield.
+        # As simple solution, just make sure all parent admin models are also know in the child admin site.
+        # This should be done after all parent models are registered off course.
+        complete_registry = self.admin_site._registry.copy()
+        complete_registry.update(self._child_admin_site._registry)
+
+        self._child_admin_site._registry = complete_registry
+        self._is_setup = True
+
+
+    def register_child(self, model, model_admin):
         """
-        Return the polymorphic admin interface for a given model.
+        Register a model with admin to display.
         """
-        if self.initialized_child_models is None:
-            raise NotImplementedError("Implement get_admin_for_model() or child_models")
+        # After the get_urls() is called, the URLs of the child model can't be exposed anymore to the Django URLconf,
+        # which also means that a "Save and continue editing" button won't work.
+        if self._is_setup:
+            raise RegistrationClosed("The admin model can't be registered anymore at this point.")
 
-        return self.initialized_child_models[model]
+        if not issubclass(model, self.base_model):
+            raise TypeError("{0} should be a subclass of {1}".format(model.__name__, self.base_model.__name__))
+        if not issubclass(model_admin, admin.ModelAdmin):
+            raise TypeError("{0} should be a subclass of {1}".format(model_admin.__name__, admin.ModelAdmin.__name__))
+
+        self._child_admin_site.register(model, model_admin)
 
 
-    def get_child_model_classes(self):
+    def get_child_models(self):
         """
         Return the derived model classes which this admin should handle.
+        This should return a list of tuples, exactly like :attr:`child_models` is.
 
-        This could either be implemented as ``base_model.__subclasses__()``,
-        a setting in a config file, or a query of a plugin registration system.
+        The model classes can be retrieved as ``base_model.__subclasses__()``,
+        a setting in a config file, or a query of a plugin registration system at your option
         """
-        if self.initialized_child_models is None:
-            raise NotImplementedError("Implement get_child_model_classes() or child_models")
+        if self.child_models is None:
+            raise NotImplementedError("Implement get_child_models() or child_models")
 
-        return self.initialized_child_models.keys()
+        return self.child_models
 
 
     def get_child_type_choices(self):
@@ -114,7 +139,7 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
         Return a list of polymorphic types which can be added.
         """
         choices = []
-        for model in self.get_child_model_classes():
+        for model, _ in self.get_child_models():
             ct = ContentType.objects.get_for_model(model)
             choices.append((ct.id, model._meta.verbose_name))
         return choices
@@ -135,12 +160,21 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
         if not model_class:
             raise Http404("No model found for '{0}.{1}'.".format(*ct.natural_key()))  # Handle model deletion
 
-        # The views are already checked for permissions, so ensure the model is a derived object.
-        # Otherwise, it would open all admin views to users who can edit the base object.
-        if not issubclass(model_class, self.base_model):
-            raise PermissionDenied("Invalid model '{0}.{1}', must derive from {name}.".format(*ct.natural_key(), name=self.base_model.__name__))
+        return self._get_real_admin_by_model(model_class)
 
-        return self.get_admin_for_model(model_class)
+
+    def _get_real_admin_by_model(self, model_class):
+        # In case of a ?ct_id=### parameter, the view is already checked for permissions.
+        # Hence, make sure this is a derived object, or risk exposing other admin interfaces.
+        if model_class not in self._child_models:
+            raise PermissionDenied("Invalid model '{0}', it must be registered as child model.".format(model_class))
+
+        try:
+            # HACK: the only way to get the instance of an model admin,
+            # is to read the registry of the AdminSite.
+            return self._child_admin_site._registry[model_class]
+        except KeyError:
+            raise ChildAdminNotRegistered("No child admin site was registered for a '{0}' model.".format(model_class))
 
 
     def queryset(self, request):
@@ -194,11 +228,14 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
             url(r'^(?P<path>.+)$', self.admin_site.admin_view(self.subclass_view))
         )
 
+        # At this point. all admin code needs to be known.
+        self._lazy_setup()
+
         # Add reverse names for all polymorphic models, so the delete button and "save and add" just work.
         # These definitions are masked by the definition above, since it needs special handling (and a ct_id parameter).
         dummy_urls = []
-        for model in self.get_child_model_classes():
-            admin = self.get_admin_for_model(model)
+        for model, _ in self.get_child_models():
+            admin = self._get_real_admin_by_model(model)
             dummy_urls += admin.get_urls()
 
         return urls + custom_urls + dummy_urls
