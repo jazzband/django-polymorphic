@@ -3,6 +3,12 @@
 Changelog
 ++++++++++
 
+Juli 5, 2012, Polymorphic admin interface
+=========================================
+
+Added a polymorphic admin interface. The admin interface is able to add polymorphic models,
+and the admin edit screen also displays the custom fields of the polymorphic model.
+
 
 2011-12-20 Renaming, refactoring, new maintainer
 ================================================

@@ -1,0 +1,43 @@
+{% extends "admin/change_form.html" %}
+{% load i18n admin_modify adminmedia %}
+{% load url from future %}
+
+{% block breadcrumbs %}{% if not is_popup %}
+<div class="breadcrumbs">
+     <a href="../../../">{% trans "Home" %}</a> &rsaquo;
+     <a href="../../">{{ app_label|capfirst|escape }}</a> &rsaquo;
+     {% if has_change_permission %}<a href="../">{{ opts.verbose_name_plural|capfirst }}</a>{% else %}{{ opts.verbose_name_plural|capfirst }}{% endif %} &rsaquo;
+     {% trans "Add" %} {{ opts.verbose_name }}
+</div>
+{% endif %}{% endblock %}
+
+{% block content %}<div id="content-main">
+<form action="{{ form_url }}" method="post" id="{{ opts.module_name }}_form">{% csrf_token %}{% block form_top %}{% endblock %}
+<div>
+{% if is_popup %}<input type="hidden" name="_popup" value="1" />{% endif %}
+
+{% if save_on_top %}
+    <div class="submit-row" {% if is_popup %}style="overflow: auto;"{% endif %}>
+        <input type="submit" value="{% trans 'Submit' %}" class="default" name="_save" />
+    </div>
+{% endif %}
+
+{% if errors %}
+    <p class="errornote">
+    {% blocktrans count errors|length as counter %}Please correct the error below.{% plural %}Please correct the errors below.{% endblocktrans %}
+    </p>
+    {{ adminform.form.non_field_errors }}
+{% endif %}
+
+{% for fieldset in adminform %}
+  {% include "admin/includes/fieldset.html" %}
+{% endfor %}
+
+<div class="submit-row" {% if is_popup %}style="overflow: auto;"{% endif %}>
+    <input type="submit" value="{% trans 'Submit' %}" class="default" name="_save" />
+</div>
+
+<script type="text/javascript">document.getElementById("{{ adminform.first_field.id_for_label }}").focus();</script>
+</div>
+</form></div>
+{% endblock %}
