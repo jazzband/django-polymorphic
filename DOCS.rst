@@ -179,8 +179,7 @@ The parent model needs to inherit ``PolymorphicParentModelAdmin``, and implement
 * ``base_model`` should be set
 * ``child_models`` should be set, or:
 
- * ``get_admin_for_model()`` should return the model class for the child model.
- * ``get_child_model_classes()`` should return a list of all child model classes.
+ * ``get_child_models()`` should return a list with (Model, ModelAdmin) tuple.
 
 The exact implementation can depend on the way your module is structured.
 For simple inheritance situations, ``child_models`` is best suited.
