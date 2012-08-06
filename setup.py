@@ -8,7 +8,11 @@ setup(
     author_email = 'bert.constantin@gmx.de',
     maintainer = 'Christopher Glass',
     maintainer_email = 'tribaal@gmail.com',
-    packages = [ 'polymorphic' ],
+    url = 'https://github.com/chrisglass/django_polymorphic',
+    packages = [
+        'polymorphic',
+        'polymorphic.templatetags',
+    ],
     classifiers=[
         'Framework :: Django',
         'Intended Audience :: Developers',
