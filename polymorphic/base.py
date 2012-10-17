@@ -12,6 +12,7 @@ except ImportError:
 
 from django.db import models
 from django.db.models.base import ModelBase
+from django.contrib.contenttypes.models import ContentType
 
 from manager import PolymorphicManager
 from query import PolymorphicQuerySet
@@ -93,40 +94,40 @@ class PolymorphicModelBase(ModelBase):
 
         # create new model
         new_class = self.call_superclass_new_method(model_name, bases, attrs)
+        if not new_class._deferred:
+            # check if the model fields are all allowed
+            self.validate_model_fields(new_class)
 
-        # check if the model fields are all allowed
-        self.validate_model_fields(new_class)
+            # create list of all managers to be inherited from the base classes
+            inherited_managers = new_class.get_inherited_managers(attrs)
 
-        # create list of all managers to be inherited from the base classes
-        inherited_managers = new_class.get_inherited_managers(attrs)
+            # add the managers to the new model
+            for source_name, mgr_name, manager in inherited_managers:
+                #print '** add inherited manager from model %s, manager %s, %s' % (source_name, mgr_name, manager.__class__.__name__)
+                new_manager = manager._copy_to_model(new_class)
+                new_class.add_to_class(mgr_name, new_manager)
 
-        # add the managers to the new model
-        for source_name, mgr_name, manager in inherited_managers:
-            #print '** add inherited manager from model %s, manager %s, %s' % (source_name, mgr_name, manager.__class__.__name__)
-            new_manager = manager._copy_to_model(new_class)
-            new_class.add_to_class(mgr_name, new_manager)
+            # get first user defined manager; if there is one, make it the _default_manager
+            user_manager = new_class.get_first_user_defined_manager()
+            if user_manager:
+                def_mgr = user_manager._copy_to_model(new_class)
+                #print '## add default manager', type(def_mgr)
+                new_class.add_to_class('_default_manager', def_mgr)
+                new_class._default_manager._inherited = False   # the default mgr was defined by the user, not inherited
 
-        # get first user defined manager; if there is one, make it the _default_manager
-        user_manager = new_class.get_first_user_defined_manager()
-        if user_manager:
-            def_mgr = user_manager._copy_to_model(new_class)
-            #print '## add default manager', type(def_mgr)
-            new_class.add_to_class('_default_manager', def_mgr)
-            new_class._default_manager._inherited = False   # the default mgr was defined by the user, not inherited
+            # validate resulting default manager
+            _default_manager = super(PolymorphicModelBase, new_class).__getattribute__('_default_manager')
+            self.validate_model_manager(_default_manager, model_name, '_default_manager')
 
-        # validate resulting default manager
-        _default_manager = super(PolymorphicModelBase, new_class).__getattribute__('_default_manager')
-        self.validate_model_manager(_default_manager, model_name, '_default_manager')
+            # for __init__ function of this class (monkeypatching inheritance accessors)
+            new_class.polymorphic_super_sub_accessors_replaced = False
 
-        # for __init__ function of this class (monkeypatching inheritance accessors)
-        new_class.polymorphic_super_sub_accessors_replaced = False
-
-        # determine the name of the primary key field and store it into the class variable
-        # polymorphic_primary_key_name (it is needed by query.py)
-        for f in new_class._meta.fields:
-            if f.primary_key and type(f) != models.OneToOneField:
-                new_class.polymorphic_primary_key_name = f.name
-                break
+            # determine the name of the primary key field and store it into the class variable
+            # polymorphic_primary_key_name (it is needed by query.py)
+            for f in new_class._meta.fields:
+                if f.primary_key and type(f) != models.OneToOneField:
+                    new_class.polymorphic_primary_key_name = f.name
+                    break
 
         return new_class
 

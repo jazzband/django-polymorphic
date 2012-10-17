@@ -18,6 +18,93 @@ Polymorphic_QuerySet_objects_per_request = CHUNK_SIZE
 
 
 ###################################################################################
+
+
+from django.db.backends import util
+from django.db.models.query_utils import DeferredAttribute
+
+
+class BulkDeferredAttribute(DeferredAttribute):
+    def __get__(self, instance, owner):
+        """
+        Retrieves and caches the value from the datastore on the first lookup.
+        Returns the cached value.
+        """
+        assert instance is not None
+        cls = self.model_ref()
+        data = instance.__dict__
+        if data.get(self.field_name, self) is self:
+            fields = {}
+            for field in cls._meta.fields:
+                field_name = field.attname
+                if isinstance(instance.__class__.__dict__.get(field_name), BulkDeferredAttribute):
+                    fields[field_name] = field.name
+            # We use only() instead of values() here because we want the
+            # various data coersion methods (to_python(), etc.) to be called
+            # here.
+            if fields and self.field_name in fields:
+                try:
+                    obj = cls.base_objects.filter(pk=instance.pk).only(*fields.values()).using(
+                            instance._state.db).get()
+                except cls.DoesNotExist:
+                    # re-create missing objects:
+                    o = cls()
+                    bo = instance
+                    for k, v in bo.__dict__.items():
+                        o.__dict__[k] = v
+                    o.pk = bo.pk
+                    obj = o
+                for field_name in fields.keys():
+                    val = getattr(obj, field_name)
+                    data[field_name] = val
+        return data[self.field_name]
+
+    def __set__(self, instance, value):
+        """
+        Deferred loading attributes can be set normally (which means there will
+        never be a database lookup involved.
+        """
+        cls = self.model_ref()
+        for field in cls._meta.fields:
+            if field.attname == self.field_name:
+                if hasattr(field, '__set__'):
+                    field.__set__(instance, value)
+                    if hasattr(field, '__get__'):
+                        value = field.__get__(instance, cls)
+                break
+        instance.__dict__[self.field_name] = value
+
+
+def deferred_class_factory(model, attrs):
+    """
+    Returns a class object that is a copy of "model" with the specified "attrs"
+    being replaced with BulkDeferredAttribute objects. The "pk_value" ties the
+    deferred attributes to a particular instance of the model.
+    """
+    class Meta:
+        proxy = True
+        app_label = model._meta.app_label
+
+    # The app_cache wants a unique name for each model, otherwise the new class
+    # won't be created (we get an old one back). Therefore, we generate the
+    # name using the passed in attrs. It's OK to reuse an existing class
+    # object if the attrs are identical.
+    name = "%s_Deferred_%s" % (model.__name__, '_'.join(sorted(list(attrs))))
+    name = util.truncate_name(name, 80, 32)
+
+    overrides = dict([(attr, BulkDeferredAttribute(attr, model))
+            for attr in attrs])
+    overrides["Meta"] = Meta
+    overrides["__module__"] = model.__module__
+    overrides["_deferred"] = True
+    return type(name, (model,), overrides)
+
+# The above function is also used to unpickle model instances with deferred
+# fields.
+deferred_class_factory.__safe_for_unpickling__ = True
+
+
+###################################################################################
 ### PolymorphicQuerySet
 
 
@@ -35,30 +122,44 @@ class PolymorphicQuerySet(QuerySet):
         "init our queryset object member variables"
         super(PolymorphicQuerySet, self).__init__(*args, **kwargs)
         self.polymorphic_disabled = self.model.polymorphic_disabled
+        self.deferred = False
 
     def _clone(self, *args, **kwargs):
         "Django's _clone only copies its own variables, so we need to copy ours here"
         new = super(PolymorphicQuerySet, self)._clone(*args, **kwargs)
         new.polymorphic_disabled = self.polymorphic_disabled
+        new.deferred = self.deferred
         return new
+
+    def defer(self, *fields):
+        clone = self._clone()
+        if fields == (None,):
+            clone.deferred = False
+        else:
+            clone.deferred = True
+        if fields:
+            clone = super(PolymorphicQuerySet, clone).aggregate(*fields)
+        return clone
 
     def delete(self, *args, **kwargs):
         """deletes the records in the current QuerySet.
         We need non-polymorphic object retrieval for aggregate => switch it off."""
-        self.polymorphic_disabled = True
-        _polymorphic_disabled = self.model.polymorphic_disabled
-        self.model.polymorphic_disabled = self.polymorphic_disabled
+        clone = self._clone()
+        clone.polymorphic_disabled = True
+        _polymorphic_disabled = clone.model.polymorphic_disabled
+        clone.model.polymorphic_disabled = clone.polymorphic_disabled
         try:
-            super(PolymorphicQuerySet, self).delete(*args, **kwargs)
+            super(PolymorphicQuerySet, clone).delete(*args, **kwargs)
         finally:
-            self.model.polymorphic_disabled = _polymorphic_disabled
+            clone.model.polymorphic_disabled = _polymorphic_disabled
 
     def non_polymorphic(self, *args, **kwargs):
         """switch off polymorphic behaviour for this query.
         When the queryset is evaluated, only objects of the type of the
         base class used for this query are returned."""
-        self.polymorphic_disabled = True
-        return self
+        clone = self._clone()
+        clone.polymorphic_disabled = True
+        return clone
 
     def instance_of(self, *args):
         """Filter the queryset to only include the classes in args (and their subclasses).
@@ -98,9 +199,10 @@ class PolymorphicQuerySet(QuerySet):
     def aggregate(self, *args, **kwargs):
         """translate the polymorphic field paths in the kwargs, then call vanilla aggregate.
         We need non-polymorphic object retrieval for aggregate => switch it off."""
-        self._process_aggregate_args(args, kwargs)
-        self.polymorphic_disabled = True
-        return super(PolymorphicQuerySet, self).aggregate(*args, **kwargs)
+        clone = self._clone()
+        clone._process_aggregate_args(args, kwargs)
+        clone.polymorphic_disabled = True
+        return super(PolymorphicQuerySet, clone).aggregate(*args, **kwargs)
 
     # Since django_polymorphic 'V1.0 beta2', extra() always returns polymorphic results.^
     # The resulting objects are required to have a unique primary key within the result set
@@ -195,32 +297,69 @@ class PolymorphicQuerySet(QuerySet):
         # Then we copy the extra() select fields from the base objects to the real objects.
         # TODO: defer(), only(): support for these would be around here
         for modelclass, idlist in idlist_per_model.items():
-            qs = modelclass.base_objects.filter(pk__in=idlist)  # use pk__in instead ####
-            qs.dup_select_related(self)  # copy select related configuration to new qs
+            if self.deferred:
+                attrs = set(f.attname for f in modelclass._meta.fields) - set([f.attname for f in self.model._meta.fields])
+                attrs.remove(modelclass._meta.pk.attname)
+                # print repr(attrs)
+                deferred_modelclass = deferred_class_factory(modelclass, attrs)
+                for o_pk in idlist:
+                    o = deferred_modelclass()
+                    bo = base_result_objects_by_id[o_pk]
 
-            for o in qs:
-                o_pk = getattr(o, pk_name)
+                    for k, v in bo.__dict__.items():
+                        o.__dict__[k] = v
+                    o.pk = bo.pk
 
-                if self.query.aggregates:
-                    for anno_field_name in self.query.aggregates.keys():
-                        attr = getattr(base_result_objects_by_id[o_pk], anno_field_name)
-                        setattr(o, anno_field_name, attr)
+                    if self.query.aggregates:
+                        for anno_field_name in self.query.aggregates.keys():
+                            attr = getattr(bo, anno_field_name)
+                            setattr(o, anno_field_name, attr)
 
-                if self.query.extra_select:
-                    for select_field_name in self.query.extra_select.keys():
-                        attr = getattr(base_result_objects_by_id[o_pk], select_field_name)
-                        setattr(o, select_field_name, attr)
+                    if self.query.extra_select:
+                        for select_field_name in self.query.extra_select.keys():
+                            attr = getattr(bo, select_field_name)
+                            setattr(o, select_field_name, attr)
 
-                results[o_pk] = o
+                    results[o_pk] = o
+            else:
+                qs = modelclass.base_objects.filter(pk__in=idlist)  # use pk__in instead ####
+                qs.dup_select_related(self)  # copy select related configuration to new qs
+
+                for o in qs:
+                    o_pk = getattr(o, pk_name)
+                    bo = base_result_objects_by_id[o_pk]
+
+                    if self.query.aggregates:
+                        for anno_field_name in self.query.aggregates.keys():
+                            attr = getattr(bo, anno_field_name)
+                            setattr(o, anno_field_name, attr)
+
+                    if self.query.extra_select:
+                        for select_field_name in self.query.extra_select.keys():
+                            attr = getattr(bo, select_field_name)
+                            setattr(o, select_field_name, attr)
+
+                    results[o_pk] = o
 
             # re-create missing objects:
             for o_pk in idlist:
                 if o_pk not in results:
                     o = modelclass()
-                    for k, v in base_result_objects_by_id[o_pk].__dict__.items():
-                        o.__dict__[k] = v
+                    bo = base_result_objects_by_id[o_pk]
 
-                    o.save()
+                    for k, v in bo.__dict__.items():
+                        o.__dict__[k] = v
+                    o.pk = bo.pk
+
+                    if self.query.aggregates:
+                        for anno_field_name in self.query.aggregates.keys():
+                            attr = getattr(bo, anno_field_name)
+                            setattr(o, anno_field_name, attr)
+
+                    if self.query.extra_select:
+                        for select_field_name in self.query.extra_select.keys():
+                            attr = getattr(bo, select_field_name)
+                            setattr(o, select_field_name, attr)
 
                     results[o_pk] = o
 

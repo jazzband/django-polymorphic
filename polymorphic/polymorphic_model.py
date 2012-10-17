@@ -73,7 +73,7 @@ class PolymorphicModel(models.Model):
 
     @property
     def type(self):
-        return self.__class__.__name__.lower()
+        return self.polymorphic_ctype.model
 
     @classmethod
     def translate_polymorphic_Q_object(self_class, q):
