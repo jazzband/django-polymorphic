@@ -68,18 +68,20 @@ SECRET_KEY = 'nk=c&k+c&#+)8557)%&0auysdd3g^sfq6@rw8_x1k8)-p@y)!('
 
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
-    'django.template.loaders.filesystem.load_template_source',
-    'django.template.loaders.app_directories.load_template_source',
-#     'django.template.loaders.eggs.load_template_source',
+    'django.template.loaders.filesystem.Loader',
+    'django.template.loaders.app_directories.Loader',
 )
 
 MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
 )
 
-ROOT_URLCONF = ''
+ROOT_URLCONF = 'urls'
+STATIC_URL = '/static/'
+ADMIN_MEDIA_PREFIX = '/static/admin/'  # 1.3 compatibility
 
 TEMPLATE_DIRS = (
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
@@ -88,10 +90,14 @@ TEMPLATE_DIRS = (
 )
 
 INSTALLED_APPS = (
-    #'django.contrib.auth',
+    'django.contrib.auth',
+    'django.contrib.admin',
     'django.contrib.contenttypes',
-    #'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.sessions',
+    'django.contrib.staticfiles',
+
     #'django.contrib.sites',
-    'polymorphic',      # only needed if you want to use polymorphic_dumpdata
+    'polymorphic',      # needed if you want to use the polymorphic admin
     'pexp',             # this Django app is for testing and experimentation; not needed otherwise
 )

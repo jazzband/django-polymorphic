@@ -1,0 +1,12 @@
+{% extends "admin/delete_confirmation.html" %}
+{% load i18n polymorphic_admin_tags %}
+
+{% block breadcrumbs %}{% breadcrumb_scope base_opts %}
+<div class="breadcrumbs">
+     <a href="../../../../">{% trans "Home" %}</a> &rsaquo;
+     <a href="../../../">{{ app_label|capfirst|escape }}</a> &rsaquo;
+     <a href="../../">{{ opts.verbose_name_plural|capfirst }}</a> &rsaquo;
+     <a href="../">{{ object|truncatewords:"18" }}</a> &rsaquo;
+     {% trans 'Delete' %}
+</div>
+{% endbreadcrumb_scope %}{% endblock %}
