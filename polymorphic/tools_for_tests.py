@@ -7,13 +7,13 @@ import uuid
 from django import forms
 from django.db import models
 from django.utils.encoding import smart_unicode
-
+from django.utils import six
 
 class UUIDVersionError(Exception):
     pass
 
 
-class UUIDField(models.CharField):
+class UUIDField(six.with_metaclass(models.SubfieldBase, models.CharField)):
     """Encode and stores a Python uuid.UUID in a manner that is appropriate
     for the given datatabase that we are using.
 
@@ -22,7 +22,6 @@ class UUIDField(models.CharField):
 
     This class supports type 1, 2, 4, and 5 UUID's.
     """
-    __metaclass__ = models.SubfieldBase
 
     _CREATE_COLUMN_TYPES = {
         'postgresql_psycopg2': 'uuid',

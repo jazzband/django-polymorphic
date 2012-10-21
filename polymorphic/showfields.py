@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from django.db import models
-
+from django.utils import six
 
 class ShowFieldBase(object):
     """ base class for the ShowField... model mixins, does the work """
@@ -33,12 +33,12 @@ class ShowFieldBase(object):
                 out += content.__class__.__name__
         elif issubclass(field_type, models.ManyToManyField):
             out += '%d' % content.count()
-        elif type(content) in (int, long):
-            out += unicode(content)
+        elif isinstance(content, six.integer_types):
+            out += str(content)
         elif content is None:
             out += 'None'
         else:
-            txt = unicode(content)
+            txt = str(content)
             if len(txt) > self.polymorphic_showfield_max_field_width:
                 txt = txt[:self.polymorphic_showfield_max_field_width - 2] + '..'
             out += '"' + txt + '"'
@@ -58,7 +58,7 @@ class ShowFieldBase(object):
 
             # if this is the standard primary key named "id", print it as we did with older versions of django_polymorphic
             if field.primary_key and field.name == 'id' and type(field) == models.AutoField:
-                out += ' ' + unicode(getattr(self, field.name))
+                out += ' ' + str(getattr(self, field.name))
 
             # otherwise, display it just like all other fields (with correct type, shortened content etc.)
             else:
@@ -108,11 +108,11 @@ class ShowFieldBase(object):
 
         indent = len(self.__class__.__name__) + 5
         indentstr = ''.rjust(indent)
-        out = u''
+        out = ''
         xpos = 0
         possible_line_break_pos = None
 
-        for i in xrange(len(parts)):
+        for i in range(len(parts)):
             new_section, p, separator = parts[i]
             final = (i == len(parts) - 1)
             if not final:
@@ -139,7 +139,7 @@ class ShowFieldBase(object):
             if not new_section:
                 possible_line_break_pos = len(out)
 
-        return u'<' + out + '>'
+        return '<' + out + '>'
 
 
 class ShowFieldType(ShowFieldBase):

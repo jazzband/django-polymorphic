@@ -1,4 +1,5 @@
 from django.template import Library, Node, TemplateSyntaxError
+from django.utils import six
 
 register = Library()
 
@@ -31,7 +32,7 @@ class BreadcrumbScope(Node):
         # Instead, have an assignment tag that inserts that in the template.
         base_opts = self.base_opts.resolve(context)
         new_vars = {}
-        if base_opts and not isinstance(base_opts, basestring):
+        if base_opts and not isinstance(base_opts, six.string_types):
             new_vars = {
                 'app_label': base_opts.app_label,  # What this is all about
                 'opts': base_opts,

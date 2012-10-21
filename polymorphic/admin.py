@@ -13,7 +13,8 @@ from django.core.urlresolvers import RegexURLResolver
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext
-from django.utils.encoding import force_unicode
+from django.utils import six
+from django.utils.encoding import force_text
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
 
@@ -315,7 +316,7 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
         opts = self.model._meta
 
         context = {
-            'title': _('Add %s') % force_unicode(opts.verbose_name),
+            'title': _('Add %s') % force_text(opts.verbose_name),
             'adminform': adminForm,
             'is_popup': "_popup" in request.REQUEST,
             'media': mark_safe(media),
@@ -482,7 +483,7 @@ class PolymorphicChildModelAdmin(admin.ModelAdmin):
         # By not declaring the fields/form in the base class,
         # get_form() will populate the form with all available fields.
         form = self.get_form(request, obj, exclude=exclude)
-        subclass_fields = form.base_fields.keys() + list(self.get_readonly_fields(request, obj))
+        subclass_fields = list(six.iterkeys(form.base_fields)) + list(self.get_readonly_fields(request, obj))
 
         # Find which fields are not part of the common fields.
         for fieldset in self.base_fieldsets:

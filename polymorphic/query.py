@@ -2,14 +2,16 @@
 """ QuerySet for PolymorphicModel
     Please see README.rst or DOCS.rst or http://chrisglass.github.com/django_polymorphic/
 """
+from __future__ import absolute_import
 
-from compatibility_tools import defaultdict
+from collections import defaultdict
 
 from django.db.models.query import QuerySet
 from django.contrib.contenttypes.models import ContentType
+from django.utils import six
 
-from query_translate import translate_polymorphic_filter_definitions_in_kwargs, translate_polymorphic_filter_definitions_in_args
-from query_translate import translate_polymorphic_field_path
+from .query_translate import translate_polymorphic_filter_definitions_in_kwargs, translate_polymorphic_filter_definitions_in_args
+from .query_translate import translate_polymorphic_field_path
 
 # chunk-size: maximum number of objects requested per db-request
 # by the polymorphic queryset.iterator() implementation; we use the same chunk size as Django
@@ -90,7 +92,7 @@ class PolymorphicQuerySet(QuerySet):
         Modifies kwargs if needed (these are Aggregate objects, we translate the lookup member variable)"""
         for a in args:
             assert not '___' in a.lookup, 'PolymorphicModel: annotate()/aggregate(): ___ model lookup supported for keyword arguments only'
-        for a in kwargs.values():
+        for a in six.itervalues(kwargs):
             a.lookup = translate_polymorphic_field_path(self.model, a.lookup)
 
     def annotate(self, *args, **kwargs):
@@ -207,12 +209,12 @@ class PolymorphicQuerySet(QuerySet):
                     real_object = transmogrify(real_class, real_object)
 
                 if self.query.aggregates:
-                    for anno_field_name in self.query.aggregates.keys():
+                    for anno_field_name in six.iterkeys(self.query.aggregates):
                         attr = getattr(base_result_objects_by_id[o_pk], anno_field_name)
                         setattr(real_object, anno_field_name, attr)
 
                 if self.query.extra_select:
-                    for select_field_name in self.query.extra_select.keys():
+                    for select_field_name in six.iterkeys(self.query.extra_select):
                         attr = getattr(base_result_objects_by_id[o_pk], select_field_name)
                         setattr(real_object, select_field_name, attr)
 
@@ -223,13 +225,13 @@ class PolymorphicQuerySet(QuerySet):
 
         # set polymorphic_annotate_names in all objects (currently just used for debugging/printing)
         if self.query.aggregates:
-            annotate_names = self.query.aggregates.keys()  # get annotate field list
+            annotate_names = six.iterkeys(self.query.aggregates)  # get annotate field list
             for real_object in resultlist:
                 real_object.polymorphic_annotate_names = annotate_names
 
         # set polymorphic_extra_select_names in all objects (currently just used for debugging/printing)
         if self.query.extra_select:
-            extra_select_names = self.query.extra_select.keys()  # get extra select field list
+            extra_select_names = six.iterkeys(self.query.extra_select)  # get extra select field list
             for real_object in resultlist:
                 real_object.polymorphic_extra_select_names = extra_select_names
 
@@ -264,7 +266,7 @@ class PolymorphicQuerySet(QuerySet):
 
             for i in range(Polymorphic_QuerySet_objects_per_request):
                 try:
-                    o = base_iter.next()
+                    o = next(base_iter)
                     base_result_objects.append(o)
                 except StopIteration:
                     reached_end = True

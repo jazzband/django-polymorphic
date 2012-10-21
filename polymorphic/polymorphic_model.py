@@ -13,20 +13,22 @@ Copyright:
 This code and affiliated files are (C) by Bert Constantin and individual contributors.
 Please see LICENSE and AUTHORS for more information.
 """
+from __future__ import absolute_import
 
 from django.db import models
 from django.contrib.contenttypes.models import ContentType
 from django import VERSION as django_VERSION
+from django.utils import six
 
-from base import PolymorphicModelBase
-from manager import PolymorphicManager
-from query_translate import translate_polymorphic_Q_object
+from .base import PolymorphicModelBase
+from .manager import PolymorphicManager
+from .query_translate import translate_polymorphic_Q_object
 
 
 ###################################################################################
 ### PolymorphicModel
 
-class PolymorphicModel(models.Model):
+class PolymorphicModel(six.with_metaclass(PolymorphicModelBase, models.Model)):
     """
     Abstract base class that provides polymorphic behaviour
     for any model directly or indirectly derived from it.
@@ -44,7 +46,6 @@ class PolymorphicModel(models.Model):
 
         super(YourClass,self).save(*args,**kwargs)
     """
-    __metaclass__ = PolymorphicModelBase
 
     # for PolymorphicModelBase, so it can tell which models are polymorphic and which are not (duck typing)
     polymorphic_model_marker = True
@@ -168,7 +169,7 @@ class PolymorphicModel(models.Model):
         subclasses_and_superclasses_accessors = self._get_inheritance_relation_fields_and_models()
 
         from django.db.models.fields.related import SingleRelatedObjectDescriptor, ReverseSingleRelatedObjectDescriptor
-        for name, model in subclasses_and_superclasses_accessors.iteritems():
+        for name, model in subclasses_and_superclasses_accessors.items():
             orig_accessor = getattr(self.__class__, name, None)
             if type(orig_accessor) in [SingleRelatedObjectDescriptor, ReverseSingleRelatedObjectDescriptor]:
                 #print >>sys.stderr, '---------- replacing', name, orig_accessor, '->', model

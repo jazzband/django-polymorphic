@@ -2,11 +2,13 @@
 """ PolymorphicQuerySet support functions
     Please see README.rst or DOCS.rst or http://chrisglass.github.com/django_polymorphic/
 """
+from __future__ import absolute_import
 
 from django.db import models
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import Q
-from compatibility_tools import compat_partition
+
+from functools import reduce
 
 
 ###################################################################################
@@ -124,7 +126,7 @@ def translate_polymorphic_field_path(queryset_model, field_path):
     into modela__modelb__modelc__field3.
     Returns: translated path (unchanged, if no translation needed)
     """
-    classname, sep, pure_field_path = compat_partition(field_path, '___')
+    classname, sep, pure_field_path = field_path.partition('___')
     if not sep:
         return field_path
     assert classname, 'PolymorphicModel: %s: bad field specification' % field_path
@@ -136,7 +138,7 @@ def translate_polymorphic_field_path(queryset_model, field_path):
 
     if '__' in classname:
         # the user has app label prepended to class name via __ => use Django's get_model function
-        appname, sep, classname = compat_partition(classname, '__')
+        appname, sep, classname = classname.partition('__')
         model = models.get_model(appname, classname)
         assert model, 'PolymorphicModel: model %s (in app %s) not found!' % (model.__name__, appname)
         if not issubclass(model, queryset_model):
@@ -211,7 +213,7 @@ def _create_model_filter_Q(modellist, not_instance_of=False):
     if not modellist:
         return None
 
-    from polymorphic_model import PolymorphicModel
+    from .polymorphic_model import PolymorphicModel
 
     if type(modellist) != list and type(modellist) != tuple:
         if issubclass(modellist, PolymorphicModel):

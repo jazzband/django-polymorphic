@@ -2,6 +2,7 @@
 """ PolymorphicModel Meta Class
     Please see README.rst or DOCS.rst or http://chrisglass.github.com/django_polymorphic/
 """
+from __future__ import absolute_import
 
 import sys
 import inspect
@@ -10,8 +11,8 @@ from django.db import models
 from django.db.models.base import ModelBase
 from django.db.models.manager import ManagerDescriptor
 
-from manager import PolymorphicManager
-from query import PolymorphicQuerySet
+from .manager import PolymorphicManager
+from .query import PolymorphicQuerySet
 
 # PolymorphicQuerySet Q objects (and filter()) support these additional key words.
 # These are forbidden as field names (a descriptive exception is raised)

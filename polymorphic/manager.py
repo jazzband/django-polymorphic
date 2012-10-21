@@ -2,6 +2,7 @@
 """ PolymorphicManager
     Please see README.rst or DOCS.rst or http://chrisglass.github.com/django_polymorphic/
 """
+from __future__ import unicode_literals
 import warnings
 from django.db import models
 from polymorphic.query import PolymorphicQuerySet
@@ -42,4 +43,4 @@ class PolymorphicManager(models.Manager):
         return getattr(self.get_query_set(), name)
 
     def __unicode__(self):
-        return u'%s (PolymorphicManager) using %s' % (self.__class__.__name__, self.queryset_class.__name__)
+        return '%s (PolymorphicManager) using %s' % (self.__class__.__name__, self.queryset_class.__name__)
