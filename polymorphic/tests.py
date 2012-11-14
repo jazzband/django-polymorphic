@@ -463,10 +463,6 @@ __test__ = {"doctest": """
 [ <Model2B: id 2, field1 (CharField), field2 (CharField)>,
   <Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)> ]
 
->>> Model2A.objects.extra(select={"select_test": "field1 = 'A1'"}, where=["field1 = 'A1' OR field1 = 'B1'"], order_by = ['-id'] )
-[ <Model2B: id 2, field1 (CharField), field2 (CharField) - Extra: select_test (int)>,
-  <Model2A: id 1, field1 (CharField) - Extra: select_test (int)> ]
-
 >>> o=ModelExtraA.objects.create(field1='A1')
 >>> o=ModelExtraB.objects.create(field1='B1', field2='B2')
 >>> o=ModelExtraC.objects.create(field1='C1', field2='C2', field3='C3')
