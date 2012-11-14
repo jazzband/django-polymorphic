@@ -395,13 +395,13 @@ __test__ = {"doctest": """
 >>> show_base_manager(Model2A)
 <class 'polymorphic.manager.PolymorphicManager'> <class 'polymorphic.tests.Model2A'>
 >>> show_base_manager(Model2B)
-<class 'django.db.models.manager.Manager'> <class 'polymorphic.tests.Model2B'>
+<class 'polymorphic.manager.PolymorphicManager'> <class 'polymorphic.tests.Model2B'>
 >>> show_base_manager(Model2C)
-<class 'django.db.models.manager.Manager'> <class 'polymorphic.tests.Model2C'>
+<class 'polymorphic.manager.PolymorphicManager'> <class 'polymorphic.tests.Model2C'>
 >>> show_base_manager(One2OneRelatingModel)
 <class 'polymorphic.manager.PolymorphicManager'> <class 'polymorphic.tests.One2OneRelatingModel'>
 >>> show_base_manager(One2OneRelatingModelDerived)
-<class 'django.db.models.manager.Manager'> <class 'polymorphic.tests.One2OneRelatingModelDerived'>
+<class 'polymorphic.manager.PolymorphicManager'> <class 'polymorphic.tests.One2OneRelatingModelDerived'>
 
 >>> o=Model2A.base_objects.get(field1='C1')
 >>> o.model2b
@@ -637,3 +637,37 @@ __test__ = {"doctest": """
 
 """}
 
+
+class MonkeyPatchTests(TestCase):
+
+    def test_content_types_for_proxy_models_patch(self):
+        from django.db.models import Model
+        from django.contrib.contenttypes.models import ContentType
+
+        class Base(Model):
+            pass
+
+        class Proxy(Base):
+            class Meta:
+                proxy = True
+
+        ct = ContentType.objects.get_for_model(Proxy, for_concrete_model=False)
+        self.assertEqual(Proxy, ct.model_class())
+
+    def test_content_types_for_proxy_models_patch_still_required(self):
+        """
+        If this test fails then our monkey patch of ContentTypeManager.get_for_model
+        is no longer required and should be removed
+        """
+        from django.db.models import Model
+        from django.contrib.contenttypes.models import ContentType
+
+        class MyModel(Model):
+            pass
+
+        self.assertRaisesMessage(
+            TypeError,
+            "get_for_model() got an unexpected keyword argument 'for_concrete_model'",
+            ContentType.objects.get_for_model__original,
+            MyModel, for_concrete_model=False
+        )
