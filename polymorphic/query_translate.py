@@ -220,7 +220,7 @@ def _create_model_filter_Q(modellist, not_instance_of=False):
             assert False, 'PolymorphicModel: instance_of expects a list of (polymorphic) models or a single (polymorphic) model'
 
     def q_class_with_subclasses(model):
-        q = Q(polymorphic_ctype=ContentType.objects.get_for_model(model))
+        q = Q(polymorphic_ctype=ContentType.objects.get_for_model(model, for_concrete_model=False))
         for subclass in model.__subclasses__():
             q = q | q_class_with_subclasses(subclass)
         return q

@@ -135,7 +135,7 @@ class PolymorphicQuerySet(QuerySet):
         # - also record the correct result order in "ordered_id_list"
         # - store objects that already have the correct class into "results"
         base_result_objects_by_id = {}
-        self_model_content_type_id = ContentType.objects.get_for_model(self.model).pk
+        self_model_content_type_id = ContentType.objects.get_for_model(self.model, for_concrete_model=False).pk
         for base_object in base_result_objects:
             ordered_id_list.append(base_object.pk)
 

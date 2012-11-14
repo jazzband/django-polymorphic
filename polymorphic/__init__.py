@@ -25,33 +25,37 @@ def get_version():
         version += ' %s' % VERSION[3]
     return version
 
-
-# Proxied models need to have it's own ContentType
-
-
 from django.contrib.contenttypes.models import ContentTypeManager
 from django.utils.encoding import smart_unicode
 
 
-def get_for_proxied_model(self, model):
-    """
-    Returns the ContentType object for a given model, creating the
-    ContentType if necessary. Lookups are cached so that subsequent lookups
-    for the same model don't hit the database.
-    """
+# Monkey-patch Django to allow ContentTypes for proxy models. This is compatible with an
+# upcoming change in Django 1.5 and should be removed when we upgrade. There is a test
+# in MonkeyPatchTests that checks for this.
+# https://code.djangoproject.com/ticket/18399
+
+def get_for_model(self, model, for_concrete_model=True):
+    from django.utils.encoding import smart_unicode
+
+    if for_concrete_model:
+        model = model._meta.concrete_model
+    elif model._deferred:
+        model = model._meta.proxy_for_model
+
     opts = model._meta
-    key = (opts.app_label, opts.object_name.lower())
+
     try:
-        ct = self.__class__._cache[self.db][key]
+        ct = self._get_from_cache(opts)
     except KeyError:
-        # Load or create the ContentType entry. The smart_unicode() is
-        # needed around opts.verbose_name_raw because name_raw might be a
-        # django.utils.functional.__proxy__ object.
         ct, created = self.get_or_create(
-            app_label=opts.app_label,
-            model=opts.object_name.lower(),
-            defaults={'name': smart_unicode(opts.verbose_name_raw)},
+            app_label = opts.app_label,
+            model = opts.object_name.lower(),
+            defaults = {'name': smart_unicode(opts.verbose_name_raw)},
         )
         self._add_to_cache(self.db, ct)
+
     return ct
-ContentTypeManager.get_for_proxied_model = get_for_proxied_model
+
+ContentTypeManager.get_for_model__original = ContentTypeManager.get_for_model
+ContentTypeManager.get_for_model = get_for_model
+
