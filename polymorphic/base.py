@@ -63,7 +63,7 @@ class PolymorphicModelBase(ModelBase):
             new_class.add_to_class(mgr_name, new_manager)
 
         # get first user defined manager; if there is one, make it the _default_manager
-        user_manager = new_class.get_first_user_defined_manager()
+        user_manager = self.get_first_user_defined_manager(model_name, attrs)
         if user_manager:
             def_mgr = user_manager._copy_to_model(new_class)
             #print '## add default manager', type(def_mgr)
@@ -120,12 +120,11 @@ class PolymorphicModelBase(ModelBase):
         return add_managers
 
     @classmethod
-    def get_first_user_defined_manager(self):
+    def get_first_user_defined_manager(self, model_name, attrs):
         mgr_list = []
-        for key, val in self.__dict__.items():
-            item = getattr(self, key)
-            if not isinstance(item, models.Manager): continue
-            mgr_list.append((item.creation_counter, key, item))
+        for key, item in attrs.items():
+            if isinstance(item, models.Manager):
+                mgr_list.append((item.creation_counter, key, item))
         # if there are user defined managers, use first one as _default_manager
         if mgr_list:
             _, manager_name, manager = sorted(mgr_list)[0]
