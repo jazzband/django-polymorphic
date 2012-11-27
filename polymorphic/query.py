@@ -17,6 +17,15 @@ from django.db.models.query import CHUNK_SIZE               # this is 100 for Dj
 Polymorphic_QuerySet_objects_per_request = CHUNK_SIZE
 
 
+def transmogrify(cls, obj):
+    """
+    Clone an object as a different class, by instantiating that class and copying the __dict__
+    """
+    new = cls()
+    for k,v in obj.__dict__.items():
+        new.__dict__[k] = v
+    return new
+
 ###################################################################################
 ### PolymorphicQuerySet
 
@@ -136,6 +145,8 @@ class PolymorphicQuerySet(QuerySet):
         # - store objects that already have the correct class into "results"
         base_result_objects_by_id = {}
         self_model_content_type_id = ContentType.objects.get_for_model(self.model, for_concrete_model=False).pk
+        self_concrete_model_content_type_id = ContentType.objects.get_for_model(self.model, for_concrete_model=True).pk
+
         for base_object in base_result_objects:
             ordered_id_list.append(base_object.pk)
 
@@ -146,14 +157,21 @@ class PolymorphicQuerySet(QuerySet):
 
             base_result_objects_by_id[base_object.pk] = base_object
 
-            # this object is not a derived object and already the real instance => store it right away
             if (base_object.polymorphic_ctype_id == self_model_content_type_id):
+                # Real class is exactly the same as base class, go straight to results
                 results[base_object.pk] = base_object
 
-            # this object is derived and its real instance needs to be retrieved
-            # => store it's id into the bin for this model type
             else:
-                idlist_per_model[base_object.get_real_instance_class()].append(base_object.pk)
+                modelclass = base_object.get_real_instance_class()
+                real_concrete_class_id = base_object.get_real_concrete_instance_class_id()
+
+                if real_concrete_class_id == self_concrete_model_content_type_id:
+                    # Real and base classes share the same concrete ancestor,
+                    # upcast it and put it in the results
+                    results[base_object.pk] = transmogrify(modelclass, base_object)
+                else:
+                    modelclass = ContentType.objects.get_for_id(real_concrete_class_id).model_class()
+                    idlist_per_model[modelclass].append(base_object.pk)
 
         # django's automatic ".pk" field does not always work correctly for
         # custom fields in derived objects (unclear yet who to put the blame on).
@@ -175,6 +193,11 @@ class PolymorphicQuerySet(QuerySet):
 
             for o in qs:
                 o_pk = getattr(o, pk_name)
+                real_class = o.get_real_instance_class()
+
+                # If the real class is a proxy, upcast it
+                if real_class != modelclass:
+                    o = transmogrify(real_class, o)
 
                 if self.query.aggregates:
                     for anno_field_name in self.query.aggregates.keys():
