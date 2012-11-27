@@ -102,6 +102,12 @@ class PolymorphicModel(models.Model):
         # so we use the following version, which uses the CopntentType manager cache
         return ContentType.objects.get_for_id(self.polymorphic_ctype_id).model_class()
 
+    def get_real_concrete_instance_class_id(self):
+        return ContentType.objects.get_for_model(self.get_real_instance_class(), for_concrete_model=True).pk
+
+    def get_real_concrete_instance_class(self):
+        return ContentType.objects.get_for_model(self.get_real_instance_class(), for_concrete_model=True).model_class()
+
     def get_real_instance(self):
         """Normally not needed.
         If a non-polymorphic manager (like base_objects) has been used to
