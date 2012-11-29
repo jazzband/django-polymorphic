@@ -151,27 +151,24 @@ class PolymorphicQuerySet(QuerySet):
             ordered_id_list.append(base_object.pk)
 
             # check if id of the result object occeres more than once - this can happen e.g. with base_objects.extra(tables=...)
-            assert not base_object.pk in base_result_objects_by_id, (
-                "django_polymorphic: result objects do not have unique primary keys - model " + unicode(self.model)
-            )
+            if not base_object.pk in base_result_objects_by_id:
+                base_result_objects_by_id[base_object.pk] = base_object
 
-            base_result_objects_by_id[base_object.pk] = base_object
+                if base_object.polymorphic_ctype_id == self_model_class_id:
+                    # Real class is exactly the same as base class, go straight to results
+                    results[base_object.pk] = base_object
 
-            if (base_object.polymorphic_ctype_id == self_model_class_id):
-                # Real class is exactly the same as base class, go straight to results
-                results[base_object.pk] = base_object
-
-            else:
-                real_concrete_class = base_object.get_real_instance_class()
-                real_concrete_class_id = base_object.get_real_concrete_instance_class_id()
-
-                if real_concrete_class_id == self_concrete_model_class_id:
-                    # Real and base classes share the same concrete ancestor,
-                    # upcast it and put it in the results
-                    results[base_object.pk] = transmogrify(real_concrete_class, base_object)
                 else:
-                    real_concrete_class = ContentType.objects.get_for_id(real_concrete_class_id).model_class()
-                    idlist_per_model[real_concrete_class].append(base_object.pk)
+                    real_concrete_class = base_object.get_real_instance_class()
+                    real_concrete_class_id = base_object.get_real_concrete_instance_class_id()
+
+                    if real_concrete_class_id == self_concrete_model_class_id:
+                        # Real and base classes share the same concrete ancestor,
+                        # upcast it and put it in the results
+                        results[base_object.pk] = transmogrify(real_concrete_class, base_object)
+                    else:
+                        real_concrete_class = ContentType.objects.get_for_id(real_concrete_class_id).model_class()
+                        idlist_per_model[real_concrete_class].append(base_object.pk)
 
         # django's automatic ".pk" field does not always work correctly for
         # custom fields in derived objects (unclear yet who to put the blame on).
