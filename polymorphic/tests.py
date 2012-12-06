@@ -203,12 +203,12 @@ class RelatedNameClash(ShowFieldType, PolymorphicModel):
 class testclass(TestCase):
     def test_diamond_inheritance(self):
         # Django diamond problem
+        # https://code.djangoproject.com/ticket/10808
         o = DiamondXY.objects.create(field_b='b', field_x='x', field_y='y')
-        print 'DiamondXY fields 1: field_b "%s", field_x "%s", field_y "%s"' % (o.field_b, o.field_x, o.field_y)
         o = DiamondXY.objects.get()
-        print 'DiamondXY fields 2: field_b "%s", field_x "%s", field_y "%s"' % (o.field_b, o.field_x, o.field_y)
         if o.field_b != 'b':
-            print
+            print 'DiamondXY fields 1: field_b "%s", field_x "%s", field_y "%s"' % (o.field_b, o.field_x, o.field_y)
+            print 'DiamondXY fields 2: field_b "%s", field_x "%s", field_y "%s"' % (o.field_b, o.field_x, o.field_y)
             print '# known django model inheritance diamond problem detected'
 
     def test_annotate_aggregate_order(self):
