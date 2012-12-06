@@ -395,13 +395,13 @@ __test__ = {"doctest": """
 >>> show_base_manager(Model2A)
 <class 'polymorphic.manager.PolymorphicManager'> <class 'polymorphic.tests.Model2A'>
 >>> show_base_manager(Model2B)
-<class 'django.db.models.manager.Manager'> <class 'polymorphic.tests.Model2B'>
+<class 'polymorphic.manager.PolymorphicManager'> <class 'polymorphic.tests.Model2B'>
 >>> show_base_manager(Model2C)
-<class 'django.db.models.manager.Manager'> <class 'polymorphic.tests.Model2C'>
+<class 'polymorphic.manager.PolymorphicManager'> <class 'polymorphic.tests.Model2C'>
 >>> show_base_manager(One2OneRelatingModel)
 <class 'polymorphic.manager.PolymorphicManager'> <class 'polymorphic.tests.One2OneRelatingModel'>
 >>> show_base_manager(One2OneRelatingModelDerived)
-<class 'django.db.models.manager.Manager'> <class 'polymorphic.tests.One2OneRelatingModelDerived'>
+<class 'polymorphic.manager.PolymorphicManager'> <class 'polymorphic.tests.One2OneRelatingModelDerived'>
 
 >>> o=Model2A.base_objects.get(field1='C1')
 >>> o.model2b
