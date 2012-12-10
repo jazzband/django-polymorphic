@@ -2,4 +2,4 @@ include README.rst
 include LICENSE
 include DOCS.rst
 include CHANGES.rst
-recursive-include polymorphic/templates/ *.html
+recursive-include polymorphic/templates *
