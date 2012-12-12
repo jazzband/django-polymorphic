@@ -1,18 +1,26 @@
-from distutils.core import setup
+from setuptools import setup, find_packages
 
 setup(
     name = 'django_polymorphic',
-    version = '0.2',
+    version = '0.2.1',
     description = 'Seamless Polymorphic Inheritance for Django Models',
+    url = 'https://github.com/chrisglass/django_polymorphic',
+
     author = 'Bert Constantin',
     author_email = 'bert.constantin@gmx.de',
+
     maintainer = 'Christopher Glass',
     maintainer_email = 'tribaal@gmail.com',
-    url = 'https://github.com/chrisglass/django_polymorphic',
-    packages = [
-        'polymorphic',
-        'polymorphic.templatetags',
-    ],
+
+    packages = find_packages(),
+    package_data = {
+        'polymorphic': [
+            'templates/admin/polymorphic/*.html',
+        ],
+    },
+
+    install_requires=['setuptools'],
+
     classifiers=[
         'Framework :: Django',
         'Intended Audience :: Developers',
