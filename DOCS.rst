@@ -239,7 +239,7 @@ Example
         child_models = (
             (ModelB, ModelBAdmin),
             (ModelC, ModelCAdmin),
-        }
+        )
 
     # Only the parent needs to be registered:
     admin.site.register(ModelA, ModelAParentAdmin)
