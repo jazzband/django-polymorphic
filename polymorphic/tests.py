@@ -33,6 +33,8 @@ class Model2C(Model2B):
     field3 = models.CharField(max_length=10)
 class Model2D(Model2C):
     field4 = models.CharField(max_length=10)
+class Model2E(Model2D):
+    pass
 
 class ModelExtraA(ShowFieldTypeAndContent, PolymorphicModel):
     field1 = models.CharField(max_length=10)
@@ -43,7 +45,7 @@ class ModelExtraC(ModelExtraB):
 class ModelExtraExternal(models.Model):
     topic = models.CharField(max_length=10)
 
-class ModelShow1(ShowFieldType,PolymorphicModel):
+class ModelShow1(ShowFieldType, PolymorphicModel):
     field1 = models.CharField(max_length=10)
     m2m = models.ManyToManyField('self')
 class ModelShow2(ShowFieldContent, PolymorphicModel):
@@ -255,12 +257,12 @@ class testclass(TestCase):
   <BlogA: id 5, name (CharField) "B2", info (CharField) "i2">,
   <BlogA: id 1, name (CharField) "B1", info (CharField) "i1"> ]'''
         x = '\n' + repr(BlogBase.objects.order_by('-name'))
-        assert x == expected
+        assert x == expected, x
 
         ### test ordering for field in one subclass only
 
         # MySQL and SQLite return this order
-        expected1='''
+        expected1 = '''
 [ <BlogA: id 8, name (CharField) "B5", info (CharField) "i5">,
   <BlogA: id 7, name (CharField) "B4", info (CharField) "i4">,
   <BlogA: id 6, name (CharField) "B3", info (CharField) "i3">,
@@ -271,7 +273,7 @@ class testclass(TestCase):
   <BlogB: id 4, name (CharField) "Bb3"> ]'''
 
         # PostgreSQL returns this order
-        expected2='''
+        expected2 = '''
 [ <BlogB: id 2, name (CharField) "Bb1">,
   <BlogB: id 3, name (CharField) "Bb2">,
   <BlogB: id 4, name (CharField) "Bb3">,
@@ -282,7 +284,7 @@ class testclass(TestCase):
   <BlogA: id 1, name (CharField) "B1", info (CharField) "i1"> ]'''
 
         x = '\n' + repr(BlogBase.objects.order_by('-BlogA___info'))
-        assert x == expected1 or x == expected2
+        assert x == expected1 or x == expected2, x
 
 
     def test_limit_choices_to(self):
@@ -329,7 +331,7 @@ class testclass(TestCase):
 
 
 def show_base_manager(model):
-    print type(model._base_manager),model._base_manager.model
+    print type(model._base_manager), model._base_manager.model
 
 __test__ = {"doctest": """
 #######################################################
@@ -344,11 +346,13 @@ __test__ = {"doctest": """
 >>> o=Model2B.objects.create(field1='B1', field2='B2')
 >>> o=Model2C.objects.create(field1='C1', field2='C2', field3='C3')
 >>> o=Model2D.objects.create(field1='D1', field2='D2', field3='D3', field4='D4')
+>>> o=Model2E.objects.create(field1='E1', field2='E2', field3='E3', field4='E4')
 >>> Model2A.objects.all()
 [ <Model2A: id 1, field1 (CharField)>,
   <Model2B: id 2, field1 (CharField), field2 (CharField)>,
   <Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)>,
-  <Model2D: id 4, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField)> ]
+  <Model2D: id 4, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField)>,
+  <Model2E: id 5, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField)> ]
 
 # manual get_real_instance()
 >>> o=Model2A.objects.non_polymorphic().get(field1='C1')
@@ -361,28 +365,53 @@ __test__ = {"doctest": """
 [ <Model2A: id 1, field1 (CharField)>,
   <Model2A: id 2, field1 (CharField)>,
   <Model2A: id 3, field1 (CharField)>,
-  <Model2A: id 4, field1 (CharField)> ]
+  <Model2A: id 4, field1 (CharField)>,
+  <Model2A: id 5, field1 (CharField)> ]
 
 # get_real_instances()
 >>> qs.get_real_instances()
 [ <Model2A: id 1, field1 (CharField)>,
   <Model2B: id 2, field1 (CharField), field2 (CharField)>,
   <Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)>,
-  <Model2D: id 4, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField)> ]
+  <Model2D: id 4, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField)>,
+  <Model2E: id 5, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField)> ]
 
 >>> l=list(qs)
 >>> Model2A.objects.get_real_instances(l)
 [ <Model2A: id 1, field1 (CharField)>,
   <Model2B: id 2, field1 (CharField), field2 (CharField)>,
   <Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)>,
-  <Model2D: id 4, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField)> ]
+  <Model2D: id 4, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField)>,
+  <Model2E: id 5, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField)> ]
 
 # translate_polymorphic_Q_object
 >>> q=Model2A.translate_polymorphic_Q_object( Q(instance_of=Model2C) )
 >>> Model2A.objects.filter(q)
 [ <Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)>,
-  <Model2D: id 4, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField)> ]
+  <Model2D: id 4, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField)>,
+  <Model2E: id 5, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField)> ]
 
+>>> qs=Model2B.objects.all()
+>>> qs
+[ <Model2B: id 2, field1 (CharField), field2 (CharField)>,
+  <Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)>,
+  <Model2D: id 4, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField)>,
+  <Model2E: id 5, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField)> ]
+
+>>> qs=Model2C.objects.all()
+>>> qs
+[ <Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)>,
+  <Model2D: id 4, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField)>,
+  <Model2E: id 5, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField)> ]
+
+>>> qs=Model2D.objects.all()
+>>> qs
+[ <Model2D: id 4, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField)>,
+  <Model2E: id 5, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField)> ]
+
+>>> qs=Model2E.objects.all()
+>>> qs
+[ <Model2E: id 5, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField)> ]
 
 ### test inheritance pointers & _base_managers
 
@@ -395,13 +424,15 @@ __test__ = {"doctest": """
 >>> show_base_manager(Model2A)
 <class 'polymorphic.manager.PolymorphicManager'> <class 'polymorphic.tests.Model2A'>
 >>> show_base_manager(Model2B)
-<class 'django.db.models.manager.Manager'> <class 'polymorphic.tests.Model2B'>
+<class 'polymorphic.manager.PolymorphicManager'> <class 'polymorphic.tests.Model2B'>
 >>> show_base_manager(Model2C)
-<class 'django.db.models.manager.Manager'> <class 'polymorphic.tests.Model2C'>
+<class 'polymorphic.manager.PolymorphicManager'> <class 'polymorphic.tests.Model2C'>
+>>> show_base_manager(Model2E)
+<class 'polymorphic.manager.PolymorphicManager'> <class 'polymorphic.tests.Model2E'>
 >>> show_base_manager(One2OneRelatingModel)
 <class 'polymorphic.manager.PolymorphicManager'> <class 'polymorphic.tests.One2OneRelatingModel'>
 >>> show_base_manager(One2OneRelatingModelDerived)
-<class 'django.db.models.manager.Manager'> <class 'polymorphic.tests.One2OneRelatingModelDerived'>
+<class 'polymorphic.manager.PolymorphicManager'> <class 'polymorphic.tests.One2OneRelatingModelDerived'>
 
 >>> o=Model2A.base_objects.get(field1='C1')
 >>> o.model2b
@@ -483,17 +514,20 @@ __test__ = {"doctest": """
 >>> Model2A.objects.instance_of(Model2B)
 [ <Model2B: id 2, field1 (CharField), field2 (CharField)>,
   <Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)>,
-  <Model2D: id 4, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField)> ]
+  <Model2D: id 4, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField)>,
+  <Model2E: id 5, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField)> ]
 
 >>> Model2A.objects.filter(instance_of=Model2B)
 [ <Model2B: id 2, field1 (CharField), field2 (CharField)>,
   <Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)>,
-  <Model2D: id 4, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField)> ]
+  <Model2D: id 4, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField)>,
+  <Model2E: id 5, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField)> ]
 
 >>> Model2A.objects.filter(Q(instance_of=Model2B))
 [ <Model2B: id 2, field1 (CharField), field2 (CharField)>,
   <Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)>,
-  <Model2D: id 4, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField)> ]
+  <Model2D: id 4, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField)>,
+  <Model2E: id 5, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField)> ]
 
 >>> Model2A.objects.not_instance_of(Model2B)
 [ <Model2A: id 1, field1 (CharField)> ]
@@ -516,8 +550,19 @@ __test__ = {"doctest": """
 >>> Model2A.objects.all()
 [ <Model2A: id 1, field1 (CharField)>,
   <Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)>,
+  <Model2D: id 4, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField)>,
+  <Model2E: id 5, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField)> ]
+
+>>> Model2E.objects.all().delete()
+>>> Model2A.objects.all()
+[ <Model2A: id 1, field1 (CharField)>,
+  <Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)>,
   <Model2D: id 4, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField)> ]
 
+>>> Model2D.objects.all().delete()
+>>> Model2A.objects.all()
+[ <Model2A: id 1, field1 (CharField)>,
+  <Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)> ]
 
 ### queryset combining
 
@@ -576,8 +621,8 @@ __test__ = {"doctest": """
 >>> o=ModelWithMyManager.objects.create(field1='D1b', field4='D4b')
 
 >>> ModelWithMyManager.objects.all()
-[ <ModelWithMyManager: id 6, field1 (CharField) "D1b", field4 (CharField) "D4b">,
-  <ModelWithMyManager: id 5, field1 (CharField) "D1a", field4 (CharField) "D4a"> ]
+[ <ModelWithMyManager: id 5, field1 (CharField) "D1b", field4 (CharField) "D4b">,
+  <ModelWithMyManager: id 4, field1 (CharField) "D1a", field4 (CharField) "D4a"> ]
 
 >>> type(ModelWithMyManager.objects)
 <class 'polymorphic.tests.MyManager'>
@@ -636,4 +681,3 @@ __test__ = {"doctest": """
 >>> settings.DEBUG=False
 
 """}
-

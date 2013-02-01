@@ -195,39 +195,38 @@ def translate_polymorphic_field_path(queryset_model, field_path):
     return newpath
 
 
-def _create_model_filter_Q(modellist, not_instance_of=False):
+def _create_model_filter_Q(models, not_instance_of=False):
     """
     Helper function for instance_of / not_instance_of
-    Creates and returns a Q object that filters for the models in modellist,
+    Creates and returns a Q object that filters for the models in models,
     including all subclasses of these models (as we want to do the same
-    as pythons isinstance() ).
-    .
-    We recursively collect all __subclasses__(), create a Q filter for each,
-    and or-combine these Q objects. This could be done much more
-    efficiently however (regarding the resulting sql), should an optimization
-    be needed.
+    as pythons isinstance().
     """
 
-    if not modellist:
+    if not models:
         return None
 
     from polymorphic_model import PolymorphicModel
 
-    if type(modellist) != list and type(modellist) != tuple:
-        if issubclass(modellist, PolymorphicModel):
-            modellist = [modellist]
-        else:
-            assert False, 'PolymorphicModel: instance_of expects a list of (polymorphic) models or a single (polymorphic) model'
+    if isinstance(models, tuple):
+        models = list(models)
+    elif not isinstance(models, list):
+        models = [models]
 
-    def q_class_with_subclasses(model):
-        q = Q(polymorphic_ctype=ContentType.objects.get_for_model(model))
-        for subclass in model.__subclasses__():
-            q = q | q_class_with_subclasses(subclass)
-        return q
+    for model in models:
+        if not issubclass(model, PolymorphicModel):
+            raise TypeError("PolymorphicModel: instance_of expects a list of (polymorphic) models or a single (polymorphic) model")
 
-    qlist = [q_class_with_subclasses(m)  for m in modellist]
+    def models_with_subclasses(models):
+        for model in models:
+            models.extend(models_with_subclasses(model.__subclasses__()))
+        return models
 
-    q_ored = reduce(lambda a, b: a | b, qlist)
+    ctypes = [ContentType.objects.get_for_proxied_model(m) for m in set(models_with_subclasses(models))]
+
+    q_ored = Q(polymorphic_ctype__in=ctypes)
+
     if not_instance_of:
         q_ored = ~q_ored
+
     return q_ored

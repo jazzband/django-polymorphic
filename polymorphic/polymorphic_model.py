@@ -62,7 +62,7 @@ class PolymorphicModel(models.Model):
         p_related_name_template = 'polymorphic_%(class)s_set'
     else:
         p_related_name_template = 'polymorphic_%(app_label)s.%(class)s_set'
-    polymorphic_ctype = models.ForeignKey(ContentType, null=True, editable=False,
+    polymorphic_ctype = models.ForeignKey(ContentType, editable=False,
                                 related_name=p_related_name_template)
 
     # some applications want to know the name of the fields that are added to its models
@@ -71,9 +71,23 @@ class PolymorphicModel(models.Model):
     objects = PolymorphicManager()
     base_objects = models.Manager()
 
+    @property
+    def type(self):
+        return self.polymorphic_ctype.model
+
     @classmethod
     def translate_polymorphic_Q_object(self_class, q):
         return translate_polymorphic_Q_object(self_class, q)
+
+    def __getattribute__(self, name):
+        if name == 'polymorphic_ctype':
+            """Avoid SQL queries and instead use the ContentType manager cache"""
+            polymorphic_ctype_id = super(PolymorphicModel, self).__getattribute__('polymorphic_ctype_id')
+            if polymorphic_ctype_id:
+                return ContentType.objects.get_for_id(polymorphic_ctype_id)
+            else:
+                return ContentType.objects.get_for_proxied_model(self)
+        return super(PolymorphicModel, self).__getattribute__(name)
 
     def pre_save_polymorphic(self):
         """Normally not needed.
@@ -83,8 +97,8 @@ class PolymorphicModel(models.Model):
         field to figure out the real class of this object
         (used by PolymorphicQuerySet._get_real_instances)
         """
-        if not self.polymorphic_ctype:
-            self.polymorphic_ctype = ContentType.objects.get_for_model(self)
+        if not self.polymorphic_ctype_id:
+            self.polymorphic_ctype_id = self.polymorphic_ctype.id
 
     def save(self, *args, **kwargs):
         """Overridden model save function which supports the polymorphism
@@ -97,10 +111,7 @@ class PolymorphicModel(models.Model):
         If a non-polymorphic manager (like base_objects) has been used to
         retrieve objects, then the real class/type of these objects may be
         determined using this method."""
-        # the following line would be the easiest way to do this, but it produces sql queries
-        #return self.polymorphic_ctype.model_class()
-        # so we use the following version, which uses the CopntentType manager cache
-        return ContentType.objects.get_for_id(self.polymorphic_ctype_id).model_class()
+        return self.polymorphic_ctype.model_class()
 
     def get_real_instance(self):
         """Normally not needed.
@@ -113,13 +124,13 @@ class PolymorphicModel(models.Model):
             return self
         return real_model.objects.get(pk=self.pk)
 
-    def __init__(self, * args, ** kwargs):
+    def __init__(self, *args, **kwargs):
         """Replace Django's inheritance accessor member functions for our model
         (self.__class__) with our own versions.
         We monkey patch them until a patch can be added to Django
         (which would probably be very small and make all of this obsolete).
 
-        If we have inheritance of the form ModelA -> ModelB ->ModelC then
+        If we have inheritance of the form ModelA -> ModelB -> ModelC then
         Django creates accessors like this:
         - ModelA: modelb
         - ModelB: modela_ptr, modelb, modelc
@@ -132,7 +143,7 @@ class PolymorphicModel(models.Model):
         But they should not. So we replace them with our own accessors that use
         our appropriate base_objects manager.
         """
-        super(PolymorphicModel, self).__init__(*args, ** kwargs)
+        super(PolymorphicModel, self).__init__(*args, **kwargs)
 
         if self.__class__.polymorphic_super_sub_accessors_replaced:
             return

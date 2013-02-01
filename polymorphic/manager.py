@@ -24,7 +24,10 @@ class PolymorphicManager(models.Manager):
         super(PolymorphicManager, self).__init__(*args, **kwrags)
 
     def get_query_set(self):
-        return self.queryset_class(self.model)
+        queryset = self.queryset_class(self.model)
+        if self.model._meta.proxy:
+            queryset = queryset.filter(instance_of=self.model)
+        return queryset
 
     # Proxy all unknown method calls to the queryset, so that its members are
     # directly accessible as PolymorphicModel.objects.*

@@ -24,6 +24,14 @@
         }
     }, 
     {
+        "pk": 4, 
+        "model": "pexp.project", 
+        "fields": {
+            "topic": "UFO Research", 
+            "polymorphic_ctype": 5
+        }
+    }, 
+    {
         "pk": 2, 
         "model": "pexp.artproject", 
         "fields": {
