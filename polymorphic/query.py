@@ -5,7 +5,8 @@
 
 from compatibility_tools import defaultdict
 
-from django.db.models.query import QuerySet
+from django.db import connections
+from django.db.models.query import QuerySet, get_klass_info, get_cached_row
 from django.contrib.contenttypes.models import ContentType
 
 from query_translate import translate_polymorphic_filter_definitions_in_kwargs, translate_polymorphic_filter_definitions_in_args
@@ -75,7 +76,7 @@ class BulkDeferredAttribute(DeferredAttribute):
         instance.__dict__[self.field_name] = value
 
 
-def deferred_class_factory(model, attrs):
+def deferred_class_factory(model, attrs, bulk_attrs):
     """
     Returns a class object that is a copy of "model" with the specified "attrs"
     being replaced with BulkDeferredAttribute objects. The "pk_value" ties the
@@ -89,11 +90,13 @@ def deferred_class_factory(model, attrs):
     # won't be created (we get an old one back). Therefore, we generate the
     # name using the passed in attrs. It's OK to reuse an existing class
     # object if the attrs are identical.
-    name = "%s_Deferred_%s" % (model.__name__, '_'.join(sorted(list(attrs))))
+    name = "%s_Deferred_%s" % (model.__name__, '_'.join(sorted(list(attrs | bulk_attrs))))
     name = util.truncate_name(name, 80, 32)
 
     overrides = dict([(attr, BulkDeferredAttribute(attr, model))
-            for attr in attrs])
+            for attr in bulk_attrs - attrs])
+    overrides.update(dict([(attr, DeferredAttribute(attr, model))
+            for attr in attrs]))
     overrides["Meta"] = Meta
     overrides["__module__"] = model.__module__
     overrides["_deferred"] = True
@@ -141,17 +144,18 @@ class PolymorphicQuerySet(QuerySet):
             clone = super(PolymorphicQuerySet, clone).aggregate(*fields)
         return clone
 
-    def delete(self, *args, **kwargs):
-        """deletes the records in the current QuerySet.
-        We need non-polymorphic object retrieval for aggregate => switch it off."""
-        clone = self._clone()
-        clone.polymorphic_disabled = True
-        _polymorphic_disabled = clone.model.polymorphic_disabled
-        clone.model.polymorphic_disabled = clone.polymorphic_disabled
-        try:
-            super(PolymorphicQuerySet, clone).delete(*args, **kwargs)
-        finally:
-            clone.model.polymorphic_disabled = _polymorphic_disabled
+    # FIXME: If django's delete() is patched to accept polymorphic queries, comment this method:
+    # def delete(self, *args, **kwargs):
+    #     """deletes the records in the current QuerySet.
+    #     We need non-polymorphic object retrieval for aggregate => switch it off."""
+    #     clone = self._clone()
+    #     clone.polymorphic_disabled = True
+    #     _polymorphic_disabled = clone.model.polymorphic_disabled
+    #     clone.model.polymorphic_disabled = clone.polymorphic_disabled
+    #     try:
+    #         super(PolymorphicQuerySet, clone).delete(*args, **kwargs)
+    #     finally:
+    #         clone.model.polymorphic_disabled = _polymorphic_disabled
 
     def non_polymorphic(self, *args, **kwargs):
         """switch off polymorphic behaviour for this query.
@@ -300,11 +304,16 @@ class PolymorphicQuerySet(QuerySet):
             if self.deferred:
                 attrs = set(f.attname for f in modelclass._meta.fields) - set([f.attname for f in self.model._meta.fields])
                 attrs.remove(modelclass._meta.pk.attname)
-                # print repr(attrs)
-                deferred_modelclass = deferred_class_factory(modelclass, attrs)
+                deferred_modelclass = deferred_class_factory(modelclass, set(), attrs)
                 for o_pk in idlist:
-                    o = deferred_modelclass()
                     bo = base_result_objects_by_id[o_pk]
+
+                    if bo._deferred:
+                        if bo.__class__._meta.proxy_for_model == modelclass:
+                            results[o_pk] = bo
+                            continue  # Skip already deferred objects of the same class
+
+                    o = deferred_modelclass()
 
                     for k, v in bo.__dict__.items():
                         o.__dict__[k] = v
@@ -380,6 +389,112 @@ class PolymorphicQuerySet(QuerySet):
 
         return resultlist
 
+    def _iterator(self):
+        """
+        An iterator over the results from applying this QuerySet to the
+        database.
+        """
+        fill_cache = False
+        if connections[self.db].features.supports_select_related:
+            fill_cache = self.query.select_related
+        if isinstance(fill_cache, dict):
+            requested = fill_cache
+        else:
+            requested = None
+        max_depth = self.query.max_depth
+
+        extra_select = self.query.extra_select.keys()
+        aggregate_select = self.query.aggregate_select.keys()
+
+        only_load = self.query.get_loaded_field_names()
+        if not fill_cache:
+            fields = self.model._meta.fields
+
+        load_fields = []
+        # If only/defer clauses have been specified,
+        # build the list of fields that are to be loaded.
+        if only_load:
+            for field, model in self.model._meta.get_fields_with_model():
+                if model is None:
+                    model = self.model
+                try:
+                    if field.name in only_load[model]:
+                        # Add a field that has been explicitly included
+                        load_fields.append(field.name)
+                except KeyError:
+                    # Model wasn't explicitly listed in the only_load table
+                    # Therefore, we need to load all fields from this model
+                    load_fields.append(field.name)
+
+        index_start = len(extra_select)
+        aggregate_start = index_start + len(load_fields or self.model._meta.fields)
+
+        skip = None
+        if not fill_cache:
+            skip = set()
+            # Some fields have been deferred, so we have to initialise
+            # via keyword arguments.
+            init_list = []
+            for idx, field in enumerate(fields):
+                if load_fields and field.name not in load_fields:
+                    skip.add(field.attname)
+                else:
+                    init_list.append(field.attname)
+            deferred_classes = {}
+
+        # Cache db and model outside the loop
+        db = self.db
+        compiler = self.query.get_compiler(using=db)
+        if fill_cache:
+            klass_info = get_klass_info(self.model, max_depth=max_depth,
+                                        requested=requested, only_load=only_load)
+        for row in compiler.results_iter():
+            if fill_cache:
+                obj, _ = get_cached_row(row, index_start, db, klass_info,
+                                        offset=len(aggregate_select))
+            else:
+                kwargs = dict(zip(init_list, row[index_start:aggregate_start]))
+                # Get the polymorphic child model class
+                model = ContentType.objects.get_for_id(kwargs['polymorphic_ctype_id']).model_class()
+                # Find out what fields belong to the polymorphic child class and bulk defer them
+                bulk_skip = set(f.attname for f in model._meta.fields) - set([f.attname for f in self.model._meta.fields])
+                if model._meta.pk.attname in bulk_skip:
+                    bulk_skip.remove(model._meta.pk.attname)
+                if skip or bulk_skip:
+                    if model in deferred_classes:
+                        model_cls = deferred_classes[model]
+                    else:
+                        model_cls = deferred_class_factory(model, skip, bulk_skip)
+                        deferred_classes[model] = model_cls
+                else:
+                    # Omit aggregates in object creation.
+                    model_cls = model
+
+                kwargs[model._meta.pk.attname] = kwargs[self.model._meta.pk.attname]
+
+                obj = model_cls(**kwargs)
+
+                # Models keep a track of modified attrs to choose which
+                # fields to save. Since we're just pulling from the
+                # database, nothing has changed yet.
+                obj._reset_modified_attrs()
+
+                # Store the source database of the object
+                obj._state.db = db
+                # This object came from the database; it's not being added.
+                obj._state.adding = False
+
+            if extra_select:
+                for i, k in enumerate(extra_select):
+                    setattr(obj, k, row[i])
+
+            # Add the aggregates to the model
+            if aggregate_select:
+                for i, aggregate in enumerate(aggregate_select):
+                    setattr(obj, aggregate, row[i + aggregate_start])
+
+            yield obj
+
     def iterator(self):
         """
         This function is used by Django for all object retrieval.
@@ -395,15 +510,17 @@ class PolymorphicQuerySet(QuerySet):
         but it requests the objects in chunks from the database,
         with Polymorphic_QuerySet_objects_per_request per chunk
         """
-        base_iter = super(PolymorphicQuerySet, self).iterator()
-
         # disabled => work just like a normal queryset
         if self.polymorphic_disabled:
+            base_iter = super(PolymorphicQuerySet, self).iterator()
+
             for o in base_iter:
                 yield o
             raise StopIteration
 
         while True:
+            base_iter = self._iterator()
+
             base_result_objects = []
             reached_end = False
 
