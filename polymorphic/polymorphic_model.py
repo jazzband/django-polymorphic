@@ -83,7 +83,7 @@ class PolymorphicModel(models.Model):
         field to figure out the real class of this object
         (used by PolymorphicQuerySet._get_real_instances)
         """
-        if not self.polymorphic_ctype:
+        if not self.polymorphic_ctype_id:
             self.polymorphic_ctype = ContentType.objects.get_for_model(self)
 
     def save(self, *args, **kwargs):
