@@ -1,0 +1,946 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="Docutils 0.10: http://docutils.sourceforge.net/" />
+<title></title>
+<style type="text/css">
+
+/*
+:Author: David Goodger (goodger@python.org)
+:Id: $Id: html4css1.css 7514 2012-09-14 14:27:12Z milde $
+:Copyright: This stylesheet has been placed in the public domain.
+
+Default cascading style sheet for the HTML output of Docutils.
+
+See http://docutils.sf.net/docs/howto/html-stylesheets.html for how to
+customize this style sheet.
+*/
+
+/* used to remove borders from tables and images */
+.borderless, table.borderless td, table.borderless th {
+  border: 0 }
+
+table.borderless td, table.borderless th {
+  /* Override padding for "table.docutils td" with "! important".
+     The right padding separates the table cells. */
+  padding: 0 0.5em 0 0 ! important }
+
+.first {
+  /* Override more specific margin styles with "! important". */
+  margin-top: 0 ! important }
+
+.last, .with-subtitle {
+  margin-bottom: 0 ! important }
+
+.hidden {
+  display: none }
+
+a.toc-backref {
+  text-decoration: none ;
+  color: black }
+
+blockquote.epigraph {
+  margin: 2em 5em ; }
+
+dl.docutils dd {
+  margin-bottom: 0.5em }
+
+object[type="image/svg+xml"], object[type="application/x-shockwave-flash"] {
+  overflow: hidden;
+}
+
+/* Uncomment (and remove this text!) to get bold-faced definition list terms
+dl.docutils dt {
+  font-weight: bold }
+*/
+
+div.abstract {
+  margin: 2em 5em }
+
+div.abstract p.topic-title {
+  font-weight: bold ;
+  text-align: center }
+
+div.admonition, div.attention, div.caution, div.danger, div.error,
+div.hint, div.important, div.note, div.tip, div.warning {
+  margin: 2em ;
+  border: medium outset ;
+  padding: 1em }
+
+div.admonition p.admonition-title, div.hint p.admonition-title,
+div.important p.admonition-title, div.note p.admonition-title,
+div.tip p.admonition-title {
+  font-weight: bold ;
+  font-family: sans-serif }
+
+div.attention p.admonition-title, div.caution p.admonition-title,
+div.danger p.admonition-title, div.error p.admonition-title,
+div.warning p.admonition-title, .code .error {
+  color: red ;
+  font-weight: bold ;
+  font-family: sans-serif }
+
+/* Uncomment (and remove this text!) to get reduced vertical space in
+   compound paragraphs.
+div.compound .compound-first, div.compound .compound-middle {
+  margin-bottom: 0.5em }
+
+div.compound .compound-last, div.compound .compound-middle {
+  margin-top: 0.5em }
+*/
+
+div.dedication {
+  margin: 2em 5em ;
+  text-align: center ;
+  font-style: italic }
+
+div.dedication p.topic-title {
+  font-weight: bold ;
+  font-style: normal }
+
+div.figure {
+  margin-left: 2em ;
+  margin-right: 2em }
+
+div.footer, div.header {
+  clear: both;
+  font-size: smaller }
+
+div.line-block {
+  display: block ;
+  margin-top: 1em ;
+  margin-bottom: 1em }
+
+div.line-block div.line-block {
+  margin-top: 0 ;
+  margin-bottom: 0 ;
+  margin-left: 1.5em }
+
+div.sidebar {
+  margin: 0 0 0.5em 1em ;
+  border: medium outset ;
+  padding: 1em ;
+  background-color: #ffffee ;
+  width: 40% ;
+  float: right ;
+  clear: right }
+
+div.sidebar p.rubric {
+  font-family: sans-serif ;
+  font-size: medium }
+
+div.system-messages {
+  margin: 5em }
+
+div.system-messages h1 {
+  color: red }
+
+div.system-message {
+  border: medium outset ;
+  padding: 1em }
+
+div.system-message p.system-message-title {
+  color: red ;
+  font-weight: bold }
+
+div.topic {
+  margin: 2em }
+
+h1.section-subtitle, h2.section-subtitle, h3.section-subtitle,
+h4.section-subtitle, h5.section-subtitle, h6.section-subtitle {
+  margin-top: 0.4em }
+
+h1.title {
+  text-align: center }
+
+h2.subtitle {
+  text-align: center }
+
+hr.docutils {
+  width: 75% }
+
+img.align-left, .figure.align-left, object.align-left {
+  clear: left ;
+  float: left ;
+  margin-right: 1em }
+
+img.align-right, .figure.align-right, object.align-right {
+  clear: right ;
+  float: right ;
+  margin-left: 1em }
+
+img.align-center, .figure.align-center, object.align-center {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.align-left {
+  text-align: left }
+
+.align-center {
+  clear: both ;
+  text-align: center }
+
+.align-right {
+  text-align: right }
+
+/* reset inner alignment in figures */
+div.align-right {
+  text-align: inherit }
+
+/* div.align-center * { */
+/*   text-align: left } */
+
+ol.simple, ul.simple {
+  margin-bottom: 1em }
+
+ol.arabic {
+  list-style: decimal }
+
+ol.loweralpha {
+  list-style: lower-alpha }
+
+ol.upperalpha {
+  list-style: upper-alpha }
+
+ol.lowerroman {
+  list-style: lower-roman }
+
+ol.upperroman {
+  list-style: upper-roman }
+
+p.attribution {
+  text-align: right ;
+  margin-left: 50% }
+
+p.caption {
+  font-style: italic }
+
+p.credits {
+  font-style: italic ;
+  font-size: smaller }
+
+p.label {
+  white-space: nowrap }
+
+p.rubric {
+  font-weight: bold ;
+  font-size: larger ;
+  color: maroon ;
+  text-align: center }
+
+p.sidebar-title {
+  font-family: sans-serif ;
+  font-weight: bold ;
+  font-size: larger }
+
+p.sidebar-subtitle {
+  font-family: sans-serif ;
+  font-weight: bold }
+
+p.topic-title {
+  font-weight: bold }
+
+pre.address {
+  margin-bottom: 0 ;
+  margin-top: 0 ;
+  font: inherit }
+
+pre.literal-block, pre.doctest-block, pre.math, pre.code {
+  margin-left: 2em ;
+  margin-right: 2em }
+
+pre.code .ln { color: grey; } /* line numbers */
+pre.code, code { background-color: #eeeeee }
+pre.code .comment, code .comment { color: #5C6576 }
+pre.code .keyword, code .keyword { color: #3B0D06; font-weight: bold }
+pre.code .literal.string, code .literal.string { color: #0C5404 }
+pre.code .name.builtin, code .name.builtin { color: #352B84 }
+pre.code .deleted, code .deleted { background-color: #DEB0A1}
+pre.code .inserted, code .inserted { background-color: #A3D289}
+
+span.classifier {
+  font-family: sans-serif ;
+  font-style: oblique }
+
+span.classifier-delimiter {
+  font-family: sans-serif ;
+  font-weight: bold }
+
+span.interpreted {
+  font-family: sans-serif }
+
+span.option {
+  white-space: nowrap }
+
+span.pre {
+  white-space: pre }
+
+span.problematic {
+  color: red }
+
+span.section-subtitle {
+  /* font-size relative to parent (h1..h6 element) */
+  font-size: 80% }
+
+table.citation {
+  border-left: solid 1px gray;
+  margin-left: 1px }
+
+table.docinfo {
+  margin: 2em 4em }
+
+table.docutils {
+  margin-top: 0.5em ;
+  margin-bottom: 0.5em }
+
+table.footnote {
+  border-left: solid 1px black;
+  margin-left: 1px }
+
+table.docutils td, table.docutils th,
+table.docinfo td, table.docinfo th {
+  padding-left: 0.5em ;
+  padding-right: 0.5em ;
+  vertical-align: top }
+
+table.docutils th.field-name, table.docinfo th.docinfo-name {
+  font-weight: bold ;
+  text-align: left ;
+  white-space: nowrap ;
+  padding-left: 0 }
+
+h1 tt.docutils, h2 tt.docutils, h3 tt.docutils,
+h4 tt.docutils, h5 tt.docutils, h6 tt.docutils {
+  font-size: 100% }
+
+ul.auto-toc {
+  list-style-type: none }
+
+</style>
+</head>
+<body>
+<div class="document">
+
+
+<div class="section" id="polymorphic-models-for-django">
+<h1><a class="toc-backref" href="#id1">Polymorphic Models for Django</a></h1>
+<div class="contents topic" id="table-of-contents">
+<p class="topic-title first">Table of Contents</p>
+<ul class="simple">
+<li><a class="reference internal" href="#polymorphic-models-for-django" id="id1">Polymorphic Models for Django</a></li>
+<li><a class="reference internal" href="#quickstart" id="id2">Quickstart</a></li>
+<li><a class="reference internal" href="#list-of-features" id="id3">List of Features</a></li>
+<li><a class="reference internal" href="#more-about-installation-testing" id="id4">More about Installation / Testing</a></li>
+<li><a class="reference internal" href="#more-polymorphic-functionality" id="id5">More Polymorphic Functionality</a></li>
+<li><a class="reference internal" href="#custom-managers-querysets-manager-inheritance" id="id6">Custom Managers, Querysets &amp; Manager Inheritance</a></li>
+<li><a class="reference internal" href="#performance-considerations" id="id7">Performance Considerations</a></li>
+<li><a class="reference internal" href="#restrictions-caveats" id="id8">Restrictions &amp; Caveats</a></li>
+<li><a class="reference internal" href="#project-status" id="id9">Project Status</a></li>
+<li><a class="reference internal" href="#links" id="id10">Links</a></li>
+</ul>
+</div>
+</div>
+<div class="section" id="quickstart">
+<h1><a class="toc-backref" href="#id2">Quickstart</a></h1>
+<div class="section" id="install">
+<h2>Install</h2>
+<p>After uncompressing (if necessary), in the directory &quot;...django_polymorphic&quot;,
+execute  (on Unix-like systems):</p>
+<pre class="literal-block">
+sudo python setup.py install
+</pre>
+</div>
+<div class="section" id="make-your-models-polymorphic">
+<h2>Make Your Models Polymorphic</h2>
+<p>Use <tt class="docutils literal">PolymorphicModel</tt> instead of Django's <tt class="docutils literal">models.Model</tt>, like so:</p>
+<pre class="literal-block">
+from polymorphic import PolymorphicModel
+
+class Project(PolymorphicModel):
+        topic = models.CharField(max_length=30)
+
+class ArtProject(Project):
+        artist = models.CharField(max_length=30)
+
+class ResearchProject(Project):
+        supervisor = models.CharField(max_length=30)
+</pre>
+<p>All models inheriting from your polymorphic models will be polymorphic as well.</p>
+</div>
+<div class="section" id="create-some-objects">
+<h2>Create some objects</h2>
+<pre class="doctest-block">
+&gt;&gt;&gt; Project.objects.create(topic=&quot;Department Party&quot;)
+&gt;&gt;&gt; ArtProject.objects.create(topic=&quot;Painting with Tim&quot;, artist=&quot;T. Turner&quot;)
+&gt;&gt;&gt; ResearchProject.objects.create(topic=&quot;Swallow Aerodynamics&quot;, supervisor=&quot;Dr. Winter&quot;)
+</pre>
+</div>
+<div class="section" id="get-polymorphic-query-results">
+<h2>Get polymorphic query results</h2>
+<pre class="doctest-block">
+&gt;&gt;&gt; Project.objects.all()
+[ &lt;Project:         id 1, topic &quot;Department Party&quot;&gt;,
+  &lt;ArtProject:      id 2, topic &quot;Painting with Tim&quot;, artist &quot;T. Turner&quot;&gt;,
+  &lt;ResearchProject: id 3, topic &quot;Swallow Aerodynamics&quot;, supervisor &quot;Dr. Winter&quot;&gt; ]
+</pre>
+<p>use <tt class="docutils literal">instance_of</tt> or <tt class="docutils literal">not_instance_of</tt> for narrowing the result to specific subtypes:</p>
+<pre class="doctest-block">
+&gt;&gt;&gt; Project.objects.instance_of(ArtProject)
+[ &lt;ArtProject:      id 2, topic &quot;Painting with Tim&quot;, artist &quot;T. Turner&quot;&gt; ]
+</pre>
+<pre class="doctest-block">
+&gt;&gt;&gt; Project.objects.instance_of(ArtProject) | Project.objects.instance_of(ResearchProject)
+[ &lt;ArtProject:      id 2, topic &quot;Painting with Tim&quot;, artist &quot;T. Turner&quot;&gt;,
+  &lt;ResearchProject: id 3, topic &quot;Swallow Aerodynamics&quot;, supervisor &quot;Dr. Winter&quot;&gt; ]
+</pre>
+<p>Polymorphic filtering: Get all projects where Mr. Turner is involved as an artist
+or supervisor (note the three underscores):</p>
+<pre class="doctest-block">
+&gt;&gt;&gt; Project.objects.filter(  Q(ArtProject___artist = 'T. Turner') | Q(ResearchProject___supervisor = 'T. Turner')  )
+[ &lt;ArtProject:      id 2, topic &quot;Painting with Tim&quot;, artist &quot;T. Turner&quot;&gt;,
+  &lt;ResearchProject: id 4, topic &quot;Color Use in Late Cubism&quot;, supervisor &quot;T. Turner&quot;&gt; ]
+</pre>
+<p>This is basically all you need to know, as django_polymorphic mostly
+works fully automatic and just delivers the expected (&quot;pythonic&quot;) results.</p>
+<p>Note: In all example output, above and below, for a nicer and more informative
+output the <tt class="docutils literal">ShowFieldType</tt> mixin has been used (documented below).</p>
+</div>
+</div>
+<div class="section" id="list-of-features">
+<h1><a class="toc-backref" href="#id3">List of Features</a></h1>
+<ul class="simple">
+<li>Fully automatic - generally makes sure that the same objects are
+returned from the database that were stored there, regardless how
+they are retrieved</li>
+<li>Only on models that request polymorphic behaviour (and the
+models inheriting from them)</li>
+<li>Full support for ForeignKeys, ManyToManyFields and OneToToneFields</li>
+<li>Filtering for classes, equivalent to python's isinstance():
+<tt class="docutils literal"><span class="pre">instance_of(...)</span></tt> and <tt class="docutils literal"><span class="pre">not_instance_of(...)</span></tt></li>
+<li>Polymorphic filtering/ordering etc., allowing the use of fields of
+derived models (&quot;ArtProject___artist&quot;)</li>
+<li>Support for user-defined custom managers</li>
+<li>Automatic inheritance of custom managers</li>
+<li>Support for user-defined custom queryset classes</li>
+<li>Non-polymorphic queries if needed, with no other change in
+features/behaviour</li>
+<li>Combining querysets of different types/models (&quot;qs3 = qs1 | qs2&quot;)</li>
+<li>Nice/informative display of polymorphic queryset results</li>
+</ul>
+</div>
+<div class="section" id="more-about-installation-testing">
+<h1><a class="toc-backref" href="#id4">More about Installation / Testing</a></h1>
+<div class="section" id="requirements">
+<h2>Requirements</h2>
+<p>Django 1.1 (or later) and Python 2.4 or later. This code has been tested
+on Django 1.1 / 1.2 / 1.3 and Python 2.4.6 / 2.5.4 / 2.6.4 on Linux.</p>
+</div>
+<div class="section" id="included-test-suite">
+<h2>Included Test Suite</h2>
+<p>The repository (or tar file) contains a complete Django project
+that may be used for tests or experiments, without any installation needed.</p>
+<p>To run the included test suite, in the directory &quot;...django_polymorphic&quot; execute:</p>
+<pre class="literal-block">
+./manage test polymorphic
+</pre>
+<p>The management command <tt class="docutils literal">pcmd.py</tt> in the app <tt class="docutils literal">pexp</tt> can be used
+for quick tests or experiments - modify this file (pexp/management/commands/pcmd.py)
+to your liking, then run:</p>
+<pre class="literal-block">
+./manage syncdb      # db is created in /var/tmp/... (settings.py)
+./manage pcmd
+</pre>
+</div>
+<div class="section" id="installation">
+<h2>Installation</h2>
+<p>In the directory &quot;...django_polymorphic&quot;, execute <tt class="docutils literal">sudo python setup.py install</tt>.</p>
+<p>Alternatively you can simply copy the <tt class="docutils literal">polymorphic</tt> subdirectory
+(under &quot;django_polymorphic&quot;) into your Django project dir
+(e.g. if you want to distribute your project with more 'batteries included').</p>
+<p>If you want to run the test cases in <cite>polymorphic/tests.py</cite>, you need to add
+<tt class="docutils literal">polymorphic</tt> to your INSTALLED_APPS setting.</p>
+<p>Django's ContentType framework (<tt class="docutils literal">django.contrib.contenttypes</tt>)
+needs to be listed in INSTALLED_APPS (usually it already is).</p>
+</div>
+</div>
+<div class="section" id="more-polymorphic-functionality">
+<h1><a class="toc-backref" href="#id5">More Polymorphic Functionality</a></h1>
+<p>In the examples below, these models are being used:</p>
+<pre class="literal-block">
+from polymorphic import PolymorphicModel
+
+class ModelA(PolymorphicModel):
+    field1 = models.CharField(max_length=10)
+
+class ModelB(ModelA):
+    field2 = models.CharField(max_length=10)
+
+class ModelC(ModelB):
+    field3 = models.CharField(max_length=10)
+</pre>
+<div class="section" id="using-polymorphic-models-in-the-admin-interface">
+<h2>Using polymorphic models in the admin interface</h2>
+<p>Naturally, it's possible to register individual polymorphic models in the Django admin interface.
+However, to use these models in a single cohesive interface, some extra base classes are available.</p>
+<p>The polymorphic admin interface works in a simple way:</p>
+<ul class="simple">
+<li>The add screen gains an additional step where the desired child model is selected.</li>
+<li>The edit screen displays the admin interface of the child model.</li>
+<li>The list screen still displays all objects of the base class.</li>
+</ul>
+<p>The polymorphic admin is implemented via a parent admin that forwards the <em>edit</em> and <em>delete</em> views
+to the <tt class="docutils literal">ModelAdmin</tt> of the derived child model. The <em>list</em> page is still implemented by the parent model admin.</p>
+<p>Both the parent model and child model need to have a <tt class="docutils literal">ModelAdmin</tt> class.
+Only the <tt class="docutils literal">ModelAdmin</tt> class of the parent/base model has to be registered in the Django admin site.</p>
+<div class="section" id="the-parent-model">
+<h3>The parent model</h3>
+<p>The parent model needs to inherit <tt class="docutils literal">PolymorphicParentModelAdmin</tt>, and implement the following:</p>
+<ul class="simple">
+<li><tt class="docutils literal">base_model</tt> should be set</li>
+<li><tt class="docutils literal">child_models</tt> should be set, or:</li>
+</ul>
+<blockquote>
+<ul class="simple">
+<li><tt class="docutils literal">get_child_models()</tt> should return a list with (Model, ModelAdmin) tuple.</li>
+</ul>
+</blockquote>
+<p>The exact implementation can depend on the way your module is structured.
+For simple inheritance situations, <tt class="docutils literal">child_models</tt> is best suited.
+For large applications, this leaves room for a plugin registration system.</p>
+</div>
+<div class="section" id="the-child-models">
+<h3>The child models</h3>
+<p>The admin interface of the derived models should inherit from <tt class="docutils literal">PolymorphicChildModelAdmin</tt>.
+Again, <tt class="docutils literal">base_model</tt> should be set in this class as well.
+This class implements the following features:</p>
+<ul class="simple">
+<li>It corrects the breadcrumbs in the admin pages.</li>
+<li>It extends the template lookup paths, to look for both the parent model and child model in the <tt class="docutils literal">admin/app/model/change_form.html</tt> path.</li>
+<li>It allows to set <tt class="docutils literal">base_form</tt> so the derived class will automatically include other fields in the form.</li>
+<li>It allows to set <tt class="docutils literal">base_fieldsets</tt> so the derived class will automatically display any extra fields.</li>
+</ul>
+<p>By adding <tt class="docutils literal">polymorphic</tt> to the <tt class="docutils literal">INSTALLED_APPS</tt>, the breadcrumbs will be
+fixed as well, to stay the same for all child models.</p>
+<p>The standard <tt class="docutils literal">ModelAdmin</tt> attributes <tt class="docutils literal">form</tt> and <tt class="docutils literal">fieldsets</tt> should rather be avoided at the base class,
+because it will hide any additional fields which are defined in the derived model. Instead,
+use the <tt class="docutils literal">base_form</tt> and <tt class="docutils literal">base_fieldsets</tt> instead. The <tt class="docutils literal">PolymorphicChildModelAdmin</tt> will
+automatically detect the additional fields that the child model has, display those in a separate fieldset.</p>
+</div>
+<div class="section" id="example">
+<h3>Example</h3>
+<pre class="literal-block">
+from django.contrib import admin
+from polymorphic.admin import PolymorphicParentModelAdmin, PolymorphicChildModelAdmin
+
+
+class ModelAChildAdmin(PolymorphicChildModelAdmin):
+    &quot;&quot;&quot; Base admin class for all child models &quot;&quot;&quot;
+    base_model = ModelA
+
+    # By using these `base_...` attributes instead of the regular ModelAdmin `form` and `fieldsets`,
+    # the additional fields of the child models are automatically added to the admin form.
+    base_form = ...
+    base_fieldsets = (
+        ...
+    )
+
+class ModelBAdmin(ModelAChildAdmin):
+    # define custom features here
+
+class ModelCAdmin(ModelBAdmin):
+    # define custom features here
+
+
+class ModelAParentAdmin(PolymorphicParentModelAdmin):
+    &quot;&quot;&quot; The parent model admin &quot;&quot;&quot;
+    base_model = ModelA
+    child_models = (
+        (ModelB, ModelBAdmin),
+        (ModelC, ModelCAdmin),
+    )
+
+# Only the parent needs to be registered:
+admin.site.register(ModelA, ModelAParentAdmin)
+</pre>
+</div>
+</div>
+<div class="section" id="filtering-for-classes-equivalent-to-python-s-isinstance">
+<h2>Filtering for classes (equivalent to python's isinstance() ):</h2>
+<pre class="doctest-block">
+&gt;&gt;&gt; ModelA.objects.instance_of(ModelB)
+.
+[ &lt;ModelB: id 2, field1 (CharField), field2 (CharField)&gt;,
+  &lt;ModelC: id 3, field1 (CharField), field2 (CharField), field3 (CharField)&gt; ]
+</pre>
+<p>In general, including or excluding parts of the inheritance tree:</p>
+<pre class="literal-block">
+ModelA.objects.instance_of(ModelB [, ModelC ...])
+ModelA.objects.not_instance_of(ModelB [, ModelC ...])
+</pre>
+<p>You can also use this feature in Q-objects (with the same result as above):</p>
+<pre class="doctest-block">
+&gt;&gt;&gt; ModelA.objects.filter( Q(instance_of=ModelB) )
+</pre>
+</div>
+<div class="section" id="polymorphic-filtering-for-fields-in-derived-classes">
+<h2>Polymorphic filtering (for fields in derived classes)</h2>
+<p>For example, cherrypicking objects from multiple derived classes
+anywhere in the inheritance tree, using Q objects (with the
+syntax: <tt class="docutils literal">exact model name + three _ + field name</tt>):</p>
+<pre class="doctest-block">
+&gt;&gt;&gt; ModelA.objects.filter(  Q(ModelB___field2 = 'B2') | Q(ModelC___field3 = 'C3')  )
+.
+[ &lt;ModelB: id 2, field1 (CharField), field2 (CharField)&gt;,
+  &lt;ModelC: id 3, field1 (CharField), field2 (CharField), field3 (CharField)&gt; ]
+</pre>
+</div>
+<div class="section" id="combining-querysets">
+<h2>Combining Querysets</h2>
+<p>Querysets could now be regarded as object containers that allow the
+aggregation of different object types, very similar to python
+lists - as long as the objects are accessed through the manager of
+a common base class:</p>
+<pre class="doctest-block">
+&gt;&gt;&gt; Base.objects.instance_of(ModelX) | Base.objects.instance_of(ModelY)
+.
+[ &lt;ModelX: id 1, field_x (CharField)&gt;,
+  &lt;ModelY: id 2, field_y (CharField)&gt; ]
+</pre>
+</div>
+<div class="section" id="manytomanyfield-foreignkey-onetoonefield">
+<h2>ManyToManyField, ForeignKey, OneToOneField</h2>
+<p>Relationship fields referring to polymorphic models work as
+expected: like polymorphic querysets they now always return the
+referred objects with the same type/class these were created and
+saved as.</p>
+<p>E.g., if in your model you define:</p>
+<pre class="literal-block">
+field1 = OneToOneField(ModelA)
+</pre>
+<p>then field1 may now also refer to objects of type <tt class="docutils literal">ModelB</tt> or <tt class="docutils literal">ModelC</tt>.</p>
+<p>A ManyToManyField example:</p>
+<pre class="literal-block">
+# The model holding the relation may be any kind of model, polymorphic or not
+class RelatingModel(models.Model):
+    many2many = models.ManyToManyField('ModelA')  # ManyToMany relation to a polymorphic model
+
+&gt;&gt;&gt; o=RelatingModel.objects.create()
+&gt;&gt;&gt; o.many2many.add(ModelA.objects.get(id=1))
+&gt;&gt;&gt; o.many2many.add(ModelB.objects.get(id=2))
+&gt;&gt;&gt; o.many2many.add(ModelC.objects.get(id=3))
+
+&gt;&gt;&gt; o.many2many.all()
+[ &lt;ModelA: id 1, field1 (CharField)&gt;,
+  &lt;ModelB: id 2, field1 (CharField), field2 (CharField)&gt;,
+  &lt;ModelC: id 3, field1 (CharField), field2 (CharField), field3 (CharField)&gt; ]
+</pre>
+</div>
+<div class="section" id="using-third-party-models-without-modifying-them">
+<h2>Using Third Party Models (without modifying them)</h2>
+<p>Third party models can be used as polymorphic models without
+restrictions by subclassing them. E.g. using a third party
+model as the root of a polymorphic inheritance tree:</p>
+<pre class="literal-block">
+from thirdparty import ThirdPartyModel
+
+class MyThirdPartyBaseModel(PolymorhpicModel, ThirdPartyModel):
+    pass    # or add fields
+</pre>
+<p>Or instead integrating the third party model anywhere into an
+existing polymorphic inheritance tree:</p>
+<pre class="literal-block">
+class MyBaseModel(SomePolymorphicModel):
+    my_field = models.CharField(max_length=10)
+
+class MyModelWithThirdParty(MyBaseModel, ThirdPartyModel):
+    pass    # or add fields
+</pre>
+</div>
+<div class="section" id="non-polymorphic-queries">
+<h2>Non-Polymorphic Queries</h2>
+<p>If you insert <tt class="docutils literal">.non_polymorphic()</tt> anywhere into the query chain, then
+django_polymorphic will simply leave out the final step of retrieving the
+real objects, and the manager/queryset will return objects of the type of
+the base class you used for the query, like vanilla Django would
+(<tt class="docutils literal">ModelA</tt> in this example).</p>
+<pre class="doctest-block">
+&gt;&gt;&gt; qs=ModelA.objects.non_polymorphic().all()
+&gt;&gt;&gt; qs
+[ &lt;ModelA: id 1, field1 (CharField)&gt;,
+  &lt;ModelA: id 2, field1 (CharField)&gt;,
+  &lt;ModelA: id 3, field1 (CharField)&gt; ]
+</pre>
+<p>There are no other changes in the behaviour of the queryset. For example,
+enhancements for <tt class="docutils literal">filter()</tt> or <tt class="docutils literal">instance_of()</tt> etc. still work as expected.
+If you do the final step yourself, you get the usual polymorphic result:</p>
+<pre class="doctest-block">
+&gt;&gt;&gt; ModelA.objects.get_real_instances(qs)
+[ &lt;ModelA: id 1, field1 (CharField)&gt;,
+  &lt;ModelB: id 2, field1 (CharField), field2 (CharField)&gt;,
+  &lt;ModelC: id 3, field1 (CharField), field2 (CharField), field3 (CharField)&gt; ]
+</pre>
+</div>
+<div class="section" id="about-queryset-methods">
+<h2>About Queryset Methods</h2>
+<ul class="simple">
+<li><tt class="docutils literal">annotate()</tt> and <tt class="docutils literal">aggregate()</tt> work just as usual, with the
+addition that the <tt class="docutils literal">ModelX___field</tt> syntax can be used for the
+keyword arguments (but not for the non-keyword arguments).</li>
+<li><tt class="docutils literal">order_by()</tt> now similarly supports the <tt class="docutils literal">ModelX___field</tt> syntax
+for specifying ordering through a field in a submodel.</li>
+<li><tt class="docutils literal">distinct()</tt> works as expected. It only regards the fields of
+the base class, but this should never make a difference.</li>
+<li><tt class="docutils literal">select_related()</tt> works just as usual, but it can not (yet) be used
+to select relations in derived models
+(like <tt class="docutils literal"><span class="pre">ModelA.objects.select_related('ModelC___fieldxy')</span></tt> )</li>
+<li><tt class="docutils literal">extra()</tt> works as expected (it returns polymorphic results) but
+currently has one restriction: The resulting objects are required to have
+a unique primary key within the result set - otherwise an error is thrown
+(this case could be made to work, however it may be mostly unneeded)..
+The keyword-argument &quot;polymorphic&quot; is no longer supported.
+You can get back the old non-polymorphic behaviour (before V1.0)
+by using <tt class="docutils literal"><span class="pre">ModelA.objects.non_polymorphic().extra(...)</span></tt>.</li>
+<li><tt class="docutils literal">get_real_instances()</tt> allows you to turn a
+queryset or list  of base model objects efficiently into the real objects.
+For example, you could do <tt class="docutils literal"><span class="pre">base_objects_queryset=ModelA.extra(...).non_polymorphic()</span></tt>
+and then call <tt class="docutils literal">real_objects=base_objects_queryset.get_real_instances()</tt>.Or alternatively
+.``real_objects=ModelA.objects..get_real_instances(base_objects_queryset_or_object_list)``</li>
+<li><tt class="docutils literal">values()</tt> &amp; <tt class="docutils literal">values_list()</tt> currently do not return polymorphic
+results. This may change in the future however. If you want to use these
+methods now, it's best if you use <tt class="docutils literal"><span class="pre">Model.base_objects.values...</span></tt> as
+this is guaranteed to not change.</li>
+<li><tt class="docutils literal">defer()</tt> and <tt class="docutils literal">only()</tt> are not yet supported (support will be added
+in the future).</li>
+</ul>
+</div>
+<div class="section" id="using-enhanced-q-objects-in-any-places">
+<h2>Using enhanced Q-objects in any Places</h2>
+<p>The queryset enhancements (e.g. <tt class="docutils literal">instance_of</tt>) only work as arguments
+to the member functions of a polymorphic queryset.  Occationally it may
+be useful to be able to use Q objects with these enhancements in other places.
+As Django doesn't understand these enhanced Q objects, you need to
+transform them manually into normal Q objects before you can feed them
+to a Django queryset or function:</p>
+<pre class="literal-block">
+normal_q_object = ModelA.translate_polymorphic_Q_object( Q(instance_of=Model2B) )
+</pre>
+<p>This function cannot be used at model creation time however (in models.py),
+as it may need to access the ContentTypes database table.</p>
+</div>
+<div class="section" id="nicely-displaying-polymorphic-querysets">
+<h2>Nicely Displaying Polymorphic Querysets</h2>
+<p>In order to get the output as seen in all examples here, you need to use the
+ShowFieldType class mixin:</p>
+<pre class="literal-block">
+from polymorphic import PolymorphicModel, ShowFieldType
+
+class ModelA(ShowFieldType, PolymorphicModel):
+    field1 = models.CharField(max_length=10)
+</pre>
+<p>You may also use ShowFieldContent or ShowFieldTypeAndContent to display
+additional information when printing querysets (or converting them to text).</p>
+<p>When showing field contents, they will be truncated to 20 characters. You can
+modify this behaviour by setting a class variable in your model like this:</p>
+<pre class="literal-block">
+class ModelA(ShowFieldType, PolymorphicModel):
+    polymorphic_showfield_max_field_width = 20
+    ...
+</pre>
+<p>Similarly, pre-V1.0 output formatting can be re-estated by using
+<tt class="docutils literal">polymorphic_showfield_old_format = True</tt>.</p>
+</div>
+</div>
+<div class="section" id="custom-managers-querysets-manager-inheritance">
+<h1><a class="toc-backref" href="#id6">Custom Managers, Querysets &amp; Manager Inheritance</a></h1>
+<div class="section" id="using-a-custom-manager">
+<h2>Using a Custom Manager</h2>
+<p>A nice feature of Django is the possibility to define one's own custom object managers.
+This is fully supported with django_polymorphic: For creating a custom polymorphic
+manager class, just derive your manager from <tt class="docutils literal">PolymorphicManager</tt> instead of
+<tt class="docutils literal">models.Manager</tt>. As with vanilla Django, in your model class, you should
+explicitly add the default manager first, and then your custom manager:</p>
+<pre class="literal-block">
+ from polymorphic import PolymorphicModel, PolymorphicManager
+
+class TimeOrderedManager(PolymorphicManager):
+     def get_query_set(self):
+         qs = super(TimeOrderedManager,self).get_query_set()
+         return qs.order_by('-start_date')        # order the queryset
+
+     def most_recent(self):
+         qs = self.get_query_set()                # get my ordered queryset
+         return qs[:10]                           # limit =&gt; get ten most recent entries
+
+ class Project(PolymorphicModel):
+     objects = PolymorphicManager()               # add the default polymorphic manager first
+     objects_ordered = TimeOrderedManager()       # then add your own manager
+     start_date = DateTimeField()                 # project start is this date/time
+</pre>
+<p>The first manager defined ('objects' in the example) is used by
+Django as automatic manager for several purposes, including accessing
+related objects. It must not filter objects and it's safest to use
+the plain <tt class="docutils literal">PolymorphicManager</tt> here.</p>
+</div>
+<div class="section" id="manager-inheritance">
+<h2>Manager Inheritance</h2>
+<p>Polymorphic models inherit/propagate all managers from their
+base models, as long as these are polymorphic. This means that all
+managers defined in polymorphic base models continue to work as
+expected in models inheriting from this base model:</p>
+<pre class="literal-block">
+from polymorphic import PolymorphicModel, PolymorphicManager
+
+class TimeOrderedManager(PolymorphicManager):
+     def get_query_set(self):
+         qs = super(TimeOrderedManager,self).get_query_set()
+         return qs.order_by('-start_date')        # order the queryset
+
+     def most_recent(self):
+         qs = self.get_query_set()                # get my ordered queryset
+         return qs[:10]                           # limit =&gt; get ten most recent entries
+
+ class Project(PolymorphicModel):
+     objects = PolymorphicManager()               # add the default polymorphic manager first
+     objects_ordered = TimeOrderedManager()       # then add your own manager
+     start_date = DateTimeField()                 # project start is this date/time
+
+ class ArtProject(Project):                       # inherit from Project, inheriting its fields and managers
+     artist = models.CharField(max_length=30)
+</pre>
+<p>ArtProject inherited the managers <tt class="docutils literal">objects</tt> and <tt class="docutils literal">objects_ordered</tt> from Project.</p>
+<p><tt class="docutils literal">ArtProject.objects_ordered.all()</tt> will return all art projects ordered
+regarding their start time and <tt class="docutils literal">ArtProject.objects_ordered.most_recent()</tt>
+will return the ten most recent art projects.
+.</p>
+</div>
+<div class="section" id="using-a-custom-queryset-class">
+<h2>Using a Custom Queryset Class</h2>
+<p>The <tt class="docutils literal">PolymorphicManager</tt> class accepts one initialization argument,
+which is the queryset class the manager should use. Just as with vanilla Django,
+you may define your own custom queryset classes. Just use PolymorphicQuerySet
+instead of Django's QuerySet as the base class:</p>
+<pre class="literal-block">
+from polymorphic import PolymorphicModel, PolymorphicManager, PolymorphicQuerySet
+
+class MyQuerySet(PolymorphicQuerySet):
+    def my_queryset_method(...):
+        ...
+
+class MyModel(PolymorphicModel):
+    my_objects=PolymorphicManager(MyQuerySet)
+    ...
+</pre>
+</div>
+</div>
+<div class="section" id="performance-considerations">
+<h1><a class="toc-backref" href="#id7">Performance Considerations</a></h1>
+<p>The current implementation is rather simple and does not use any
+custom SQL or Django DB layer internals - it is purely based on the
+standard Django ORM.</p>
+<p>Specifically, the query:</p>
+<pre class="literal-block">
+result_objects = list( ModelA.objects.filter(...) )
+</pre>
+<p>performs one SQL query to retrieve <tt class="docutils literal">ModelA</tt> objects and one additional
+query for each unique derived class occurring in result_objects.
+The best case for retrieving 100 objects is 1 SQL query if all are
+class <tt class="docutils literal">ModelA</tt>. If 50 objects are <tt class="docutils literal">ModelA</tt> and 50 are <tt class="docutils literal">ModelB</tt>, then
+two queries are executed. The pathological worst case is 101 db queries if
+result_objects contains 100 different object types (with all of them
+subclasses of <tt class="docutils literal">ModelA</tt>).</p>
+<p>Usually, when Django users create their own polymorphic ad-hoc solution
+without a tool like django_polymorphic, this usually results in a variation of</p>
+<pre class="literal-block">
+result_objects = [ o.get_real_instance() for o in BaseModel.objects.filter(...) ]
+</pre>
+<p>which has very bad performance, as it introduces one additional
+SQL query for every object in the result which is not of class <tt class="docutils literal">BaseModel</tt>.</p>
+<p>Compared to these solutions, django_polymorphic has the advantage
+that it only needs one sql request per <em>object type</em>, and not <em>per object</em>.</p>
+<div class="section" id="performance-problems-with-postgresql-mysql-and-sqlite3">
+<span id="performance"></span><h2>Performance Problems with PostgreSQL, MySQL and SQLite3</h2>
+<p>Current relational DBM systems seem to have general problems with
+the SQL queries produced by object relational mappers like the Django
+ORM, if these use multi-table inheritance like Django's ORM does.
+The &quot;inner joins&quot; in these queries can perform very badly.
+This is independent of django_polymorphic and affects all uses of
+multi table Model inheritance.</p>
+<p>Concrete benchmark results are forthcoming (please see discussion forum).</p>
+<p>Please also see this <a class="reference external" href="http://www.jacobian.org/writing/concrete-inheritance/">post (and comments) from Jacob Kaplan-Moss</a>.</p>
+</div>
+</div>
+<div class="section" id="restrictions-caveats">
+<span id="restrictions"></span><h1><a class="toc-backref" href="#id8">Restrictions &amp; Caveats</a></h1>
+<ul class="simple">
+<li>Database Performance regarding concrete Model inheritance in general.
+Please see &quot;Performance Problems&quot; above.</li>
+<li>Queryset methods <tt class="docutils literal">values()</tt>, <tt class="docutils literal">values_list()</tt>, <tt class="docutils literal">select_related()</tt>,
+<tt class="docutils literal">defer()</tt> and <tt class="docutils literal">only()</tt> are not yet fully supported (see above).
+<tt class="docutils literal">extra()</tt> has one restriction: the resulting objects are required to have
+a unique primary key within the result set.</li>
+<li>Diamond shaped inheritance: There seems to be a general problem
+with diamond shaped multiple model inheritance with Django models
+(tested with V1.1 - V1.3).
+An example is here: <a class="reference external" href="http://code.djangoproject.com/ticket/10808">http://code.djangoproject.com/ticket/10808</a>.
+This problem is aggravated when trying to enhance models.Model
+by subclassing it instead of modifying Django core (as we do here
+with PolymorphicModel).</li>
+<li>The enhanced filter-definitions/Q-objects only work as arguments
+for the methods of the polymorphic querysets. Please see above
+for <tt class="docutils literal">translate_polymorphic_Q_object</tt>.</li>
+<li>A reference (<tt class="docutils literal">ContentType</tt>) to the real/leaf model is stored
+in the base model (the base model directly inheriting from
+PolymorphicModel). You need to be aware of this when using the
+<tt class="docutils literal">dumpdata</tt> management command or any other low-level
+database operations. E.g. if you rename models or apps or copy
+objects from one database to another, then Django's ContentType
+table needs to be corrected/copied too. This is of course generally
+the case for any models using Django's ContentType.</li>
+<li>Django 1.1 only - the names of polymorphic models must be unique
+in the whole project, even if they are in two different apps.
+This results from a restriction in the Django 1.1 &quot;related_name&quot;
+option (fixed in Django 1.2).</li>
+<li>Django 1.1 only - when ContentType is used in models, Django's
+seralisation or fixtures cannot be used (all polymorphic models
+use ContentType). This issue seems to be resolved for Django 1.2
+(changeset 11863: Fixed #7052, Added support for natural keys in serialization).<ul>
+<li><a class="reference external" href="http://code.djangoproject.com/ticket/7052">http://code.djangoproject.com/ticket/7052</a></li>
+<li><a class="reference external" href="http://stackoverflow.com/questions/853796/problems-with-contenttypes-when-loading-a-fixture-in-django">http://stackoverflow.com/questions/853796/problems-with-contenttypes-when-loading-a-fixture-in-django</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="project-status">
+<h1><a class="toc-backref" href="#id9">Project Status</a></h1>
+<p>Django_polymorphic works well for a considerable number of users now,
+and no major problems have shown up for many months.
+The API can be considered stable beginning with the V1.0 release.</p>
+</div>
+<div class="section" id="links">
+<h1><a class="toc-backref" href="#id10">Links</a></h1>
+<ul class="simple">
+<li><a class="reference external" href="http://code.djangoproject.com/wiki/ModelInheritance">http://code.djangoproject.com/wiki/ModelInheritance</a></li>
+<li><a class="reference external" href="http://lazypython.blogspot.com/2009/02/second-look-at-inheritance-and.html">http://lazypython.blogspot.com/2009/02/second-look-at-inheritance-and.html</a></li>
+<li><a class="reference external" href="http://www.djangosnippets.org/snippets/1031/">http://www.djangosnippets.org/snippets/1031/</a></li>
+<li><a class="reference external" href="http://www.djangosnippets.org/snippets/1034/">http://www.djangosnippets.org/snippets/1034/</a></li>
+<li><a class="reference external" href="http://groups.google.com/group/django-developers/browse_frm/thread/7d40ad373ebfa912/a20fabc661b7035d?lnk=gst&amp;q=model+inheritance+CORBA#a20fabc661b7035d">http://groups.google.com/group/django-developers/browse_frm/thread/7d40ad373ebfa912/a20fabc661b7035d?lnk=gst&amp;q=model+inheritance+CORBA#a20fabc661b7035d</a></li>
+<li><a class="reference external" href="http://groups.google.com/group/django-developers/browse_thread/thread/9bc2aaec0796f4e0/0b92971ffc0aa6f8?lnk=gst&amp;q=inheritance#0b92971ffc0aa6f8">http://groups.google.com/group/django-developers/browse_thread/thread/9bc2aaec0796f4e0/0b92971ffc0aa6f8?lnk=gst&amp;q=inheritance#0b92971ffc0aa6f8</a></li>
+<li><a class="reference external" href="http://groups.google.com/group/django-developers/browse_thread/thread/3947c594100c4adb/d8c0af3dacad412d?lnk=gst&amp;q=inheritance#d8c0af3dacad412d">http://groups.google.com/group/django-developers/browse_thread/thread/3947c594100c4adb/d8c0af3dacad412d?lnk=gst&amp;q=inheritance#d8c0af3dacad412d</a></li>
+<li><a class="reference external" href="http://groups.google.com/group/django-users/browse_thread/thread/52f72cffebb705e/b76c9d8c89a5574f">http://groups.google.com/group/django-users/browse_thread/thread/52f72cffebb705e/b76c9d8c89a5574f</a></li>
+<li><a class="reference external" href="http://peterbraden.co.uk/article/django-inheritance">http://peterbraden.co.uk/article/django-inheritance</a></li>
+<li><a class="reference external" href="http://www.hopelessgeek.com/2009/11/25/a-hack-for-multi-table-inheritance-in-django">http://www.hopelessgeek.com/2009/11/25/a-hack-for-multi-table-inheritance-in-django</a></li>
+<li><a class="reference external" href="http://stackoverflow.com/questions/929029/how-do-i-access-the-child-classes-of-an-object-in-django-without-knowing-the-name/929982#929982">http://stackoverflow.com/questions/929029/how-do-i-access-the-child-classes-of-an-object-in-django-without-knowing-the-name/929982#929982</a></li>
+<li><a class="reference external" href="http://stackoverflow.com/questions/1581024/django-inheritance-how-to-have-one-method-for-all-subclasses">http://stackoverflow.com/questions/1581024/django-inheritance-how-to-have-one-method-for-all-subclasses</a></li>
+<li><a class="reference external" href="http://groups.google.com/group/django-users/browse_thread/thread/cbdaf2273781ccab/e676a537d735d9ef?lnk=gst&amp;q=polymorphic#e676a537d735d9ef">http://groups.google.com/group/django-users/browse_thread/thread/cbdaf2273781ccab/e676a537d735d9ef?lnk=gst&amp;q=polymorphic#e676a537d735d9ef</a></li>
+<li><a class="reference external" href="http://groups.google.com/group/django-users/browse_thread/thread/52f72cffebb705e/bc18c18b2e83881e?lnk=gst&amp;q=model+inheritance#bc18c18b2e83881e">http://groups.google.com/group/django-users/browse_thread/thread/52f72cffebb705e/bc18c18b2e83881e?lnk=gst&amp;q=model+inheritance#bc18c18b2e83881e</a></li>
+<li><a class="reference external" href="http://code.djangoproject.com/ticket/10808">http://code.djangoproject.com/ticket/10808</a></li>
+<li><a class="reference external" href="http://code.djangoproject.com/ticket/7270">http://code.djangoproject.com/ticket/7270</a></li>
+</ul>
+</div>
+</div>
+</body>
+</html>
