@@ -1,7 +1,15 @@
 *django_polymorphic*
 ++++++++++++++++++++
 Changelog
-++++++++++
+++++++++++++++++++++
+
+2013-02-28 Releasing Polymorphic v.0.3
+======================================
+
+Many changes to the codebase happened, but no new version was released to pypi
+for years.
+0.3 contains fixes submitted by many contributors, huge thanks to everyone!
+
 
 Juli 5, 2012, Polymorphic admin interface
 =========================================
