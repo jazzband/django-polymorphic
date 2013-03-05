@@ -8,6 +8,7 @@ import sys
 from pprint import pprint
 
 from django import VERSION as django_VERSION
+from django.conf import settings
 from django.test import TestCase
 from django.db.models.query import QuerySet
 from django.db.models import Q,Count
@@ -226,16 +227,16 @@ class testclass(TestCase):
 
         qs = BlogBase.objects.annotate(entrycount=Count('BlogA___blogentry'))
 
-        assert len(qs)==4
+        self.assertEqual(len(qs), 4)
 
         for o in qs:
             if o.name=='B1':
-                assert o.entrycount == 2
+                self.assertEqual(o.entrycount, 2)
             else:
-                assert o.entrycount == 0
+                self.assertEqual(o.entrycount, 0)
 
         x = BlogBase.objects.aggregate(entrycount=Count('BlogA___blogentry'))
-        assert x['entrycount'] == 2
+        self.assertEqual(x['entrycount'], 2)
 
         # create some more blogs for next test
         b2 = BlogA.objects.create(name='B2', info='i2')
@@ -255,7 +256,7 @@ class testclass(TestCase):
   <BlogA: id 5, name (CharField) "B2", info (CharField) "i2">,
   <BlogA: id 1, name (CharField) "B1", info (CharField) "i1"> ]'''
         x = '\n' + repr(BlogBase.objects.order_by('-name'))
-        assert x == expected
+        self.assertEqual(x, expected)
 
         ### test ordering for field in one subclass only
 
@@ -282,7 +283,7 @@ class testclass(TestCase):
   <BlogA: id 1, name (CharField) "B1", info (CharField) "i1"> ]'''
 
         x = '\n' + repr(BlogBase.objects.order_by('-BlogA___info'))
-        assert x == expected1 or x == expected2
+        self.assertTrue(x == expected1 or x == expected2)
 
 
     def test_limit_choices_to(self):
@@ -306,15 +307,16 @@ class testclass(TestCase):
         a=qs[0]
         b=qs[1]
         c=qs[2]
-        assert len(qs)==3
-        assert type(a.uuid_primary_key)==uuid.UUID and type(a.pk)==uuid.UUID
+        self.assertEqual(len(qs), 3)
+        self.assertIsInstance(a.uuid_primary_key, uuid.UUID)
+        self.assertIsInstance(a.pk, uuid.UUID)
         res=repr(qs)
         import re
         res=re.sub(' "(.*?)..", topic',', topic',res)
         res_exp="""[ <UUIDProject: uuid_primary_key (UUIDField/pk), topic (CharField) "John's gathering">,
   <UUIDArtProject: uuid_primary_key (UUIDField/pk), topic (CharField) "Sculpting with Tim", artist (CharField) "T. Turner">,
   <UUIDResearchProject: uuid_primary_key (UUIDField/pk), topic (CharField) "Swallow Aerodynamics", supervisor (CharField) "Dr. Winter"> ]"""
-        assert res==res_exp, res
+        self.assertEqual(res, res_exp)
         #if (a.pk!= uuid.UUID or c.pk!= uuid.UUID):
         #    print
         #    print '# known inconstency with custom primary key field detected (django problem?)'
@@ -323,7 +325,7 @@ class testclass(TestCase):
         b=UUIDPlainB.objects.create(field1='B1', field2='B2')
         c=UUIDPlainC.objects.create(field1='C1', field2='C2', field3='C3')
         qs=UUIDPlainA.objects.all()
-        if (a.pk!= uuid.UUID or c.pk!= uuid.UUID):
+        if a.pk!= uuid.UUID or c.pk!= uuid.UUID:
             print
             print '# known type inconstency with custom primary key field detected (django problem?)'
 
