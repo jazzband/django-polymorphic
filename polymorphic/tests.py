@@ -582,7 +582,7 @@ __test__ = {"doctest": """
 >>> type(ModelWithMyManager.objects)
 <class 'polymorphic.tests.MyManager'>
 >>> type(ModelWithMyManager._default_manager)
-<class 'polymorphic.tests.MyManager'>
+<class 'polymorphic.manager.PolymorphicManager'>
 
 
 ### Manager Inheritance
@@ -592,11 +592,11 @@ __test__ = {"doctest": """
 
 # check for correct default manager
 >>> type(MROBase1._default_manager)
-<class 'polymorphic.tests.MyManager'>
+<class 'polymorphic.manager.PolymorphicManager'>
 
 # Django vanilla inheritance does not inherit MyManager as _default_manager here
 >>> type(MROBase2._default_manager)
-<class 'polymorphic.tests.MyManager'>
+<class 'polymorphic.manager.PolymorphicManager'>
 
 
 ### fixed issue in PolymorphicModel.__getattribute__: field name same as model name
