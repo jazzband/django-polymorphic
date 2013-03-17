@@ -3,7 +3,7 @@
     Please see README.rst or DOCS.rst or http://bserve.webhop.org/wiki/django_polymorphic
 """
 
-import settings
+from django.conf import settings
 import sys
 from pprint import pprint
 
