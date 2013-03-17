@@ -9,28 +9,12 @@ ADMINS = (
 
 MANAGERS = ADMINS
 
-import django
-import os
-
-if os.path.ismount('/ram'):
-    SQLITE_DB_PATH = '/ram/django-polymorphic-test-db.sqlite3'
-else:
-    SQLITE_DB_PATH = '/var/tmp/django-polymorphic-test-db.sqlite3'
-
-if django.VERSION[:2][0]>=1 and django.VERSION[:2][1]>=3:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': SQLITE_DB_PATH
-        }
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': ':memory:'
     }
-else:
-    DATABASE_ENGINE = 'sqlite3'           # 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
-    DATABASE_NAME = SQLITE_DB_PATH             # Or path to database file if using sqlite3.
-    DATABASE_USER = ''             # Not used with sqlite3.
-    DATABASE_PASSWORD = ''         # Not used with sqlite3.
-    DATABASE_HOST = ''             # Set to empty string for localhost. Not used with sqlite3.
-    DATABASE_PORT = ''             # Set to empty string for default. Not used with sqlite3.
+}
 
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
