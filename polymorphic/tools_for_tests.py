@@ -84,7 +84,9 @@ class UUIDField(models.CharField):
 
     def db_type(self, connection):
         from django.conf import settings
-        return UUIDField._CREATE_COLUMN_TYPES.get(settings.DATABASE_ENGINE, "char(%s)" % self.max_length)
+        full_database_type = settings.DATABASES['default']['ENGINE']
+        database_type = full_database_type.split('.')[-1]
+        return UUIDField._CREATE_COLUMN_TYPES.get(database_type, "char(%s)" % self.max_length)
 
     def to_python(self, value):
         """Return a uuid.UUID instance from the value returned by the database."""
