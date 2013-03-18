@@ -618,22 +618,30 @@ __test__ = {"doctest": """
 #>>> print 'DiamondXY fields 1: field_b "%s", field_x "%s", field_y "%s"' % (o.field_b, o.field_x, o.field_y)
 #DiamondXY fields 1: field_b "a", field_x "x", field_y "y"
 
-# test for github issue
->>> t = Top()
->>> t.save()
->>> m = Middle()
->>> m.save()
->>> b = Bottom()
->>> b.save()
->>> Top.objects.all()
-[<Top: Top object>, <Middle: Middle object>, <Bottom: Bottom object>]
->>> Middle.objects.all()
-[<Middle: Middle object>, <Bottom: Bottom object>]
->>> Bottom.objects.all()
-[<Bottom: Bottom object>]
-
 
 >>> settings.DEBUG=False
 
 """}
+
+
+class RegressionTests(TestCase):
+
+    def test_for_query_result_incomplete_with_inheritance(self):
+        """ https://github.com/bconstantin/django_polymorphic/issues/15 """
+
+        top = Top()
+        top.save()
+        middle = Middle()
+        middle.save()
+        bottom = Bottom()
+        bottom.save()
+
+        expected_queryset = [top, middle, bottom]
+        self.assertQuerysetEqual(Top.objects.all(), [repr(r) for r in expected_queryset])
+
+        expected_queryset = [middle, bottom]
+        self.assertQuerysetEqual(Middle.objects.all(), [repr(r) for r in expected_queryset])
+
+        expected_queryset = [bottom]
+        self.assertQuerysetEqual(Bottom.objects.all(), [repr(r) for r in expected_queryset])
 
