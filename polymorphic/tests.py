@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """ Test Cases
-    Please see README.rst or DOCS.rst or http://bserve.webhop.org/wiki/django_polymorphic
+    Please see README.rst or DOCS.rst or http://chrisglass.github.com/django_polymorphic/
 """
 
 from django.conf import settings
