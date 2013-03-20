@@ -750,9 +750,8 @@ class RegressionTests(TestCase):
         self.assertQuerysetEqual(Bottom.objects.all(), [repr(r) for r in expected_queryset])
 
 
-class MonkeyPatchTests(TestCase):
-
-    def test_content_types_for_proxy_models_patch(self):
+class ProxiedModelTests(TestCase):
+    def test_content_types_for_proxy_models(self):
         from django.db.models import Model
         from django.contrib.contenttypes.models import ContentType
 
@@ -766,20 +765,3 @@ class MonkeyPatchTests(TestCase):
         ct = ContentType.objects.get_for_model(Proxy, for_concrete_model=False)
         self.assertEqual(Proxy, ct.model_class())
 
-    def test_content_types_for_proxy_models_patch_still_required(self):
-        """
-        If this test fails then our monkey patch of ContentTypeManager.get_for_model
-        is no longer required and should be removed
-        """
-        from django.db.models import Model
-        from django.contrib.contenttypes.models import ContentType
-
-        class MyModel(Model):
-            pass
-
-        self.assertRaisesMessage(
-            TypeError,
-            "get_for_model() got an unexpected keyword argument 'for_concrete_model'",
-            ContentType.objects.get_for_model__original,
-            MyModel, for_concrete_model=False
-        )
