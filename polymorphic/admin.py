@@ -17,7 +17,9 @@ from django.utils.encoding import force_unicode
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
 
-__all__ = ('PolymorphicModelChoiceForm', 'PolymorphicParentModelAdmin', 'PolymorphicChildModelAdmin')
+__all__ = (
+    'PolymorphicModelChoiceForm', 'PolymorphicParentModelAdmin',
+    'PolymorphicChildModelAdmin', 'PolymorphicChildModelFilter')
 
 
 class RegistrationClosed(RuntimeError):
@@ -43,6 +45,31 @@ class PolymorphicModelChoiceForm(forms.Form):
         super(PolymorphicModelChoiceForm, self).__init__(*args, **kwargs)
         self.fields['ct_id'].label = self.type_label
 
+
+class PolymorphicChildModelFilter(admin.SimpleListFilter):
+    """
+    An admin list filter for the PolymorphicParentModelAdmin which enables
+    filtering by its child models.
+    """
+    title = _('Content type')
+    parameter_name = 'polymorphic_ctype'
+
+    def lookups(self, request, model_admin):
+        return model_admin.get_child_type_choices()
+
+    def queryset(self, request, queryset):
+        try:
+            value = int(self.value())
+        except TypeError:
+            value = None
+        if value:
+            # ensure the content type is allowed
+            for choice_value, _ in self.lookup_choices:
+                if choice_value == value:
+                    return queryset.filter(polymorphic_ctype_id=choice_value)
+            raise PermissionDenied(
+                'Invalid ContentType "{0}". It must be registered as child model.'.format(value))
+        return queryset
 
 
 class PolymorphicParentModelAdmin(admin.ModelAdmin):
