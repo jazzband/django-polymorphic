@@ -164,6 +164,13 @@ class Middle(Top):
 class Bottom(Middle):
     author = models.CharField(max_length=50)
 
+class ProxyBase(PolymorphicModel):
+    some_data = models.CharField(max_length=128)
+
+class ProxyChild(ProxyBase):
+    class Meta:
+        proxy = True
+
 
 # UUID tests won't work with Django 1.1
 if not (django_VERSION[0] <= 1 and django_VERSION[1] <= 1):
@@ -326,6 +333,28 @@ class testclass(TestCase):
         if (a.pk!= uuid.UUID or c.pk!= uuid.UUID):
             print
             print '# known type inconstency with custom primary key field detected (django problem?)'
+
+            
+class ProxyModelTests(TestCase):
+    def test_proxy_models(self):
+        # prepare some data
+        for data in ('bleep bloop', 'I am a', 'computer'):
+            ProxyChild.objects.create(some_data=data)
+        # this caches ContentType queries so they don't interfere with our query counts later
+        list(ProxyBase.objects.all())
+        # one query per concrete class
+        with self.assertNumQueries(1):
+            items = list(ProxyBase.objects.all())
+        item = items[0]
+        self.assertIsInstance(item, ProxyChild)
+
+    def test_content_types_for_proxy_models(self):
+        """Checks if ContentType is capable of returning proxy models."""
+        from django.db.models import Model
+        from django.contrib.contenttypes.models import ContentType
+
+        ct = ContentType.objects.get_for_model(ProxyChild, for_concrete_model=False)
+        self.assertEqual(ProxyChild, ct.model_class())
 
 
 def show_base_manager(model):
@@ -636,20 +665,4 @@ __test__ = {"doctest": """
 >>> settings.DEBUG=False
 
 """}
-
-
-class ProxiedModelTests(TestCase):
-    def test_content_types_for_proxy_models(self):
-        from django.db.models import Model
-        from django.contrib.contenttypes.models import ContentType
-
-        class Base(Model):
-            pass
-
-        class Proxy(Base):
-            class Meta:
-                proxy = True
-
-        ct = ContentType.objects.get_for_model(Proxy, for_concrete_model=False)
-        self.assertEqual(Proxy, ct.model_class())
 
