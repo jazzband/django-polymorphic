@@ -193,7 +193,7 @@ class PolymorphicQuerySet(QuerySet):
         # TODO: defer(), only(): support for these would be around here
         for real_concrete_class, idlist in idlist_per_model.items():
             real_objects = real_concrete_class.base_objects.filter(pk__in=idlist)  # use pk__in instead ####
-            real_objects.dup_select_related(self)  # copy select related configuration to new qs
+            real_objects.query.select_related = self.query.select_related  # copy select related configuration to new qs
 
             for real_object in real_objects:
                 o_pk = getattr(real_object, pk_name)
