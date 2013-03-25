@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """ PolymorphicManager
-    Please see README.rst or DOCS.rst or http://bserve.webhop.org/wiki/django_polymorphic
+    Please see README.rst or DOCS.rst or http://chrisglass.github.com/django_polymorphic/
 """
 
 from django.db import models
