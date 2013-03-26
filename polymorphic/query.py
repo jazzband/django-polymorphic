@@ -171,7 +171,7 @@ class PolymorphicQuerySet(QuerySet):
         # TODO: defer(), only(): support for these would be around here
         for modelclass, idlist in idlist_per_model.items():
             qs = modelclass.base_objects.filter(pk__in=idlist)  # use pk__in instead ####
-            qs.dup_select_related(self)  # copy select related configuration to new qs
+            qs.query.select_related = self.query.select_related  # copy select related configuration to new qs
 
             for o in qs:
                 o_pk = getattr(o, pk_name)
