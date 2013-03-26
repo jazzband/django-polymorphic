@@ -17,6 +17,15 @@ from django.db.models.query import CHUNK_SIZE               # this is 100 for Dj
 Polymorphic_QuerySet_objects_per_request = CHUNK_SIZE
 
 
+def transmogrify(cls, obj):
+    """
+    Clone an object as a different class, by instantiating that class and copying the __dict__
+    """
+    new = cls()
+    for k,v in obj.__dict__.items():
+        new.__dict__[k] = v
+    return new
+
 ###################################################################################
 ### PolymorphicQuerySet
 
@@ -135,25 +144,31 @@ class PolymorphicQuerySet(QuerySet):
         # - also record the correct result order in "ordered_id_list"
         # - store objects that already have the correct class into "results"
         base_result_objects_by_id = {}
-        self_model_content_type_id = ContentType.objects.get_for_model(self.model).pk
+        self_model_class_id = ContentType.objects.get_for_model(self.model, for_concrete_model=False).pk
+        self_concrete_model_class_id = ContentType.objects.get_for_model(self.model, for_concrete_model=True).pk
+
         for base_object in base_result_objects:
             ordered_id_list.append(base_object.pk)
 
             # check if id of the result object occeres more than once - this can happen e.g. with base_objects.extra(tables=...)
-            assert not base_object.pk in base_result_objects_by_id, (
-                "django_polymorphic: result objects do not have unique primary keys - model " + unicode(self.model)
-            )
+            if not base_object.pk in base_result_objects_by_id:
+                base_result_objects_by_id[base_object.pk] = base_object
 
-            base_result_objects_by_id[base_object.pk] = base_object
+                if base_object.polymorphic_ctype_id == self_model_class_id:
+                    # Real class is exactly the same as base class, go straight to results
+                    results[base_object.pk] = base_object
 
-            # this object is not a derived object and already the real instance => store it right away
-            if (base_object.polymorphic_ctype_id == self_model_content_type_id):
-                results[base_object.pk] = base_object
+                else:
+                    real_concrete_class = base_object.get_real_instance_class()
+                    real_concrete_class_id = base_object.get_real_concrete_instance_class_id()
 
-            # this object is derived and its real instance needs to be retrieved
-            # => store it's id into the bin for this model type
-            else:
-                idlist_per_model[base_object.get_real_instance_class()].append(base_object.pk)
+                    if real_concrete_class_id == self_concrete_model_class_id:
+                        # Real and base classes share the same concrete ancestor,
+                        # upcast it and put it in the results
+                        results[base_object.pk] = transmogrify(real_concrete_class, base_object)
+                    else:
+                        real_concrete_class = ContentType.objects.get_for_id(real_concrete_class_id).model_class()
+                        idlist_per_model[real_concrete_class].append(base_object.pk)
 
         # django's automatic ".pk" field does not always work correctly for
         # custom fields in derived objects (unclear yet who to put the blame on).
@@ -169,24 +184,29 @@ class PolymorphicQuerySet(QuerySet):
         # Then we copy the annotate fields from the base objects to the real objects.
         # Then we copy the extra() select fields from the base objects to the real objects.
         # TODO: defer(), only(): support for these would be around here
-        for modelclass, idlist in idlist_per_model.items():
-            qs = modelclass.base_objects.filter(pk__in=idlist)  # use pk__in instead ####
-            qs.dup_select_related(self)  # copy select related configuration to new qs
+        for real_concrete_class, idlist in idlist_per_model.items():
+            real_objects = real_concrete_class.base_objects.filter(pk__in=idlist)  # use pk__in instead ####
+            real_objects.dup_select_related(self)  # copy select related configuration to new qs
 
-            for o in qs:
-                o_pk = getattr(o, pk_name)
+            for real_object in real_objects:
+                o_pk = getattr(real_object, pk_name)
+                real_class = real_object.get_real_instance_class()
+
+                # If the real class is a proxy, upcast it
+                if real_class != real_concrete_class:
+                    real_object = transmogrify(real_class, real_object)
 
                 if self.query.aggregates:
                     for anno_field_name in self.query.aggregates.keys():
                         attr = getattr(base_result_objects_by_id[o_pk], anno_field_name)
-                        setattr(o, anno_field_name, attr)
+                        setattr(real_object, anno_field_name, attr)
 
                 if self.query.extra_select:
                     for select_field_name in self.query.extra_select.keys():
                         attr = getattr(base_result_objects_by_id[o_pk], select_field_name)
-                        setattr(o, select_field_name, attr)
+                        setattr(real_object, select_field_name, attr)
 
-                results[o_pk] = o
+                results[o_pk] = real_object
 
         # re-create correct order and return result list
         resultlist = [results[ordered_id] for ordered_id in ordered_id_list if ordered_id in results]
@@ -194,14 +214,14 @@ class PolymorphicQuerySet(QuerySet):
         # set polymorphic_annotate_names in all objects (currently just used for debugging/printing)
         if self.query.aggregates:
             annotate_names = self.query.aggregates.keys()  # get annotate field list
-            for o in resultlist:
-                o.polymorphic_annotate_names = annotate_names
+            for real_object in resultlist:
+                real_object.polymorphic_annotate_names = annotate_names
 
         # set polymorphic_extra_select_names in all objects (currently just used for debugging/printing)
         if self.query.extra_select:
             extra_select_names = self.query.extra_select.keys()  # get extra select field list
-            for o in resultlist:
-                o.polymorphic_extra_select_names = extra_select_names
+            for real_object in resultlist:
+                real_object.polymorphic_extra_select_names = extra_select_names
 
         return resultlist
 

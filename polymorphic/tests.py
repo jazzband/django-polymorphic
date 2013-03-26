@@ -164,6 +164,13 @@ class Middle(Top):
 class Bottom(Middle):
     author = models.CharField(max_length=50)
 
+class ProxyBase(PolymorphicModel):
+    some_data = models.CharField(max_length=128)
+
+class ProxyChild(ProxyBase):
+    class Meta:
+        proxy = True
+
 
 # UUID tests won't work with Django 1.1
 if not (django_VERSION[0] <= 1 and django_VERSION[1] <= 1):
@@ -327,6 +334,28 @@ class testclass(TestCase):
             print
             print '# known type inconstency with custom primary key field detected (django problem?)'
 
+            
+class ProxyModelTests(TestCase):
+    def test_proxy_models(self):
+        # prepare some data
+        for data in ('bleep bloop', 'I am a', 'computer'):
+            ProxyChild.objects.create(some_data=data)
+        # this caches ContentType queries so they don't interfere with our query counts later
+        list(ProxyBase.objects.all())
+        # one query per concrete class
+        with self.assertNumQueries(1):
+            items = list(ProxyBase.objects.all())
+        item = items[0]
+        self.assertIsInstance(item, ProxyChild)
+
+    def test_content_types_for_proxy_models(self):
+        """Checks if ContentType is capable of returning proxy models."""
+        from django.db.models import Model
+        from django.contrib.contenttypes.models import ContentType
+
+        ct = ContentType.objects.get_for_model(ProxyChild, for_concrete_model=False)
+        self.assertEqual(ProxyChild, ct.model_class())
+
 
 def show_base_manager(model):
     print type(model._base_manager),model._base_manager.model
@@ -395,13 +424,13 @@ __test__ = {"doctest": """
 >>> show_base_manager(Model2A)
 <class 'polymorphic.manager.PolymorphicManager'> <class 'polymorphic.tests.Model2A'>
 >>> show_base_manager(Model2B)
-<class 'django.db.models.manager.Manager'> <class 'polymorphic.tests.Model2B'>
+<class 'polymorphic.manager.PolymorphicManager'> <class 'polymorphic.tests.Model2B'>
 >>> show_base_manager(Model2C)
-<class 'django.db.models.manager.Manager'> <class 'polymorphic.tests.Model2C'>
+<class 'polymorphic.manager.PolymorphicManager'> <class 'polymorphic.tests.Model2C'>
 >>> show_base_manager(One2OneRelatingModel)
 <class 'polymorphic.manager.PolymorphicManager'> <class 'polymorphic.tests.One2OneRelatingModel'>
 >>> show_base_manager(One2OneRelatingModelDerived)
-<class 'django.db.models.manager.Manager'> <class 'polymorphic.tests.One2OneRelatingModelDerived'>
+<class 'polymorphic.manager.PolymorphicManager'> <class 'polymorphic.tests.One2OneRelatingModelDerived'>
 
 >>> o=Model2A.base_objects.get(field1='C1')
 >>> o.model2b
