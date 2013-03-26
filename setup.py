@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name = 'django_polymorphic',
-    version = '0.3.1',
+    version = '0.4.0',
     description = 'Seamless Polymorphic Inheritance for Django Models',
     url = 'https://github.com/chrisglass/django_polymorphic',
 
