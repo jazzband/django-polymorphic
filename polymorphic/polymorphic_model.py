@@ -6,9 +6,8 @@ Seamless Polymorphic Inheritance for Django Models
 Please see README.rst and DOCS.rst for further information.
 
 Or on the Web:
-http://bserve.webhop.org/wiki/django_polymorphic
-http://github.com/bconstantin/django_polymorphic
-http://bitbucket.org/bconstantin/django_polymorphic
+http://chrisglass.github.com/django_polymorphic/
+http://github.com/chrisglass/django_polymorphic
 
 Copyright:
 This code and affiliated files are (C) by Bert Constantin and individual contributors.
