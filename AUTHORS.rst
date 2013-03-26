@@ -9,6 +9,7 @@ Contributors
 =============
 
 * Andrew Ingram (contributed setup.py)
+* Adam Wentz
 * Ben Konrath
 * Charles Leifer (python 2.4 compatibility)
 * Diederik van der Boor (polymorphic admin interface)

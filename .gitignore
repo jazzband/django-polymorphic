@@ -35,3 +35,4 @@ lib/
 
 MANIFEST
 dist/
+*.egg-info
