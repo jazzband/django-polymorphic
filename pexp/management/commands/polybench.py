@@ -6,7 +6,6 @@ This module is a scratchpad for general development, testing & debugging
 from django.core.management.base import NoArgsCommand
 from django.db.models import connection
 from pprint import pprint
-import settings
 import sys
 from pexp.models import *
 
@@ -90,8 +89,6 @@ class Command(NoArgsCommand):
     help = ""
 
     def handle_noargs(self, **options):
-        print 'polybench - sqlite test db is stored in:',settings.SQLITE_DB_PATH
-
         func_list = [
             ( bench_delete, 1 ),
             ( bench_create, 1 ),
