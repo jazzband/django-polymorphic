@@ -2,7 +2,7 @@
 ModelAdmin code to display polymorphic models.
 """
 from django import forms
-from django.conf.urls.defaults import patterns, url
+from django.conf.urls import patterns, url
 from django.contrib import admin
 from django.contrib.admin.helpers import AdminForm, AdminErrorList
 from django.contrib.admin.sites import AdminSite
