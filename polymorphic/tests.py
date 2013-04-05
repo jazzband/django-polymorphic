@@ -2,24 +2,17 @@
 """ Test Cases
     Please see README.rst or DOCS.rst or http://chrisglass.github.com/django_polymorphic/
 """
-
-from django.conf import settings
-import sys
-from pprint import pprint
 import uuid
 
-from django import VERSION as django_VERSION
-from django.conf import settings
 from django.test import TestCase
-from django.db.models.query import QuerySet
 from django.db.models import Q,Count
 from django.db import models
 from django.contrib.contenttypes.models import ContentType
 
-from polymorphic import PolymorphicModel, PolymorphicManager, PolymorphicQuerySet
-from polymorphic import ShowFieldContent, ShowFieldType, ShowFieldTypeAndContent, get_version
-from polymorphic import translate_polymorphic_Q_object
+from polymorphic import PolymorphicModel, PolymorphicManager
+from polymorphic import ShowFieldContent, ShowFieldType, ShowFieldTypeAndContent
 from polymorphic.tools_for_tests import UUIDField
+
 
 class PlainA(models.Model):
     field1 = models.CharField(max_length=10)
