@@ -8,7 +8,6 @@ import uuid
 from django.core.management.base import NoArgsCommand
 from django.db.models import connection
 from pprint import pprint
-import settings
 import time,sys
 
 from pexp.models import *
@@ -44,9 +43,6 @@ class Command(NoArgsCommand):
     help = ""
 
     def handle_noargs(self, **options):
-        print 'polycmd - sqlite test db is stored in:',settings.SQLITE_DB_PATH
-        print
-
         if False:
             ModelA.objects.all().delete()
             a=ModelA.objects.create(field1='A1')

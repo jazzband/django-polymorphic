@@ -36,3 +36,4 @@ lib/
 MANIFEST
 dist/
 *.egg-info
+.tox/
