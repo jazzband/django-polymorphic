@@ -6,6 +6,7 @@
 from django.conf import settings
 import sys
 from pprint import pprint
+import uuid
 
 from django import VERSION as django_VERSION
 from django.conf import settings
@@ -18,6 +19,7 @@ from django.contrib.contenttypes.models import ContentType
 from polymorphic import PolymorphicModel, PolymorphicManager, PolymorphicQuerySet
 from polymorphic import ShowFieldContent, ShowFieldType, ShowFieldTypeAndContent, get_version
 from polymorphic import translate_polymorphic_Q_object
+from polymorphic.tools_for_tests import UUIDField
 
 class PlainA(models.Model):
     field1 = models.CharField(max_length=10)
@@ -166,28 +168,21 @@ class Bottom(Middle):
     author = models.CharField(max_length=50)
 
 
-# UUID tests won't work with Django 1.1
-if not (django_VERSION[0] <= 1 and django_VERSION[1] <= 1):
-    try: from polymorphic.tools_for_tests  import UUIDField
-    except: pass
-    if 'UUIDField' in globals():
-        import uuid
+class UUIDProject(ShowFieldTypeAndContent, PolymorphicModel):
+        uuid_primary_key = UUIDField(primary_key = True)
+        topic = models.CharField(max_length = 30)
+class UUIDArtProject(UUIDProject):
+        artist = models.CharField(max_length = 30)
+class UUIDResearchProject(UUIDProject):
+        supervisor = models.CharField(max_length = 30)
 
-        class UUIDProject(ShowFieldTypeAndContent, PolymorphicModel):
-                uuid_primary_key = UUIDField(primary_key = True)
-                topic = models.CharField(max_length = 30)
-        class UUIDArtProject(UUIDProject):
-                artist = models.CharField(max_length = 30)
-        class UUIDResearchProject(UUIDProject):
-                supervisor = models.CharField(max_length = 30)
-
-        class UUIDPlainA(models.Model):
-            uuid_primary_key = UUIDField(primary_key = True)
-            field1 = models.CharField(max_length=10)
-        class UUIDPlainB(UUIDPlainA):
-            field2 = models.CharField(max_length=10)
-        class UUIDPlainC(UUIDPlainB):
-            field3 = models.CharField(max_length=10)
+class UUIDPlainA(models.Model):
+    uuid_primary_key = UUIDField(primary_key = True)
+    field1 = models.CharField(max_length=10)
+class UUIDPlainB(UUIDPlainA):
+    field2 = models.CharField(max_length=10)
+class UUIDPlainC(UUIDPlainB):
+    field3 = models.CharField(max_length=10)
 
 
 # test bad field name
@@ -303,7 +298,6 @@ class PolymorphicTests(TestCase):
 
     def test_primary_key_custom_field_problem(self):
         "object retrieval problem occuring with some custom primary key fields (UUIDField as test case)"
-        if not 'UUIDField' in globals(): return
         a=UUIDProject.objects.create(topic="John's gathering")
         b=UUIDArtProject.objects.create(topic="Sculpting with Tim", artist="T. Turner")
         c=UUIDResearchProject.objects.create(topic="Swallow Aerodynamics", supervisor="Dr. Winter")
