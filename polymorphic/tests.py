@@ -2,21 +2,18 @@
 """ Test Cases
     Please see README.rst or DOCS.rst or http://chrisglass.github.com/django_polymorphic/
 """
+import uuid
+import re
 
-from django.conf import settings
-import sys
-from pprint import pprint
-
-from django import VERSION as django_VERSION
 from django.test import TestCase
-from django.db.models.query import QuerySet
 from django.db.models import Q,Count
 from django.db import models
 from django.contrib.contenttypes.models import ContentType
 
-from polymorphic import PolymorphicModel, PolymorphicManager, PolymorphicQuerySet
-from polymorphic import ShowFieldContent, ShowFieldType, ShowFieldTypeAndContent, get_version
-from polymorphic import translate_polymorphic_Q_object
+from polymorphic import PolymorphicModel, PolymorphicManager
+from polymorphic import ShowFieldContent, ShowFieldType, ShowFieldTypeAndContent
+from polymorphic.tools_for_tests import UUIDField
+
 
 class PlainA(models.Model):
     field1 = models.CharField(max_length=10)
@@ -165,28 +162,21 @@ class Bottom(Middle):
     author = models.CharField(max_length=50)
 
 
-# UUID tests won't work with Django 1.1
-if not (django_VERSION[0] <= 1 and django_VERSION[1] <= 1):
-    try: from polymorphic.tools_for_tests  import UUIDField
-    except: pass
-    if 'UUIDField' in globals():
-        import uuid
+class UUIDProject(ShowFieldTypeAndContent, PolymorphicModel):
+        uuid_primary_key = UUIDField(primary_key = True)
+        topic = models.CharField(max_length = 30)
+class UUIDArtProject(UUIDProject):
+        artist = models.CharField(max_length = 30)
+class UUIDResearchProject(UUIDProject):
+        supervisor = models.CharField(max_length = 30)
 
-        class UUIDProject(ShowFieldTypeAndContent, PolymorphicModel):
-                uuid_primary_key = UUIDField(primary_key = True)
-                topic = models.CharField(max_length = 30)
-        class UUIDArtProject(UUIDProject):
-                artist = models.CharField(max_length = 30)
-        class UUIDResearchProject(UUIDProject):
-                supervisor = models.CharField(max_length = 30)
-
-        class UUIDPlainA(models.Model):
-            uuid_primary_key = UUIDField(primary_key = True)
-            field1 = models.CharField(max_length=10)
-        class UUIDPlainB(UUIDPlainA):
-            field2 = models.CharField(max_length=10)
-        class UUIDPlainC(UUIDPlainB):
-            field3 = models.CharField(max_length=10)
+class UUIDPlainA(models.Model):
+    uuid_primary_key = UUIDField(primary_key = True)
+    field1 = models.CharField(max_length=10)
+class UUIDPlainB(UUIDPlainA):
+    field2 = models.CharField(max_length=10)
+class UUIDPlainC(UUIDPlainB):
+    field3 = models.CharField(max_length=10)
 
 
 # test bad field name
@@ -200,51 +190,53 @@ class RelatedNameClash(ShowFieldType, PolymorphicModel):
     ctype = models.ForeignKey(ContentType, null=True, editable=False)
 
 
-class testclass(TestCase):
+class PolymorphicTests(TestCase):
+    """
+    The test suite
+    """
+
     def test_diamond_inheritance(self):
         # Django diamond problem
-        o = DiamondXY.objects.create(field_b='b', field_x='x', field_y='y')
-        print 'DiamondXY fields 1: field_b "%s", field_x "%s", field_y "%s"' % (o.field_b, o.field_x, o.field_y)
-        o = DiamondXY.objects.get()
-        print 'DiamondXY fields 2: field_b "%s", field_x "%s", field_y "%s"' % (o.field_b, o.field_x, o.field_y)
-        if o.field_b != 'b':
+        o1 = DiamondXY.objects.create(field_b='b', field_x='x', field_y='y')
+        o2 = DiamondXY.objects.get()
+
+        if o2.field_b != 'b':
             print
             print '# known django model inheritance diamond problem detected'
+            print 'DiamondXY fields 1: field_b "{0}", field_x "{1}", field_y "{2}"'.format(o1.field_b, o1.field_x, o1.field_y)
+            print 'DiamondXY fields 2: field_b "{0}", field_x "{1}", field_y "{2}"'.format(o2.field_b, o2.field_x, o2.field_y)
+
 
     def test_annotate_aggregate_order(self):
-
         # create a blog of type BlogA
-        blog = BlogA.objects.create(name='B1', info='i1')
         # create two blog entries in BlogA
-        entry1 = blog.blogentry_set.create(text='bla')
-        entry2 = BlogEntry.objects.create(blog=blog, text='bla2')
-
         # create some blogs of type BlogB to make the BlogBase table data really polymorphic
-        o = BlogB.objects.create(name='Bb1')
-        o = BlogB.objects.create(name='Bb2')
-        o = BlogB.objects.create(name='Bb3')
+        blog = BlogA.objects.create(name='B1', info='i1')
+        blog.blogentry_set.create(text='bla')
+        BlogEntry.objects.create(blog=blog, text='bla2')
+        BlogB.objects.create(name='Bb1')
+        BlogB.objects.create(name='Bb2')
+        BlogB.objects.create(name='Bb3')
 
         qs = BlogBase.objects.annotate(entrycount=Count('BlogA___blogentry'))
-
-        assert len(qs)==4
+        self.assertEqual(len(qs), 4)
 
         for o in qs:
-            if o.name=='B1':
-                assert o.entrycount == 2
+            if o.name == 'B1':
+                self.assertEqual(o.entrycount, 2)
             else:
-                assert o.entrycount == 0
+                self.assertEqual(o.entrycount, 0)
 
         x = BlogBase.objects.aggregate(entrycount=Count('BlogA___blogentry'))
-        assert x['entrycount'] == 2
+        self.assertEqual(x['entrycount'], 2)
 
         # create some more blogs for next test
-        b2 = BlogA.objects.create(name='B2', info='i2')
-        b2 = BlogA.objects.create(name='B3', info='i3')
-        b2 = BlogA.objects.create(name='B4', info='i4')
-        b2 = BlogA.objects.create(name='B5', info='i5')
+        BlogA.objects.create(name='B2', info='i2')
+        BlogA.objects.create(name='B3', info='i3')
+        BlogA.objects.create(name='B4', info='i4')
+        BlogA.objects.create(name='B5', info='i5')
 
-        ### test ordering for field in all entries
-
+        # test ordering for field in all entries
         expected = '''
 [ <BlogB: id 4, name (CharField) "Bb3">,
   <BlogB: id 3, name (CharField) "Bb2">,
@@ -255,10 +247,9 @@ class testclass(TestCase):
   <BlogA: id 5, name (CharField) "B2", info (CharField) "i2">,
   <BlogA: id 1, name (CharField) "B1", info (CharField) "i1"> ]'''
         x = '\n' + repr(BlogBase.objects.order_by('-name'))
-        assert x == expected
+        self.assertEqual(x, expected)
 
-        ### test ordering for field in one subclass only
-
+        # test ordering for field in one subclass only
         # MySQL and SQLite return this order
         expected1='''
 [ <BlogA: id 8, name (CharField) "B5", info (CharField) "i5">,
@@ -282,11 +273,13 @@ class testclass(TestCase):
   <BlogA: id 1, name (CharField) "B1", info (CharField) "i1"> ]'''
 
         x = '\n' + repr(BlogBase.objects.order_by('-BlogA___info'))
-        assert x == expected1 or x == expected2
+        self.assertTrue(x == expected1 or x == expected2)
 
 
     def test_limit_choices_to(self):
-        "this is not really a testcase, as limit_choices_to only affects the Django admin"
+        """
+        this is not really a testcase, as limit_choices_to only affects the Django admin
+        """
         # create a blog of type BlogA
         blog_a = BlogA.objects.create(name='aa', info='aa')
         blog_b = BlogB.objects.create(name='bb')
@@ -296,332 +289,339 @@ class testclass(TestCase):
 
 
     def test_primary_key_custom_field_problem(self):
-        "object retrieval problem occuring with some custom primary key fields (UUIDField as test case)"
-        if not 'UUIDField' in globals(): return
-        a=UUIDProject.objects.create(topic="John's gathering")
-        b=UUIDArtProject.objects.create(topic="Sculpting with Tim", artist="T. Turner")
-        c=UUIDResearchProject.objects.create(topic="Swallow Aerodynamics", supervisor="Dr. Winter")
-        qs=UUIDProject.objects.all()
-        ol=list(qs)
-        a=qs[0]
-        b=qs[1]
-        c=qs[2]
-        assert len(qs)==3
-        assert type(a.uuid_primary_key)==uuid.UUID and type(a.pk)==uuid.UUID
-        res=repr(qs)
-        import re
-        res=re.sub(' "(.*?)..", topic',', topic',res)
-        res_exp="""[ <UUIDProject: uuid_primary_key (UUIDField/pk), topic (CharField) "John's gathering">,
+        """
+        object retrieval problem occuring with some custom primary key fields (UUIDField as test case)
+        """
+        UUIDProject.objects.create(topic="John's gathering")
+        UUIDArtProject.objects.create(topic="Sculpting with Tim", artist="T. Turner")
+        UUIDResearchProject.objects.create(topic="Swallow Aerodynamics", supervisor="Dr. Winter")
+
+        qs = UUIDProject.objects.all()
+        ol = list(qs)
+        a = qs[0]
+        b = qs[1]
+        c = qs[2]
+        self.assertEqual(len(qs), 3)
+        self.assertIsInstance(a.uuid_primary_key, uuid.UUID)
+        self.assertIsInstance(a.pk, uuid.UUID)
+
+        res = re.sub(' "(.*?)..", topic',', topic', repr(qs))
+        res_exp = """[ <UUIDProject: uuid_primary_key (UUIDField/pk), topic (CharField) "John's gathering">,
   <UUIDArtProject: uuid_primary_key (UUIDField/pk), topic (CharField) "Sculpting with Tim", artist (CharField) "T. Turner">,
   <UUIDResearchProject: uuid_primary_key (UUIDField/pk), topic (CharField) "Swallow Aerodynamics", supervisor (CharField) "Dr. Winter"> ]"""
-        assert res==res_exp, res
+        self.assertEqual(res, res_exp)
         #if (a.pk!= uuid.UUID or c.pk!= uuid.UUID):
         #    print
         #    print '# known inconstency with custom primary key field detected (django problem?)'
 
-        a=UUIDPlainA.objects.create(field1='A1')
-        b=UUIDPlainB.objects.create(field1='B1', field2='B2')
-        c=UUIDPlainC.objects.create(field1='C1', field2='C2', field3='C3')
-        qs=UUIDPlainA.objects.all()
-        if (a.pk!= uuid.UUID or c.pk!= uuid.UUID):
+        a = UUIDPlainA.objects.create(field1='A1')
+        b = UUIDPlainB.objects.create(field1='B1', field2='B2')
+        c = UUIDPlainC.objects.create(field1='C1', field2='C2', field3='C3')
+        qs = UUIDPlainA.objects.all()
+        if a.pk!= uuid.UUID or c.pk!= uuid.UUID:
             print
             print '# known type inconstency with custom primary key field detected (django problem?)'
 
 
-def show_base_manager(model):
-    print type(model._base_manager),model._base_manager.model
-
-__test__ = {"doctest": """
-#######################################################
-### Tests
-
->>> settings.DEBUG=True
-
-
-### simple inheritance
-
->>> o=Model2A.objects.create(field1='A1')
->>> o=Model2B.objects.create(field1='B1', field2='B2')
->>> o=Model2C.objects.create(field1='C1', field2='C2', field3='C3')
->>> o=Model2D.objects.create(field1='D1', field2='D2', field3='D3', field4='D4')
->>> Model2A.objects.all()
-[ <Model2A: id 1, field1 (CharField)>,
-  <Model2B: id 2, field1 (CharField), field2 (CharField)>,
-  <Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)>,
-  <Model2D: id 4, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField)> ]
-
-# manual get_real_instance()
->>> o=Model2A.objects.non_polymorphic().get(field1='C1')
->>> o.get_real_instance()
-<Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)>
-
-# non_polymorphic()
->>> qs=Model2A.objects.all().non_polymorphic()
->>> qs
-[ <Model2A: id 1, field1 (CharField)>,
-  <Model2A: id 2, field1 (CharField)>,
-  <Model2A: id 3, field1 (CharField)>,
-  <Model2A: id 4, field1 (CharField)> ]
-
-# get_real_instances()
->>> qs.get_real_instances()
-[ <Model2A: id 1, field1 (CharField)>,
-  <Model2B: id 2, field1 (CharField), field2 (CharField)>,
-  <Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)>,
-  <Model2D: id 4, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField)> ]
-
->>> l=list(qs)
->>> Model2A.objects.get_real_instances(l)
-[ <Model2A: id 1, field1 (CharField)>,
-  <Model2B: id 2, field1 (CharField), field2 (CharField)>,
-  <Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)>,
-  <Model2D: id 4, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField)> ]
-
-# translate_polymorphic_Q_object
->>> q=Model2A.translate_polymorphic_Q_object( Q(instance_of=Model2C) )
->>> Model2A.objects.filter(q)
-[ <Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)>,
-  <Model2D: id 4, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField)> ]
-
-
-### test inheritance pointers & _base_managers
-
->>> show_base_manager(PlainA)
-<class 'django.db.models.manager.Manager'> <class 'polymorphic.tests.PlainA'>
->>> show_base_manager(PlainB)
-<class 'django.db.models.manager.Manager'> <class 'polymorphic.tests.PlainB'>
->>> show_base_manager(PlainC)
-<class 'django.db.models.manager.Manager'> <class 'polymorphic.tests.PlainC'>
->>> show_base_manager(Model2A)
-<class 'polymorphic.manager.PolymorphicManager'> <class 'polymorphic.tests.Model2A'>
->>> show_base_manager(Model2B)
-<class 'django.db.models.manager.Manager'> <class 'polymorphic.tests.Model2B'>
->>> show_base_manager(Model2C)
-<class 'django.db.models.manager.Manager'> <class 'polymorphic.tests.Model2C'>
->>> show_base_manager(One2OneRelatingModel)
-<class 'polymorphic.manager.PolymorphicManager'> <class 'polymorphic.tests.One2OneRelatingModel'>
->>> show_base_manager(One2OneRelatingModelDerived)
-<class 'django.db.models.manager.Manager'> <class 'polymorphic.tests.One2OneRelatingModelDerived'>
-
->>> o=Model2A.base_objects.get(field1='C1')
->>> o.model2b
-<Model2B: id 3, field1 (CharField), field2 (CharField)>
-
->>> o=Model2B.base_objects.get(field1='C1')
->>> o.model2c
-<Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)>
-
-
-### OneToOneField, test both directions for polymorphism
-
->>> a=Model2A.base_objects.get(field1='C1')
->>> b=One2OneRelatingModelDerived.objects.create(one2one=a, field1='f1', field2='f2')
->>> b.one2one  # this result is basically wrong, probably due to Django cacheing (we used base_objects), but should not be a problem
-<Model2A: id 3, field1 (CharField)>
->>> c=One2OneRelatingModelDerived.objects.get(field1='f1')
->>> c.one2one
-<Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)>
-
->>> a.one2onerelatingmodel
-<One2OneRelatingModelDerived: One2OneRelatingModelDerived object>
-
-
-### ShowFieldContent, ShowFieldType, ShowFieldTypeAndContent, also with annotate()
-
->>> o=ModelShow1.objects.create(field1='abc')
->>> o.m2m.add(o) ; o.save()
->>> ModelShow1.objects.all()
-[ <ModelShow1: id 1, field1 (CharField), m2m (ManyToManyField)> ]
+    def create_model2abcd(self):
+        """
+        Create the chain of objects of Model2,
+        this is reused in various tests.
+        """
+        Model2A.objects.create(field1='A1')
+        Model2B.objects.create(field1='B1', field2='B2')
+        Model2C.objects.create(field1='C1', field2='C2', field3='C3')
+        Model2D.objects.create(field1='D1', field2='D2', field3='D3', field4='D4')
 
->>> o=ModelShow2.objects.create(field1='abc')
->>> o.m2m.add(o) ; o.save()
->>> ModelShow2.objects.all()
-[ <ModelShow2: id 1, field1 "abc", m2m 1> ]
 
->>> o=ModelShow3.objects.create(field1='abc')
->>> o.m2m.add(o) ; o.save()
->>> ModelShow3.objects.all()
-[ <ModelShow3: id 1, field1 (CharField) "abc", m2m (ManyToManyField) 1> ]
+    def test_simple_inheritance(self):
+        self.create_model2abcd()
 
->>> ModelShow1.objects.all().annotate(Count('m2m'))
-[ <ModelShow1: id 1, field1 (CharField), m2m (ManyToManyField) - Ann: m2m__count (int)> ]
->>> ModelShow2.objects.all().annotate(Count('m2m'))
-[ <ModelShow2: id 1, field1 "abc", m2m 1 - Ann: m2m__count 1> ]
->>> ModelShow3.objects.all().annotate(Count('m2m'))
-[ <ModelShow3: id 1, field1 (CharField) "abc", m2m (ManyToManyField) 1 - Ann: m2m__count (int) 1> ]
+        objects = list(Model2A.objects.all())
+        self.assertEqual(repr(objects[0]), '<Model2A: id 1, field1 (CharField)>')
+        self.assertEqual(repr(objects[1]), '<Model2B: id 2, field1 (CharField), field2 (CharField)>')
+        self.assertEqual(repr(objects[2]), '<Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)>')
+        self.assertEqual(repr(objects[3]), '<Model2D: id 4, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField)>')
 
-# no pretty printing
->>> o=ModelShow1_plain.objects.create(field1='abc')
->>> o=ModelShow2_plain.objects.create(field1='abc', field2='def')
->>> ModelShow1_plain.objects.all()
-[<ModelShow1_plain: ModelShow1_plain object>, <ModelShow2_plain: ModelShow2_plain object>]
 
+    def test_manual_get_real_instance(self):
+        self.create_model2abcd()
 
-### extra() method
+        o = Model2A.objects.non_polymorphic().get(field1='C1')
+        self.assertEqual(repr(o.get_real_instance()), '<Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)>')
 
->>> Model2A.objects.extra(where=['id IN (2, 3)'])
-[ <Model2B: id 2, field1 (CharField), field2 (CharField)>,
-  <Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)> ]
 
->>> Model2A.objects.extra(select={"select_test": "field1 = 'A1'"}, where=["field1 = 'A1' OR field1 = 'B1'"], order_by = ['-id'] )
-[ <Model2B: id 2, field1 (CharField), field2 (CharField) - Extra: select_test (int)>,
-  <Model2A: id 1, field1 (CharField) - Extra: select_test (int)> ]
+    def test_non_polymorphic(self):
+        self.create_model2abcd()
 
->>> o=ModelExtraA.objects.create(field1='A1')
->>> o=ModelExtraB.objects.create(field1='B1', field2='B2')
->>> o=ModelExtraC.objects.create(field1='C1', field2='C2', field3='C3')
->>> o=ModelExtraExternal.objects.create(topic='extra1')
->>> o=ModelExtraExternal.objects.create(topic='extra2')
->>> o=ModelExtraExternal.objects.create(topic='extra3')
->>> ModelExtraA.objects.extra(tables=["polymorphic_modelextraexternal"], select={"topic":"polymorphic_modelextraexternal.topic"}, where=["polymorphic_modelextraa.id = polymorphic_modelextraexternal.id"] )
-[ <ModelExtraA: id 1, field1 (CharField) "A1" - Extra: topic (unicode) "extra1">,
-  <ModelExtraB: id 2, field1 (CharField) "B1", field2 (CharField) "B2" - Extra: topic (unicode) "extra2">,
-  <ModelExtraC: id 3, field1 (CharField) "C1", field2 (CharField) "C2", field3 (CharField) "C3" - Extra: topic (unicode) "extra3"> ]
+        objects = list(Model2A.objects.all().non_polymorphic())
+        self.assertEqual(repr(objects[0]), '<Model2A: id 1, field1 (CharField)>')
+        self.assertEqual(repr(objects[1]), '<Model2A: id 2, field1 (CharField)>')
+        self.assertEqual(repr(objects[2]), '<Model2A: id 3, field1 (CharField)>')
+        self.assertEqual(repr(objects[3]), '<Model2A: id 4, field1 (CharField)>')
 
-### class filtering, instance_of, not_instance_of
 
->>> Model2A.objects.instance_of(Model2B)
-[ <Model2B: id 2, field1 (CharField), field2 (CharField)>,
-  <Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)>,
-  <Model2D: id 4, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField)> ]
+    def test_get_real_instances(self):
+        self.create_model2abcd()
+        qs = Model2A.objects.all().non_polymorphic()
 
->>> Model2A.objects.filter(instance_of=Model2B)
-[ <Model2B: id 2, field1 (CharField), field2 (CharField)>,
-  <Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)>,
-  <Model2D: id 4, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField)> ]
+        # from queryset
+        objects = qs.get_real_instances()
+        self.assertEqual(repr(objects[0]), '<Model2A: id 1, field1 (CharField)>')
+        self.assertEqual(repr(objects[1]), '<Model2B: id 2, field1 (CharField), field2 (CharField)>')
+        self.assertEqual(repr(objects[2]), '<Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)>')
+        self.assertEqual(repr(objects[3]), '<Model2D: id 4, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField)>')
 
->>> Model2A.objects.filter(Q(instance_of=Model2B))
-[ <Model2B: id 2, field1 (CharField), field2 (CharField)>,
-  <Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)>,
-  <Model2D: id 4, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField)> ]
+        # from a manual list
+        objects = Model2A.objects.get_real_instances(list(qs))
+        self.assertEqual(repr(objects[0]), '<Model2A: id 1, field1 (CharField)>')
+        self.assertEqual(repr(objects[1]), '<Model2B: id 2, field1 (CharField), field2 (CharField)>')
+        self.assertEqual(repr(objects[2]), '<Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)>')
+        self.assertEqual(repr(objects[3]), '<Model2D: id 4, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField)>')
+
+
+    def test_translate_polymorphic_q_object(self):
+        self.create_model2abcd()
+
+        q = Model2A.translate_polymorphic_Q_object(Q(instance_of=Model2C))
+        objects = Model2A.objects.filter(q)
+        self.assertEqual(repr(objects[0]), '<Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)>')
+        self.assertEqual(repr(objects[1]), '<Model2D: id 4, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField)>')
 
->>> Model2A.objects.not_instance_of(Model2B)
-[ <Model2A: id 1, field1 (CharField)> ]
+
+    def test_base_manager(self):
+        def show_base_manager(model):
+            return "{0} {1}".format(
+                repr(type(model._base_manager)),
+                repr(model._base_manager.model)
+            )
+
+        self.assertEqual(show_base_manager(PlainA), "<class 'django.db.models.manager.Manager'> <class 'polymorphic.tests.PlainA'>")
+        self.assertEqual(show_base_manager(PlainB), "<class 'django.db.models.manager.Manager'> <class 'polymorphic.tests.PlainB'>")
+        self.assertEqual(show_base_manager(PlainC), "<class 'django.db.models.manager.Manager'> <class 'polymorphic.tests.PlainC'>")
+        self.assertEqual(show_base_manager(Model2A), "<class 'polymorphic.manager.PolymorphicManager'> <class 'polymorphic.tests.Model2A'>")
+        self.assertEqual(show_base_manager(Model2B), "<class 'django.db.models.manager.Manager'> <class 'polymorphic.tests.Model2B'>")
+        self.assertEqual(show_base_manager(Model2C), "<class 'django.db.models.manager.Manager'> <class 'polymorphic.tests.Model2C'>")
+        self.assertEqual(show_base_manager(One2OneRelatingModel), "<class 'polymorphic.manager.PolymorphicManager'> <class 'polymorphic.tests.One2OneRelatingModel'>")
+        self.assertEqual(show_base_manager(One2OneRelatingModelDerived), "<class 'django.db.models.manager.Manager'> <class 'polymorphic.tests.One2OneRelatingModelDerived'>")
+
+
+    def test_foreignkey_field(self):
+        self.create_model2abcd()
+
+        object2a = Model2A.base_objects.get(field1='C1')
+        self.assertEqual(repr(object2a.model2b), '<Model2B: id 3, field1 (CharField), field2 (CharField)>')
+
+        object2b = Model2B.base_objects.get(field1='C1')
+        self.assertEqual(repr(object2b.model2c), '<Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)>')
+
+
+    def test_onetoone_field(self):
+        self.create_model2abcd()
 
+        a = Model2A.base_objects.get(field1='C1')
+        b = One2OneRelatingModelDerived.objects.create(one2one=a, field1='f1', field2='f2')
 
-### polymorphic filtering
-
->>> Model2A.objects.filter(  Q( Model2B___field2 = 'B2' )  |  Q( Model2C___field3 = 'C3' )  )
-[ <Model2B: id 2, field1 (CharField), field2 (CharField)>,
-  <Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)> ]
-
-
-### get & delete
-
->>> oa=Model2A.objects.get(id=2)
->>> oa
-<Model2B: id 2, field1 (CharField), field2 (CharField)>
-
->>> oa.delete()
->>> Model2A.objects.all()
-[ <Model2A: id 1, field1 (CharField)>,
-  <Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)>,
-  <Model2D: id 4, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField)> ]
-
-
-### queryset combining
-
->>> o=ModelX.objects.create(field_x='x')
->>> o=ModelY.objects.create(field_y='y')
-
->>> Base.objects.instance_of(ModelX) | Base.objects.instance_of(ModelY)
-[ <ModelX: id 1, field_b (CharField), field_x (CharField)>,
-  <ModelY: id 2, field_b (CharField), field_y (CharField)> ]
-
-
-### multiple inheritance, subclassing third party models (mix PolymorphicModel with models.Model)
-
->>> o = Enhance_Base.objects.create(field_b='b-base')
->>> o = Enhance_Inherit.objects.create(field_b='b-inherit', field_p='p', field_i='i')
-
->>> Enhance_Base.objects.all()
-[ <Enhance_Base: id 1, field_b (CharField) "b-base">,
-  <Enhance_Inherit: id 2, field_b (CharField) "b-inherit", field_p (CharField) "p", field_i (CharField) "i"> ]
-
-
-### ForeignKey, ManyToManyField
-
->>> obase=RelationBase.objects.create(field_base='base')
->>> oa=RelationA.objects.create(field_base='A1', field_a='A2', fk=obase)
->>> ob=RelationB.objects.create(field_base='B1', field_b='B2', fk=oa)
->>> oc=RelationBC.objects.create(field_base='C1', field_b='C2', field_c='C3', fk=oa)
->>> oa.m2m.add(oa); oa.m2m.add(ob)
-
->>> RelationBase.objects.all()
-[ <RelationBase: id 1, field_base (CharField) "base", fk (ForeignKey) None, m2m (ManyToManyField) 0>,
-  <RelationA: id 2, field_base (CharField) "A1", fk (ForeignKey) RelationBase, field_a (CharField) "A2", m2m (ManyToManyField) 2>,
-  <RelationB: id 3, field_base (CharField) "B1", fk (ForeignKey) RelationA, field_b (CharField) "B2", m2m (ManyToManyField) 1>,
-  <RelationBC: id 4, field_base (CharField) "C1", fk (ForeignKey) RelationA, field_b (CharField) "C2", field_c (CharField) "C3", m2m (ManyToManyField) 0> ]
-
->>> oa=RelationBase.objects.get(id=2)
->>> oa.fk
-<RelationBase: id 1, field_base (CharField) "base", fk (ForeignKey) None, m2m (ManyToManyField) 0>
-
->>> oa.relationbase_set.all()
-[ <RelationB: id 3, field_base (CharField) "B1", fk (ForeignKey) RelationA, field_b (CharField) "B2", m2m (ManyToManyField) 1>,
-  <RelationBC: id 4, field_base (CharField) "C1", fk (ForeignKey) RelationA, field_b (CharField) "C2", field_c (CharField) "C3", m2m (ManyToManyField) 0> ]
-
->>> ob=RelationBase.objects.get(id=3)
->>> ob.fk
-<RelationA: id 2, field_base (CharField) "A1", fk (ForeignKey) RelationBase, field_a (CharField) "A2", m2m (ManyToManyField) 2>
-
->>> oa=RelationA.objects.get()
->>> oa.m2m.all()
-[ <RelationA: id 2, field_base (CharField) "A1", fk (ForeignKey) RelationBase, field_a (CharField) "A2", m2m (ManyToManyField) 2>,
-  <RelationB: id 3, field_base (CharField) "B1", fk (ForeignKey) RelationA, field_b (CharField) "B2", m2m (ManyToManyField) 1> ]
-
-### user-defined manager
-
->>> o=ModelWithMyManager.objects.create(field1='D1a', field4='D4a')
->>> o=ModelWithMyManager.objects.create(field1='D1b', field4='D4b')
-
->>> ModelWithMyManager.objects.all()
-[ <ModelWithMyManager: id 6, field1 (CharField) "D1b", field4 (CharField) "D4b">,
-  <ModelWithMyManager: id 5, field1 (CharField) "D1a", field4 (CharField) "D4a"> ]
-
->>> type(ModelWithMyManager.objects)
-<class 'polymorphic.tests.MyManager'>
->>> type(ModelWithMyManager._default_manager)
-<class 'polymorphic.manager.PolymorphicManager'>
-
-
-### Manager Inheritance
-
->>> type(MRODerived.objects) # MRO
-<class 'polymorphic.tests.MyManager'>
-
-# check for correct default manager
->>> type(MROBase1._default_manager)
-<class 'polymorphic.manager.PolymorphicManager'>
-
-# Django vanilla inheritance does not inherit MyManager as _default_manager here
->>> type(MROBase2._default_manager)
-<class 'polymorphic.manager.PolymorphicManager'>
-
-
-### fixed issue in PolymorphicModel.__getattribute__: field name same as model name
->>> ModelFieldNameTest.objects.create(modelfieldnametest='1')
-<ModelFieldNameTest: id 1, modelfieldnametest (CharField)>
-
-
-### fixed issue in PolymorphicModel.__getattribute__:
-# if subclass defined __init__ and accessed class members, __getattribute__ had a problem: "...has no attribute 'sub_and_superclass_dict'"
-#>>> o
->>> o = InitTestModelSubclass.objects.create()
->>> o.bar
-'XYZ'
-
-
-### Django model inheritance diamond problem, fails for Django 1.1
-
-#>>> o=DiamondXY.objects.create(field_b='b', field_x='x', field_y='y')
-#>>> print 'DiamondXY fields 1: field_b "%s", field_x "%s", field_y "%s"' % (o.field_b, o.field_x, o.field_y)
-#DiamondXY fields 1: field_b "a", field_x "x", field_y "y"
-
-
->>> settings.DEBUG=False
-
-"""}
+        # this result is basically wrong, probably due to Django cacheing (we used base_objects), but should not be a problem
+        self.assertEqual(repr(b.one2one), '<Model2A: id 3, field1 (CharField)>')
+
+        c = One2OneRelatingModelDerived.objects.get(field1='f1')
+        self.assertEqual(repr(c.one2one), '<Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)>')
+        self.assertEqual(repr(a.one2onerelatingmodel), '<One2OneRelatingModelDerived: One2OneRelatingModelDerived object>')
+
+
+    def test_manytomany_field(self):
+        # Model 1
+        o = ModelShow1.objects.create(field1='abc')
+        o.m2m.add(o)
+        o.save()
+        self.assertEqual(repr(ModelShow1.objects.all()), '[ <ModelShow1: id 1, field1 (CharField), m2m (ManyToManyField)> ]')
+
+        # Model 2
+        o = ModelShow2.objects.create(field1='abc')
+        o.m2m.add(o)
+        o.save()
+        self.assertEqual(repr(ModelShow2.objects.all()), '[ <ModelShow2: id 1, field1 "abc", m2m 1> ]')
+
+        # Model 3
+        o=ModelShow3.objects.create(field1='abc')
+        o.m2m.add(o)
+        o.save()
+        self.assertEqual(repr(ModelShow3.objects.all()), '[ <ModelShow3: id 1, field1 (CharField) "abc", m2m (ManyToManyField) 1> ]')
+        self.assertEqual(repr(ModelShow1.objects.all().annotate(Count('m2m'))), '[ <ModelShow1: id 1, field1 (CharField), m2m (ManyToManyField) - Ann: m2m__count (int)> ]')
+        self.assertEqual(repr(ModelShow2.objects.all().annotate(Count('m2m'))), '[ <ModelShow2: id 1, field1 "abc", m2m 1 - Ann: m2m__count 1> ]')
+        self.assertEqual(repr(ModelShow3.objects.all().annotate(Count('m2m'))), '[ <ModelShow3: id 1, field1 (CharField) "abc", m2m (ManyToManyField) 1 - Ann: m2m__count (int) 1> ]')
+
+        # no pretty printing
+        ModelShow1_plain.objects.create(field1='abc')
+        ModelShow2_plain.objects.create(field1='abc', field2='def')
+        self.assertEqual(repr(ModelShow1_plain.objects.all()), '[<ModelShow1_plain: ModelShow1_plain object>, <ModelShow2_plain: ModelShow2_plain object>]')
+
+
+    def test_extra_method(self):
+        self.create_model2abcd()
+
+        objects = list(Model2A.objects.extra(where=['id IN (2, 3)']))
+        self.assertEqual(repr(objects[0]), '<Model2B: id 2, field1 (CharField), field2 (CharField)>')
+        self.assertEqual(repr(objects[1]), '<Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)>')
+
+        objects = Model2A.objects.extra(select={"select_test": "field1 = 'A1'"}, where=["field1 = 'A1' OR field1 = 'B1'"], order_by=['-id'])
+        self.assertEqual(repr(objects[0]), '<Model2B: id 2, field1 (CharField), field2 (CharField) - Extra: select_test (int)>')
+        self.assertEqual(repr(objects[1]), '<Model2A: id 1, field1 (CharField) - Extra: select_test (int)>')
+        self.assertEqual(len(objects), 2)   # Placed after the other tests, only verifying whether there are no more additional objects.
+
+        ModelExtraA.objects.create(field1='A1')
+        ModelExtraB.objects.create(field1='B1', field2='B2')
+        ModelExtraC.objects.create(field1='C1', field2='C2', field3='C3')
+        ModelExtraExternal.objects.create(topic='extra1')
+        ModelExtraExternal.objects.create(topic='extra2')
+        ModelExtraExternal.objects.create(topic='extra3')
+        objects = ModelExtraA.objects.extra(tables=["polymorphic_modelextraexternal"], select={"topic":"polymorphic_modelextraexternal.topic"}, where=["polymorphic_modelextraa.id = polymorphic_modelextraexternal.id"])
+        self.assertEqual(repr(objects[0]), '<ModelExtraA: id 1, field1 (CharField) "A1" - Extra: topic (unicode) "extra1">')
+        self.assertEqual(repr(objects[1]), '<ModelExtraB: id 2, field1 (CharField) "B1", field2 (CharField) "B2" - Extra: topic (unicode) "extra2">')
+        self.assertEqual(repr(objects[2]), '<ModelExtraC: id 3, field1 (CharField) "C1", field2 (CharField) "C2", field3 (CharField) "C3" - Extra: topic (unicode) "extra3">')
+        self.assertEqual(len(objects), 3)
+
+
+    def test_instance_of_filter(self):
+        self.create_model2abcd()
+
+        objects = Model2A.objects.instance_of(Model2B)
+        self.assertEqual(repr(objects[0]), '<Model2B: id 2, field1 (CharField), field2 (CharField)>')
+        self.assertEqual(repr(objects[1]), '<Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)>')
+        self.assertEqual(repr(objects[2]), '<Model2D: id 4, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField)>')
+        self.assertEqual(len(objects), 3)
+
+        objects = Model2A.objects.filter(instance_of=Model2B)
+        self.assertEqual(repr(objects[0]), '<Model2B: id 2, field1 (CharField), field2 (CharField)>')
+        self.assertEqual(repr(objects[1]), '<Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)>')
+        self.assertEqual(repr(objects[2]), '<Model2D: id 4, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField)>')
+        self.assertEqual(len(objects), 3)
+
+        objects = Model2A.objects.filter(Q(instance_of=Model2B))
+        self.assertEqual(repr(objects[0]), '<Model2B: id 2, field1 (CharField), field2 (CharField)>')
+        self.assertEqual(repr(objects[1]), '<Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)>')
+        self.assertEqual(repr(objects[2]), '<Model2D: id 4, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField)>')
+        self.assertEqual(len(objects), 3)
+
+        objects = Model2A.objects.not_instance_of(Model2B)
+        self.assertEqual(repr(objects[0]), '<Model2A: id 1, field1 (CharField)>')
+        self.assertEqual(len(objects), 1)
+
+
+    def test_polymorphic___filter(self):
+        self.create_model2abcd()
+
+        objects = Model2A.objects.filter(Q( Model2B___field2='B2') | Q( Model2C___field3='C3'))
+        self.assertEqual(len(objects), 2)
+        self.assertEqual(repr(objects[0]), '<Model2B: id 2, field1 (CharField), field2 (CharField)>')
+        self.assertEqual(repr(objects[1]), '<Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)>')
+
+
+    def test_delete(self):
+        self.create_model2abcd()
+
+        oa = Model2A.objects.get(id=2)
+        self.assertEqual(repr(oa), '<Model2B: id 2, field1 (CharField), field2 (CharField)>')
+        self.assertEqual(Model2A.objects.count(), 4)
+
+        oa.delete()
+        objects = Model2A.objects.all()
+        self.assertEqual(repr(objects[0]), '<Model2A: id 1, field1 (CharField)>')
+        self.assertEqual(repr(objects[1]), '<Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)>')
+        self.assertEqual(repr(objects[2]), '<Model2D: id 4, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField)>')
+        self.assertEqual(len(objects), 3)
+
+
+    def test_combine_querysets(self):
+        ModelX.objects.create(field_x='x')
+        ModelY.objects.create(field_y='y')
+
+        qs = Base.objects.instance_of(ModelX) | Base.objects.instance_of(ModelY)
+        self.assertEqual(repr(qs[0]), '<ModelX: id 1, field_b (CharField), field_x (CharField)>')
+        self.assertEqual(repr(qs[1]), '<ModelY: id 2, field_b (CharField), field_y (CharField)>')
+        self.assertEqual(len(qs), 2)
+
+
+    def test_multiple_inheritance(self):
+        # multiple inheritance, subclassing third party models (mix PolymorphicModel with models.Model)
+
+        Enhance_Base.objects.create(field_b='b-base')
+        Enhance_Inherit.objects.create(field_b='b-inherit', field_p='p', field_i='i')
+
+        qs = Enhance_Base.objects.all()
+        self.assertEqual(repr(qs[0]), '<Enhance_Base: id 1, field_b (CharField) "b-base">')
+        self.assertEqual(repr(qs[1]), '<Enhance_Inherit: id 2, field_b (CharField) "b-inherit", field_p (CharField) "p", field_i (CharField) "i">')
+        self.assertEqual(len(qs), 2)
+
+
+    def test_relation_base(self):
+        # ForeignKey, ManyToManyField
+        obase = RelationBase.objects.create(field_base='base')
+        oa = RelationA.objects.create(field_base='A1', field_a='A2', fk=obase)
+        ob = RelationB.objects.create(field_base='B1', field_b='B2', fk=oa)
+        oc = RelationBC.objects.create(field_base='C1', field_b='C2', field_c='C3', fk=oa)
+        oa.m2m.add(oa)
+        oa.m2m.add(ob)
+
+        objects = RelationBase.objects.all()
+        self.assertEqual(repr(objects[0]), '<RelationBase: id 1, field_base (CharField) "base", fk (ForeignKey) None, m2m (ManyToManyField) 0>')
+        self.assertEqual(repr(objects[1]), '<RelationA: id 2, field_base (CharField) "A1", fk (ForeignKey) RelationBase, field_a (CharField) "A2", m2m (ManyToManyField) 2>')
+        self.assertEqual(repr(objects[2]), '<RelationB: id 3, field_base (CharField) "B1", fk (ForeignKey) RelationA, field_b (CharField) "B2", m2m (ManyToManyField) 1>')
+        self.assertEqual(repr(objects[3]), '<RelationBC: id 4, field_base (CharField) "C1", fk (ForeignKey) RelationA, field_b (CharField) "C2", field_c (CharField) "C3", m2m (ManyToManyField) 0>')
+        self.assertEqual(len(objects), 4)
+
+        oa = RelationBase.objects.get(id=2)
+        self.assertEqual(repr(oa.fk), '<RelationBase: id 1, field_base (CharField) "base", fk (ForeignKey) None, m2m (ManyToManyField) 0>')
+
+        objects = oa.relationbase_set.all()
+        self.assertEqual(repr(objects[0]), '<RelationB: id 3, field_base (CharField) "B1", fk (ForeignKey) RelationA, field_b (CharField) "B2", m2m (ManyToManyField) 1>')
+        self.assertEqual(repr(objects[1]), '<RelationBC: id 4, field_base (CharField) "C1", fk (ForeignKey) RelationA, field_b (CharField) "C2", field_c (CharField) "C3", m2m (ManyToManyField) 0>')
+        self.assertEqual(len(objects), 2)
+
+        ob = RelationBase.objects.get(id=3)
+        self.assertEqual(repr(ob.fk), '<RelationA: id 2, field_base (CharField) "A1", fk (ForeignKey) RelationBase, field_a (CharField) "A2", m2m (ManyToManyField) 2>')
+
+        oa = RelationA.objects.get()
+        objects = oa.m2m.all()
+        self.assertEqual(repr(objects[0]), '<RelationA: id 2, field_base (CharField) "A1", fk (ForeignKey) RelationBase, field_a (CharField) "A2", m2m (ManyToManyField) 2>')
+        self.assertEqual(repr(objects[1]), '<RelationB: id 3, field_base (CharField) "B1", fk (ForeignKey) RelationA, field_b (CharField) "B2", m2m (ManyToManyField) 1>')
+        self.assertEqual(len(objects), 2)
+
+
+    def test_user_defined_manager(self):
+        self.create_model2abcd()
+        ModelWithMyManager.objects.create(field1='D1a', field4='D4a')
+        ModelWithMyManager.objects.create(field1='D1b', field4='D4b')
+
+        objects = ModelWithMyManager.objects.all()
+        self.assertEqual(repr(objects[0]), '<ModelWithMyManager: id 6, field1 (CharField) "D1b", field4 (CharField) "D4b">')
+        self.assertEqual(repr(objects[1]), '<ModelWithMyManager: id 5, field1 (CharField) "D1a", field4 (CharField) "D4a">')
+        self.assertEqual(len(objects), 2)
+
+        self.assertEqual(repr(type(ModelWithMyManager.objects)), "<class 'polymorphic.tests.MyManager'>")
+        self.assertEqual(repr(type(ModelWithMyManager._default_manager)), "<class 'polymorphic.manager.PolymorphicManager'>")
+
+
+    def test_manager_inheritance(self):
+        self.assertEqual(repr(type(MRODerived.objects)), "<class 'polymorphic.tests.MyManager'>")  # MRO
+
+        # check for correct default manager
+        self.assertEqual(repr(type(MROBase1._default_manager)), "<class 'polymorphic.manager.PolymorphicManager'>")
+
+        # Django vanilla inheritance does not inherit MyManager as _default_manager here
+        self.assertEqual(repr(type(MROBase2._default_manager)), "<class 'polymorphic.manager.PolymorphicManager'>")
+
+
+    def test_fix_getattribute(self):
+        ### fixed issue in PolymorphicModel.__getattribute__: field name same as model name
+        o = ModelFieldNameTest.objects.create(modelfieldnametest='1')
+        self.assertEqual(repr(o), '<ModelFieldNameTest: id 1, modelfieldnametest (CharField)>')
+
+        # if subclass defined __init__ and accessed class members,
+        # __getattribute__ had a problem: "...has no attribute 'sub_and_superclass_dict'"
+        o = InitTestModelSubclass.objects.create()
+        self.assertEqual(o.bar, 'XYZ')
 
 
 class RegressionTests(TestCase):
