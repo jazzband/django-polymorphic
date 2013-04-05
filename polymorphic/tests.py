@@ -305,7 +305,7 @@ class PolymorphicTests(TestCase):
         self.assertIsInstance(a.uuid_primary_key, uuid.UUID)
         self.assertIsInstance(a.pk, uuid.UUID)
 
-        res = re.sub(' "(.*?)..", topic',', topic', repr(res))
+        res = re.sub(' "(.*?)..", topic',', topic', repr(qs))
         res_exp = """[ <UUIDProject: uuid_primary_key (UUIDField/pk), topic (CharField) "John's gathering">,
   <UUIDArtProject: uuid_primary_key (UUIDField/pk), topic (CharField) "Sculpting with Tim", artist (CharField) "T. Turner">,
   <UUIDResearchProject: uuid_primary_key (UUIDField/pk), topic (CharField) "Swallow Aerodynamics", supervisor (CharField) "Dr. Winter"> ]"""
