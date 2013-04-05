@@ -3,6 +3,7 @@
     Please see README.rst or DOCS.rst or http://chrisglass.github.com/django_polymorphic/
 """
 import uuid
+import re
 
 from django.test import TestCase
 from django.db.models import Q,Count
@@ -205,25 +206,23 @@ class PolymorphicTests(TestCase):
             print 'DiamondXY fields 1: field_b "{0}", field_x "{1}", field_y "{2}"'.format(o1.field_b, o1.field_x, o1.field_y)
             print 'DiamondXY fields 2: field_b "{0}", field_x "{1}", field_y "{2}"'.format(o2.field_b, o2.field_x, o2.field_y)
 
+
     def test_annotate_aggregate_order(self):
-
         # create a blog of type BlogA
-        blog = BlogA.objects.create(name='B1', info='i1')
         # create two blog entries in BlogA
-        entry1 = blog.blogentry_set.create(text='bla')
-        entry2 = BlogEntry.objects.create(blog=blog, text='bla2')
-
         # create some blogs of type BlogB to make the BlogBase table data really polymorphic
-        o = BlogB.objects.create(name='Bb1')
-        o = BlogB.objects.create(name='Bb2')
-        o = BlogB.objects.create(name='Bb3')
+        blog = BlogA.objects.create(name='B1', info='i1')
+        blog.blogentry_set.create(text='bla')
+        BlogEntry.objects.create(blog=blog, text='bla2')
+        BlogB.objects.create(name='Bb1')
+        BlogB.objects.create(name='Bb2')
+        BlogB.objects.create(name='Bb3')
 
         qs = BlogBase.objects.annotate(entrycount=Count('BlogA___blogentry'))
-
         self.assertEqual(len(qs), 4)
 
         for o in qs:
-            if o.name=='B1':
+            if o.name == 'B1':
                 self.assertEqual(o.entrycount, 2)
             else:
                 self.assertEqual(o.entrycount, 0)
@@ -232,13 +231,12 @@ class PolymorphicTests(TestCase):
         self.assertEqual(x['entrycount'], 2)
 
         # create some more blogs for next test
-        b2 = BlogA.objects.create(name='B2', info='i2')
-        b2 = BlogA.objects.create(name='B3', info='i3')
-        b2 = BlogA.objects.create(name='B4', info='i4')
-        b2 = BlogA.objects.create(name='B5', info='i5')
+        BlogA.objects.create(name='B2', info='i2')
+        BlogA.objects.create(name='B3', info='i3')
+        BlogA.objects.create(name='B4', info='i4')
+        BlogA.objects.create(name='B5', info='i5')
 
-        ### test ordering for field in all entries
-
+        # test ordering for field in all entries
         expected = '''
 [ <BlogB: id 4, name (CharField) "Bb3">,
   <BlogB: id 3, name (CharField) "Bb2">,
@@ -251,8 +249,7 @@ class PolymorphicTests(TestCase):
         x = '\n' + repr(BlogBase.objects.order_by('-name'))
         self.assertEqual(x, expected)
 
-        ### test ordering for field in one subclass only
-
+        # test ordering for field in one subclass only
         # MySQL and SQLite return this order
         expected1='''
 [ <BlogA: id 8, name (CharField) "B5", info (CharField) "i5">,
@@ -280,7 +277,9 @@ class PolymorphicTests(TestCase):
 
 
     def test_limit_choices_to(self):
-        "this is not really a testcase, as limit_choices_to only affects the Django admin"
+        """
+        this is not really a testcase, as limit_choices_to only affects the Django admin
+        """
         # create a blog of type BlogA
         blog_a = BlogA.objects.create(name='aa', info='aa')
         blog_b = BlogB.objects.create(name='bb')
@@ -290,22 +289,24 @@ class PolymorphicTests(TestCase):
 
 
     def test_primary_key_custom_field_problem(self):
-        "object retrieval problem occuring with some custom primary key fields (UUIDField as test case)"
-        a=UUIDProject.objects.create(topic="John's gathering")
-        b=UUIDArtProject.objects.create(topic="Sculpting with Tim", artist="T. Turner")
-        c=UUIDResearchProject.objects.create(topic="Swallow Aerodynamics", supervisor="Dr. Winter")
-        qs=UUIDProject.objects.all()
-        ol=list(qs)
-        a=qs[0]
-        b=qs[1]
-        c=qs[2]
+        """
+        object retrieval problem occuring with some custom primary key fields (UUIDField as test case)
+        """
+        UUIDProject.objects.create(topic="John's gathering")
+        UUIDArtProject.objects.create(topic="Sculpting with Tim", artist="T. Turner")
+        UUIDResearchProject.objects.create(topic="Swallow Aerodynamics", supervisor="Dr. Winter")
+
+        qs = UUIDProject.objects.all()
+        ol = list(qs)
+        a = qs[0]
+        b = qs[1]
+        c = qs[2]
         self.assertEqual(len(qs), 3)
         self.assertIsInstance(a.uuid_primary_key, uuid.UUID)
         self.assertIsInstance(a.pk, uuid.UUID)
-        res=repr(qs)
-        import re
-        res=re.sub(' "(.*?)..", topic',', topic',res)
-        res_exp="""[ <UUIDProject: uuid_primary_key (UUIDField/pk), topic (CharField) "John's gathering">,
+
+        res = re.sub(' "(.*?)..", topic',', topic', repr(res))
+        res_exp = """[ <UUIDProject: uuid_primary_key (UUIDField/pk), topic (CharField) "John's gathering">,
   <UUIDArtProject: uuid_primary_key (UUIDField/pk), topic (CharField) "Sculpting with Tim", artist (CharField) "T. Turner">,
   <UUIDResearchProject: uuid_primary_key (UUIDField/pk), topic (CharField) "Swallow Aerodynamics", supervisor (CharField) "Dr. Winter"> ]"""
         self.assertEqual(res, res_exp)
@@ -313,10 +314,10 @@ class PolymorphicTests(TestCase):
         #    print
         #    print '# known inconstency with custom primary key field detected (django problem?)'
 
-        a=UUIDPlainA.objects.create(field1='A1')
-        b=UUIDPlainB.objects.create(field1='B1', field2='B2')
-        c=UUIDPlainC.objects.create(field1='C1', field2='C2', field3='C3')
-        qs=UUIDPlainA.objects.all()
+        a = UUIDPlainA.objects.create(field1='A1')
+        b = UUIDPlainB.objects.create(field1='B1', field2='B2')
+        c = UUIDPlainC.objects.create(field1='C1', field2='C2', field3='C3')
+        qs = UUIDPlainA.objects.all()
         if a.pk!= uuid.UUID or c.pk!= uuid.UUID:
             print
             print '# known type inconstency with custom primary key field detected (django problem?)'
