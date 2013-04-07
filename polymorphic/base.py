@@ -8,6 +8,7 @@ import inspect
 
 from django.db import models
 from django.db.models.base import ModelBase
+from django.db.models.manager import ManagerDescriptor
 
 from manager import PolymorphicManager
 from query import PolymorphicQuerySet
@@ -68,7 +69,8 @@ class PolymorphicModelBase(ModelBase):
             new_class.add_to_class(mgr_name, new_manager)
 
         # get first user defined manager; if there is one, make it the _default_manager
-        user_manager = new_class.get_first_user_defined_manager()
+        # this value is used by the related objects, restoring access to custom queryset methods on related objects.
+        user_manager = self.get_first_user_defined_manager(new_class)
         if user_manager:
             def_mgr = user_manager._copy_to_model(new_class)
             #print '## add default manager', type(def_mgr)
@@ -141,13 +143,16 @@ class PolymorphicModelBase(ModelBase):
         return add_managers
 
     @classmethod
-    def get_first_user_defined_manager(self):
+    def get_first_user_defined_manager(mcs, new_class):
         # See if there is a manager attribute directly stored at this inheritance level.
         mgr_list = []
-        for key, val in self.__dict__.items():
-            item = getattr(self, key)
-            if not isinstance(item, models.Manager): continue
-            mgr_list.append((item.creation_counter, key, item))
+        for key, val in new_class.__dict__.items():
+            if isinstance(val, ManagerDescriptor):
+                val = val.manager
+            if not isinstance(val, PolymorphicManager) or type(val) is PolymorphicManager:
+                continue
+
+            mgr_list.append((val.creation_counter, key, val))
 
         # if there are user defined managers, use first one as _default_manager
         if mgr_list:
