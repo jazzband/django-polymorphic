@@ -6,7 +6,7 @@ import uuid
 
 from django import forms
 from django.db import models
-from django.utils.encoding import smart_unicode
+from django.utils.encoding import smart_text
 from django.utils import six
 
 class UUIDVersionError(Exception):
@@ -98,7 +98,7 @@ class UUIDField(six.with_metaclass(models.SubfieldBase, models.CharField)):
         if isinstance(value, uuid.UUID):
             return value
         # attempt to parse a UUID
-        return uuid.UUID(smart_unicode(value))
+        return uuid.UUID(smart_text(value))
 
         #
         # If I do the following (returning a String instead of a UUID
@@ -108,7 +108,7 @@ class UUIDField(six.with_metaclass(models.SubfieldBase, models.CharField)):
         #if not value:
         # return None
         #if isinstance(value, uuid.UUID):
-        # return smart_unicode(value)
+        # return smart_text(value)
         #else:
         # return value
 
@@ -126,7 +126,7 @@ class UUIDField(six.with_metaclass(models.SubfieldBase, models.CharField)):
     def get_db_prep_value(self, value, connection, prepared):
         """Casts uuid.UUID values into the format expected by the back end for use in queries"""
         if isinstance(value, uuid.UUID):
-            return smart_unicode(value)
+            return smart_text(value)
         return value
 
     def value_to_string(self, obj):
@@ -134,7 +134,7 @@ class UUIDField(six.with_metaclass(models.SubfieldBase, models.CharField)):
         if val is None:
             data = ''
         else:
-            data = smart_unicode(val)
+            data = smart_text(val)
         return data
 
     def formfield(self, **kwargs):

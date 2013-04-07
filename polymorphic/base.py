@@ -54,6 +54,13 @@ class PolymorphicModelBase(ModelBase):
     def __new__(self, model_name, bases, attrs):
         #print; print '###', model_name, '- bases:', bases
 
+        # Workaround compatibility issue with six.with_metaclass() and custom Django model metaclasses:
+        # Let Django fully ignore the class which is inserted in between.
+        if not attrs and model_name == 'NewBase':
+            attrs['__module__'] = 'django.utils.six'
+            attrs['Meta'] = type('Meta', (), {'abstract': True})
+            return super(PolymorphicModelBase, self).__new__(self, model_name, bases, attrs)
+
         # create new model
         new_class = self.call_superclass_new_method(model_name, bases, attrs)
 
@@ -145,7 +152,7 @@ class PolymorphicModelBase(ModelBase):
         # The ordering in the base.__dict__ may randomly change depending on which method is added.
         # Make sure base_objects is on top, and 'objects' and '_default_manager' follow afterwards.
         # This makes sure that the _base_manager is also assigned properly.
-        add_managers = sorted(add_managers, key=lambda item: item[2].creation_counter, reverse=True)
+        add_managers = sorted(add_managers, key=lambda item: (item[1].startswith('_'), item[1]))
         return add_managers
 
     @classmethod
@@ -178,9 +185,8 @@ class PolymorphicModelBase(ModelBase):
         # which is directly in the python path. To work around this we temporarily set
         # app_label here for PolymorphicModel.
         meta = attrs.get('Meta', None)
-        model_module_name = attrs['__module__']
         do_app_label_workaround = (meta
-                                    and model_module_name == 'polymorphic'
+                                    and attrs['__module__'] == 'polymorphic'
                                     and model_name == 'PolymorphicModel'
                                     and getattr(meta, 'app_label', None) is None)
 

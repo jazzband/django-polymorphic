@@ -34,7 +34,7 @@ def translate_polymorphic_filter_definitions_in_kwargs(queryset_model, kwargs):
     Returns: a list of non-keyword-arguments (Q objects) to be added to the filter() query.
     """
     additional_args = []
-    for field_path, val in kwargs.items():
+    for field_path, val in kwargs.copy().items():  # Python 3 needs copy
 
         new_expr = _translate_polymorphic_filter_definition(queryset_model, field_path, val)
 

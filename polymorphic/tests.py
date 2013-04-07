@@ -2,6 +2,7 @@
 """ Test Cases
     Please see README.rst or DOCS.rst or http://chrisglass.github.com/django_polymorphic/
 """
+from __future__ import print_function
 import uuid
 import re
 from django.db.models.query import QuerySet
@@ -10,6 +11,7 @@ from django.test import TestCase
 from django.db.models import Q,Count
 from django.db import models
 from django.contrib.contenttypes.models import ContentType
+from django.utils import six
 
 from polymorphic import PolymorphicModel, PolymorphicManager, PolymorphicQuerySet
 from polymorphic import ShowFieldContent, ShowFieldType, ShowFieldTypeAndContent
@@ -253,10 +255,10 @@ class PolymorphicTests(TestCase):
         o2 = DiamondXY.objects.get()
 
         if o2.field_b != 'b':
-            print
-            print '# known django model inheritance diamond problem detected'
-            print 'DiamondXY fields 1: field_b "{0}", field_x "{1}", field_y "{2}"'.format(o1.field_b, o1.field_x, o1.field_y)
-            print 'DiamondXY fields 2: field_b "{0}", field_x "{1}", field_y "{2}"'.format(o2.field_b, o2.field_x, o2.field_y)
+            print('')
+            print('# known django model inheritance diamond problem detected')
+            print('DiamondXY fields 1: field_b "{0}", field_x "{1}", field_y "{2}"'.format(o1.field_b, o1.field_x, o1.field_y))
+            print('DiamondXY fields 2: field_b "{0}", field_x "{1}", field_y "{2}"'.format(o2.field_b, o2.field_x, o2.field_y))
 
 
     def test_annotate_aggregate_order(self):
@@ -363,16 +365,16 @@ class PolymorphicTests(TestCase):
   <UUIDResearchProject: uuid_primary_key (UUIDField/pk), topic (CharField) "Swallow Aerodynamics", supervisor (CharField) "Dr. Winter"> ]"""
         self.assertEqual(res, res_exp)
         #if (a.pk!= uuid.UUID or c.pk!= uuid.UUID):
-        #    print
-        #    print '# known inconstency with custom primary key field detected (django problem?)'
+        #    print()
+        #    print('# known inconstency with custom primary key field detected (django problem?)')
 
         a = UUIDPlainA.objects.create(field1='A1')
         b = UUIDPlainB.objects.create(field1='B1', field2='B2')
         c = UUIDPlainC.objects.create(field1='C1', field2='C2', field3='C3')
         qs = UUIDPlainA.objects.all()
         if a.pk!= uuid.UUID or c.pk!= uuid.UUID:
-            print
-            print '# known type inconstency with custom primary key field detected (django problem?)'
+            print('')
+            print('# known type inconstency with custom primary key field detected (django problem?)')
 
 
     def create_model2abcd(self):
@@ -531,9 +533,14 @@ class PolymorphicTests(TestCase):
         ModelExtraExternal.objects.create(topic='extra2')
         ModelExtraExternal.objects.create(topic='extra3')
         objects = ModelExtraA.objects.extra(tables=["polymorphic_modelextraexternal"], select={"topic":"polymorphic_modelextraexternal.topic"}, where=["polymorphic_modelextraa.id = polymorphic_modelextraexternal.id"])
-        self.assertEqual(repr(objects[0]), '<ModelExtraA: id 1, field1 (CharField) "A1" - Extra: topic (unicode) "extra1">')
-        self.assertEqual(repr(objects[1]), '<ModelExtraB: id 2, field1 (CharField) "B1", field2 (CharField) "B2" - Extra: topic (unicode) "extra2">')
-        self.assertEqual(repr(objects[2]), '<ModelExtraC: id 3, field1 (CharField) "C1", field2 (CharField) "C2", field3 (CharField) "C3" - Extra: topic (unicode) "extra3">')
+        if six.PY3:
+            self.assertEqual(repr(objects[0]), '<ModelExtraA: id 1, field1 (CharField) "A1" - Extra: topic (str) "extra1">')
+            self.assertEqual(repr(objects[1]), '<ModelExtraB: id 2, field1 (CharField) "B1", field2 (CharField) "B2" - Extra: topic (str) "extra2">')
+            self.assertEqual(repr(objects[2]), '<ModelExtraC: id 3, field1 (CharField) "C1", field2 (CharField) "C2", field3 (CharField) "C3" - Extra: topic (str) "extra3">')
+        else:
+            self.assertEqual(repr(objects[0]), '<ModelExtraA: id 1, field1 (CharField) "A1" - Extra: topic (unicode) "extra1">')
+            self.assertEqual(repr(objects[1]), '<ModelExtraB: id 2, field1 (CharField) "B1", field2 (CharField) "B2" - Extra: topic (unicode) "extra2">')
+            self.assertEqual(repr(objects[2]), '<ModelExtraC: id 3, field1 (CharField) "C1", field2 (CharField) "C2", field3 (CharField) "C3" - Extra: topic (unicode) "extra3">')
         self.assertEqual(len(objects), 3)
 
 
