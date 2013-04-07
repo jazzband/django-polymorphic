@@ -19,7 +19,8 @@ from django.utils.translation import ugettext_lazy as _
 
 __all__ = (
     'PolymorphicModelChoiceForm', 'PolymorphicParentModelAdmin',
-    'PolymorphicChildModelAdmin', 'PolymorphicChildModelFilter')
+    'PolymorphicChildModelAdmin', 'PolymorphicChildModelFilter'
+)
 
 
 class RegistrationClosed(RuntimeError):
