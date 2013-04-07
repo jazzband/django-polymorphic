@@ -19,12 +19,19 @@ Polymorphic_QuerySet_objects_per_request = CHUNK_SIZE
 
 def transmogrify(cls, obj):
     """
-    Clone an object as a different class, by instantiating that class and copying the __dict__
+    Upcast a class to a different type without asking questions.
     """
-    new = cls()
-    for k,v in obj.__dict__.items():
-        new.__dict__[k] = v
+    if not '__init__' in obj.__dict__:
+        # Just assign __class__ to a different value.
+        new = obj
+        new.__class__ = cls
+    else:
+        # Run constructor, reassign values
+        new = cls()
+        for k,v in obj.__dict__.items():
+            new.__dict__[k] = v
     return new
+
 
 ###################################################################################
 ### PolymorphicQuerySet
