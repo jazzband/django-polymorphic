@@ -178,6 +178,17 @@ class UUIDPlainB(UUIDPlainA):
 class UUIDPlainC(UUIDPlainB):
     field3 = models.CharField(max_length=10)
 
+# base -> proxy -> real models
+class ProxiedBase(ShowFieldTypeAndContent, PolymorphicModel):
+    name = models.CharField(max_length=10)
+class ProxyModelBase(ProxiedBase):
+    class Meta:
+        proxy = True
+class ProxyModelA(ProxyModelBase):
+    field1 = models.CharField(max_length=10)
+class ProxyModelB(ProxyModelBase):
+    field2 = models.CharField(max_length=10)
+
 
 # test bad field name
 #class TestBadFieldModel(ShowFieldType, PolymorphicModel):
@@ -194,7 +205,6 @@ class PolymorphicTests(TestCase):
     """
     The test suite
     """
-
     def test_diamond_inheritance(self):
         # Django diamond problem
         o1 = DiamondXY.objects.create(field_b='b', field_x='x', field_y='y')
@@ -611,6 +621,37 @@ class PolymorphicTests(TestCase):
 
         # Django vanilla inheritance does not inherit MyManager as _default_manager here
         self.assertEqual(repr(type(MROBase2._default_manager)), "<class 'polymorphic.manager.PolymorphicManager'>")
+
+
+    def test_proxy_model_inheritance(self):
+        """
+        Polymorphic abilities should also work when the base model is a proxy object.
+        """
+        # The managers should point to the proper objects.
+        # otherwise, the whole excersise is pointless.
+        self.assertEqual(ProxiedBase.objects.model, ProxiedBase)
+        self.assertEqual(ProxyModelBase.objects.model, ProxyModelBase)
+        self.assertEqual(ProxyModelA.objects.model, ProxyModelA)
+        self.assertEqual(ProxyModelB.objects.model, ProxyModelB)
+
+        # Create objects
+        ProxyModelA.objects.create(name="object1")
+        ProxyModelB.objects.create(name="object2", field2="bb")
+
+        # Getting single objects
+        object1 = ProxyModelBase.objects.get(name='object1')
+        object2 = ProxyModelBase.objects.get(name='object2')
+        self.assertEqual(repr(object1), '<ProxyModelA: id 1, name (CharField) "object1", field1 (CharField) "">')
+        self.assertEqual(repr(object2), '<ProxyModelB: id 2, name (CharField) "object2", field2 (CharField) "bb">')
+        self.assertIsInstance(object1, ProxyModelA)
+        self.assertIsInstance(object2, ProxyModelB)
+
+        # Same for lists
+        objects = list(ProxyModelBase.objects.all().order_by('name'))
+        self.assertEqual(repr(objects[0]), '<ProxyModelA: id 1, name (CharField) "object1", field1 (CharField) "">')
+        self.assertEqual(repr(objects[1]), '<ProxyModelB: id 2, name (CharField) "object2", field2 (CharField) "bb">')
+        self.assertIsInstance(objects[0], ProxyModelA)
+        self.assertIsInstance(objects[1], ProxyModelB)
 
 
     def test_fix_getattribute(self):
