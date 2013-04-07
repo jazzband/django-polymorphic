@@ -196,7 +196,6 @@ class Middle(Top):
 class Bottom(Middle):
     author = models.CharField(max_length=50)
 
-
 class UUIDProject(ShowFieldTypeAndContent, PolymorphicModel):
         uuid_primary_key = UUIDField(primary_key = True)
         topic = models.CharField(max_length = 30)
@@ -212,6 +211,13 @@ class UUIDPlainB(UUIDPlainA):
     field2 = models.CharField(max_length=10)
 class UUIDPlainC(UUIDPlainB):
     field3 = models.CharField(max_length=10)
+
+# base -> proxy
+class ProxyBase(PolymorphicModel):
+    some_data = models.CharField(max_length=128)
+class ProxyChild(ProxyBase):
+    class Meta:
+        proxy = True
 
 # base -> proxy -> real models
 class ProxiedBase(ShowFieldTypeAndContent, PolymorphicModel):
@@ -684,6 +690,30 @@ class PolymorphicTests(TestCase):
 
         # A related set is created using the model's _default_manager, so does gain extra methods.
         self.assertIs(type(parent.childmodel_set.my_queryset_foo()), MyManagerQuerySet)
+
+
+    def test_proxy_models(self):
+        # prepare some data
+        for data in ('bleep bloop', 'I am a', 'computer'):
+            ProxyChild.objects.create(some_data=data)
+
+        # this caches ContentType queries so they don't interfere with our query counts later
+        list(ProxyBase.objects.all())
+
+        # one query per concrete class
+        with self.assertNumQueries(1):
+            items = list(ProxyBase.objects.all())
+
+        self.assertIsInstance(items[0], ProxyChild)
+
+
+    def test_content_types_for_proxy_models(self):
+        """Checks if ContentType is capable of returning proxy models."""
+        from django.db.models import Model
+        from django.contrib.contenttypes.models import ContentType
+
+        ct = ContentType.objects.get_for_model(ProxyChild, for_concrete_model=False)
+        self.assertEqual(ProxyChild, ct.model_class())
 
 
     def test_proxy_model_inheritance(self):

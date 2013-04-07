@@ -140,7 +140,7 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
         """
         choices = []
         for model, _ in self.get_child_models():
-            ct = ContentType.objects.get_for_model(model)
+            ct = ContentType.objects.get_for_model(model, for_concrete_model=False)
             choices.append((ct.id, model._meta.verbose_name))
         return choices
 

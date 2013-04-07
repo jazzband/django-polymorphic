@@ -85,7 +85,7 @@ class PolymorphicModel(models.Model):
         (used by PolymorphicQuerySet._get_real_instances)
         """
         if not self.polymorphic_ctype_id:
-            self.polymorphic_ctype = ContentType.objects.get_for_model(self)
+            self.polymorphic_ctype = ContentType.objects.get_for_model(self, for_concrete_model=False)
 
     def save(self, *args, **kwargs):
         """Overridden model save function which supports the polymorphism
@@ -102,6 +102,12 @@ class PolymorphicModel(models.Model):
         #return self.polymorphic_ctype.model_class()
         # so we use the following version, which uses the CopntentType manager cache
         return ContentType.objects.get_for_id(self.polymorphic_ctype_id).model_class()
+
+    def get_real_concrete_instance_class_id(self):
+        return ContentType.objects.get_for_model(self.get_real_instance_class(), for_concrete_model=True).pk
+
+    def get_real_concrete_instance_class(self):
+        return ContentType.objects.get_for_model(self.get_real_instance_class(), for_concrete_model=True).model_class()
 
     def get_real_instance(self):
         """Normally not needed.

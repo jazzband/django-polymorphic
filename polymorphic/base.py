@@ -140,6 +140,11 @@ class PolymorphicModelBase(ModelBase):
                     self.validate_model_manager(manager, self.__name__, key)
                 add_managers.append((base.__name__, key, manager))
                 add_managers_keys.add(key)
+
+        # The ordering in the base.__dict__ may randomly change depending on which method is added.
+        # Make sure base_objects is on top, and 'objects' and '_default_manager' follow afterwards.
+        # This makes sure that the _base_manager is also assigned properly.
+        add_managers = sorted(add_managers, key=lambda item: item[2].creation_counter, reverse=True)
         return add_managers
 
     @classmethod
