@@ -61,3 +61,15 @@ if 'UUIDModelA' in globals():
 
     admin.site.register(UUIDModelA, UUIDModelAAdmin)
 
+
+class ProxyChildAdmin(PolymorphicChildModelAdmin):
+    base_model = ProxyBase
+
+class ProxyAdmin(PolymorphicParentModelAdmin):
+    base_model = ProxyBase
+    child_models = (
+        (ProxyA, ProxyChildAdmin),
+        (ProxyB, ProxyChildAdmin),
+    )
+
+admin.site.register(ProxyBase, ProxyAdmin)
