@@ -8,11 +8,13 @@ Main authors (commit rights to the main repository)
 Contributors
 =============
 
+* Adam Wentz
 * Andrew Ingram (contributed setup.py)
 * Adam Wentz
 * Ben Konrath
 * Charles Leifer (python 2.4 compatibility)
 * Germán M. Bravo
+* Jedediah Smith (proxy models support)
 * Martin Brochhaus
 
 
