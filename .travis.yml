@@ -13,9 +13,3 @@ script:
 branches:
   only:
     - master
-notifications:
-  irc:
-    channels:
-      - "irc.freenode.org#django-polymorphic"
-    template:
-      - "%{repository}#%{build_number} (%{commit}) %{message}  --  %{build_url}"
