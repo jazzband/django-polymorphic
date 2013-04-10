@@ -1,9 +1,8 @@
 from setuptools import setup, find_packages
-import polymorphic
 
 setup(
     name = 'django_polymorphic',
-    version = polymorphic.__version__,
+    version ="0.4.2",  # You must ALSO bump polymorphic.__version__ !
     description = 'Seamless Polymorphic Inheritance for Django Models',
     url = 'https://github.com/chrisglass/django_polymorphic',
 
