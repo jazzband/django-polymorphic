@@ -14,16 +14,19 @@ from showfields import ShowFieldContent, ShowFieldType, ShowFieldTypeAndContent
 from showfields import ShowFields, ShowFieldTypes, ShowFieldsAndTypes  # import old names for compatibility
 
 
-VERSION = (1, 0, 0, 'beta')
+"""
+See PEP 386 (https://www.python.org/dev/peps/pep-0386/)
 
-
-def get_version():
-    version = '%s.%s' % VERSION[0:2]
-    if VERSION[2]:
-        version += '.%s' % VERSION[2]
-    if VERSION[3]:
-        version += ' %s' % VERSION[3]
-    return version
+Release logic:
+    1. Remove "dev#" from current (this file, now).
+    2. git commit
+    3. git tag <version>
+    4. push to pypi + push --tags to github
+    5. bump the version, append ".dev0"
+    6. git commit
+    7. push to github
+"""
+__version__ = "0.4.1.dev0"
 
 
 # Proxied models need to have it's own ContentType
