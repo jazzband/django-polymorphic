@@ -27,7 +27,7 @@ Release logic:
     6. git commit
     7. push to github
 """
-__version__ = "0.4.1.dev0"
+__version__ = "0.4.1"
 
 
 # Monkey-patch Django < 1.5 to allow ContentTypes for proxy models.
