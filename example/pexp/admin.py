@@ -1,5 +1,5 @@
 from django.contrib import admin
-from polymorphic.admin import PolymorphicParentModelAdmin, PolymorphicChildModelAdmin
+from polymorphic.admin import PolymorphicParentModelAdmin, PolymorphicChildModelAdmin, PolymorphicChildModelFilter
 from pexp.models import *
 
 
@@ -8,6 +8,7 @@ class ProjectChildAdmin(PolymorphicChildModelAdmin):
 
 class ProjectAdmin(PolymorphicParentModelAdmin):
     base_model = Project
+    list_filter = (PolymorphicChildModelFilter,)
     child_models = (
         (Project, ProjectChildAdmin),
         (ArtProject, ProjectChildAdmin),
@@ -23,6 +24,7 @@ class ModelAChildAdmin(PolymorphicChildModelAdmin):
 
 class ModelAAdmin(PolymorphicParentModelAdmin):
     base_model = ModelA
+    list_filter = (PolymorphicChildModelFilter,)
     child_models = (
         (ModelA, ModelAChildAdmin),
         (ModelB, ModelAChildAdmin),
@@ -38,6 +40,7 @@ if 'Model2A' in globals():
 
     class Model2AAdmin(PolymorphicParentModelAdmin):
         base_model = Model2A
+        list_filter = (PolymorphicChildModelFilter,)
         child_models = (
             (Model2A, Model2AChildAdmin),
             (Model2B, Model2AChildAdmin),
@@ -53,6 +56,7 @@ if 'UUIDModelA' in globals():
 
     class UUIDModelAAdmin(PolymorphicParentModelAdmin):
         base_model = UUIDModelA
+        list_filter = (PolymorphicChildModelFilter,)
         child_models = (
             (UUIDModelA, UUIDModelAChildAdmin),
             (UUIDModelB, UUIDModelAChildAdmin),
@@ -61,3 +65,16 @@ if 'UUIDModelA' in globals():
 
     admin.site.register(UUIDModelA, UUIDModelAAdmin)
 
+
+class ProxyChildAdmin(PolymorphicChildModelAdmin):
+    base_model = ProxyBase
+
+class ProxyAdmin(PolymorphicParentModelAdmin):
+    base_model = ProxyBase
+    list_filter = (PolymorphicChildModelFilter,)
+    child_models = (
+        (ProxyA, ProxyChildAdmin),
+        (ProxyB, ProxyChildAdmin),
+    )
+
+admin.site.register(ProxyBase, ProxyAdmin)

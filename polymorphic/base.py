@@ -8,6 +8,7 @@ import inspect
 
 from django.db import models
 from django.db.models.base import ModelBase
+from django.db.models.manager import ManagerDescriptor
 
 from manager import PolymorphicManager
 from query import PolymorphicQuerySet
@@ -15,6 +16,11 @@ from query import PolymorphicQuerySet
 # PolymorphicQuerySet Q objects (and filter()) support these additional key words.
 # These are forbidden as field names (a descriptive exception is raised)
 POLYMORPHIC_SPECIAL_Q_KWORDS = ['instance_of', 'not_instance_of']
+
+try:
+    from django.db.models.manager import AbstractManagerDescriptor  # Django 1.5
+except ImportError:
+    AbstractManagerDescriptor = None
 
 
 ###################################################################################
@@ -63,7 +69,8 @@ class PolymorphicModelBase(ModelBase):
             new_class.add_to_class(mgr_name, new_manager)
 
         # get first user defined manager; if there is one, make it the _default_manager
-        user_manager = new_class.get_first_user_defined_manager()
+        # this value is used by the related objects, restoring access to custom queryset methods on related objects.
+        user_manager = self.get_first_user_defined_manager(new_class)
         if user_manager:
             def_mgr = user_manager._copy_to_model(new_class)
             #print '## add default manager', type(def_mgr)
@@ -91,6 +98,7 @@ class PolymorphicModelBase(ModelBase):
         use correct mro, only use managers with _inherited==False (they are of no use),
         skip managers that are overwritten by the user with same-named class attributes (in attrs)
         """
+        #print "** ", self.__name__
         add_managers = []
         add_managers_keys = set()
         for base in self.__mro__[1:]:
@@ -102,9 +110,23 @@ class PolymorphicModelBase(ModelBase):
             for key, manager in base.__dict__.items():
                 if type(manager) == models.manager.ManagerDescriptor:
                     manager = manager.manager
+
+                if AbstractManagerDescriptor is not None:
+                    # Django 1.4 unconditionally assigned managers to a model. As of Django 1.5 however,
+                    # the abstract models don't get any managers, only a AbstractManagerDescriptor as substitute.
+                    # Pretend that the manager is still there, so all code works like it used to.
+                    if type(manager) == AbstractManagerDescriptor and base.__name__ == 'PolymorphicModel':
+                        model = manager.model
+                        if key == 'objects':
+                            manager = PolymorphicManager()
+                            manager.model = model
+                        elif key == 'base_objects':
+                            manager = models.Manager()
+                            manager.model = model
+
                 if not isinstance(manager, models.Manager):
                     continue
-                if key in ['_base_manager']:
+                if key == '_base_manager':
                     continue       # let Django handle _base_manager
                 if key in attrs:
                     continue
@@ -112,25 +134,36 @@ class PolymorphicModelBase(ModelBase):
                     continue       # manager with that name already added, skip
                 if manager._inherited:
                     continue             # inherited managers (on the bases) have no significance, they are just copies
-                #print >>sys.stderr,'##',self.__name__, key
+                #print '## {0} {1}'.format(self.__name__, key)
+
                 if isinstance(manager, PolymorphicManager):  # validate any inherited polymorphic managers
                     self.validate_model_manager(manager, self.__name__, key)
                 add_managers.append((base.__name__, key, manager))
                 add_managers_keys.add(key)
+
+        # The ordering in the base.__dict__ may randomly change depending on which method is added.
+        # Make sure base_objects is on top, and 'objects' and '_default_manager' follow afterwards.
+        # This makes sure that the _base_manager is also assigned properly.
+        add_managers = sorted(add_managers, key=lambda item: item[2].creation_counter, reverse=True)
         return add_managers
 
     @classmethod
-    def get_first_user_defined_manager(self):
+    def get_first_user_defined_manager(mcs, new_class):
+        # See if there is a manager attribute directly stored at this inheritance level.
         mgr_list = []
-        for key, val in self.__dict__.items():
-            item = getattr(self, key)
-            if not isinstance(item, models.Manager): continue
-            mgr_list.append((item.creation_counter, key, item))
+        for key, val in new_class.__dict__.items():
+            if isinstance(val, ManagerDescriptor):
+                val = val.manager
+            if not isinstance(val, PolymorphicManager) or type(val) is PolymorphicManager:
+                continue
+
+            mgr_list.append((val.creation_counter, key, val))
+
         # if there are user defined managers, use first one as _default_manager
         if mgr_list:
             _, manager_name, manager = sorted(mgr_list)[0]
             #sys.stderr.write( '\n# first user defined manager for model "{model}":\n#  "{mgrname}": {mgr}\n#  manager model: {mgrmodel}\n\n'
-            #    .format( model=model_name, mgrname=manager_name, mgr=manager, mgrmodel=manager.model ) )
+            #    .format( model=self.__name__, mgrname=manager_name, mgr=manager, mgrmodel=manager.model ) )
             return manager
         return None
 

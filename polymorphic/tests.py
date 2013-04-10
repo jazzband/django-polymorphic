@@ -4,13 +4,14 @@
 """
 import uuid
 import re
+from django.db.models.query import QuerySet
 
 from django.test import TestCase
 from django.db.models import Q,Count
 from django.db import models
 from django.contrib.contenttypes.models import ContentType
 
-from polymorphic import PolymorphicModel, PolymorphicManager
+from polymorphic import PolymorphicModel, PolymorphicManager, PolymorphicQuerySet
 from polymorphic import ShowFieldContent, ShowFieldType, ShowFieldTypeAndContent
 from polymorphic.tools_for_tests import UUIDField
 
@@ -81,7 +82,7 @@ class DiamondXY(DiamondX, DiamondY):
 
 class RelationBase(ShowFieldTypeAndContent, PolymorphicModel):
     field_base = models.CharField(max_length=10)
-    fk = models.ForeignKey('self', null=True)
+    fk = models.ForeignKey('self', null=True, related_name='relationbase_set')
     m2m = models.ManyToManyField('self')
 class RelationA(RelationBase):
     field_a = models.CharField(max_length=10)
@@ -100,9 +101,16 @@ class One2OneRelatingModel(PolymorphicModel):
 class One2OneRelatingModelDerived(One2OneRelatingModel):
     field2 = models.CharField(max_length=10)
 
+class MyManagerQuerySet(PolymorphicQuerySet):
+    def my_queryset_foo(self):
+        return self.all()  # Just a method to prove the existance of the custom queryset.
+
 class MyManager(PolymorphicManager):
+    queryset_class = MyManagerQuerySet
+
     def get_query_set(self):
         return super(MyManager, self).get_query_set().order_by('-field1')
+
 class ModelWithMyManager(ShowFieldTypeAndContent, Model2A):
     objects = MyManager()
     field4 = models.CharField(max_length=10)
@@ -116,6 +124,33 @@ class MROBase3(models.Model):
     objects = PolymorphicManager()
 class MRODerived(MROBase2, MROBase3):
     pass
+
+class ParentModelWithManager(PolymorphicModel):
+    pass
+class ChildModelWithManager(PolymorphicModel):
+    # Also test whether foreign keys receive the manager:
+    fk = models.ForeignKey(ParentModelWithManager, related_name='childmodel_set')
+    objects = MyManager()
+
+
+class PlainMyManagerQuerySet(QuerySet):
+    def my_queryset_foo(self):
+        return self.all()  # Just a method to prove the existance of the custom queryset.
+
+class PlainMyManager(models.Manager):
+    def my_queryset_foo(self):
+        return self.get_query_set().my_queryset_foo()
+
+    def get_query_set(self):
+        return PlainMyManagerQuerySet(self.model, using=self._db)
+
+class PlainParentModelWithManager(models.Model):
+    pass
+
+class PlainChildModelWithManager(models.Model):
+    fk = models.ForeignKey(PlainParentModelWithManager, related_name='childmodel_set')
+    objects = PlainMyManager()
+
 
 class MgrInheritA(models.Model):
     mgrA = models.Manager()
@@ -161,7 +196,6 @@ class Middle(Top):
 class Bottom(Middle):
     author = models.CharField(max_length=50)
 
-
 class UUIDProject(ShowFieldTypeAndContent, PolymorphicModel):
         uuid_primary_key = UUIDField(primary_key = True)
         topic = models.CharField(max_length = 30)
@@ -177,6 +211,24 @@ class UUIDPlainB(UUIDPlainA):
     field2 = models.CharField(max_length=10)
 class UUIDPlainC(UUIDPlainB):
     field3 = models.CharField(max_length=10)
+
+# base -> proxy
+class ProxyBase(PolymorphicModel):
+    some_data = models.CharField(max_length=128)
+class ProxyChild(ProxyBase):
+    class Meta:
+        proxy = True
+
+# base -> proxy -> real models
+class ProxiedBase(ShowFieldTypeAndContent, PolymorphicModel):
+    name = models.CharField(max_length=10)
+class ProxyModelBase(ProxiedBase):
+    class Meta:
+        proxy = True
+class ProxyModelA(ProxyModelBase):
+    field1 = models.CharField(max_length=10)
+class ProxyModelB(ProxyModelBase):
+    field2 = models.CharField(max_length=10)
 
 
 # test bad field name
@@ -194,7 +246,6 @@ class PolymorphicTests(TestCase):
     """
     The test suite
     """
-
     def test_diamond_inheritance(self):
         # Django diamond problem
         o1 = DiamondXY.objects.create(field_b='b', field_x='x', field_y='y')
@@ -399,9 +450,11 @@ class PolymorphicTests(TestCase):
         self.assertEqual(show_base_manager(PlainA), "<class 'django.db.models.manager.Manager'> <class 'polymorphic.tests.PlainA'>")
         self.assertEqual(show_base_manager(PlainB), "<class 'django.db.models.manager.Manager'> <class 'polymorphic.tests.PlainB'>")
         self.assertEqual(show_base_manager(PlainC), "<class 'django.db.models.manager.Manager'> <class 'polymorphic.tests.PlainC'>")
+
         self.assertEqual(show_base_manager(Model2A), "<class 'polymorphic.manager.PolymorphicManager'> <class 'polymorphic.tests.Model2A'>")
         self.assertEqual(show_base_manager(Model2B), "<class 'django.db.models.manager.Manager'> <class 'polymorphic.tests.Model2B'>")
         self.assertEqual(show_base_manager(Model2C), "<class 'django.db.models.manager.Manager'> <class 'polymorphic.tests.Model2C'>")
+
         self.assertEqual(show_base_manager(One2OneRelatingModel), "<class 'polymorphic.manager.PolymorphicManager'> <class 'polymorphic.tests.One2OneRelatingModel'>")
         self.assertEqual(show_base_manager(One2OneRelatingModelDerived), "<class 'django.db.models.manager.Manager'> <class 'polymorphic.tests.One2OneRelatingModelDerived'>")
 
@@ -594,23 +647,104 @@ class PolymorphicTests(TestCase):
         ModelWithMyManager.objects.create(field1='D1a', field4='D4a')
         ModelWithMyManager.objects.create(field1='D1b', field4='D4b')
 
-        objects = ModelWithMyManager.objects.all()
+        objects = ModelWithMyManager.objects.all()   # MyManager should reverse the sorting of field1
         self.assertEqual(repr(objects[0]), '<ModelWithMyManager: id 6, field1 (CharField) "D1b", field4 (CharField) "D4b">')
         self.assertEqual(repr(objects[1]), '<ModelWithMyManager: id 5, field1 (CharField) "D1a", field4 (CharField) "D4a">')
         self.assertEqual(len(objects), 2)
 
-        self.assertEqual(repr(type(ModelWithMyManager.objects)), "<class 'polymorphic.tests.MyManager'>")
-        self.assertEqual(repr(type(ModelWithMyManager._default_manager)), "<class 'polymorphic.manager.PolymorphicManager'>")
+        self.assertIs(type(ModelWithMyManager.objects), MyManager)
+        self.assertIs(type(ModelWithMyManager._default_manager), MyManager)
+        self.assertIs(type(ModelWithMyManager.base_objects), models.Manager)
 
 
     def test_manager_inheritance(self):
-        self.assertEqual(repr(type(MRODerived.objects)), "<class 'polymorphic.tests.MyManager'>")  # MRO
+        # by choice of MRO, should be MyManager from MROBase1.
+        self.assertIs(type(MRODerived.objects), MyManager)
 
         # check for correct default manager
-        self.assertEqual(repr(type(MROBase1._default_manager)), "<class 'polymorphic.manager.PolymorphicManager'>")
+        self.assertIs(type(MROBase1._default_manager), MyManager)
 
         # Django vanilla inheritance does not inherit MyManager as _default_manager here
-        self.assertEqual(repr(type(MROBase2._default_manager)), "<class 'polymorphic.manager.PolymorphicManager'>")
+        self.assertIs(type(MROBase2._default_manager), MyManager)
+
+
+    def test_queryset_assignment(self):
+        # This is just a consistency check for now, testing standard Django behavior.
+        parent = PlainParentModelWithManager.objects.create()
+        child = PlainChildModelWithManager.objects.create(fk=parent)
+        self.assertIs(type(PlainParentModelWithManager._default_manager), models.Manager)
+        self.assertIs(type(PlainChildModelWithManager._default_manager), PlainMyManager)
+        self.assertIs(type(PlainChildModelWithManager.objects), PlainMyManager)
+        self.assertIs(type(PlainChildModelWithManager.objects.all()), PlainMyManagerQuerySet)
+
+        # A related set is created using the model's _default_manager, so does gain extra methods.
+        self.assertIs(type(parent.childmodel_set.my_queryset_foo()), PlainMyManagerQuerySet)
+
+        # For polymorphic models, the same should happen.
+        parent = ParentModelWithManager.objects.create()
+        child = ChildModelWithManager.objects.create(fk=parent)
+        self.assertIs(type(ParentModelWithManager._default_manager), PolymorphicManager)
+        self.assertIs(type(ChildModelWithManager._default_manager), MyManager)
+        self.assertIs(type(ChildModelWithManager.objects), MyManager)
+        self.assertIs(type(ChildModelWithManager.objects.my_queryset_foo()), MyManagerQuerySet)
+
+        # A related set is created using the model's _default_manager, so does gain extra methods.
+        self.assertIs(type(parent.childmodel_set.my_queryset_foo()), MyManagerQuerySet)
+
+
+    def test_proxy_models(self):
+        # prepare some data
+        for data in ('bleep bloop', 'I am a', 'computer'):
+            ProxyChild.objects.create(some_data=data)
+
+        # this caches ContentType queries so they don't interfere with our query counts later
+        list(ProxyBase.objects.all())
+
+        # one query per concrete class
+        with self.assertNumQueries(1):
+            items = list(ProxyBase.objects.all())
+
+        self.assertIsInstance(items[0], ProxyChild)
+
+
+    def test_content_types_for_proxy_models(self):
+        """Checks if ContentType is capable of returning proxy models."""
+        from django.db.models import Model
+        from django.contrib.contenttypes.models import ContentType
+
+        ct = ContentType.objects.get_for_model(ProxyChild, for_concrete_model=False)
+        self.assertEqual(ProxyChild, ct.model_class())
+
+
+    def test_proxy_model_inheritance(self):
+        """
+        Polymorphic abilities should also work when the base model is a proxy object.
+        """
+        # The managers should point to the proper objects.
+        # otherwise, the whole excersise is pointless.
+        self.assertEqual(ProxiedBase.objects.model, ProxiedBase)
+        self.assertEqual(ProxyModelBase.objects.model, ProxyModelBase)
+        self.assertEqual(ProxyModelA.objects.model, ProxyModelA)
+        self.assertEqual(ProxyModelB.objects.model, ProxyModelB)
+
+        # Create objects
+        ProxyModelA.objects.create(name="object1")
+        ProxyModelB.objects.create(name="object2", field2="bb")
+
+        # Getting single objects
+        object1 = ProxyModelBase.objects.get(name='object1')
+        object2 = ProxyModelBase.objects.get(name='object2')
+        self.assertEqual(repr(object1), '<ProxyModelA: id 1, name (CharField) "object1", field1 (CharField) "">')
+        self.assertEqual(repr(object2), '<ProxyModelB: id 2, name (CharField) "object2", field2 (CharField) "bb">')
+        self.assertIsInstance(object1, ProxyModelA)
+        self.assertIsInstance(object2, ProxyModelB)
+
+        # Same for lists
+        objects = list(ProxyModelBase.objects.all().order_by('name'))
+        self.assertEqual(repr(objects[0]), '<ProxyModelA: id 1, name (CharField) "object1", field1 (CharField) "">')
+        self.assertEqual(repr(objects[1]), '<ProxyModelB: id 2, name (CharField) "object2", field2 (CharField) "bb">')
+        self.assertIsInstance(objects[0], ProxyModelA)
+        self.assertIsInstance(objects[1], ProxyModelB)
 
 
     def test_fix_getattribute(self):

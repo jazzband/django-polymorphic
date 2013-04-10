@@ -1,17 +1,23 @@
 Main authors (commit rights to the main repository)
 ===================================================
 
-* Bert Constantin 2009/2010 (disappeared :( )
-* Chris Glass <tribaal@gmail.com> (Current maintainer)
+* Chris Glass
+* Diederik van der Boor
 
 
 Contributors
 =============
 
+* Adam Wentz
 * Andrew Ingram (contributed setup.py)
 * Adam Wentz
 * Ben Konrath
 * Charles Leifer (python 2.4 compatibility)
-* Diederik van der Boor (polymorphic admin interface)
 * Germán M. Bravo
+* Jedediah Smith (proxy models support)
 * Martin Brochhaus
+
+
+Former authors / maintainers
+============================
+* Bert Constantin 2009/2010 (Original author, disappeared from the internet :( )
