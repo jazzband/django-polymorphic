@@ -71,23 +71,19 @@ class PolymorphicModel(models.Model):
     objects = PolymorphicManager()
     base_objects = models.Manager()
 
+    def get_polymorphic_ctype(self):
+        if self.polymorphic_ctype_id:
+            return ContentType.objects.get_for_id(self.polymorphic_ctype_id)
+        else:
+            return ContentType.objects.get_for_proxied_model(self)
+
     @property
     def type(self):
-        return self.polymorphic_ctype.model
+        return self.get_polymorphic_ctype().model
 
     @classmethod
     def translate_polymorphic_Q_object(self_class, q):
         return translate_polymorphic_Q_object(self_class, q)
-
-    def __getattribute__(self, name):
-        if name == 'polymorphic_ctype':
-            """Avoid SQL queries and instead use the ContentType manager cache"""
-            polymorphic_ctype_id = super(PolymorphicModel, self).__getattribute__('polymorphic_ctype_id')
-            if polymorphic_ctype_id:
-                return ContentType.objects.get_for_id(polymorphic_ctype_id)
-            else:
-                return ContentType.objects.get_for_proxied_model(self)
-        return super(PolymorphicModel, self).__getattribute__(name)
 
     def pre_save_polymorphic(self):
         """Normally not needed.
@@ -98,7 +94,7 @@ class PolymorphicModel(models.Model):
         (used by PolymorphicQuerySet._get_real_instances)
         """
         if not self.polymorphic_ctype_id:
-            self.polymorphic_ctype_id = self.polymorphic_ctype.id
+            self.polymorphic_ctype_id = self.get_polymorphic_ctype().id
 
     def save(self, *args, **kwargs):
         """Overridden model save function which supports the polymorphism
@@ -111,7 +107,7 @@ class PolymorphicModel(models.Model):
         If a non-polymorphic manager (like base_objects) has been used to
         retrieve objects, then the real class/type of these objects may be
         determined using this method."""
-        return self.polymorphic_ctype.model_class()
+        return self.get_polymorphic_ctype().model_class()
 
     def get_real_instance(self):
         """Normally not needed.
