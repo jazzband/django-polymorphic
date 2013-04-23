@@ -474,11 +474,6 @@ class PolymorphicQuerySet(QuerySet):
 
                 obj = model_cls(**kwargs)
 
-                # Models keep a track of modified attrs to choose which
-                # fields to save. Since we're just pulling from the
-                # database, nothing has changed yet.
-                obj._reset_modified_attrs()
-
                 # Store the source database of the object
                 obj._state.db = db
                 # This object came from the database; it's not being added.
