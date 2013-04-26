@@ -125,7 +125,7 @@ class PolymorphicQuerySet(QuerySet):
         "init our queryset object member variables"
         super(PolymorphicQuerySet, self).__init__(*args, **kwargs)
         self.polymorphic_disabled = self.model.polymorphic_disabled
-        self.deferred = False
+        self.deferred = True
 
     def _clone(self, *args, **kwargs):
         "Django's _clone only copies its own variables, so we need to copy ours here"
@@ -138,10 +138,10 @@ class PolymorphicQuerySet(QuerySet):
         clone = self._clone()
         if fields == (None,):
             clone.deferred = False
+            clone.query.clear_deferred_loading()
         else:
             clone.deferred = True
-        if fields:
-            clone = super(PolymorphicQuerySet, clone).aggregate(*fields)
+            clone.query.add_deferred_loading(fields)
         return clone
 
     # FIXME: If django's delete() is patched to accept polymorphic queries, comment this method:
