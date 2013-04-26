@@ -22,6 +22,7 @@ from django import VERSION as django_VERSION
 from base import PolymorphicModelBase
 from manager import PolymorphicManager
 from query_translate import translate_polymorphic_Q_object
+from query import deferred_class_factory
 
 
 ###################################################################################
@@ -115,10 +116,26 @@ class PolymorphicModel(models.Model):
         retrieve objects, then the complete object with it's real class/type
         and all fields may be retrieved with this method.
         Each method call executes one db query (if necessary)."""
-        real_model = self.get_real_instance_class()
-        if real_model == self.__class__:
+        modelclass = self.get_real_instance_class()
+
+        if modelclass == self.__class__:
             return self
-        return real_model.objects.get(pk=self.pk)
+
+        if self._deferred:
+            if self.__class__._meta.proxy_for_model == modelclass:
+                return self  # Skip already deferred objects of the same class
+
+        attrs = set(f.attname for f in modelclass._meta.fields) - set(f.attname for f in self._meta.fields)
+        attrs.remove(modelclass._meta.pk.attname)
+        deferred_modelclass = deferred_class_factory(modelclass, set(), attrs)
+
+        o = deferred_modelclass()
+
+        for k, v in self.__dict__.items():
+            o.__dict__[k] = v
+        o.pk = self.pk
+
+        return o
 
     def __init__(self, *args, **kwargs):
         """Replace Django's inheritance accessor member functions for our model
