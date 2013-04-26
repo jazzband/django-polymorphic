@@ -308,6 +308,10 @@ class PolymorphicQuerySet(QuerySet):
                 for o_pk in idlist:
                     bo = base_result_objects_by_id[o_pk]
 
+                    if bo.__class__ == modelclass:
+                        results[o_pk] = bo
+                        continue  # Skip objects of the same class
+
                     if bo._deferred:
                         if bo.__class__._meta.proxy_for_model == modelclass:
                             results[o_pk] = bo
