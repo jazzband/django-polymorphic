@@ -302,7 +302,7 @@ class PolymorphicQuerySet(QuerySet):
         # TODO: defer(), only(): support for these would be around here
         for modelclass, idlist in idlist_per_model.items():
             if self.deferred:
-                attrs = set(f.attname for f in modelclass._meta.fields) - set([f.attname for f in self.model._meta.fields])
+                attrs = set(f.attname for f in modelclass._meta.fields) - set(f.attname for f in self.model._meta.fields)
                 attrs.remove(modelclass._meta.pk.attname)
                 deferred_modelclass = deferred_class_factory(modelclass, set(), attrs)
                 for o_pk in idlist:
@@ -461,7 +461,7 @@ class PolymorphicQuerySet(QuerySet):
                 # Get the polymorphic child model class
                 model = ContentType.objects.get_for_id(kwargs['polymorphic_ctype_id']).model_class()
                 # Find out what fields belong to the polymorphic child class and bulk defer them
-                bulk_skip = set(f.attname for f in model._meta.fields) - set([f.attname for f in self.model._meta.fields])
+                bulk_skip = set(f.attname for f in model._meta.fields) - set(f.attname for f in self.model._meta.fields)
                 if model._meta.pk.attname in bulk_skip:
                     bulk_skip.remove(model._meta.pk.attname)
                 if skip or bulk_skip:
@@ -542,14 +542,14 @@ class PolymorphicQuerySet(QuerySet):
     def __repr__(self, *args, **kwargs):
         if self.model.polymorphic_query_multiline_output:
             result = [repr(o) for o in self.all()]
-            return  '[ ' + ',\n  '.join(result) + ' ]'
+            return '[ ' + ',\n  '.join(result) + ' ]'
         else:
             return super(PolymorphicQuerySet, self).__repr__(*args, **kwargs)
 
     class _p_list_class(list):
         def __repr__(self, *args, **kwargs):
             result = [repr(o) for o in self]
-            return  '[ ' + ',\n  '.join(result) + ' ]'
+            return '[ ' + ',\n  '.join(result) + ' ]'
 
     def get_real_instances(self, base_result_objects=None):
         "same as _get_real_instances, but make sure that __repr__ for ShowField... creates correct output"
