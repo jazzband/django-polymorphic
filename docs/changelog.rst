@@ -42,7 +42,7 @@ Many changes to the codebase happened, but no new version was released to pypi f
 * PEP8 and code cleanups by various authors
 
 
-Version 0.2 (2012-11-12)
+Version 0.2 (2011-04-27)
 ------------------------
 
 The 0.2 release serves as legacy release.
