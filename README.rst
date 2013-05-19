@@ -1,11 +1,14 @@
 Polymorphic Models for Django
 =============================
 
+Django-polymorphic simplifies using inherited models in Django projects.
+When a query is made at the base model, the inherited model classes are returned!
+
 What is django_polymorphic good for?
 ------------------------------------
 
-Let's assume the models ``ArtProject`` and ``ResearchProject`` are derived
-from the model ``Project``, and stored in the database:
+Let's take the models ``ArtProject`` and ``ResearchProject`` which inherit
+from the model ``Project``, and store them in the database:
 
 >>> Project.objects.create(topic="Department Party")
 >>> ArtProject.objects.create(topic="Painting with Tim", artist="T. Turner")
@@ -37,12 +40,12 @@ Features
 * ORM integration:
 
  * support for ForeignKey, ManyToManyField, OneToOneField descriptors.
- * Filtering/ordering of derived models (``ArtProject___artist``).
+ * Filtering/ordering of inherited models (``ArtProject___artist``).
  * Filtering model types: ``instance_of(...)`` and ``not_instance_of(...)``
  * Combining querysets of different models (``qs3 = qs1 | qs2``)
  * Support for custom user-defined managers.
 
-* Uses the minumum amount of queries needed to fetch the derived models.
+* Uses the minumum amount of queries needed to fetch the inherited models.
 * Disabling polymorphic behavior when needed.
 
 While *django-polymorphic* makes subclassed models easy to use in Django,

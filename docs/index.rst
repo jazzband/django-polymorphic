@@ -4,7 +4,7 @@ Welcome to django-polymorphic's documentation!
 Django-polymorphic simplifies using inherited models in Django projects.
 When a query is made at the base model, the inherited model classes are returned.
 
-When we store models that derive from a ``Project`` model...
+When we store models that inherit from a ``Project`` model...
 
 >>> Project.objects.create(topic="Department Party")
 >>> ArtProject.objects.create(topic="Painting with Tim", artist="T. Turner")
@@ -32,12 +32,12 @@ Features
 
  * support for ForeignKey, ManyToManyField, OneToOneField descriptors.
  * support for proxy models
- * Filtering/ordering of derived models (``ArtProject___artist``).
+ * Filtering/ordering of inherited models (``ArtProject___artist``).
  * Filtering model types: ``instance_of(...)`` and ``not_instance_of(...)``
  * Combining querysets of different models (``qs3 = qs1 | qs2``)
  * Support for custom user-defined managers.
 
-* Uses the minumum amount of queries needed to fetch the derived models.
+* Uses the minumum amount of queries needed to fetch the inherited models.
 * Disabling polymorphic behavior when needed.
 
 

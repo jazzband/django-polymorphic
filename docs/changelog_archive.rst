@@ -81,7 +81,7 @@ Bugfixes
 ~~~~~~~~
 
 *   Custom fields could cause problems when used as the primary key.
-    In derived models, Django's automatic ".pk" field does not always work
+    In inherited models, Django's automatic ".pk" field does not always work
     correctly for such custom fields: "some_object.pk" and "some_object.id"
     return different results (which they shouldn't, as pk should always be just
     an alias for the primary key field). It's unclear yet if the problem lies in

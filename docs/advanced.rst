@@ -32,8 +32,8 @@ You can also use this feature in Q-objects (with the same result as above):
 >>> ModelA.objects.filter( Q(instance_of=ModelB) )
 
 
-Polymorphic filtering (for fields in derived classes)
------------------------------------------------------
+Polymorphic filtering (for fields in inherited classes)
+-------------------------------------------------------
 
 For example, cherrypicking objects from multiple derived classes
 anywhere in the inheritance tree, using Q objects (with the
@@ -151,7 +151,7 @@ About Queryset Methods
     the base class, but this should never make a difference.
 
 *   ``select_related()`` works just as usual, but it can not (yet) be used
-    to select relations in derived models
+    to select relations in inherited models
     (like ``ModelA.objects.select_related('ModelC___fieldxy')`` )
 
 *   ``extra()`` works as expected (it returns polymorphic results) but
