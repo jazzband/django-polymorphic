@@ -248,6 +248,7 @@ class PolymorphicTests(TestCase):
     """
     def test_diamond_inheritance(self):
         # Django diamond problem
+        # https://code.djangoproject.com/ticket/10808
         o1 = DiamondXY.objects.create(field_b='b', field_x='x', field_y='y')
         o2 = DiamondXY.objects.get()
 

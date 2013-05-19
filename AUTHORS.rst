@@ -20,4 +20,5 @@ Contributors
 
 Former authors / maintainers
 ============================
+
 * Bert Constantin 2009/2010 (Original author, disappeared from the internet :( )

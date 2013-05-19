@@ -1,56 +1,27 @@
-*django_polymorphic*
-++++++++++++++++++++
-Changelog
-++++++++++++++++++++
+Archive of old changelog entries
+================================
 
-2013-02-28 Releasing Polymorphic v.0.3
-======================================
+2011-01-24 V1.0 Release Candidate 1
+------------------------------------
 
-Many changes to the codebase happened, but no new version was released to pypi
-for years.
-0.3 contains fixes submitted by many contributors, huge thanks to everyone!
-
-
-Juli 5, 2012, Polymorphic admin interface
-=========================================
-
-Added a polymorphic admin interface. The admin interface is able to add polymorphic models,
-and the admin edit screen also displays the custom fields of the polymorphic model.
+* Fixed GitHub issue 15 (query result incomplete with inheritance).
+  Thanks to John Debs for reporting and the test case.
 
 
 2011-12-20 Renaming, refactoring, new maintainer
-================================================
+------------------------------------------------
 
-Since the original author diseappeared from the internet, we undertook to
+Since the original author disappeared from the internet, we undertook to
 maintain and upgrade this piece of software.
-
-It works really well, but we cannot guarantee or otherwise support its current
-state.
 
 The latest "legacy" tag should be V1.0-RC-1. Anything above that should be
 considered experimental and unstable until further notice (there be dragons).
 
-New features, bug fixes and other improvements will be added to trunk from now
-on.
+New features, bug fixes and other improvements will be added to trunk from now on.
 
-
-2011-01-24 V1.0 Release Candidate 1
-===================================
-
-Bugfixes
-------------------------
-
-*   Fixed GitHub issue 15 (query result incomplete with inheritance).
-    Thanks to John Debs for reporting and the test case.
-
-
-------------------------------------------------------------------
 
 2010-11-11 V1.0 Beta 2
-======================
-
-This is a V1.0 Testing Release
-------------------------------
+-----------------------
 
 Beta 2 accumulated somewhat more changes than intended, and also
 has been delayed by DBMS benchmark testing I wanted to do on model
@@ -58,8 +29,7 @@ inheritance. These benchmarks show that there are considerable
 problems with concrete model inheritance and contemporary DBM systems.
 The results will be forthcoming on the google discussion forum.
 
-Please also see:
-http://www.jacobian.org/writing/concrete-inheritance/
+Please also see: http://www.jacobian.org/writing/concrete-inheritance/
 
 The API should be stable now with Beta 2, so it's just about potential
 bugfixes from now on regarding V1.0.
@@ -70,9 +40,8 @@ and Beta 1 is used on a few production sites by some enterprising users.
 
 There will be a release candidate for V1.0 in the very near future.
 
-
-New Features and API changes in Beta 2 since Beta 1
----------------------------------------------------
+New Features and changes
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 *   API CHANGE: ``.extra()`` has been re-implemented. Now it's polymorphic by
     default and works (nearly) without restrictions (please see docs). This is a (very)
@@ -95,7 +64,7 @@ New Features and API changes in Beta 2 since Beta 1
 
 *   ``.get_real_instances()``: implementation modified to allow the following
     more simple and intuitive use::
-    
+
     >>> qs = ModelA.objects.all().non_polymorphic()
     >>> qs.get_real_instances()
 
@@ -109,7 +78,7 @@ New Features and API changes in Beta 2 since Beta 1
 *   misc changes/improvements
 
 Bugfixes
-------------------------
+~~~~~~~~
 
 *   Custom fields could cause problems when used as the primary key.
     In derived models, Django's automatic ".pk" field does not always work
@@ -121,14 +90,8 @@ Bugfixes
     "python manage.py test polymorphic" also tests and reports on this problem now.
     Thanks to Mathieu Steele for reporting and the test case.
 
-
-------------------------------------------------------------------
-
 2010-10-18 V1.0 Beta 1
-======================
-
-This is a V1.0 Beta/Testing Release
------------------------------------
+----------------------
 
 This release is mostly a cleanup and maintenance release that also
 improves a number of minor things and fixes one (non-critical) bug.
@@ -153,7 +116,7 @@ There also have been a number of minor API changes.
 Please see the README for more information.
 
 New Features
-------------------------
+~~~~~~~~~~~~
 
 *   official Django 1.3 alpha compatibility
 
@@ -180,13 +143,13 @@ New Features
 *   Changelog added: CHANGES.rst/html
 
 Bugfixes
-------------------------
+~~~~~~~~
 
 *   Removed requirement for primary key to be an IntegerField.
     Thanks to Mathieu Steele and Malthe Borch.
 
 API Changes
------------
+~~~~~~~~~~~
 
 **polymorphic_dumpdata**
 
@@ -223,10 +186,8 @@ Django 1.3 requires ``python manage.py test polymorphic`` instead of
 just ``python manage.py test``.
 
 
-------------------------------------------------------------------
-
 2010-2-22
-==========
+---------
 
 IMPORTANT: API Changed (import path changed), and Installation Note
 
@@ -253,12 +214,12 @@ imported directly from 'polymorphic' instead from
 + minor API addition: 'from polymorphic import VERSION, get_version'
 
 New Features
-------------------------
+~~~~~~~~~~~~
 
 Python 2.4 compatibility, contributed by Charles Leifer. Thanks!
 
 Bugfixes
-------------------------
+~~~~~~~~
 
 Fix: The exception "...has no attribute 'sub_and_superclass_dict'"
 could be raised. (This occurred if a subclass defined __init__
@@ -272,14 +233,11 @@ Now it is possible to give a field the same name as the class
 (Found through the example provided by Mattias Brändström)
 
 
-
-------------------------------------------------------------------
-
 2010-2-4
-==========
+--------
 
 New features (and documentation)
------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 queryset order_by method added
 
@@ -296,7 +254,7 @@ More about these additions in the docs:
 http://bserve.webhop.org/wiki/django_polymorphic/doc
 
 Bugfixes
-------------------------
+~~~~~~~~
 
 *   fix remaining potential accessor name clashes (but this only works
     with Django 1.2+, for 1.1 no changes). Thanks to Andrew Ingram.
@@ -307,7 +265,7 @@ Bugfixes
     sel.-r. was just ignored)
 
 "Restrictions & Caveats" updated
-----------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 *   Django 1.1 only - the names of polymorphic models must be unique
     in the whole project, even if they are in two different apps.
@@ -320,11 +278,8 @@ Bugfixes
     support for natural keys in serialization).
 
 
-
-------------------------------------------------------------------
-
 2010-1-30
-==========
+---------
 
 Fixed ContentType related field accessor clash (an error emitted
 by model validation) by adding related_name to the ContentType
@@ -332,11 +287,8 @@ ForeignKey. This happened if your polymorphc model used a ContentType
 ForeignKey. Thanks to Andrew Ingram.
 
 
-
-------------------------------------------------------------------
-
 2010-1-29
-==========
+---------
 
 Restructured django_polymorphic into a regular Django add-on
 application. This is needed for the management commands, and
@@ -348,11 +300,8 @@ The ``poly`` app - until now being used for test purposes only
 ("installation/testing") for more info.
 
 
-
-------------------------------------------------------------------
-
 2010-1-28
-==========
+---------
 
 Added the polymorphic_dumpdata management command (github issue 4),
 for creating fixtures, this should be used instead of
@@ -363,12 +312,8 @@ Important: Using ContentType together with dumpdata generally
 needs Django 1.2 (important as any polymorphic model uses
 ContentType).
 
-
-
-------------------------------------------------------------------
-
 2010-1-26
-==========
+---------
 
 IMPORTANT - database schema change (more info in change log).
 I hope I got this change in early enough before anyone started
