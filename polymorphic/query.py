@@ -169,7 +169,10 @@ class PolymorphicQuerySet(QuerySet):
                     real_concrete_class = base_object.get_real_instance_class()
                     real_concrete_class_id = base_object.get_real_concrete_instance_class_id()
 
-                    if real_concrete_class_id == self_concrete_model_class_id:
+                    if real_concrete_class_id is None:
+                        # Dealing with a stale content type
+                        continue
+                    elif real_concrete_class_id == self_concrete_model_class_id:
                         # Real and base classes share the same concrete ancestor,
                         # upcast it and put it in the results
                         results[base_object.pk] = transmogrify(real_concrete_class, base_object)

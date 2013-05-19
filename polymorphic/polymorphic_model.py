@@ -94,20 +94,34 @@ class PolymorphicModel(models.Model):
         return super(PolymorphicModel, self).save(*args, **kwargs)
 
     def get_real_instance_class(self):
-        """Normally not needed.
+        """
+        Normally not needed.
         If a non-polymorphic manager (like base_objects) has been used to
         retrieve objects, then the real class/type of these objects may be
-        determined using this method."""
+        determined using this method.
+        """
         # the following line would be the easiest way to do this, but it produces sql queries
-        #return self.polymorphic_ctype.model_class()
-        # so we use the following version, which uses the CopntentType manager cache
-        return ContentType.objects.get_for_id(self.polymorphic_ctype_id).model_class()
+        # return self.polymorphic_ctype.model_class()
+        # so we use the following version, which uses the CopntentType manager cache.
+        # Note that model_class() can return None for stale content types;
+        # when the content type record still exists but no longer refers to an existing model.
+        try:
+            return ContentType.objects.get_for_id(self.polymorphic_ctype_id).model_class()
+        except AttributeError:
+            # Django <1.6 workaround
+            return None
 
     def get_real_concrete_instance_class_id(self):
-        return ContentType.objects.get_for_model(self.get_real_instance_class(), for_concrete_model=True).pk
+        model_class = self.get_real_instance_class()
+        if model_class is None:
+            return None
+        return ContentType.objects.get_for_model(model_class, for_concrete_model=True).pk
 
     def get_real_concrete_instance_class(self):
-        return ContentType.objects.get_for_model(self.get_real_instance_class(), for_concrete_model=True).model_class()
+        model_class = self.get_real_instance_class()
+        if model_class is None:
+            return None
+        return ContentType.objects.get_for_model(model_class, for_concrete_model=True).model_class()
 
     def get_real_instance(self):
         """Normally not needed.
