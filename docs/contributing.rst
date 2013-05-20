@@ -31,8 +31,8 @@ Python 3.3 support is being worked on.
 Example project
 ----------------
 
-The repository (or tar file) contains a complete Django project
-that may be used for tests or experiments, without any installation needed.
+The repository contains a complete Django project that may be used for tests or experiments,
+without any installation needed.
 
 The management command ``pcmd.py`` in the app ``pexp`` can be used for quick tests
 or experiments - modify this file (pexp/management/commands/pcmd.py) to your liking.
