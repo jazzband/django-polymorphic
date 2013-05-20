@@ -6,6 +6,10 @@ python:
 env:
   - DJANGO=django==1.4.5
   - DJANGO=django==1.5
+matrix:
+  exclude:
+  - python: "3.3"
+    env: DJANGO=django==1.4.5
 install:
   - "pip install $DJANGO --use-mirrors"
 
