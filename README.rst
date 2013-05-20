@@ -1,5 +1,5 @@
-.. image::  https://travis-ci.org/vdboor/django_polymorphic.png?branch=master
-  :target: http://travis-ci.org/vdboor/django_polymorphic
+.. image::  https://travis-ci.org/chrisglass/django_polymorphic.png?branch=master
+  :target: http://travis-ci.org/chrisglass/django_polymorphic
   :alt: build-status
 
 Polymorphic Models for Django
