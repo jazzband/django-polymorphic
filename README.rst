@@ -1,31 +1,29 @@
+.. image::  https://travis-ci.org/vdboor/django_polymorphic.png?branch=master
+  :target: http://travis-ci.org/vdboor/django_polymorphic
+  :alt: build-status
+
 Polymorphic Models for Django
 =============================
 
 Django-polymorphic simplifies using inherited models in Django projects.
-When a query is made at the base model, the inherited model classes are returned!
+When a query is made at the base model, the inherited model classes are returned.
 
-What is django_polymorphic good for?
-------------------------------------
-
-Let's take the models ``ArtProject`` and ``ResearchProject`` which inherit
-from the model ``Project``, and store them in the database:
+When we store models that inherit from a ``Project`` model...
 
 >>> Project.objects.create(topic="Department Party")
 >>> ArtProject.objects.create(topic="Painting with Tim", artist="T. Turner")
 >>> ResearchProject.objects.create(topic="Swallow Aerodynamics", supervisor="Dr. Winter")
 
-If we want to retrieve all our projects, we do:
+...and want to retrieve all our projects, the subclassed models are returned!
 
 >>> Project.objects.all()
-
-Using *django-polymorphic*, we simply get what we stored::
-
     [ <Project:         id 1, topic "Department Party">,
       <ArtProject:      id 2, topic "Painting with Tim", artist "T. Turner">,
       <ResearchProject: id 3, topic "Swallow Aerodynamics", supervisor "Dr. Winter"> ]
 
-Using vanilla Django, we get the base class objects, which is probably not what we wanted::
+Using vanilla Django, we get the base class objects, which is rarely what we wanted:
 
+>>> Project.objects.all()
     [ <Project: id 1, topic "Department Party">,
       <Project: id 2, topic "Painting with Tim">,
       <Project: id 3, topic "Swallow Aerodynamics"> ]
