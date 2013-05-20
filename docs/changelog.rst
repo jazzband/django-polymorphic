@@ -1,8 +1,8 @@
 Changelog
 ==========
 
-Version 0.5 (dev)
---------------------------
+Version 0.5 (2013-04-20)
+------------------------
 
 * Add Python 3.2 and 3.3 support
 * Fix errors with ContentType objects that don't refer to an existing model.
