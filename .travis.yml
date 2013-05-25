@@ -7,6 +7,8 @@ python:
 env:
   - DJANGO=django==1.4.5
   - DJANGO=django==1.5
+  - DJANGO=https://github.com/django/django/archive/master.zip
+
 matrix:
   exclude:
   - python: "3.3"

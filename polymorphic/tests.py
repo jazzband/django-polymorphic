@@ -193,6 +193,8 @@ class InitTestModelSubclass(InitTestModel):
 # models from github issue
 class Top(PolymorphicModel):
     name = models.CharField(max_length=50)
+    class Meta:
+        ordering = ('pk',)
 class Middle(Top):
     description = models.TextField()
 class Bottom(Middle):
