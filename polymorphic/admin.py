@@ -336,6 +336,8 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
             'has_change_permission': self.has_change_permission(request),
             'form_url': mark_safe(form_url),
             'opts': opts,
+            'add': True,
+            'save_on_top': self.save_on_top,
         })
         if hasattr(self.admin_site, 'root_path'):
             context['root_path'] = self.admin_site.root_path  # Django < 1.4
