@@ -509,17 +509,21 @@ class PolymorphicQuerySet(QuerySet):
         but it requests the objects in chunks from the database,
         with Polymorphic_QuerySet_objects_per_request per chunk
         """
+        if self.deferred:
+            base_iter = self._iterator()
+            for o in base_iter:
+                yield o
+            raise StopIteration
+
+        base_iter = super(PolymorphicQuerySet, self).iterator()
+
         # disabled => work just like a normal queryset
         if self.polymorphic_disabled:
-            base_iter = super(PolymorphicQuerySet, self).iterator()
-
             for o in base_iter:
                 yield o
             raise StopIteration
 
         while True:
-            base_iter = self._iterator()
-
             base_result_objects = []
             reached_end = False
 
