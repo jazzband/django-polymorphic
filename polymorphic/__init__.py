@@ -35,14 +35,18 @@ from django.utils.encoding import smart_unicode
 
 def get_for_proxied_model(self, model):
     """
-    Returns the ContentType object for a given model, creating the
+    Returns the ContentType object for a given proxy model, creating the
     ContentType if necessary. Lookups are cached so that subsequent lookups
     for the same model don't hit the database.
     """
+    if model._deferred:
+        # If the model has deferred fields we make sure to use the
+        # underlying model class.
+        model = model._meta.proxy_for_model
+    # No not use concrete model here (as we want proxy models as well)
     opts = model._meta
-    key = (opts.app_label, opts.object_name.lower())
     try:
-        ct = self.__class__._cache[self.db][key]
+        ct = self._get_from_cache(opts)
     except KeyError:
         # Load or create the ContentType entry. The smart_unicode() is
         # needed around opts.verbose_name_raw because name_raw might be a
