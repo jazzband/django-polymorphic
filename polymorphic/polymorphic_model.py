@@ -126,7 +126,8 @@ class PolymorphicModel(models.Model):
                 return self  # Skip already deferred objects of the same class
 
         attrs = set(f.attname for f in modelclass._meta.fields) - set(f.attname for f in self._meta.fields)
-        attrs.remove(modelclass._meta.pk.attname)
+        if modelclass._meta.pk.attname in attrs:
+            attrs.remove(modelclass._meta.pk.attname)
         deferred_modelclass = deferred_class_factory(modelclass, set(), attrs)
 
         o = deferred_modelclass()

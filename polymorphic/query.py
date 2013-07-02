@@ -303,7 +303,8 @@ class PolymorphicQuerySet(QuerySet):
         for modelclass, idlist in idlist_per_model.items():
             if self.deferred:
                 attrs = set(f.attname for f in modelclass._meta.fields) - set(f.attname for f in self.model._meta.fields)
-                attrs.remove(modelclass._meta.pk.attname)
+                if modelclass._meta.pk.attname in attrs:
+                    attrs.remove(modelclass._meta.pk.attname)
                 deferred_modelclass = deferred_class_factory(modelclass, set(), attrs)
                 for o_pk in idlist:
                     bo = base_result_objects_by_id[o_pk]
