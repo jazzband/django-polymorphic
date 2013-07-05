@@ -1,3 +1,5 @@
+:orphan:
+
 Archive of old changelog entries
 ================================
 
