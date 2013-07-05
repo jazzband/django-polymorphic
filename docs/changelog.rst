@@ -1,8 +1,8 @@
 Changelog
 ==========
 
-Version 0.5.1 (in development)
-------------------------------
+Version 0.5.1 (2013-07-05)
+--------------------------
 
 * Add Django 1.6 support.
 * Fix Grappelli_ theme support in the "Add type" view.
