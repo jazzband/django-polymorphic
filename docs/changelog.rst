@@ -1,10 +1,12 @@
 Changelog
 ==========
 
-Version 0.5.1
--------------
+Version 0.5.1 (in development)
+------------------------------
 
 * Add Django 1.6 support.
+* Fix Grappelli_ theme support in the "Add type" view.
+
 
 Version 0.5 (2013-04-20)
 ------------------------
@@ -61,3 +63,5 @@ The 0.2 release serves as legacy release.
 It supports Django 1.1 up till 1.4 and Python 2.4 up till 2.7.
 
 For a detailed list of it's changes, see the :doc:`archived changelog <changelog_archive>`.
+
+.. _Grappelli: http://grappelliproject.com/
