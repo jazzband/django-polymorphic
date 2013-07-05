@@ -7,7 +7,7 @@ python:
 env:
   - DJANGO=django==1.4.5
   - DJANGO=django==1.5
-  - DJANGO=https://github.com/django/django/archive/master.zip
+  - DJANGO=https://github.com/django/django/archive/stable/1.6.x.zip
 
 matrix:
   exclude:
@@ -21,7 +21,7 @@ script:
   - coverage run --source=polymorphic runtests.py
   - coverage report -m
 after_success:
-  - "pip install coveralls==0.1.1 --use-mirrors"
+  - "pip install coveralls==0.2 --use-mirrors"
   - coveralls
 branches:
   only:
