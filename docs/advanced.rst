@@ -1,8 +1,11 @@
+.. _advanced-features:
+
 Advanced features
 =================
 
 In the examples below, these models are being used::
 
+    from django.db import models
     from polymorphic import PolymorphicModel
 
     class ModelA(PolymorphicModel):
@@ -99,7 +102,7 @@ model as the root of a polymorphic inheritance tree::
 
     from thirdparty import ThirdPartyModel
 
-    class MyThirdPartyBaseModel(PolymorhpicModel, ThirdPartyModel):
+    class MyThirdPartyBaseModel(PolymorphicModel, ThirdPartyModel):
         pass    # or add fields
 
 Or instead integrating the third party model anywhere into an
@@ -181,7 +184,7 @@ Using enhanced Q-objects in any Places
 --------------------------------------
 
 The queryset enhancements (e.g. ``instance_of``) only work as arguments
-to the member functions of a polymorphic queryset.  Occationally it may
+to the member functions of a polymorphic queryset.  Occasionally it may
 be useful to be able to use Q objects with these enhancements in other places.
 As Django doesn't understand these enhanced Q objects, you need to
 transform them manually into normal Q objects before you can feed them

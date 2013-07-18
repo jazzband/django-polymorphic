@@ -27,17 +27,17 @@ Using vanilla Django, we get the base class objects, which is rarely what we wan
 Features
 --------
 
-* Full admin integation.
+* Full admin integration.
 * ORM integration:
 
- * support for ForeignKey, ManyToManyField, OneToOneField descriptors.
- * support for proxy models
+ * Support for ForeignKey, ManyToManyField, OneToOneField descriptors.
+ * Support for proxy models.
  * Filtering/ordering of inherited models (``ArtProject___artist``).
  * Filtering model types: ``instance_of(...)`` and ``not_instance_of(...)``
  * Combining querysets of different models (``qs3 = qs1 | qs2``)
  * Support for custom user-defined managers.
 
-* Uses the minumum amount of queries needed to fetch the inherited models.
+* Uses the minimum amount of queries needed to fetch the inherited models.
 * Disabling polymorphic behavior when needed.
 
 
@@ -59,6 +59,7 @@ Advanced topics
 
    advanced
    managers
+   third-party
    changelog
    contributing
 
