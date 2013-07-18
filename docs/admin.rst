@@ -46,13 +46,18 @@ use the ``base_form`` and ``base_fieldsets`` instead. The ``PolymorphicChildMode
 automatically detect the additional fields that the child model has, display those in a separate fieldset.
 
 
+.. _admin-example:
+
 Example
 -------
+
+The models are taken from :ref:`advanced-features`.
 
 .. code-block:: python
 
     from django.contrib import admin
     from polymorphic.admin import PolymorphicParentModelAdmin, PolymorphicChildModelAdmin
+    from .models import ModelA, ModelB, ModelC
 
 
     class ModelAChildAdmin(PolymorphicChildModelAdmin):

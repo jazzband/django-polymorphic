@@ -1,5 +1,3 @@
-
-
 Custom Managers, Querysets & Manager Inheritance
 ================================================
 
