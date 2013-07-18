@@ -1,6 +1,12 @@
 Changelog
 ==========
 
+Version 0.5.2 (unreleased)
+--------------------------
+
+* Fix Grappelli_ breadcrumb support in the views.
+
+
 Version 0.5.1 (2013-07-05)
 --------------------------
 
