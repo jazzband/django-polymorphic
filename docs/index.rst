@@ -30,8 +30,8 @@ Features
 * Full admin integration.
 * ORM integration:
 
- * support for ForeignKey, ManyToManyField, OneToOneField descriptors.
- * support for proxy models
+ * Support for ForeignKey, ManyToManyField, OneToOneField descriptors.
+ * Support for proxy models.
  * Filtering/ordering of inherited models (``ArtProject___artist``).
  * Filtering model types: ``instance_of(...)`` and ``not_instance_of(...)``
  * Combining querysets of different models (``qs3 = qs1 | qs2``)
@@ -59,6 +59,7 @@ Advanced topics
 
    advanced
    managers
+   third-party
    changelog
    contributing
 

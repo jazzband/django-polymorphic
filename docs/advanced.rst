@@ -1,8 +1,11 @@
+.. _advanced-features:
+
 Advanced features
 =================
 
 In the examples below, these models are being used::
 
+    from django.db import models
     from polymorphic import PolymorphicModel
 
     class ModelA(PolymorphicModel):
