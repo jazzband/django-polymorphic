@@ -82,7 +82,6 @@ class PolymorphicCompatibleForeignKeyRawIdWidget(ForeignKeyRawIdWidget):
                                   current_app=self.admin_site.name)
 
             params = self.url_parameters()
-            print(params)
             if params:
                 url = '?' + '&amp;'.join(['%s=%s' % (k, v) for k, v in params.items()])
             else:
