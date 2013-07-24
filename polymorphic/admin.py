@@ -1,27 +1,261 @@
 """
 ModelAdmin code to display polymorphic models.
 """
+import copy
 from django import forms
 from django.conf.urls import patterns, url
 from django.contrib import admin
+from django.contrib.admin import widgets
 from django.contrib.admin.helpers import AdminForm, AdminErrorList
+from django.contrib.admin.options import get_ul_class, BaseModelAdmin
 from django.contrib.admin.sites import AdminSite
-from django.contrib.admin.widgets import AdminRadioSelect
+from django.contrib.admin.widgets import (
+    AdminRadioSelect, RelatedFieldWidgetWrapper, ForeignKeyRawIdWidget)
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import PermissionDenied
-from django.core.urlresolvers import RegexURLResolver
+from django.core.urlresolvers import RegexURLResolver, reverse
+from django.db import models
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext
+from django.templatetags.static import static
 from django.utils import six
 from django.utils.encoding import force_text
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
+from .polymorphic_model import PolymorphicModel
 
 __all__ = (
     'PolymorphicModelChoiceForm', 'PolymorphicParentModelAdmin',
-    'PolymorphicChildModelAdmin', 'PolymorphicChildModelFilter'
+    'PolymorphicChildModelAdmin', 'PolymorphicChildModelFilter',
+    'PolymorphicCompatibleBaseModel'
 )
+
+
+#
+# Overridden BaseModelAdmin to support related lookups
+# on polymorphic child models.  Without that, no "+" button, no magnifying
+# glass, etc.
+# Discussion on https://github.com/chrisglass/django_polymorphic/issues/46.
+#
+
+
+def is_polymorphic_model(model):
+    return issubclass(model, PolymorphicModel)
+
+
+def get_polymorphic_parent_model(model):
+    if is_polymorphic_model(model):
+        parent_model = [p for p in model.__bases__ if is_polymorphic_model(p)]
+        assert len(parent_model) == 1
+        return parent_model[0]
+
+
+def is_polymorphic_child_model(model):
+    return get_polymorphic_parent_model(model) is not None
+
+
+def get_registry_from_model(admin_site, model):
+    registry = admin_site._registry
+    if model in registry:
+        return registry
+
+    if is_polymorphic_model(model):
+        parent_model = get_polymorphic_parent_model(model)
+        return registry[parent_model]._child_admin_site._registry
+
+    return registry
+
+
+class PolymorphicCompatibleForeignKeyRawIdWidget(ForeignKeyRawIdWidget):
+    # This customized method is taken from Django 1.5.1
+    def render(self, name, value, attrs=None):
+        rel_to = self.rel.to
+        if attrs is None:
+            attrs = {}
+        extra = []
+        # This line has been changed.
+        if rel_to in get_registry_from_model(self.admin_site, rel_to):
+            related_url = reverse('admin:%s_%s_changelist' %
+                                  (rel_to._meta.app_label,
+                                   rel_to._meta.module_name),
+                                  current_app=self.admin_site.name)
+
+            params = self.url_parameters()
+            print(params)
+            if params:
+                url = '?' + '&amp;'.join(['%s=%s' % (k, v) for k, v in params.items()])
+            else:
+                url = ''
+            if "class" not in attrs:
+                attrs['class'] = 'vForeignKeyRawIdAdminField'
+            extra.append('<a href="%s%s" class="related-lookup" id="lookup_id_%s" onclick="return showRelatedObjectLookupPopup(this);"> '
+                         % (related_url, url, name))
+            extra.append('<img src="%s" width="16" height="16" alt="%s" /></a>'
+                         % (static('admin/img/selector-search.gif'), _('Lookup')))
+        output = [super(ForeignKeyRawIdWidget, self).render(name, value, attrs)] + extra
+        if value:
+            output.append(self.label_for_value(value))
+        return mark_safe(''.join(output))
+
+    def base_url_parameters(self):
+        params = super(PolymorphicCompatibleForeignKeyRawIdWidget, self).base_url_parameters()
+
+        # Only displays objects of the corresponding child model in the popup.
+        model = self.rel.to
+        if is_polymorphic_child_model(model):
+            ct = ContentType.objects.get_for_model(model)
+            params['polymorphic_ctype'] = ct.pk
+
+        return params
+
+
+# This customized widget is taken from Django 1.5.1
+class PolymorphicCompatibleManyToManyRawIdWidget(PolymorphicCompatibleForeignKeyRawIdWidget):
+    def render(self, name, value, attrs=None):
+        if attrs is None:
+            attrs = {}
+        # This line has been changed.
+        if self.rel.to in get_registry_from_model(self.admin_site, self.rel.to):
+            attrs['class'] = 'vManyToManyRawIdAdminField'
+        if value:
+            value = ','.join([force_text(v) for v in value])
+        else:
+            value = ''
+        # This line has been changed.
+        return super(PolymorphicCompatibleManyToManyRawIdWidget, self).render(name, value, attrs)
+
+    def url_parameters(self):
+        return self.base_url_parameters()
+
+    def label_for_value(self, value):
+        return ''
+
+    def value_from_datadict(self, data, files, name):
+        value = data.get(name)
+        if value:
+            return value.split(',')
+
+    def _has_changed(self, initial, data):
+        if initial is None:
+            initial = []
+        if data is None:
+            data = []
+        if len(initial) != len(data):
+            return True
+        for pk1, pk2 in zip(initial, data):
+            if force_text(pk1) != force_text(pk2):
+                return True
+        return False
+
+
+class PolymorphicCompatibleRelatedFieldWidgetWrapper(RelatedFieldWidgetWrapper):
+    def __init__(self, widget, rel, admin_site, can_add_related=None):
+        can_add_related = rel.to in get_registry_from_model(admin_site, rel.to)
+        super(PolymorphicCompatibleRelatedFieldWidgetWrapper, self).__init__(
+            widget, rel, admin_site, can_add_related=can_add_related)
+
+    # This customized method is taken from Django 1.5.1
+    def render(self, name, value, *args, **kwargs):
+        rel_to = self.rel.to
+        info = (rel_to._meta.app_label, rel_to._meta.object_name.lower())
+        self.widget.choices = self.choices
+        output = [self.widget.render(name, value, *args, **kwargs)]
+        if self.can_add_related:
+            related_url = reverse('admin:%s_%s_add' % info, current_app=self.admin_site.name)
+
+            # The following lines have been added.
+            # Skips the step where the user chooses a child model.
+            model = self.rel.to
+            if is_polymorphic_child_model(model):
+                ct = ContentType.objects.get_for_model(model)
+                related_url += '?ct_id=%s' % ct.pk
+
+            output.append('<a href="%s" class="add-another" id="add_id_%s" onclick="return showAddAnotherPopup(this);"> '
+                          % (related_url, name))
+            output.append('<img src="%s" width="10" height="10" alt="%s"/></a>'
+                          % (static('admin/img/icon_addlink.gif'), _('Add Another')))
+        return mark_safe(''.join(output))
+
+
+class PolymorphicCompatibleBaseModel(BaseModelAdmin):
+    # This customized method is taken from Django 1.5.1
+    def formfield_for_dbfield(self, db_field, **kwargs):
+        request = kwargs.pop("request", None)
+
+        if db_field.choices:
+            return self.formfield_for_choice_field(db_field, request, **kwargs)
+
+        if isinstance(db_field, (models.ForeignKey, models.ManyToManyField)):
+            if db_field.__class__ in self.formfield_overrides:
+                kwargs = dict(self.formfield_overrides[db_field.__class__],
+                              **kwargs)
+
+            if isinstance(db_field, models.ForeignKey):
+                formfield = self.formfield_for_foreignkey(db_field, request,
+                                                          **kwargs)
+            elif isinstance(db_field, models.ManyToManyField):
+                formfield = self.formfield_for_manytomany(db_field, request,
+                                                          **kwargs)
+
+            if formfield and db_field.name not in self.raw_id_fields:
+                related_modeladmin = self.admin_site._registry.get(
+                    db_field.rel.to)
+                can_add_related = bool(related_modeladmin and
+                                       related_modeladmin.has_add_permission(
+                                           request))
+                # This line has been changed.
+                formfield.widget = PolymorphicCompatibleRelatedFieldWidgetWrapper(
+                    formfield.widget, db_field.rel, self.admin_site,
+                    can_add_related=can_add_related)
+
+            return formfield
+
+        for klass in db_field.__class__.mro():
+            if klass in self.formfield_overrides:
+                kwargs = dict(copy.deepcopy(self.formfield_overrides[klass]),
+                              **kwargs)
+                return db_field.formfield(**kwargs)
+
+        return db_field.formfield(**kwargs)
+
+    # This customized method is taken from Django 1.5.1
+    def formfield_for_foreignkey(self, db_field, request=None, **kwargs):
+        db = kwargs.get('using')
+        if db_field.name in self.raw_id_fields:
+            # This line has been changed.
+            kwargs['widget'] = PolymorphicCompatibleForeignKeyRawIdWidget(
+                db_field.rel, self.admin_site, using=db)
+        elif db_field.name in self.radio_fields:
+            kwargs['widget'] = widgets.AdminRadioSelect(attrs={
+                'class': get_ul_class(self.radio_fields[db_field.name]),
+            })
+            kwargs['empty_label'] = db_field.blank and _('None') or None
+
+        return db_field.formfield(**kwargs)
+
+    # This customized method is taken from Django 1.5.1
+    def formfield_for_manytomany(self, db_field, request=None, **kwargs):
+        if not db_field.rel.through._meta.auto_created:
+            return None
+        db = kwargs.get('using')
+
+        if db_field.name in self.raw_id_fields:
+            # This line has been changed.
+            kwargs['widget'] = PolymorphicCompatibleManyToManyRawIdWidget(
+                db_field.rel, self.admin_site, using=db)
+            kwargs['help_text'] = ''
+        elif db_field.name in (
+                list(self.filter_vertical) + list(self.filter_horizontal)):
+            kwargs['widget'] = widgets.FilteredSelectMultiple(
+                db_field.verbose_name, (db_field.name in self.filter_vertical))
+
+        return db_field.formfield(**kwargs)
+
+
+#
+# Polymorphic classes.
+#
 
 
 class RegistrationClosed(RuntimeError):
@@ -74,7 +308,8 @@ class PolymorphicChildModelFilter(admin.SimpleListFilter):
         return queryset
 
 
-class PolymorphicParentModelAdmin(admin.ModelAdmin):
+class PolymorphicParentModelAdmin(PolymorphicCompatibleBaseModel,
+                                  admin.ModelAdmin):
     """
     A admin interface that can displays different change/delete pages, depending on the polymorphic model.
     To use this class, two variables need to be defined:
@@ -370,7 +605,8 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
 
 
 
-class PolymorphicChildModelAdmin(admin.ModelAdmin):
+class PolymorphicChildModelAdmin(PolymorphicCompatibleBaseModel,
+                                 admin.ModelAdmin):
     """
     The *optional* base class for the admin interface of derived models.
 
