@@ -45,6 +45,30 @@ because it will hide any additional fields which are defined in the derived mode
 use the ``base_form`` and ``base_fieldsets`` instead. The ``PolymorphicChildModelAdmin`` will
 automatically detect the additional fields that the child model has, display those in a separate fieldset.
 
+PolymorphicChildModelFilter
+---------------------------
+
+This filter can be used to only display objects from the selected child model.
+To do so, add it to ``list_filter``, as shown in the example below.
+
+
+PolymorphicCompatibleBaseModelAdmin
+-----------------------------------
+
+If one of your model (let's say ``MyModel``) has a related field (ForeignKey,
+ManyToManyField, OneToOneField or GenericForeignKey) to a polymorphic child
+model, the ModelAdmin that has the related field must inherit
+``PolymorphicCompatibleBaseModelAdmin``.
+
+Like this:
+
+.. code-block:: python
+
+    from polymorphic.admin import PolymorphicCompatibleBaseModelAdmin
+
+    class MyModelAdmin(PolymorphicCompatibleBaseModelAdmin, ModelAdmin):
+        # …
+
 
 .. _admin-example:
 
