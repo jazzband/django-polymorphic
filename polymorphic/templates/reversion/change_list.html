@@ -1,0 +1,11 @@
+{% extends "admin/polymorphic/change_list.html" %}
+{% load admin_urls i18n %}
+
+{% block object-tools-items %}
+  {% if not is_popup %}
+    <li><a href="{{ recoverlist_url }}" class="recoverlink">
+      {% blocktrans with cl.opts.verbose_name_plural|escape as name %}Recover
+        deleted {{ name }}{% endblocktrans %}</a></li>
+  {% endif %}
+  {{ block.super }}
+{% endblock %}
