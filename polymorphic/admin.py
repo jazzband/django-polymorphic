@@ -28,7 +28,7 @@ from .polymorphic_model import PolymorphicModel
 __all__ = (
     'PolymorphicModelChoiceForm', 'PolymorphicParentModelAdmin',
     'PolymorphicChildModelAdmin', 'PolymorphicChildModelFilter',
-    'PolymorphicCompatibleBaseModel'
+    'PolymorphicCompatibleBaseModelAdmin'
 )
 
 
@@ -177,7 +177,7 @@ class PolymorphicCompatibleRelatedFieldWidgetWrapper(RelatedFieldWidgetWrapper):
         return mark_safe(''.join(output))
 
 
-class PolymorphicCompatibleBaseModel(BaseModelAdmin):
+class PolymorphicCompatibleBaseModelAdmin(BaseModelAdmin):
     # This customized method is taken from Django 1.5.1
     def formfield_for_dbfield(self, db_field, **kwargs):
         request = kwargs.pop("request", None)
@@ -307,7 +307,7 @@ class PolymorphicChildModelFilter(admin.SimpleListFilter):
         return queryset
 
 
-class PolymorphicParentModelAdmin(PolymorphicCompatibleBaseModel,
+class PolymorphicParentModelAdmin(PolymorphicCompatibleBaseModelAdmin,
                                   admin.ModelAdmin):
     """
     A admin interface that can displays different change/delete pages, depending on the polymorphic model.
@@ -604,7 +604,7 @@ class PolymorphicParentModelAdmin(PolymorphicCompatibleBaseModel,
 
 
 
-class PolymorphicChildModelAdmin(PolymorphicCompatibleBaseModel,
+class PolymorphicChildModelAdmin(PolymorphicCompatibleBaseModelAdmin,
                                  admin.ModelAdmin):
     """
     The *optional* base class for the admin interface of derived models.
