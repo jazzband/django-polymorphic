@@ -3,7 +3,7 @@ ModelAdmin code to display polymorphic models.
 """
 import copy
 from django import forms
-from django.conf.urls import patterns, url
+from django.conf.urls import url, include
 from django.contrib import admin
 from django.contrib.admin import widgets
 from django.contrib.admin.helpers import AdminForm, AdminErrorList
@@ -13,7 +13,7 @@ from django.contrib.admin.widgets import (
     AdminRadioSelect, RelatedFieldWidgetWrapper, ForeignKeyRawIdWidget)
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import PermissionDenied
-from django.core.urlresolvers import RegexURLResolver, reverse
+from django.core.urlresolvers import reverse
 from django.db import models
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import render_to_response
@@ -24,6 +24,7 @@ from django.utils.encoding import force_text
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
 from .polymorphic_model import PolymorphicModel
+
 
 __all__ = (
     'PolymorphicModelChoiceForm', 'PolymorphicParentModelAdmin',
@@ -97,19 +98,8 @@ class PolymorphicCompatibleForeignKeyRawIdWidget(ForeignKeyRawIdWidget):
             output.append(self.label_for_value(value))
         return mark_safe(''.join(output))
 
-    def base_url_parameters(self):
-        params = super(PolymorphicCompatibleForeignKeyRawIdWidget, self).base_url_parameters()
 
-        # Only displays objects of the corresponding child model in the popup.
-        model = self.rel.to
-        if is_polymorphic_child_model(model):
-            ct = ContentType.objects.get_for_model(model)
-            params['polymorphic_ctype'] = ct.pk
-
-        return params
-
-
-# This customized widget is taken from Django 1.5.1
+# This customized widget add its methods are taken from Django 1.5.1
 class PolymorphicCompatibleManyToManyRawIdWidget(PolymorphicCompatibleForeignKeyRawIdWidget):
     def render(self, name, value, attrs=None):
         if attrs is None:
@@ -123,9 +113,6 @@ class PolymorphicCompatibleManyToManyRawIdWidget(PolymorphicCompatibleForeignKey
             value = ''
         # This line has been changed.
         return super(PolymorphicCompatibleManyToManyRawIdWidget, self).render(name, value, attrs)
-
-    def url_parameters(self):
-        return self.base_url_parameters()
 
     def label_for_value(self, value):
         return ''
@@ -153,28 +140,6 @@ class PolymorphicCompatibleRelatedFieldWidgetWrapper(RelatedFieldWidgetWrapper):
         can_add_related = rel.to in get_registry_from_model(admin_site, rel.to)
         super(PolymorphicCompatibleRelatedFieldWidgetWrapper, self).__init__(
             widget, rel, admin_site, can_add_related=can_add_related)
-
-    # This customized method is taken from Django 1.5.1
-    def render(self, name, value, *args, **kwargs):
-        rel_to = self.rel.to
-        info = (rel_to._meta.app_label, rel_to._meta.object_name.lower())
-        self.widget.choices = self.choices
-        output = [self.widget.render(name, value, *args, **kwargs)]
-        if self.can_add_related:
-            related_url = reverse('admin:%s_%s_add' % info, current_app=self.admin_site.name)
-
-            # The following lines have been added.
-            # Skips the step where the user chooses a child model.
-            model = self.rel.to
-            if is_polymorphic_child_model(model):
-                ct = ContentType.objects.get_for_model(model)
-                related_url += '?ct_id=%s' % ct.pk
-
-            output.append('<a href="%s" class="add-another" id="add_id_%s" onclick="return showAddAnotherPopup(this);"> '
-                          % (related_url, name))
-            output.append('<img src="%s" width="10" height="10" alt="%s"/></a>'
-                          % (static('admin/img/icon_addlink.gif'), _('Add Another')))
-        return mark_safe(''.join(output))
 
 
 class PolymorphicCompatibleBaseModelAdmin(BaseModelAdmin):
@@ -290,7 +255,10 @@ class PolymorphicChildModelFilter(admin.SimpleListFilter):
     parameter_name = 'polymorphic_ctype'
 
     def lookups(self, request, model_admin):
-        return model_admin.get_child_type_choices()
+        try:
+            return model_admin.get_child_type_choices()
+        except AttributeError:  # Happens when model_admin is of a child model.
+            return ()
 
     def queryset(self, request, queryset):
         try:
@@ -486,39 +454,21 @@ class PolymorphicParentModelAdmin(PolymorphicCompatibleBaseModelAdmin,
             if oldurl.name == new_change_url.name:
                 urls[i] = new_change_url
 
-        # Define the catch-all for custom views
-        custom_urls = patterns('',
-            url(r'^(?P<path>.+)$', self.admin_site.admin_view(self.subclass_view))
-        )
-
         # At this point. all admin code needs to be known.
         self._lazy_setup()
 
-        # Add reverse names for all polymorphic models, so the delete button and "save and add" just work.
-        # These definitions are masked by the definition above, since it needs special handling (and a ct_id parameter).
-        dummy_urls = []
+        # Adds all urls from child models so that the admin works correctly
+        # when using related lookups on child models.
+        child_urls = []
         for model, _ in self.get_child_models():
             admin = self._get_real_admin_by_model(model)
-            dummy_urls += admin.get_urls()
+            # The regular "/" is replaced by a "_" here, because some
+            # applications (at least django-grappelli) rely on the url to get
+            # the app and model names.
+            child_urls += [url('^%s_' % model.__name__.lower(),
+                               include(admin.get_urls()))]
 
-        return urls + custom_urls + dummy_urls
-
-
-    def subclass_view(self, request, path):
-        """
-        Forward any request to a custom view of the real admin.
-        """
-        ct_id = int(request.GET.get('ct_id', 0))
-        if not ct_id:
-            raise Http404("No ct_id parameter, unable to find admin subclass for path '{0}'.".format(path))
-
-        real_admin = self._get_real_admin_by_ct(ct_id)
-        resolver = RegexURLResolver('^', real_admin.urls)
-        resolvermatch = resolver.resolve(path)
-        if not resolvermatch:
-            raise Http404("No match for path '{0}' in admin subclass.".format(path))
-
-        return resolvermatch.func(request, *resolvermatch.args, **resolvermatch.kwargs)
+        return child_urls + urls
 
 
     def add_type_view(self, request, form_url=''):

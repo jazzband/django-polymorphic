@@ -17,11 +17,6 @@ standard models.  We have to face these problems:
   The django-reversion wiki explains
   `how to deal with this <https://github.com/etianen/django-reversion/wiki/Low-level-API#multi-table-inheritance>`_.
 
-.. warning::
-   ``'polymorphic',`` must be before ``'reversion',`` in your
-   ``INSTALLED_APPS`` setting, so that the django-reversion templates
-   overridden by django-polymorphic will load first.
-
 
 Example
 .......
