@@ -28,6 +28,13 @@ The exact implementation can depend on the way your module is structured.
 For simple inheritance situations, ``child_models`` is the best solution.
 For large applications, ``get_child_models()`` can be used to query a plugin registration system.
 
+By default, the non_polymorphic() method will be called on the queryset, so
+only the Parent model will be provided to the list template.  This is to avoid
+the performance hit of retrieving child models.
+
+This can be controlled by setting the ``polymorphic_list`` property on the
+parent admin.  Setting it to True will provide child models to the list template.
+
 The child models
 ----------------
 
