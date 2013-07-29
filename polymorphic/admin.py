@@ -10,7 +10,8 @@ from django.contrib.admin.helpers import AdminForm, AdminErrorList
 from django.contrib.admin.options import get_ul_class, BaseModelAdmin
 from django.contrib.admin.sites import AdminSite
 from django.contrib.admin.widgets import (
-    AdminRadioSelect, RelatedFieldWidgetWrapper, ForeignKeyRawIdWidget)
+    AdminRadioSelect, RelatedFieldWidgetWrapper, ForeignKeyRawIdWidget,
+    ManyToManyRawIdWidget)
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
@@ -99,40 +100,14 @@ class PolymorphicCompatibleForeignKeyRawIdWidget(ForeignKeyRawIdWidget):
         return mark_safe(''.join(output))
 
 
-# This customized widget add its methods are taken from Django 1.5.1
-class PolymorphicCompatibleManyToManyRawIdWidget(PolymorphicCompatibleForeignKeyRawIdWidget):
+class PolymorphicCompatibleManyToManyRawIdWidget(
+        ManyToManyRawIdWidget, PolymorphicCompatibleForeignKeyRawIdWidget):
     def render(self, name, value, attrs=None):
-        if attrs is None:
-            attrs = {}
-        # This line has been changed.
-        if self.rel.to in get_registry_from_model(self.admin_site, self.rel.to):
+        if self.rel.to in get_registry_from_model(self.admin_site,
+                                                  self.rel.to):
             attrs['class'] = 'vManyToManyRawIdAdminField'
-        if value:
-            value = ','.join([force_text(v) for v in value])
-        else:
-            value = ''
-        # This line has been changed.
-        return super(PolymorphicCompatibleManyToManyRawIdWidget, self).render(name, value, attrs)
-
-    def label_for_value(self, value):
-        return ''
-
-    def value_from_datadict(self, data, files, name):
-        value = data.get(name)
-        if value:
-            return value.split(',')
-
-    def _has_changed(self, initial, data):
-        if initial is None:
-            initial = []
-        if data is None:
-            data = []
-        if len(initial) != len(data):
-            return True
-        for pk1, pk2 in zip(initial, data):
-            if force_text(pk1) != force_text(pk2):
-                return True
-        return False
+        return super(PolymorphicCompatibleManyToManyRawIdWidget, self).render(
+            name, value, attrs)
 
 
 class PolymorphicCompatibleRelatedFieldWidgetWrapper(RelatedFieldWidgetWrapper):
