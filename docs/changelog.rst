@@ -7,6 +7,7 @@ Version 0.5.2 (unreleased)
 * Fix Grappelli_ breadcrumb support in the views.
 * Fix unwanted ``___`` handling in the ORM when a field name starts with an underscore;
   this detects you meant ``relatedfield__ _underscorefield`` instead of ``ClassName___field``.
+* Fix missing permission check in the "add type" view. This was caught however in the next step.
 
 
 Version 0.5.1 (2013-07-05)

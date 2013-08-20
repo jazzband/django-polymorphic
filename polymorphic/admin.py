@@ -291,6 +291,9 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
         """
         Display a choice form to select which page type to add.
         """
+        if not self.has_add_permission(request):
+            raise PermissionDenied
+
         extra_qs = ''
         if request.META['QUERY_STRING']:
             extra_qs = '&' + request.META['QUERY_STRING']
