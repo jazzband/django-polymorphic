@@ -94,9 +94,6 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
     add_type_template = None
     add_type_form = PolymorphicModelChoiceForm
 
-    def __init__(self, model, admin_site, *args, **kwargs):
-        super(PolymorphicParentModelAdmin, self).__init__(model, admin_site, *args, **kwargs)
-
     def get_child_models(self):
         """
         Return the derived model classes which this admin should handle.
