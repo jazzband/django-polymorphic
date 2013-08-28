@@ -1,6 +1,25 @@
 Changelog
 ==========
 
+Version 0.6
+-----------
+
+* Admin integration has been simplified.  It became less hacky and therefore
+  fixed lots of issues.
+* Admin integration of a foreign key to a child polymorphic model is fully
+  working.
+* Full django-grappelli compatibility.
+* django-reversion support documentation (see :ref:`third-party`).
+* **Changed** ``PolymorphicParentModelAdmin.child_models`` is now a tuple
+  of Models.  Before it was a tuple of (Model, ModelAdmin) tuples.
+* **Changed** Child models now have to be registered to the admin site.
+* **Dropped** ``base_form`` and ``base_fieldsets`` attributes of
+  ``PolymorphicChildModelAdmin``.  Use regular ``form`` and ``fieldsets``
+  instead.
+
+Please see :ref:`the admin example <admin-example>` to see how to update your
+applications.
+
 Version 0.5.1
 -------------
 
