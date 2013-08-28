@@ -14,6 +14,8 @@ Update the settings file::
 
 The current release of *django-polymorphic* supports Django 1.4, 1.5 and 1.6 and Python 3 is supported.
 
+You will also have to check :ref:`third-party`.
+
 Making Your Models Polymorphic
 ------------------------------
 
