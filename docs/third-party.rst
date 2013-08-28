@@ -32,47 +32,26 @@ The :ref:`admin example <admin-example>` becomes:
     from .models import ModelA, ModelB, ModelC
 
 
+    class ModelAParentAdmin(VersionAdmin, PolymorphicParentModelAdmin):
+        base_model = ModelA
+        child_models = (ModelB, ModelC)
+
+
     class ModelAChildAdmin(PolymorphicChildModelAdmin):
         base_model = ModelA
-        base_form = ...
-        base_fieldsets = (
-            ...
-        )
+        # define common features between the child model admins here
+
 
     class ModelBAdmin(VersionAdmin, ModelAChildAdmin):
         # define custom features here
+
 
     class ModelCAdmin(ModelBAdmin):
         # define custom features here
 
 
-    class ModelAParentAdmin(VersionAdmin, PolymorphicParentModelAdmin):
-        base_model = ModelA
-        child_models = (
-            (ModelB, ModelBAdmin),
-            (ModelC, ModelCAdmin),
-        )
-
     reversion.register(ModelB, follow=['modela_ptr'])
     reversion.register(ModelC, follow=['modelb_ptr'])
     admin.site.register(ModelA, ModelAParentAdmin)
-
-
-
-Totally compatible apps
------------------------
-
-This lists all applications that were tested with django-polymorphic and work
-without a scratch.
-
-.. note::
-   This is absolutely not a guarantee, especially if the version you're using
-   is not in the list.
-
-.. _django-grappelli: https://github.com/sehmaschine/django-grappelli
-
-=================== ===============================================
-Project name & URL  Tested with those versions
-=================== ===============================================
-`django-grappelli`_ 2.4.6
-=================== ===============================================
+    admin.site.register(ModelB, ModelAParentAdmin)
+    admin.site.register(ModelC, ModelAParentAdmin)

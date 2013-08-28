@@ -84,31 +84,26 @@ The models are taken from :ref:`advanced-features`.
     from .models import ModelA, ModelB, ModelC
 
 
+    class ModelAAdmin(PolymorphicParentModelAdmin):
+        """ The parent model admin """
+        base_model = ModelA
+        child_models = (ModelB, ModelC)
+
+
     class ModelAChildAdmin(PolymorphicChildModelAdmin):
         """ Base admin class for all child models """
         base_model = ModelA
+        # define common features between the child model admins here
 
-        # By using these `base_...` attributes instead of the regular ModelAdmin `form` and `fieldsets`,
-        # the additional fields of the child models are automatically added to the admin form.
-        base_form = ...
-        base_fieldsets = (
-            ...
-        )
 
     class ModelBAdmin(ModelAChildAdmin):
         # define custom features here
+
 
     class ModelCAdmin(ModelBAdmin):
         # define custom features here
 
 
-    class ModelAParentAdmin(PolymorphicParentModelAdmin):
-        """ The parent model admin """
-        base_model = ModelA
-        child_models = (
-            (ModelB, ModelBAdmin),
-            (ModelC, ModelCAdmin),
-        )
-
-    # Only the parent needs to be registered:
-    admin.site.register(ModelA, ModelAParentAdmin)
+    admin.site.register(ModelA, ModelAAdmin)
+    admin.site.register(ModelB, ModelBAdmin)
+    admin.site.register(ModelC, ModelCAdmin)
