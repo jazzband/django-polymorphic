@@ -1,6 +1,5 @@
 *.pyc
 *.pyo
-*.mo
 *.db
 *.egg-info/
 *.egg/
