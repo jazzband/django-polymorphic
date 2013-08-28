@@ -3,10 +3,10 @@
 Third-party applications support
 ================================
 
-Django-reversion
+django-reversion
 ----------------
 
-`Django-reversion <https://github.com/etianen/django-reversion>`_ works as
+`django-reversion <https://github.com/etianen/django-reversion>`_ works as
 expected with polymorphic models.  However, they require more setup than
 standard models.  We have to face these problems:
 
@@ -35,6 +35,7 @@ The :ref:`admin example <admin-example>` becomes:
     class ModelAParentAdmin(VersionAdmin, PolymorphicParentModelAdmin):
         base_model = ModelA
         child_models = (ModelB, ModelC)
+        # define features for the changelist here
 
 
     class ModelAChildAdmin(PolymorphicChildModelAdmin):
