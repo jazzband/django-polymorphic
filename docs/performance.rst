@@ -11,7 +11,7 @@ without a tool like *django-polymorphic*, this usually results in a variation of
 which has very bad performance, as it introduces one additional
 SQL query for every object in the result which is not of class ``BaseModel``.
 Compared to these solutions, *django-polymorphic* has the advantage
-that it only needs 1 SQL query per *object type*, and not *per object*.
+that it only needs 1 SQL query *per object type*, and not *per object*.
 
 The current implementation is does not use any custom SQL or Django DB layer
 internals - it is purely based on the standard Django ORM. Specifically, the query::
@@ -25,6 +25,24 @@ class ``ModelA``. If 50 objects are ``ModelA`` and 50 are ``ModelB``, then
 two queries are executed. The pathological worst case is 101 db queries if
 result_objects contains 100 different object types (with all of them
 subclasses of ``ModelA``).
+
+ContentType retrieval
+---------------------
+
+When fetching the :class:`~django.contrib.contenttypes.models.ContentType` class,
+it's tempting to read the ``object.polymorphic_ctype`` field directly.
+However, this performs an additional query via the :class:`~django.db.models.ForeignKey` object
+to fetch the :class:`~django.contrib.contenttypes.models.ContentType`.
+Instead, use:
+
+.. code-block:: python
+
+    from django.contrib.contenttypes.models import ContentType
+
+    ctype = ContentType.objects.get_for_id(object.polymorphic_ctype_id)
+
+This uses the :meth:`~django.contrib.contenttypes.models.ContentTypeManager.get_for_id` function
+which caches the results internally.
 
 Database notes
 --------------
