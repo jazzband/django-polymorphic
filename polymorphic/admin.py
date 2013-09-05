@@ -479,6 +479,11 @@ class PolymorphicChildModelAdmin(admin.ModelAdmin):
             return self.base_fieldsets
 
 
+    def get_form(self, request, obj=None, **kwargs):
+        kwargs.setdefault('form', self.base_form)
+        return super(PolymorphicChildModelAdmin, self).get_form(request, obj, **kwargs)
+
+
     def get_subclass_fields(self, request, obj=None):
         # Find out how many fields would really be on the form,
         # if it weren't restricted by declared fields.
@@ -487,7 +492,7 @@ class PolymorphicChildModelAdmin(admin.ModelAdmin):
 
         # By not declaring the fields/form in the base class,
         # get_form() will populate the form with all available fields.
-        form = self.get_form(request, obj, exclude=exclude)
+        form = self.get_form(request, obj, exclude=exclude, form=self.base_form)
         subclass_fields = list(six.iterkeys(form.base_fields)) + list(self.get_readonly_fields(request, obj))
 
         # Find which fields are not part of the common fields.

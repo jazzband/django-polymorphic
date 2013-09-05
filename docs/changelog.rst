@@ -8,6 +8,7 @@ Version 0.5.2 (unreleased)
 * Fix unwanted ``___`` handling in the ORM when a field name starts with an underscore;
   this detects you meant ``relatedfield__ _underscorefield`` instead of ``ClassName___field``.
 * Fix missing permission check in the "add type" view. This was caught however in the next step.
+* Fix admin validation errors related to additional non-model form fields.
 
 
 Version 0.5.1 (2013-07-05)
