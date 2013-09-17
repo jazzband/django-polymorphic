@@ -1,6 +1,12 @@
 Changelog
 ==========
 
+Version 0.5.3 (2013-09-17)
+--------------------------
+
+* Fix TypeError when ``base_form`` was not defined.
+
+
 Version 0.5.2 (2013-09-05)
 --------------------------
 
