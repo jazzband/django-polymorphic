@@ -276,11 +276,19 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
         """
         ct_id = int(request.GET.get('ct_id', 0))
         if not ct_id:
-            raise Http404("No ct_id parameter, unable to find admin subclass for path '{0}'.".format(path))
+            # See if the path started with an ID.
+            try:
+                pos = path.find('/')
+                object_id = long(path[0:pos])
+            except ValueError:
+                raise Http404("No ct_id parameter, unable to find admin subclass for path '{0}'.".format(path))
+
+            ct_id = self.model.objects.values_list('polymorphic_ctype_id', flat=True).get(pk=object_id)
+
 
         real_admin = self._get_real_admin_by_ct(ct_id)
         resolver = RegexURLResolver('^', real_admin.urls)
-        resolvermatch = resolver.resolve(path)
+        resolvermatch = resolver.resolve(path)  # May raise Resolver404
         if not resolvermatch:
             raise Http404("No match for path '{0}' in admin subclass.".format(path))
 

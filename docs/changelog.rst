@@ -5,6 +5,8 @@ Version 0.5.3 (2013-09-17)
 --------------------------
 
 * Fix TypeError when ``base_form`` was not defined.
+* Fix passing ``/admin/app/model/id/XYZ`` urls to the correct admin backend.
+  There is no need to include a ``?ct_id=..`` field, as the ID already provides enough information.
 
 
 Version 0.5.2 (2013-09-05)
