@@ -67,8 +67,9 @@ class PolymorphicQuerySet(QuerySet):
         """switch off polymorphic behaviour for this query.
         When the queryset is evaluated, only objects of the type of the
         base class used for this query are returned."""
-        self.polymorphic_disabled = True
-        return self
+        qs = self._clone()
+        qs.polymorphic_disabled = True
+        return qs
 
     def instance_of(self, *args):
         """Filter the queryset to only include the classes in args (and their subclasses).
@@ -109,8 +110,8 @@ class PolymorphicQuerySet(QuerySet):
         """translate the polymorphic field paths in the kwargs, then call vanilla aggregate.
         We need no polymorphic object retrieval for aggregate => switch it off."""
         self._process_aggregate_args(args, kwargs)
-        self.polymorphic_disabled = True
-        return super(PolymorphicQuerySet, self).aggregate(*args, **kwargs)
+        qs = self.non_polymorphic()
+        return super(PolymorphicQuerySet, qs).aggregate(*args, **kwargs)
 
     # Since django_polymorphic 'V1.0 beta2', extra() always returns polymorphic results.^
     # The resulting objects are required to have a unique primary key within the result set

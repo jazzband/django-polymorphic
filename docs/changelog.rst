@@ -1,6 +1,12 @@
 Changelog
 ==========
 
+Version 0.5.4 (in development)
+------------------------------
+
+* Fix ``.non_polymorphic()`` to returns a clone of the queryset, instead of effecting the existing queryset.
+
+
 Version 0.5.3 (2013-09-17)
 --------------------------
 
