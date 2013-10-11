@@ -3,7 +3,6 @@
     Please see README.rst or DOCS.rst or http://bserve.webhop.org/wiki/django_polymorphic
 """
 
-from django.conf import settings
 from django.db import models
 from polymorphic.query import PolymorphicQuerySet
 
@@ -15,6 +14,8 @@ class PolymorphicManager(models.Manager):
     Usually not explicitly needed, except if a custom manager or
     a custom queryset class is to be used.
     """
+    _disabled = False
+
     use_for_related_fields = True
 
     def __init__(self, queryset_class=None, *args, **kwrags):
@@ -26,8 +27,9 @@ class PolymorphicManager(models.Manager):
 
     def get_query_set(self):
         queryset = self.queryset_class(self.model)
-        if self.model._meta.parents:
+        if self.model._meta.parents and not self._disabled:
             queryset = queryset.filter(instance_of=self.model)
+        queryset._disabled = self._disabled
         return queryset
 
     # Proxy all unknown method calls to the queryset, so that its members are

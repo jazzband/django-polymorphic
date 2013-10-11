@@ -115,16 +115,6 @@ class PolymorphicModelBase(ModelBase):
                 new_class.add_to_class('_default_manager', def_mgr)
                 new_class._default_manager._inherited = False   # the default mgr was defined by the user, not inherited
 
-            # hack: a small patch to Django would be a better solution.
-            # Django's management command 'dumpdata' relies on non-polymorphic
-            # behaviour of the _default_manager. Therefore, we disable all polymorphism
-            # if the system command contains 'dumpdata' or 'syncdb'.
-            # This way we don't need to patch django.core.management.commands.dumpdata
-            # for all supported Django versions.
-            # TODO: investigate Django how this can be avoided
-            if 'dumpdata' in sys.argv or 'syncdb' in sys.argv:
-                pass
-
             # validate resulting default manager
             _default_manager = super(PolymorphicModelBase, new_class).__getattribute__('_default_manager')
             self.validate_model_manager(_default_manager, model_name, '_default_manager')
@@ -138,6 +128,16 @@ class PolymorphicModelBase(ModelBase):
                 if f.primary_key and type(f) != models.OneToOneField:
                     new_class.polymorphic_primary_key_name = f.name
                     break
+
+            # hack: a small patch to Django would be a better solution.
+            # Django's management command 'dumpdata' relies on non-polymorphic
+            # behaviour of the _default_manager. Therefore, we disable all polymorphism
+            # if the system command contains 'dumpdata' or 'syncdb'.
+            # This way we don't need to patch django.core.management.commands.dumpdata
+            # for all supported Django versions.
+            # TODO: investigate Django how this can be avoided
+            if 'dumpdata' in sys.argv or 'syncdb' in sys.argv:
+                new_class._default_manager._disabled = True
 
         return new_class
 
