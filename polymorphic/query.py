@@ -124,7 +124,7 @@ class PolymorphicQuerySet(QuerySet):
     def __init__(self, *args, **kwargs):
         "init our queryset object member variables"
         super(PolymorphicQuerySet, self).__init__(*args, **kwargs)
-        self.polymorphic_disabled = self.model.polymorphic_disabled
+        self.polymorphic_disabled = False
         self.deferred = True
 
     def _clone(self, *args, **kwargs):
@@ -460,7 +460,10 @@ class PolymorphicQuerySet(QuerySet):
             else:
                 kwargs = dict(zip(init_list, row[index_start:aggregate_start]))
                 # Get the polymorphic child model class
-                model = ContentType.objects.get_for_id(kwargs['polymorphic_ctype_id']).model_class()
+                try:
+                    model = ContentType.objects.get_for_id(kwargs['polymorphic_ctype_id']).model_class()
+                except AttributeError:
+                    continue
                 # Find out what fields belong to the polymorphic child class and bulk defer them
                 bulk_skip = set(f.attname for f in model._meta.fields) - set(f.attname for f in self.model._meta.fields)
                 if model._meta.pk.attname in bulk_skip:
@@ -510,6 +513,13 @@ class PolymorphicQuerySet(QuerySet):
         but it requests the objects in chunks from the database,
         with Polymorphic_QuerySet_objects_per_request per chunk
         """
+        if self.polymorphic_disabled:
+            # disabled => work just like a normal queryset
+            base_iter = super(PolymorphicQuerySet, self).iterator()
+            for o in base_iter:
+                yield o
+            raise StopIteration
+
         if self.deferred:
             base_iter = self._iterator()
             for o in base_iter:
@@ -517,13 +527,6 @@ class PolymorphicQuerySet(QuerySet):
             raise StopIteration
 
         base_iter = super(PolymorphicQuerySet, self).iterator()
-
-        # disabled => work just like a normal queryset
-        if self.polymorphic_disabled:
-            for o in base_iter:
-                yield o
-            raise StopIteration
-
         while True:
             base_result_objects = []
             reached_end = False

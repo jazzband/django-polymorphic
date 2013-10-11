@@ -3,6 +3,7 @@
     Please see README.rst or DOCS.rst or http://bserve.webhop.org/wiki/django_polymorphic
 """
 
+from django.conf import settings
 from django.db import models
 from polymorphic.query import PolymorphicQuerySet
 
@@ -25,7 +26,7 @@ class PolymorphicManager(models.Manager):
 
     def get_query_set(self):
         queryset = self.queryset_class(self.model)
-        if self.model._meta.proxy:
+        if self.model._meta.parents:
             queryset = queryset.filter(instance_of=self.model)
         return queryset
 
