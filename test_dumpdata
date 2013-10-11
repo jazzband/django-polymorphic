@@ -12,14 +12,14 @@ echo "#####################################################################"
 echo "### Testing dumpdata"
 echo
 
-$PYCMD ./manage.py syncdb
+$PYCMD ./manage.py syncdb --noinput
 $PYCMD ./manage.py polymorphic_create_test_data
 
-$PYCMD ./manage.py dumpdata --indent=4 pexp >$TMPFILE
+$PYCMD ./manage.py dumpdata --natural --indent=4 pexp >$TMPFILE
 
 if ! diff -w $TMPFILE pexp/dumpdata_test_correct_output.txt ; then
     echo "#####################################################################"
-    echo "ERROR: test_dumpdata failed!"    
+    echo "ERROR: test_dumpdata failed!"
     exit 10
 fi
 echo "#####################################################################"

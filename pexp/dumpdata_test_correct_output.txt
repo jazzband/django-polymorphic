@@ -1,46 +1,58 @@
 [
     {
-        "pk": 1, 
-        "model": "pexp.project", 
+        "pk": 1,
+        "model": "pexp.project",
         "fields": {
-            "topic": "John's gathering", 
-            "polymorphic_ctype": 2
+            "topic": "John's gathering",
+            "polymorphic_ctype": [
+                "pexp",
+                "project"
+            ]
         }
-    }, 
+    },
     {
-        "pk": 2, 
-        "model": "pexp.project", 
+        "pk": 2,
+        "model": "pexp.project",
         "fields": {
-            "topic": "Sculpting with Tim", 
-            "polymorphic_ctype": 3
+            "topic": "Sculpting with Tim",
+            "polymorphic_ctype": [
+                "pexp",
+                "artproject"
+            ]
         }
-    }, 
+    },
     {
-        "pk": 3, 
-        "model": "pexp.project", 
+        "pk": 3,
+        "model": "pexp.project",
         "fields": {
-            "topic": "Swallow Aerodynamics", 
-            "polymorphic_ctype": 4
+            "topic": "Swallow Aerodynamics",
+            "polymorphic_ctype": [
+                "pexp",
+                "researchproject"
+            ]
         }
-    }, 
+    },
     {
-        "pk": 4, 
-        "model": "pexp.project", 
+        "pk": 4,
+        "model": "pexp.project",
         "fields": {
-            "topic": "UFO Research", 
-            "polymorphic_ctype": 5
+            "topic": "UFO Research",
+            "polymorphic_ctype": [
+                "pexp",
+                "xproject"
+            ]
         }
-    }, 
+    },
     {
-        "pk": 2, 
-        "model": "pexp.artproject", 
+        "pk": 2,
+        "model": "pexp.artproject",
         "fields": {
             "artist": "T. Turner"
         }
-    }, 
+    },
     {
-        "pk": 3, 
-        "model": "pexp.researchproject", 
+        "pk": 3,
+        "model": "pexp.researchproject",
         "fields": {
             "supervisor": "Dr. Winter"
         }
