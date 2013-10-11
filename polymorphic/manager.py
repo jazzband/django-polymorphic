@@ -14,7 +14,7 @@ class PolymorphicManager(models.Manager):
     Usually not explicitly needed, except if a custom manager or
     a custom queryset class is to be used.
     """
-    _disabled = False
+    _polymorphic_disabled = False
 
     use_for_related_fields = True
 
@@ -27,9 +27,9 @@ class PolymorphicManager(models.Manager):
 
     def get_query_set(self):
         queryset = self.queryset_class(self.model)
-        if self.model._meta.parents and not self._disabled:
+        if self.model._meta.parents and not self._polymorphic_disabled:
             queryset = queryset.filter(instance_of=self.model)
-        queryset._disabled = self._disabled
+        queryset.polymorphic_disabled = self._polymorphic_disabled
         return queryset
 
     # Proxy all unknown method calls to the queryset, so that its members are

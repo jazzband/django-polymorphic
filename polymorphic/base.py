@@ -137,7 +137,7 @@ class PolymorphicModelBase(ModelBase):
             # for all supported Django versions.
             # TODO: investigate Django how this can be avoided
             if 'dumpdata' in sys.argv or 'syncdb' in sys.argv:
-                new_class._default_manager._disabled = True
+                new_class._default_manager._polymorphic_disabled = True
 
         return new_class
 
