@@ -2,7 +2,10 @@
 The manager class for use in the models.
 """
 
-from django.db import models
+import inspect
+
+from django.contrib.contenttypes.models import ContentType
+from django.db import DEFAULT_DB_ALIAS, models
 
 from polymorphic.query import PolymorphicQuerySet
 
@@ -49,3 +52,44 @@ class PolymorphicManager(models.Manager):
 
     def get_real_instances(self, base_result_objects=None):
         return self.all().get_real_instances(base_result_objects=base_result_objects)
+
+    def create_from_super(self, obj, **kwargs):
+        """Creates an instance of self.model (cls) from existing super class.
+        The new subclass will be the same object with same database id
+        and data as obj, but will be an instance of cls.
+
+        obj must be an instance of the direct superclass of cls.
+        kwargs should contain all required fields of the subclass (cls).
+
+        returns obj as an instance of cls.
+        """
+        cls = self.model
+
+        scls = inspect.getmro(cls)[1]
+        if scls is not type(obj):
+            raise TypeError(
+                "create_from_super can only be used if obj is one level of inheritance up from cls"
+            )
+
+        parent_link_field = None
+        for parent, field in cls._meta.parents.items():
+            if parent is scls:
+                parent_link_field = field
+                break
+        if parent_link_field is None:
+            raise TypeError(f"Could not find parent link field for {scls.__name__}")
+        kwargs[parent_link_field.get_attname()] = obj.id
+
+        # create the new base class with only fields that apply to  it.
+        nobj = cls(**kwargs)
+        nobj.save_base(raw=True)
+        # force update the content type, but first we need to
+        # retrieve a clean copy from the db to fill in the null
+        # fields otherwise they would be overwritten.
+        nobj = obj.__class__.objects.using(obj._state.db or DEFAULT_DB_ALIAS).get(pk=obj.pk)
+        nobj.polymorphic_ctype = ContentType.objects.db_manager(
+            using=(obj._state.db or DEFAULT_DB_ALIAS)
+        ).get_for_model(cls)
+        nobj.save()
+
+        return nobj.get_real_instance()  # cast to cls
