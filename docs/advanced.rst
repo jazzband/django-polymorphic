@@ -268,6 +268,23 @@ Similarly, pre-V1.0 output formatting can be re-estated by using
 ``polymorphic_showfield_old_format = True``.
 
 
+Creating Subclass Objects from Existing Superclass Objects
+------------------------------------------------------------
+
+You can create an instance of a subclass from an existing instance of a superclass using the
+:meth:`~polymorphic.managers.PolymorphicManager.create_from_super` method
+of the subclass's manager. For example:
+
+.. code-block:: python
+
+    super_instance = ModelA.objects.get(id=1)
+    sub_instance = ModelB.objects.create_from_super(super_instance, field2='value2')
+
+The restriction is that ``super_instance`` must be an instance of the direct superclass of
+``ModelB``, and any required fields of ``ModelB`` must be provided as keyword arguments. If multiple
+levels of subclassing are involved, you must call this method multiple times to "promote" each
+level.
+
 .. _restrictions:
 
 Restrictions & Caveats

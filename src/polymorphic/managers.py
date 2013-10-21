@@ -2,7 +2,8 @@
 The manager class for use in the models.
 """
 
-from django.db import models
+from django.contrib.contenttypes.models import ContentType
+from django.db import DEFAULT_DB_ALIAS, models
 
 from polymorphic.query import PolymorphicQuerySet
 
@@ -49,3 +50,45 @@ class PolymorphicManager(models.Manager):
 
     def get_real_instances(self, base_result_objects=None):
         return self.all().get_real_instances(base_result_objects=base_result_objects)
+
+    def create_from_super(self, obj, **kwargs):
+        """
+        Create an instance of this manager's model class from the given instance of a
+        parent class.
+
+        This is useful when "promoting" an instance down the inheritance chain.
+
+        :param obj: An instance of a parent class of the manager's model class.
+        :param kwargs: Additional fields to set on the new instance.
+        :return: The newly created instance.
+        """
+        from .models import PolymorphicModel
+
+        # ensure we have the most derived real instance
+        if isinstance(obj, PolymorphicModel):
+            obj = obj.get_real_instance()
+
+        parent_ptr = self.model._meta.parents.get(type(obj), None)
+
+        if not parent_ptr:
+            raise TypeError(
+                f"{obj.__class__.__name__} is not a direct parent of {self.model.__name__}"
+            )
+        kwargs[parent_ptr.get_attname()] = obj.pk
+
+        # create the new base class with only fields that apply to  it.
+        ctype = ContentType.objects.db_manager(
+            using=(obj._state.db or DEFAULT_DB_ALIAS)
+        ).get_for_model(self.model)
+        nobj = self.model(**kwargs, polymorphic_ctype=ctype)
+        nobj.save_base(raw=True, using=obj._state.db or DEFAULT_DB_ALIAS, force_insert=True)
+        # force update the content type, but first we need to
+        # retrieve a clean copy from the db to fill in the null
+        # fields otherwise they would be overwritten.
+        if isinstance(obj, PolymorphicModel):
+            parent = obj.__class__.objects.using(obj._state.db or DEFAULT_DB_ALIAS).get(pk=obj.pk)
+            parent.polymorphic_ctype = ctype
+            parent.save()
+
+        nobj.refresh_from_db()  # cast to cls
+        return nobj
