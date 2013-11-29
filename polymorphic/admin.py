@@ -154,10 +154,6 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
         if model_class not in self._child_models:
             raise PermissionDenied("Invalid model '{0}', it must be registered as child model.".format(model_class))
 
-        return self._simple_get_real_admin_by_model(model_class)
-
-
-    def _simple_get_real_admin_by_model(self, model_class):
         try:
             # HACK: the only way to get the instance of an model admin,
             # is to read the registry of the AdminSite.
