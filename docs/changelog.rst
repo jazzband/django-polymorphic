@@ -1,6 +1,43 @@
 Changelog
 ==========
 
+
+Version 0.6
+-----------
+
+* Admin integration has been simplified.  It became less hacky and therefore
+  fixed lots of issues.
+* Admin integration of a foreign key to a child polymorphic model is fully
+  working.
+* Full django-grappelli compatibility.
+* **Changed** ``PolymorphicParentModelAdmin.child_models`` is now a tuple
+  of Models.  Before it was a tuple of (Model, ModelAdmin) tuples.
+* **Changed** Child models now have to be registered to the admin site.
+
+If you already use the admin integration, you therefore have to:
+
+* Change
+
+  .. code-block:: python
+
+      child_models = ((ModelA, ModelAChildAdmin), (ModelB, ModelBChildAdmin))
+
+  to
+
+  .. code-block:: python
+
+      child_models = (ModelA, ModelB)
+
+* Register the child models in the classical way:
+
+  .. code-block:: python
+
+      admin.site.register(ModelA, ModelAChildAdmin)
+      admin.site.register(ModelB, ModelBChildAdmin)
+
+See :ref:`the admin example <admin-example>` for more details.
+
+
 Version 0.5.4 (in development)
 ------------------------------
 
