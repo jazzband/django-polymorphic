@@ -21,7 +21,7 @@ The parent model
 The parent model needs to inherit ``PolymorphicParentModelAdmin``, and implement the following:
 
 * ``base_model`` should be set
-* ``child_models`` or ``get_child_models()`` should return a list
+* ``child_models`` or ``get_child_models()`` should return an iterable
   of Model classes.
 
 The exact implementation can depend on the way your module is structured.
