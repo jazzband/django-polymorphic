@@ -306,3 +306,32 @@ class PolymorphicQuerySet(QuerySet):
             return olist
         clist = PolymorphicQuerySet._p_list_class(olist)
         return clist
+    
+    def create_from_super(self, obj, **kwargs):
+        """Creates an instance of self.model (cls) from existing super class. 
+        The new subclass will be the same object with same database id 
+        and data as obj, but will be an instance of cls.
+        
+        obj must be an instance of the direct superclass of cls.
+        kwargs should contain all required fields of the subclass (cls).
+        
+        returns obj as an instance of cls.
+        """
+        cls = self.model
+        import inspect
+        scls = inspect.getmro(cls)[1]
+        if scls != type(obj):
+            raise Exception('create_from_super can only be used if obj is one level of inheritance up from cls')
+        ptr = '{}_ptr_id'.format(scls.__name__.lower())
+        kwargs[ptr] = obj.id
+        # create the new base class with only fields that apply to  it.
+        nobj = cls(**kwargs)
+        nobj.save_base(raw=True)
+        # force update the content type, but first we need to
+        # retrieve a clean copy from the db to fill in the null
+        # fields otherwise they would be overwritten.
+        nobj = cls.objects.get(pk=obj.pk)
+        nobj.polymorphic_ctype = ContentType.objects.get_for_model(cls)
+        nobj.save()
+            
+        return nobj.get_real_instance() # cast to cls
