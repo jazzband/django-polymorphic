@@ -7,6 +7,7 @@ from __future__ import absolute_import
 import sys
 import inspect
 
+import django
 from django.db import models
 from django.db.models.base import ModelBase
 from django.db.models.manager import ManagerDescriptor
@@ -55,10 +56,12 @@ class PolymorphicModelBase(ModelBase):
         #print; print '###', model_name, '- bases:', bases
 
         # Workaround compatibility issue with six.with_metaclass() and custom Django model metaclasses:
-        # Let Django fully ignore the class which is inserted in between.
         if not attrs and model_name == 'NewBase':
-            attrs['__module__'] = 'django.utils.six'
-            attrs['Meta'] = type('Meta', (), {'abstract': True})
+            if django.VERSION < (1,5):
+                # Let Django fully ignore the class which is inserted in between.
+                # Django 1.5 fixed this, see https://code.djangoproject.com/ticket/19688
+                attrs['__module__'] = 'django.utils.six'
+                attrs['Meta'] = type('Meta', (), {'abstract': True})
             return super(PolymorphicModelBase, self).__new__(self, model_name, bases, attrs)
 
         # create new model
