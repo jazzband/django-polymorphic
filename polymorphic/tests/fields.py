@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-
-####################################################################
+from __future__ import absolute_import, unicode_literals
 
 import uuid
 
@@ -8,6 +7,7 @@ from django import forms
 from django.db import models
 from django.utils.encoding import smart_text
 from django.utils import six
+
 
 class UUIDVersionError(Exception):
     pass
@@ -141,6 +141,6 @@ class UUIDField(six.with_metaclass(models.SubfieldBase, models.CharField)):
         defaults = {
             'form_class': forms.CharField,
             'max_length': self.max_length
-            }
+        }
         defaults.update(kwargs)
         return super(UUIDField, self).formfield(**defaults)

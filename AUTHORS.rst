@@ -3,6 +3,7 @@ Main authors (commit rights to the main repository)
 
 * Chris Glass
 * Diederik van der Boor
+* Germán M. Bravo
 
 
 Contributors
@@ -13,7 +14,6 @@ Contributors
 * Adam Wentz
 * Ben Konrath
 * Charles Leifer (python 2.4 compatibility)
-* Germán M. Bravo
 * Jedediah Smith (proxy models support)
 * Martin Brochhaus
 

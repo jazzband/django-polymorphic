@@ -20,27 +20,28 @@ module_root = dirname(realpath(__file__))
 
 # Inline settings file
 settings.configure(
-    DEBUG = False,  # will be False anyway by DjangoTestRunner.
-    TEMPLATE_DEBUG = False,
-    DATABASES = {
+    DEBUG=False,  # will be False anyway by DjangoTestRunner.
+    TEMPLATE_DEBUG=False,
+    DATABASES={
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
             'NAME': ':memory:'
         }
     },
-    TEMPLATE_LOADERS = (
+    TEMPLATE_LOADERS=(
         'django.template.loaders.app_directories.Loader',
     ),
-    TEMPLATE_CONTEXT_PROCESSORS = default_settings.TEMPLATE_CONTEXT_PROCESSORS + (
+    TEMPLATE_CONTEXT_PROCESSORS=default_settings.TEMPLATE_CONTEXT_PROCESSORS + (
         'django.core.context_processors.request',
     ),
-    INSTALLED_APPS = (
+    INSTALLED_APPS=(
         'django.contrib.auth',
         'django.contrib.contenttypes',
         'django.contrib.messages',
         'django.contrib.sites',
         'django.contrib.admin',
         'polymorphic',
+        'polymorphic.tests',
     ),
     SITE_ID = 3,
 )

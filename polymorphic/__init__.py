@@ -2,19 +2,22 @@
 """
 Seamless Polymorphic Inheritance for Django Models
 
-Copyright:
-This code and affiliated files are (C) by Bert Constantin and individual contributors.
+Copyright (C) 2011-2014 German M. Bravo
+
+Code inspired in django-polymorphic v0.5.3
+Copyright (C) 2010-2011 Bert Constantin
+Copyright (C) 2011-2014 Chris Glass
+Copyright (C) 2012-2014 Diederik van der Boor
+
 Please see LICENSE and AUTHORS for more information.
 """
 from __future__ import absolute_import
-import django
-from .polymorphic_model import PolymorphicModel
-from .manager import PolymorphicManager
-from .query import PolymorphicQuerySet
-from .query_translate import translate_polymorphic_Q_object
-from .showfields import ShowFieldContent, ShowFieldType, ShowFieldTypeAndContent
-from .showfields import ShowFields, ShowFieldTypes, ShowFieldsAndTypes  # import old names for compatibility
 
+import django
+
+from .query import PolymorphicQuerySet  # NOQA
+from .manager import PolymorphicManager  # NOQA
+from .polymorphic_model import PolymorphicModel  # NOQA
 
 # Monkey-patch Django < 1.5 to allow ContentTypes for proxy models.
 if django.VERSION[:2] < (1, 5):
@@ -33,9 +36,9 @@ if django.VERSION[:2] < (1, 5):
             ct = self._get_from_cache(opts)
         except KeyError:
             ct, created = self.get_or_create(
-                app_label = opts.app_label,
-                model = opts.object_name.lower(),
-                defaults = {'name': smart_text(opts.verbose_name_raw)},
+                app_label=opts.app_label,
+                model=opts.object_name.lower(),
+                defaults={'name': smart_text(opts.verbose_name_raw)},
             )
             self._add_to_cache(self.db, ct)
 
@@ -43,4 +46,3 @@ if django.VERSION[:2] < (1, 5):
 
     ContentTypeManager.get_for_model__original = ContentTypeManager.get_for_model
     ContentTypeManager.get_for_model = get_for_model
-
