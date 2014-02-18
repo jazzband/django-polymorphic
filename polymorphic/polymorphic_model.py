@@ -173,27 +173,34 @@ class PolymorphicModel(six.with_metaclass(PolymorphicModelBase, models.Model)):
         """helper function for __init__:
         determine names of all Django inheritance accessor member functions for type(self)"""
 
-        def add_model(model, as_ptr, result):
-            name = model.__name__.lower()
-            if as_ptr:
-                name += '_ptr'
-            result[name] = model
+        def add_model(model, field_name, result):
+            result[field_name] = model
 
-        def add_model_if_regular(model, as_ptr, result):
+        def add_model_if_regular(model, field_name, result):
             if (issubclass(model, models.Model)
                 and model != models.Model
                 and model != self.__class__
                 and model != PolymorphicModel):
-                add_model(model, as_ptr, result)
+                add_model(model, field_name, result)
 
-        def add_all_super_models(model, result):
-            add_model_if_regular(model, True, result)
-            for b in model.__bases__:
-                add_all_super_models(b, result)
+        def add_all_super_models(model, result):    
+            for super_cls, field_to_super in model._meta.parents.iteritems():
+                field_name = field_to_super.name #the field on model can have a different name to super_cls._meta.module_name, if the field is created manually using 'parent_link'
+                add_model_if_regular(super_cls, field_name, result)
+                add_all_super_models(super_cls, result)
 
-        def add_all_sub_models(model, result):
-            for b in model.__subclasses__():
-                add_model_if_regular(b, False, result)
+        def add_all_sub_models(super_cls, result):            
+            for sub_cls in super_cls.__subclasses__(): #go through all subclasses of model  
+                field_to_super = sub_cls._meta.parents[super_cls] #get the field that links sub_cls to super_cls           
+                super_to_sub_related_field = field_to_super.rel
+                if super_to_sub_related_field.related_name is None:
+                    #if related name is None the related field is the name of the subclass
+                    to_subclass_fieldname = sub_cls.__name__.lower()
+                else:
+                    #otherwise use the given related name
+                    to_subclass_fieldname = super_to_sub_related_field.related_name
+                    
+                add_model_if_regular(sub_cls, to_subclass_fieldname, result)
 
         result = {}
         add_all_super_models(self.__class__, result)
