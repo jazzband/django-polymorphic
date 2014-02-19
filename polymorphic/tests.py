@@ -245,6 +245,10 @@ class ProxyModelB(ProxyModelBase):
 class RelatedNameClash(ShowFieldType, PolymorphicModel):
     ctype = models.ForeignKey(ContentType, null=True, editable=False)
 
+#class with a parent_link to superclass, and a related_name back to subclass
+class TestParentLinkAndRelatedName(ModelShow1_plain):
+    superclass = models.OneToOneField(ModelShow1_plain, parent_link=True, related_name = 'related_name_subclass')
+
 
 class PolymorphicTests(TestCase):
     """
@@ -767,6 +771,24 @@ class PolymorphicTests(TestCase):
         o = InitTestModelSubclass.objects.create()
         self.assertEqual(o.bar, 'XYZ')
 
+    def test_parent_link_and_related_name(self):
+        t = TestParentLinkAndRelatedName(field1 = "TestParentLinkAndRelatedName")
+        t.save()
+        p = ModelShow1_plain.objects.get(field1 = "TestParentLinkAndRelatedName")
+        
+        #check that p is equal to the 
+        self.assertIsInstance(p, TestParentLinkAndRelatedName)
+        self.assertEqual(p, t)
+        
+        #check that the accessors to parent and sublass work correctly and return the right object
+        p = ModelShow1_plain.objects.non_polymorphic().get(field1 = "TestParentLinkAndRelatedName")
+        self.assertNotEqual(p, t) #p should be Plain1 and t TestParentLinkAndRelatedName, so not equal
+        self.assertEqual(p, t.superclass)
+        self.assertEqual(p.related_name_subclass, t)
+        
+        #test that we can delete t 
+        t.delete()
+        
 
 class RegressionTests(TestCase):
 
