@@ -183,7 +183,7 @@ class PolymorphicModel(six.with_metaclass(PolymorphicModelBase, models.Model)):
                 add_model(model, field_name, result)
 
         def add_all_super_models(model, result):    
-            for super_cls, field_to_super in model._meta.parents.iteritems():
+            for super_cls, field_to_super in model._meta.parents.items():
                 if field_to_super is not None:  #if not a link to a proxy model
                     field_name = field_to_super.name #the field on model can have a different name to super_cls._meta.module_name, if the field is created manually using 'parent_link'
                     add_model_if_regular(super_cls, field_name, result)
