@@ -409,6 +409,11 @@ class PolymorphicChildModelAdmin(admin.ModelAdmin):
         # Instead, pass the form unchecked here, because the standard ModelForm will just work.
         # If the derived class sets the model explicitly, respect that setting.
         kwargs.setdefault('form', self.base_form or self.form)
+
+        # prevent infinite recursion in django 1.6+
+        if not self.declared_fieldsets:
+            kwargs['fields'] = None
+
         return super(PolymorphicChildModelAdmin, self).get_form(request, obj, **kwargs)
 
 
