@@ -411,8 +411,8 @@ class PolymorphicChildModelAdmin(admin.ModelAdmin):
         kwargs.setdefault('form', self.base_form or self.form)
 
         # prevent infinite recursion in django 1.6+
-        if 'fields' not in kwargs and not self.declared_fieldsets:
-            kwargs['fields'] = None
+        if not self.declared_fieldsets:
+            kwargs.setdefault('fields', None)
 
         return super(PolymorphicChildModelAdmin, self).get_form(request, obj, **kwargs)
 

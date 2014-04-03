@@ -6,6 +6,14 @@ from pexp.models import *
 class ProjectChildAdmin(PolymorphicChildModelAdmin):
     base_model = Project
 
+    # On purpose, only have the shared fields here.
+    # The fields of the derived model should still be displayed.
+    base_fieldsets = (
+        ("Base fields", {
+            'fields': ('topic',)
+        }),
+    )
+
 class ProjectAdmin(PolymorphicParentModelAdmin):
     base_model = Project
     list_filter = (PolymorphicChildModelFilter,)
