@@ -57,7 +57,10 @@ class PolymorphicChildModelFilter(admin.SimpleListFilter):
     parameter_name = 'polymorphic_ctype'
 
     def lookups(self, request, model_admin):
-        return model_admin.get_child_type_choices()
+        try:
+            return model_admin.get_child_type_choices()
+        except AttributeError:  # Happens when model_admin is of a child model.
+            return ()
 
     def queryset(self, request, queryset):
         try:

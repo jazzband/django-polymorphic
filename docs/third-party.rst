@@ -1,10 +1,12 @@
+.. _third-party:
+
 Third-party applications support
 ================================
 
-Django-reversion support
-------------------------
+django-reversion
+----------------
 
-`Django-reversion <https://github.com/etianen/django-reversion>`_ works as
+`django-reversion <https://github.com/etianen/django-reversion>`_ works as
 expected with polymorphic models.  However, they require more setup than
 standard models.  We have to face these problems:
 
@@ -19,12 +21,14 @@ standard models.  We have to face these problems:
 Example
 .......
 
-The admin :ref:`admin-example` becomes:
+The admin :ref:`admin example <admin-example>` becomes:
 
 .. code-block:: python
 
     from django.contrib import admin
-    from polymorphic.admin import PolymorphicParentModelAdmin, PolymorphicChildModelAdmin
+    from polymorphic.admin import (
+        PolymorphicParentModelAdmin, PolymorphicChildModelAdmin,
+        PolymorphicChildModelFilter)
     import reversion
     from reversion import VersionAdmin
     from .models import ModelA, ModelB, ModelC
@@ -50,6 +54,8 @@ The admin :ref:`admin-example` becomes:
             (ModelB, ModelBAdmin),
             (ModelC, ModelCAdmin),
         )
+        list_filter = (PolymorphicChildModelFilter,)  # This is optional.
+        # Define features for the changelist here
 
     reversion.register(ModelB, follow=['modela_ptr'])
     reversion.register(ModelC, follow=['modelb_ptr'])

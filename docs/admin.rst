@@ -52,6 +52,12 @@ because it will hide any additional fields which are defined in the derived mode
 use the ``base_form`` and ``base_fieldsets`` instead. The ``PolymorphicChildModelAdmin`` will
 automatically detect the additional fields that the child model has, display those in a separate fieldset.
 
+PolymorphicChildModelFilter
+---------------------------
+
+This filter can be used to only display objects from the selected child model.
+To do so, add it to ``list_filter``, as shown in the example below.
+
 
 .. _admin-example:
 
@@ -60,10 +66,15 @@ Example
 
 The models are taken from :ref:`advanced-features`.
 
+If you use other applications such as django-reversion, please check
+:ref:`third-party`.
+
 .. code-block:: python
 
     from django.contrib import admin
-    from polymorphic.admin import PolymorphicParentModelAdmin, PolymorphicChildModelAdmin
+    from polymorphic.admin import (
+        PolymorphicParentModelAdmin, PolymorphicChildModelAdmin,
+        PolymorphicChildModelFilter)
     from .models import ModelA, ModelB, ModelC
 
 
@@ -92,6 +103,8 @@ The models are taken from :ref:`advanced-features`.
             (ModelB, ModelBAdmin),
             (ModelC, ModelCAdmin),
         )
+        list_filter = (PolymorphicChildModelFilter,)  # This is optional.
+        # Define features for the changelist here
 
     # Only the parent needs to be registered:
     admin.site.register(ModelA, ModelAParentAdmin)
