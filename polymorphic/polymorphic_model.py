@@ -81,12 +81,14 @@ class PolymorphicModel(six.with_metaclass(PolymorphicModelBase, models.Model)):
         """
         if not self.polymorphic_ctype_id:
             self.polymorphic_ctype = ContentType.objects.get_for_model(self, for_concrete_model=False)
+    pre_save_polymorphic.alters_data = True
 
     def save(self, *args, **kwargs):
         """Overridden model save function which supports the polymorphism
         functionality (through pre_save_polymorphic)."""
         self.pre_save_polymorphic()
         return super(PolymorphicModel, self).save(*args, **kwargs)
+    save.alters_data = True
 
     def get_real_instance_class(self):
         """
