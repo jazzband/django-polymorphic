@@ -103,10 +103,18 @@ class PolymorphicModel(six.with_metaclass(PolymorphicModelBase, models.Model)):
         # Note that model_class() can return None for stale content types;
         # when the content type record still exists but no longer refers to an existing model.
         try:
-            return ContentType.objects.get_for_id(self.polymorphic_ctype_id).model_class()
+            model = ContentType.objects.get_for_id(self.polymorphic_ctype_id).model_class()
         except AttributeError:
             # Django <1.6 workaround
             return None
+
+        # Protect against bad imports (dumpdata without --natural) or other
+        # issues missing with the ContentType models.
+        if not issubclass(model, self.__class__):
+            raise RuntimeError("ContentType {0} for {1} #{2} does not point to a subclass!".format(
+                self.polymorphic_ctype_id, model, self.pk,
+            ))
+        return model
 
     def get_real_concrete_instance_class_id(self):
         model_class = self.get_real_instance_class()
