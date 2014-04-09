@@ -1,8 +1,8 @@
 Changelog
 ==========
 
-Version 0.5.4 (in development)
-------------------------------
+Version 0.5.4 (2014-04-09)
+--------------------------
 
 * Fix ``.non_polymorphic()`` to returns a clone of the queryset, instead of effecting the existing queryset.
 * Fix missing ``alters_data = True`` annotations on the overwritten ``save()`` methods.
