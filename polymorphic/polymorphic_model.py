@@ -99,7 +99,7 @@ class PolymorphicModel(six.with_metaclass(PolymorphicModelBase, models.Model)):
         """
         # the following line would be the easiest way to do this, but it produces sql queries
         # return self.polymorphic_ctype.model_class()
-        # so we use the following version, which uses the CopntentType manager cache.
+        # so we use the following version, which uses the ContentType manager cache.
         # Note that model_class() can return None for stale content types;
         # when the content type record still exists but no longer refers to an existing model.
         try:
