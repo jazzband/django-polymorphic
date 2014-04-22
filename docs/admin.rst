@@ -102,15 +102,15 @@ The models are taken from :ref:`advanced-features`.
         )
 
 
-	class ModelBInline(admin.StackedInline):
-	    model = ModelB
-	    fk_name = 'modelb'
-	    readonly_fields = ['modela_ptr']
-	
-		
-	class StandardModelAdmin(admin.ModelAdmin):
-		inlines = [ModelBInline]
-		
+    class ModelBInline(admin.StackedInline):
+        model = ModelB
+        fk_name = 'modelb'
+        readonly_fields = ['modela_ptr']
+    
+        
+    class StandardModelAdmin(admin.ModelAdmin):
+        inlines = [ModelBInline]
+        
 
     # Only the parent needs to be registered:
     admin.site.register(ModelA, ModelAParentAdmin)
