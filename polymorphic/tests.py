@@ -721,10 +721,10 @@ class PolymorphicTests(TestCase):
 
     def test_proxy_get_real_instance_class(self):
         """
-            Test that proxy models derived from PolyMorphicBase classes
-            can call get_real_instance() and get_real_instance_class()
+        The call to ``get_real_instance()`` also checks whether the returned model is of the correct type.
+        This unit test guards that this check is working properly. For instance,
+        proxy child models need to be handled separately.
         """
-
         name="Item1"
         nonproxychild = NonProxyChild.objects.create(name=name)
 
