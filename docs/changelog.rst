@@ -1,7 +1,7 @@
 Changelog
 ==========
 
-Version 0.5.5 (dev)
+Version 0.5.5 (2014-04-29)
 --------------------------
 
 * Fixed ``get_real_instance_class()`` for proxy models (broke in 0.5.4).
