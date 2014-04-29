@@ -223,6 +223,9 @@ class ProxyChild(ProxyBase):
     class Meta:
         proxy = True
 
+class NonProxyChild(ProxyBase):
+    name=models.CharField(max_length=10)
+
 # base -> proxy -> real models
 class ProxiedBase(ShowFieldTypeAndContent, PolymorphicModel):
     name = models.CharField(max_length=10)
@@ -716,6 +719,24 @@ class PolymorphicTests(TestCase):
 
         self.assertIsInstance(items[0], ProxyChild)
 
+    def test_proxy_get_real_instance_class(self):
+        """
+            Test that proxy models derived from PolyMorphicBase classes
+            can call get_real_instance() and get_real_instance_class()
+        """
+
+        name="Item1"
+        nonproxychild = NonProxyChild.objects.create(name=name)
+
+        pb = ProxyBase.objects.get(id=1)
+        self.assertEqual(pb.get_real_instance_class(), NonProxyChild)
+        self.assertEqual(pb.get_real_instance(), nonproxychild)
+        self.assertEqual(pb.name, name)
+
+        pbm = ProxyChild.objects.get(id=1)
+        self.assertEqual(pbm.get_real_instance_class(), NonProxyChild)
+        self.assertEqual(pbm.get_real_instance(), nonproxychild)
+        self.assertEqual(pbm.name, name)
 
     def test_content_types_for_proxy_models(self):
         """Checks if ContentType is capable of returning proxy models."""
