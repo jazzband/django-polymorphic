@@ -530,6 +530,25 @@ class PolymorphicTests(TestCase):
         o = InitTestModelSubclass.objects.create()
         self.assertEqual(o.bar, 'XYZ')
 
+    def test_primary_key_override(self):
+        from .models import PrimaryKeyOverrideBase, PrimaryKeyOverride
+        PrimaryKeyOverride.objects.create(char_primary_key='PK1', field1='object 1, field 1', field2='object 1, field 2')
+        PrimaryKeyOverride.objects.create(char_primary_key='PK2', field1='object 2, field 1', field2='object 2, field 2')
+
+        objects = list(PrimaryKeyOverrideBase.objects.all().order_by('id'))
+
+        self.assertEqual(objects[0].id, 1)
+        self.assertEqual(objects[0].pk, 'PK1')
+        self.assertEqual(objects[0].char_primary_key, 'PK1')
+
+        self.assertEqual(objects[1].id, 2)
+        self.assertEqual(objects[1].pk, 'PK2')
+        self.assertEqual(objects[1].char_primary_key, 'PK2')
+
+        self.assertEqual(PrimaryKeyOverrideBase.objects.filter(pk=1).count(), 1)
+        self.assertEqual(PrimaryKeyOverride.objects.filter(id=1).count(), 1)
+        self.assertEqual(PrimaryKeyOverride.objects.filter(pk='PK1').count(), 1)
+
 
 class RegressionTests(TestCase):
     def test_for_query_result_incomplete_with_inheritance(self):

@@ -424,3 +424,15 @@ class ProxyModelB(ProxyModelBase):
 
 class RelatedNameClash(ShowFieldType, PolymorphicModel):
     ctype = models.ForeignKey(ContentType, null=True, editable=False)
+
+
+##
+# Test primary key override
+
+class PrimaryKeyOverrideBase(PolymorphicModel):
+    field1 = models.CharField(max_length=10)
+
+
+class PrimaryKeyOverride(PrimaryKeyOverrideBase):
+    char_primary_key = models.CharField(max_length=10, primary_key=True)
+    field2 = models.CharField(max_length=10)
