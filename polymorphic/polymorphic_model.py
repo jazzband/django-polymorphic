@@ -47,12 +47,12 @@ class PolymorphicModel(six.with_metaclass(PolymorphicModelBase, models.Model)):
         Each method call executes one db query (if necessary).
         """
         real_model = self.get_polymorphic_ctype().model_class()
-        if real_model == self.__class__:
+        if real_model == self._meta.model:
             return self
 
         attrs = set(f.attname for f in real_model._meta.fields) - set(f.attname for f in self._meta.fields)
         if real_model._meta.pk.attname in attrs:
             attrs.remove(real_model._meta.pk.attname)
-        deferred_modelclass = deferred_class_factory(real_model, set(), attrs)
+        deferred_modelclass = deferred_class_factory(real_model, self._meta.model, set(), attrs)
 
         return transmogrify(deferred_modelclass, self)

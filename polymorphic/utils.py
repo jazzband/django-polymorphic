@@ -1,3 +1,5 @@
+import weakref
+
 from django.db.backends import util
 from django.db.models.query_utils import DeferredAttribute
 
@@ -15,17 +17,24 @@ def transmogrify(cls, obj):
 
 
 class BulkDeferredAttribute(DeferredAttribute):
+    def __init__(self, field_name, model, parent):
+        self.field_name = field_name
+        self.model_ref = weakref.ref(model)
+        self.parent_ref = weakref.ref(parent)
+
     def __get__(self, instance, owner):
         """
         Retrieves and caches the value from the datastore on the first lookup.
         Returns the cached value.
         """
+        non_deferred_model = instance._meta.proxy_for_model
+        opts = non_deferred_model._meta
+
         assert instance is not None
         data = instance.__dict__
         if data.get(self.field_name, self) is self:
-            cls = self.model_ref()
             fields = {}
-            for field in cls._meta.fields:
+            for field in non_deferred_model._meta.fields:
                 field_name = field.attname
                 if isinstance(instance.__class__.__dict__.get(field_name), BulkDeferredAttribute):
                     fields[field_name] = field.name
@@ -33,11 +42,12 @@ class BulkDeferredAttribute(DeferredAttribute):
             # various data coersion methods (to_python(), etc.) to be called
             # here.
             if fields and self.field_name in fields:
-                try:
-                    obj = cls._default_manager.filter(pk=instance.pk).only(*fields.values()).using(instance._state.db).get()
-                except cls.DoesNotExist:
-                    # re-create missing objects:
-                    obj = transmogrify(cls, instance)
+                parent = self.parent_ref()
+                rel_field = opts.get_ancestor_link(parent._meta.proxy_for_model or parent)
+                val = self._check_parent_chain(instance, rel_field.related_field.name)
+                filters = {rel_field.name: val}
+                obj = non_deferred_model._base_manager.only(*fields.values()).using(
+                    instance._state.db).get(**filters)
                 for field_name in fields.keys():
                     val = getattr(obj, field_name)
                     data[field_name] = val
@@ -45,8 +55,7 @@ class BulkDeferredAttribute(DeferredAttribute):
             return data[self.field_name]
         except KeyError:
             # Fallback to try the real object's getattr:
-            cls = self.model_ref()
-            obj = transmogrify(cls, instance)
+            obj = transmogrify(non_deferred_model, instance)
             return getattr(obj, self.field_name)
 
     def __set__(self, instance, value):
@@ -65,7 +74,7 @@ class BulkDeferredAttribute(DeferredAttribute):
         instance.__dict__[self.field_name] = value
 
 
-def deferred_class_factory(model, attrs, bulk_attrs):
+def deferred_class_factory(model, parent, attrs, bulk_attrs):
     """
     Returns a class object that is a copy of "model" with the specified "attrs"
     being replaced with BulkDeferredAttribute objects. The "pk_value" ties the
@@ -88,7 +97,7 @@ def deferred_class_factory(model, attrs, bulk_attrs):
     name = "%s_Deferred_%s" % (model.__name__, '_'.join(sorted(list(attrs | bulk_attrs))))
     name = util.truncate_name(name, 80, 32)
 
-    overrides = dict([(attr, BulkDeferredAttribute(attr, model)) for attr in bulk_attrs - attrs])
+    overrides = dict([(attr, BulkDeferredAttribute(attr, model, parent)) for attr in bulk_attrs - attrs])
     overrides.update(dict([(attr, DeferredAttribute(attr, model)) for attr in attrs]))
     overrides["Meta"] = Meta
     overrides["__module__"] = model.__module__

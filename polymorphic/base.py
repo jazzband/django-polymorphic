@@ -139,15 +139,31 @@ class PolymorphicModelBase(ModelBase):
             # Figure out if it has to defer field loading.
             skip = set(f.field_name for f in cls.__dict__.values() if isinstance(f, DeferredAttribute))
             bulk_skip = set(f.attname for f in model._meta.concrete_fields) - set(fields_attrs)
-            if model._meta.pk.attname in bulk_skip:
-                bulk_skip.remove(model._meta.pk.attname)
+
+            # Figure out all ancestors (and remove them from the bulk loading)
+            ancestor_links = [model._meta.get_ancestor_link(cls)]
+            for parent in model._meta.get_parent_list():
+                ancestor_links.append(model._meta.get_ancestor_link(parent._meta.proxy_for_model or parent))
+            for base in model._meta.get_base_chain(cls) or []:
+                ancestor_links.append(base._meta.get_ancestor_link(cls._meta.proxy_for_model or cls))
+
+            for ancestor_link in ancestor_links:
+                if ancestor_link:
+                    if ancestor_link.attname in bulk_skip:
+                        bulk_skip.remove(ancestor_link.attname)
+                    if ancestor_link.related_field.attname in bulk_skip:
+                        bulk_skip.remove(ancestor_link.related_field.attname)
+
             if skip or bulk_skip:
-                model = deferred_class_factory(model, skip, bulk_skip)
+                model = deferred_class_factory(model, cls, skip, bulk_skip)
 
             # Build kwargs for new child model class.
             kwargs = dict(zip(fields_attrs, args))
             pk = kwargs[cls._meta.pk.attname]
-            kwargs[model._meta.pk.attname] = pk
+            for ancestor_link in ancestor_links:
+                if ancestor_link:
+                    kwargs[ancestor_link.attname] = pk
+                    kwargs[ancestor_link.related_field.attname] = pk
             instance = model(**kwargs)
 
             # Main class pk attribute might not have ended with a valid value in
