@@ -102,6 +102,8 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
 
     add_type_template = None
     add_type_form = PolymorphicModelChoiceForm
+    
+    pk_regex = '(\d+)'
 
 
     def __init__(self, model, admin_site, *args, **kwargs):
@@ -247,7 +249,7 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
 
         # Patch the change URL so it's not a big catch-all; allowing all custom URLs to be added to the end.
         # The url needs to be recreated, patching url.regex is not an option Django 1.4's LocaleRegexProvider changed it.
-        new_change_url = url(r'^(\d+)/$', self.admin_site.admin_view(self.change_view), name='{0}_{1}_change'.format(*info))
+        new_change_url = url(r'^{0}/$'.format(self.pk_regex), self.admin_site.admin_view(self.change_view), name='{0}_{1}_change'.format(*info))
         for i, oldurl in enumerate(urls):
             if oldurl.name == new_change_url.name:
                 urls[i] = new_change_url
