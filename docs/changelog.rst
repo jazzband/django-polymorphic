@@ -1,6 +1,12 @@
 Changelog
 ==========
 
+In git master
+-------------
+
+* Added ``pk_regex`` to the ``PolymorphicParentModelAdmin`` to support non-integer primary keys.
+
+
 Version 0.5.5 (2014-04-29)
 --------------------------
 
