@@ -1,10 +1,11 @@
 Changelog
 ==========
 
-In git master
--------------
+Version 0.5.6 (2014-07-21)
+--------------------------
 
 * Added ``pk_regex`` to the ``PolymorphicParentModelAdmin`` to support non-integer primary keys.
+* Fixed passing ``?ct_id=`` to the add view for Django 1.6 (fixes compatibility with django-parler_).
 
 
 Version 0.5.5 (2014-04-29)
@@ -104,3 +105,4 @@ It supports Django 1.1 up till 1.4 and Python 2.4 up till 2.7.
 For a detailed list of it's changes, see the :doc:`archived changelog <changelog_archive>`.
 
 .. _Grappelli: http://grappelliproject.com/
+.. _django-parler: https://github.com/edoburu/django-parler
