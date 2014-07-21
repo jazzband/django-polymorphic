@@ -16,14 +16,18 @@ matrix:
     env: DJANGO=django==1.4.5
   - python: "3.2"
     env: DJANGO=django==1.4.5
+
 install:
-  - "pip install $DJANGO coverage==3.6 --use-mirrors"
+  - pip install $DJANGO coverage==3.6
+
 script:
   - coverage run --source=polymorphic runtests.py
   - coverage report -m
+
 after_success:
-  - "pip install coveralls==0.2 --use-mirrors"
+  - pip install coveralls==0.2
   - coveralls
+
 branches:
   only:
     - master

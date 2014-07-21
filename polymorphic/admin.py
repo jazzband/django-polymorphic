@@ -15,8 +15,16 @@ from django.shortcuts import render_to_response
 from django.template.context import RequestContext
 from django.utils import six
 from django.utils.encoding import force_text
+from django.utils.http import urlencode
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
+try:
+    # Django 1.6 implements this
+    from django.contrib.admin.templatetags.admin_urls import add_preserved_filters
+except ImportError:
+    def add_preserved_filters(context, form_url):
+        return form_url
+
 
 __all__ = (
     'PolymorphicModelChoiceForm', 'PolymorphicParentModelAdmin',
@@ -227,6 +235,12 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
             return self.add_type_view(request)
         else:
             real_admin = self._get_real_admin_by_ct(ct_id)
+            # rebuild form_url, otherwise libraries below will override it.
+            form_url = add_preserved_filters({
+                'preserved_filters': urlencode({'ct_id': ct_id}),
+                'opts': self.model._meta},
+                form_url
+            )
             return real_admin.add_view(request, form_url, extra_context)
 
 
