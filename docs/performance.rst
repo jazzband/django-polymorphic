@@ -13,7 +13,7 @@ SQL query for every object in the result which is not of class ``BaseModel``.
 Compared to these solutions, *django-polymorphic* has the advantage
 that it only needs 1 SQL query *per object type*, and not *per object*.
 
-The current implementation is does not use any custom SQL or Django DB layer
+The current implementation does not use any custom SQL or Django DB layer
 internals - it is purely based on the standard Django ORM. Specifically, the query::
 
     result_objects = list( ModelA.objects.filter(...) )
