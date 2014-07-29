@@ -18,12 +18,20 @@ from django.utils.encoding import force_text
 from django.utils.http import urlencode
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
+
 try:
     # Django 1.6 implements this
     from django.contrib.admin.templatetags.admin_urls import add_preserved_filters
 except ImportError:
     def add_preserved_filters(context, form_url):
         return form_url
+
+try:
+    from django.contrib.auth import get_permission_codename
+except ImportError:
+    # Django < 1.6
+    from django.contrib.auth.management import _get_permission_codename as get_permission_codename
+
 
 
 __all__ = (
@@ -180,12 +188,6 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
         """
         Return a list of polymorphic types for which the user has the permission to perform the given action.
         """
-        try:
-            from django.contrib.auth import get_permission_codename
-        except ImportError:
-            # Django < 1.6
-            from django.contrib.auth.management import _get_permission_codename as get_permission_codename
-
         choices = []
         for model, _ in self.get_child_models():
             if not request.user.has_perm('%s.%s' % (model._meta.app_label,
