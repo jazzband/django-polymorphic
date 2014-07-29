@@ -7,6 +7,7 @@ from django.contrib import admin
 from django.contrib.admin.helpers import AdminForm, AdminErrorList
 from django.contrib.admin.sites import AdminSite
 from django.contrib.admin.widgets import AdminRadioSelect
+from django.contrib.auth import get_permission_codename
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import RegexURLResolver
@@ -65,7 +66,7 @@ class PolymorphicChildModelFilter(admin.SimpleListFilter):
     parameter_name = 'polymorphic_ctype'
 
     def lookups(self, request, model_admin):
-        return model_admin.get_child_type_choices()
+        return model_admin.get_child_type_choices(request, 'change')
 
     def queryset(self, request, queryset):
         try:
@@ -176,12 +177,15 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
         return self.child_models
 
 
-    def get_child_type_choices(self):
+    def get_child_type_choices(self, request, action):
         """
-        Return a list of polymorphic types which can be added.
+        Return a list of polymorphic types for which the user has the permission to perform the given action.
         """
         choices = []
         for model, _ in self.get_child_models():
+            if not request.user.has_perm('%s.%s' % (model._meta.app_label,
+                                                    get_permission_codename(action, model._meta))):
+                continue
             ct = ContentType.objects.get_for_model(model, for_concrete_model=False)
             choices.append((ct.id, model._meta.verbose_name))
         return choices
@@ -325,7 +329,7 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
         if request.META['QUERY_STRING']:
             extra_qs = '&' + request.META['QUERY_STRING']
 
-        choices = self.get_child_type_choices()
+        choices = self.get_child_type_choices(request, 'add')
         if len(choices) == 1:
             return HttpResponseRedirect('?ct_id={0}{1}'.format(choices[0][0], extra_qs))
 
