@@ -7,7 +7,6 @@ from django.contrib import admin
 from django.contrib.admin.helpers import AdminForm, AdminErrorList
 from django.contrib.admin.sites import AdminSite
 from django.contrib.admin.widgets import AdminRadioSelect
-from django.contrib.auth import get_permission_codename
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import RegexURLResolver
@@ -181,6 +180,12 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
         """
         Return a list of polymorphic types for which the user has the permission to perform the given action.
         """
+        try:
+            from django.contrib.auth import get_permission_codename
+        except ImportError:
+            # Django < 1.6
+            from django.contrib.auth.management import _get_permission_codename as get_permission_codename
+
         choices = []
         for model, _ in self.get_child_models():
             if not request.user.has_perm('%s.%s' % (model._meta.app_label,
