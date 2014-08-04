@@ -54,7 +54,7 @@ class PolymorphicModelChoiceForm(forms.Form):
     The default form for the ``add_type_form``. Can be overwritten and replaced.
     """
     #: Define the label for the radiofield
-    type_label = _("Type")
+    type_label = _('Type')
 
     ct_id = forms.ChoiceField(label=type_label, widget=AdminRadioSelect(attrs={'class': 'radiolist'}))
 
@@ -69,7 +69,7 @@ class PolymorphicChildModelFilter(admin.SimpleListFilter):
     An admin list filter for the PolymorphicParentModelAdmin which enables
     filtering by its child models.
     """
-    title = _('Content type')
+    title = _('Type')
     parameter_name = 'polymorphic_ctype'
 
     def lookups(self, request, model_admin):
