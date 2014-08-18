@@ -7,6 +7,7 @@ from __future__ import absolute_import
 from collections import defaultdict
 
 from django.db.models.query import QuerySet
+from django.db.models.loading import get_model
 from django.contrib.contenttypes.models import ContentType
 from django.utils import six
 
@@ -71,15 +72,42 @@ class PolymorphicQuerySet(QuerySet):
         qs.polymorphic_disabled = True
         return qs
 
+    def _parse_instance_args(self, models):
+        """Given a list of mixed models and model references, return a list of
+        models. Logic is similar to django's ForeignKey string references."""
+        model_objects = []
+        for model in models:
+            # https://github.com/django/django/blob/088f68252d1f3c9e5d51a5ea3ab769397a65859f/django/db/models/fields/related.py#L58-L68
+            if isinstance(model, six.string_types):
+                # If it's a string, try to split it.
+                try:
+                    app_label, model_name = model.split(".")
+                except ValueError:
+                    # If it can't be split, assume it's in the current app.
+                    app_label = self.model._meta.app_label
+                    model_name = model
+            else:
+                # It's a model class
+                app_label = model._meta.app_label
+                model_name = model._meta.object_name
+
+            model = get_model(app_label, model_name)
+            model_objects += [model]
+
+        return model_objects
+
+
     def instance_of(self, *args):
         """Filter the queryset to only include the classes in args (and their subclasses).
         Implementation in _translate_polymorphic_filter_defnition."""
-        return self.filter(instance_of=args)
+        models = self._parse_instance_args(args)
+        return self.filter(instance_of=models)
 
     def not_instance_of(self, *args):
         """Filter the queryset to exclude the classes in args (and their subclasses).
         Implementation in _translate_polymorphic_filter_defnition."""
-        return self.filter(not_instance_of=args)
+        models = self._parse_instance_args(args)
+        return self.filter(not_instance_of=models)
 
     def _filter_or_exclude(self, negate, *args, **kwargs):
         "We override this internal Django functon as it is used for all filter member functions."
