@@ -86,12 +86,11 @@ class PolymorphicQuerySet(QuerySet):
                     # If it can't be split, assume it's in the current app.
                     app_label = self.model._meta.app_label
                     model_name = model
-            else:
-                # It's a model class
-                app_label = model._meta.app_label
-                model_name = model._meta.object_name
 
-            model = get_model(app_label, model_name)
+                model = get_model(app_label, model_name)
+                if not model:
+                    raise ValueError("Cannot load '%s.%s'." % (app_label, model_name))
+
             model_objects += [model]
 
         return model_objects
