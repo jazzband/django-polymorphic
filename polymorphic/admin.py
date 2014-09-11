@@ -231,8 +231,15 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
 
 
     def queryset(self, request):
+        self.get_queryset(request)
+
+
+    def get_queryset(self, request):
         # optimize the list display.
-        qs = super(PolymorphicParentModelAdmin, self).queryset(request)
+        try:
+            qs = super(PolymorphicParentModelAdmin, self).get_queryset(request)
+        except:
+            qs = super(PolymorphicParentModelAdmin, self).queryset(request)
         if not self.polymorphic_list:
             qs = qs.non_polymorphic()
         return qs
