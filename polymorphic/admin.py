@@ -19,6 +19,7 @@ from django.utils.http import urlencode
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
 
+
 try:
     # Django 1.6 implements this
     from django.contrib.admin.templatetags.admin_urls import add_preserved_filters
@@ -280,7 +281,10 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
         Expose the custom URLs for the subclasses and the URL resolver.
         """
         urls = super(PolymorphicParentModelAdmin, self).get_urls()
-        info = self.model._meta.app_label, self.model._meta.module_name
+        try:
+            info = self.model._meta.app_label, self.model._meta.model_name
+        except:
+            info = self.model._meta.app_label, self.model._meta.module_name
 
         # Patch the change URL so it's not a big catch-all; allowing all custom URLs to be added to the end.
         # The url needs to be recreated, patching url.regex is not an option Django 1.4's LocaleRegexProvider changed it.
