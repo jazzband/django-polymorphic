@@ -18,6 +18,10 @@ sys.stderr.write('Using Django version {0} from {1}\n'.format(
 # Detect location and available modules
 module_root = dirname(realpath(__file__))
 
+test_runner = 'django.test.runner.DiscoverRunner'
+if django.VERSION[:2] < (1, 6):
+    test_runner = 'django.test.simple.DjangoTestSuiteRunner'
+
 # Inline settings file
 settings.configure(
     DEBUG = False,  # will be False anyway by DjangoTestRunner.
@@ -43,9 +47,15 @@ settings.configure(
         'polymorphic',
     ),
     SITE_ID = 3,
+    TEST_RUNNER = test_runner,
+    MIDDLEWARE_CLASSES = (),
 )
 
-call_command('syncdb', verbosity=1, interactive=False)
+if django.VERSION[:2] > (1, 6):
+    django.setup()
+    call_command('migrate', verbosity=1, interactive=False)
+else:
+    call_command('syncdb', verbosity=1, interactive=False)
 
 
 # ---- app start
