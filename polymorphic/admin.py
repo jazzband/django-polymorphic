@@ -232,7 +232,7 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
 
 
     def queryset(self, request):
-        self.get_queryset(request)
+        return self.get_queryset(request)
 
 
     def get_queryset(self, request):
