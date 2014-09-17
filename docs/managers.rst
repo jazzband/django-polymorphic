@@ -13,12 +13,12 @@ explicitly add the default manager first, and then your custom manager::
     from polymorphic import PolymorphicModel, PolymorphicManager
 
    class TimeOrderedManager(PolymorphicManager):
-        def get_query_set(self):
-            qs = super(TimeOrderedManager,self).get_query_set()
+        def get_queryset(self):
+            qs = super(TimeOrderedManager,self).get_queryset()
             return qs.order_by('-start_date')        # order the queryset
 
         def most_recent(self):
-            qs = self.get_query_set()                # get my ordered queryset
+            qs = self.get_queryset()                # get my ordered queryset
             return qs[:10]                           # limit => get ten most recent entries
 
     class Project(PolymorphicModel):
@@ -31,6 +31,8 @@ Django as automatic manager for several purposes, including accessing
 related objects. It must not filter objects and it's safest to use
 the plain ``PolymorphicManager`` here.
 
+    Note that get_query_set is deprecated in Django 1.8 and creates warnings in Django 1.7.
+
 Manager Inheritance
 -------------------
 
@@ -42,12 +44,12 @@ expected in models inheriting from this base model::
    from polymorphic import PolymorphicModel, PolymorphicManager
 
    class TimeOrderedManager(PolymorphicManager):
-        def get_query_set(self):
-            qs = super(TimeOrderedManager,self).get_query_set()
+        def get_queryset(self):
+            qs = super(TimeOrderedManager,self).get_queryset()
             return qs.order_by('-start_date')        # order the queryset
 
         def most_recent(self):
-            qs = self.get_query_set()                # get my ordered queryset
+            qs = self.get_queryset()                # get my ordered queryset
             return qs[:10]                           # limit => get ten most recent entries
 
     class Project(PolymorphicModel):
@@ -64,6 +66,8 @@ ArtProject inherited the managers ``objects`` and ``objects_ordered`` from Proje
 regarding their start time and ``ArtProject.objects_ordered.most_recent()``
 will return the ten most recent art projects.
 .
+
+    Note that get_query_set is deprecated in Django 1.8 and creates warnings in Django 1.7.
 
 Using a Custom Queryset Class
 -----------------------------
