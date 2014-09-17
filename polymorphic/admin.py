@@ -237,10 +237,12 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
 
     def get_queryset(self, request):
         # optimize the list display.
-        try:
-            qs = super(PolymorphicParentModelAdmin, self).get_queryset(request)
-        except:
-            qs = super(PolymorphicParentModelAdmin, self).queryset(request)
+        parent_self = super(PolymorphicParentModelAdmin, self)
+        if hasattr(parent_self, 'get_queryset'):
+            qs = parent_self.get_queryset(request)
+        else:
+            qs = parent_self.queryset(request)
+
         if not self.polymorphic_list:
             qs = qs.non_polymorphic()
         return qs
@@ -281,10 +283,8 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
         Expose the custom URLs for the subclasses and the URL resolver.
         """
         urls = super(PolymorphicParentModelAdmin, self).get_urls()
-        try:
-            info = self.model._meta.app_label, self.model._meta.model_name
-        except:
-            info = self.model._meta.app_label, self.model._meta.module_name
+        meta = self.model._meta
+        info = meta.app_label, getattr(meta, 'model_name', meta.module_name)
 
         # Patch the change URL so it's not a big catch-all; allowing all custom URLs to be added to the end.
         # The url needs to be recreated, patching url.regex is not an option Django 1.4's LocaleRegexProvider changed it.
