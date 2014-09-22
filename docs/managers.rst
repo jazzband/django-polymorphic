@@ -13,12 +13,12 @@ explicitly add the default manager first, and then your custom manager::
     from polymorphic import PolymorphicModel, PolymorphicManager
 
    class TimeOrderedManager(PolymorphicManager):
-        def get_query_set(self):
-            qs = super(TimeOrderedManager,self).get_query_set()
+        def get_queryset(self):
+            qs = super(TimeOrderedManager,self).get_queryset()
             return qs.order_by('-start_date')        # order the queryset
 
         def most_recent(self):
-            qs = self.get_query_set()                # get my ordered queryset
+            qs = self.get_queryset()                 # get my ordered queryset
             return qs[:10]                           # limit => get ten most recent entries
 
     class Project(PolymorphicModel):
@@ -42,12 +42,12 @@ expected in models inheriting from this base model::
    from polymorphic import PolymorphicModel, PolymorphicManager
 
    class TimeOrderedManager(PolymorphicManager):
-        def get_query_set(self):
-            qs = super(TimeOrderedManager,self).get_query_set()
+        def get_queryset(self):
+            qs = super(TimeOrderedManager,self).get_queryset()
             return qs.order_by('-start_date')        # order the queryset
 
         def most_recent(self):
-            qs = self.get_query_set()                # get my ordered queryset
+            qs = self.get_queryset()                 # get my ordered queryset
             return qs[:10]                           # limit => get ten most recent entries
 
     class Project(PolymorphicModel):
