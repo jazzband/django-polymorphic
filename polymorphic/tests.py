@@ -113,8 +113,8 @@ class MyManager(PolymorphicManager):
     def get_queryset(self):
         return super(MyManager, self).get_queryset().order_by('-field1')
 
-    def get_query_set(self):
-        return self.get_queryset()
+    # Django <= 1.5 compatibility
+    get_query_set = get_queryset
 
 class ModelWithMyManager(ShowFieldTypeAndContent, Model2A):
     objects = MyManager()
@@ -149,9 +149,8 @@ class PlainMyManager(models.Manager):
     def get_queryset(self):
         return PlainMyManagerQuerySet(self.model, using=self._db)
 
-    def get_query_set(self):
-        # Maintains Django <= 1.5 compatibility
-        return self.get_queryset()
+    # Django <= 1.5 compatibility
+    get_query_set = get_queryset
 
 class PlainParentModelWithManager(models.Model):
     pass

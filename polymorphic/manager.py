@@ -4,6 +4,7 @@
 """
 from __future__ import unicode_literals
 import warnings
+import django
 from django.db import models
 from polymorphic.query import PolymorphicQuerySet
 
@@ -33,9 +34,9 @@ class PolymorphicManager(models.Manager):
     def get_queryset(self):
         return self.queryset_class(self.model, using=self._db)
 
-    def get_query_set(self):
-        # Maintains Django <= 1.5 compatibility
-        return self.get_queryset()
+    # For Django 1.5
+    if django.VERSION < (1, 7):
+        get_query_set = get_queryset
 
     # Proxy all unknown method calls to the queryset, so that its members are
     # directly accessible as PolymorphicModel.objects.*
@@ -44,7 +45,7 @@ class PolymorphicManager(models.Manager):
     def __getattr__(self, name):
         if name.startswith('__'):
             return super(PolymorphicManager, self).__getattr__(self, name)
-        return getattr(self.get_query_set(), name)
+        return getattr(self.get_queryset(), name)
 
     def __unicode__(self):
         return '%s (PolymorphicManager) using %s' % (self.__class__.__name__, self.queryset_class.__name__)
