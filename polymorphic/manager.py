@@ -30,8 +30,12 @@ class PolymorphicManager(models.Manager):
 
         super(PolymorphicManager, self).__init__(*args, **kwrags)
 
-    def get_query_set(self):
+    def get_queryset(self):
         return self.queryset_class(self.model, using=self._db)
+
+    def get_query_set(self):
+        # Maintains Django <= 1.5 compatibility
+        return self.get_queryset()
 
     # Proxy all unknown method calls to the queryset, so that its members are
     # directly accessible as PolymorphicModel.objects.*

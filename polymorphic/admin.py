@@ -230,6 +230,10 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
             raise ChildAdminNotRegistered("No child admin site was registered for a '{0}' model.".format(model_class))
 
 
+    def get_queryset(self, request):
+        return self.queryset(request)
+
+
     def queryset(self, request):
         # optimize the list display.
         qs = super(PolymorphicParentModelAdmin, self).queryset(request)
