@@ -27,13 +27,6 @@ except ImportError:
     def add_preserved_filters(context, form_url):
         return form_url
 
-try:
-    from django.contrib.auth import get_permission_codename
-except ImportError:
-    # Django < 1.6
-    from django.contrib.auth.management import _get_permission_codename as get_permission_codename
-
-
 
 __all__ = (
     'PolymorphicModelChoiceForm', 'PolymorphicParentModelAdmin',
@@ -191,8 +184,10 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
         """
         choices = []
         for model, _ in self.get_child_models():
-            if not request.user.has_perm('%s.%s' % (model._meta.app_label,
-                                                    get_permission_codename(action, model._meta))):
+            perm_function_name = 'has_{0}_permission'.format(action)
+            model_admin = self._get_real_admin_by_model(model)
+            perm_function = getattr(model_admin, perm_function_name)
+            if not perm_function(request):
                 continue
             ct = ContentType.objects.get_for_model(model, for_concrete_model=False)
             choices.append((ct.id, model._meta.verbose_name))
