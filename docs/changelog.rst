@@ -5,6 +5,7 @@ Version 0.6 (in git)
 --------------------
 
 * Added permission check for all child types.
+* Added Django 1.7 support.
 * **BACKWARDS INCOMPATIBILITY:** the ``get_child_type_choices()`` method receives 2 arguments now (request, action).
   If you have overwritten this method in your code, make sure the method signature is updated accordingly.
 
