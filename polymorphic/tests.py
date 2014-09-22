@@ -5,6 +5,7 @@
 from __future__ import print_function
 import uuid
 import re
+import django
 from django.db.models.query import QuerySet
 
 from django.test import TestCase
@@ -66,21 +67,45 @@ class ModelX(Base):
 class ModelY(Base):
     field_y = models.CharField(max_length=10)
 
-class Enhance_Plain(models.Model):
-    field_p = models.CharField(max_length=10)
-class Enhance_Base(ShowFieldTypeAndContent, PolymorphicModel):
-    field_b = models.CharField(max_length=10)
-class Enhance_Inherit(Enhance_Base, Enhance_Plain):
-    field_i = models.CharField(max_length=10)
+if django.VERSION[:2] > (1, 6):
+    class Enhance_Plain(models.Model):
+        field_p = models.CharField(max_length=10)
+    class Enhance_Base(ShowFieldTypeAndContent, PolymorphicModel):
+        base_id = models.AutoField(primary_key=True)
+        field_b = models.CharField(max_length=10)
+    class Enhance_Inherit(Enhance_Base, Enhance_Plain):
+        field_i = models.CharField(max_length=10)
 
-class DiamondBase(models.Model):
-    field_b = models.CharField(max_length=10)
-class DiamondX(DiamondBase):
-    field_x = models.CharField(max_length=10)
-class DiamondY(DiamondBase):
-    field_y = models.CharField(max_length=10)
-class DiamondXY(DiamondX, DiamondY):
-    pass
+    class DiamondBase(models.Model):
+        field_b = models.CharField(max_length=10)
+    class DiamondX(DiamondBase):
+        x_id = models.AutoField(primary_key=True)
+        field_x = models.CharField(max_length=10)
+    class DiamondY(DiamondBase):
+        y_id = models.AutoField(primary_key=True)
+        field_y = models.CharField(max_length=10)
+    class DiamondXY(DiamondBase):
+        xy_id = models.AutoField(primary_key=True)
+        field_x = models.CharField(max_length=10)
+        field_y = models.CharField(max_length=10)
+else:
+    class Enhance_Plain(models.Model):
+        field_p = models.CharField(max_length=10)
+    class Enhance_Base(ShowFieldTypeAndContent, PolymorphicModel):
+        field_b = models.CharField(max_length=10)
+    class Enhance_Inherit(Enhance_Base, Enhance_Plain):
+        field_i = models.CharField(max_length=10)
+
+    class DiamondBase(models.Model):
+        field_b = models.CharField(max_length=10)
+    class DiamondX(DiamondBase):
+        x_id = models.AutoField(primary_key=True)
+        field_x = models.CharField(max_length=10)
+    class DiamondY(DiamondBase):
+        y_id = models.AutoField(primary_key=True)
+        field_y = models.CharField(max_length=10)
+    class DiamondXY(DiamondX, DiamondY):
+        xy_id = models.AutoField(primary_key=True)
 
 class RelationBase(ShowFieldTypeAndContent, PolymorphicModel):
     field_base = models.CharField(max_length=10)
@@ -260,6 +285,10 @@ class PolymorphicTests(TestCase):
     The test suite
     """
     def test_diamond_inheritance(self):
+        if django.VERSION[:2] > (1, 6):
+            print('')
+            print("# Django 1.7 doesn't allow multiple inheritance when two id fields exist. https://docs.djangoproject.com/en/dev/topics/db/models/#multiple-inheritance")
+
         # Django diamond problem
         # https://code.djangoproject.com/ticket/10808
         o1 = DiamondXY.objects.create(field_b='b', field_x='x', field_y='y')
@@ -622,10 +651,13 @@ class PolymorphicTests(TestCase):
         Enhance_Inherit.objects.create(field_b='b-inherit', field_p='p', field_i='i')
 
         qs = Enhance_Base.objects.all()
-        self.assertEqual(repr(qs[0]), '<Enhance_Base: id 1, field_b (CharField) "b-base">')
-        self.assertEqual(repr(qs[1]), '<Enhance_Inherit: id 2, field_b (CharField) "b-inherit", field_p (CharField) "p", field_i (CharField) "i">')
+        if django.VERSION[:2] > (1, 6):
+            self.assertEqual(repr(qs[0]), '<Enhance_Base: base_id (AutoField/pk) 1, field_b (CharField) "b-base">')
+            self.assertEqual(repr(qs[1]), '<Enhance_Inherit: base_id (AutoField/pk) 2, field_b (CharField) "b-inherit", id 1, field_p (CharField) "p", field_i (CharField) "i">')
+        else:
+            self.assertEqual(repr(qs[0]), '<Enhance_Base: id 1, field_b (CharField) "b-base">')
+            self.assertEqual(repr(qs[1]), '<Enhance_Inherit: id 2, field_b (CharField) "b-inherit", field_p (CharField) "p", field_i (CharField) "i">')
         self.assertEqual(len(qs), 2)
-
 
     def test_relation_base(self):
         # ForeignKey, ManyToManyField
