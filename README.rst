@@ -34,7 +34,7 @@ ForeignKeys, ManyToManyFields or OneToOneFields.
 Features
 --------
 
-* Full admin integation.
+* Full admin integration.
 * ORM integration:
 
  * support for ForeignKey, ManyToManyField, OneToOneField descriptors.
