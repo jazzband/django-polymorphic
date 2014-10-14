@@ -1,3 +1,4 @@
+import django
 import os
 
 DEBUG = True
@@ -73,6 +74,9 @@ INSTALLED_APPS = (
     'polymorphic',      # needed if you want to use the polymorphic admin
     'pexp',             # this Django app is for testing and experimentation; not needed otherwise
 )
+
+if django.VERSION >= (1,7):
+    TEST_RUNNER = 'django.test.runner.DiscoverRunner'  # silence system checks
 
 # Logging configuration
 LOGGING = {
