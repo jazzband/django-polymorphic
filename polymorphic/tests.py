@@ -169,7 +169,7 @@ class PlainMyManagerQuerySet(QuerySet):
 
 class PlainMyManager(models.Manager):
     def my_queryset_foo(self):
-        return self.get_query_set().my_queryset_foo()
+        return self.get_queryset().my_queryset_foo()
 
     def get_queryset(self):
         return PlainMyManagerQuerySet(self.model, using=self._db)

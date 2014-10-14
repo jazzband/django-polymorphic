@@ -277,8 +277,7 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
         Expose the custom URLs for the subclasses and the URL resolver.
         """
         urls = super(PolymorphicParentModelAdmin, self).get_urls()
-        meta = self.model._meta
-        info = meta.app_label, getattr(meta, 'model_name', meta.module_name)
+        info = _get_opt(self.model)
 
         # Patch the change URL so it's not a big catch-all; allowing all custom URLs to be added to the end.
         # The url needs to be recreated, patching url.regex is not an option Django 1.4's LocaleRegexProvider changed it.
@@ -545,3 +544,10 @@ class PolymorphicChildModelAdmin(admin.ModelAdmin):
                 except ValueError:
                     pass   # field not found in form, Django will raise exception later.
         return subclass_fields
+
+
+def _get_opt(model):
+    try:
+        return model._meta.app_label, model._meta.model_name  # Django 1.7 format
+    except AttributeError:
+        return model._meta.app_label, model._meta.module_name
