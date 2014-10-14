@@ -11,6 +11,7 @@
 .idea/workspace.xml
 .tox/
 .DS_Store
+build/
 dist/
 docs/_build/
 htmlcov/
