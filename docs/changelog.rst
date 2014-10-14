@@ -1,6 +1,12 @@
 Changelog
 ==========
 
+Version 0.6.1 (in git)
+----------------------
+
+* Remove Django 1.7 warnings
+
+
 Version 0.6 (2014-10-14)
 ------------------------
 
