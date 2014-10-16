@@ -38,6 +38,15 @@ class PolymorphicManager(models.Manager):
     if django.VERSION < (1, 7):
         get_query_set = get_queryset
 
+    if django.VERSION >= (1,6):
+        # Should not be used for Django 1.4/1.5 all all, as that breaks the RelatedManager
+        def _get_queryset(self):
+            return self.get_queryset()
+    else:
+        # Django 1.5
+        def _get_queryset(self):
+            return self.get_query_set()
+
     # Proxy all unknown method calls to the queryset, so that its members are
     # directly accessible as PolymorphicModel.objects.*
     # The advantage of this method is that not yet known member functions of derived querysets will be proxied as well.
@@ -45,7 +54,7 @@ class PolymorphicManager(models.Manager):
     def __getattr__(self, name):
         if name.startswith('__'):
             return super(PolymorphicManager, self).__getattr__(self, name)
-        return getattr(self.get_queryset(), name)
+        return getattr(self._get_queryset(), name)
 
     def __unicode__(self):
         return '%s (PolymorphicManager) using %s' % (self.__class__.__name__, self.queryset_class.__name__)
