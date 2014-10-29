@@ -200,12 +200,13 @@ class PolymorphicModelBase(ModelBase):
             del(meta.app_label)
         return new_class
 
-    def validate_model_fields(self):
+    @classmethod
+    def validate_model_fields(self, new_class):
         "check if all fields names are allowed (i.e. not in POLYMORPHIC_SPECIAL_Q_KWORDS)"
-        for f in self._meta.fields:
+        for f in new_class._meta.fields:
             if f.name in POLYMORPHIC_SPECIAL_Q_KWORDS:
                 e = 'PolymorphicModel: "%s" - field name "%s" is not allowed in polymorphic models'
-                raise AssertionError(e % (self.__name__, f.name))
+                raise AssertionError(e % (new_class.__name__, f.name))
 
     @classmethod
     def validate_model_manager(self, manager, model_name, manager_name):
