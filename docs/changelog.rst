@@ -1,8 +1,8 @@
 Changelog
 ==========
 
-Version 0.6.1 (in git)
-----------------------
+Version 0.6.1 (2014-12-30)
+--------------------------
 
 * Remove Django 1.7 warnings
 * Fix Django 1.4/1.5 queryset calls on related objects for unknown methods.
