@@ -1,6 +1,12 @@
 Changelog
 ==========
 
+Version 0.7 (in git)
+--------------------
+
+* Support custom primary key defined using ``mybase_ptr = models.OneToOneField(BaseClass, parent_link=True, related_name="...")``.
+
+
 Version 0.6.1 (2014-12-30)
 --------------------------
 
