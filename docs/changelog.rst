@@ -5,6 +5,9 @@ Version 0.6.1 (in git)
 ----------------------
 
 * Remove Django 1.7 warnings
+* Fix Django 1.4/1.5 queryset calls on related objects for unknown methods.
+  The ``RelatedManager`` code overrides ``get_query_set()`` while ``__getattr__()`` used the new-style ``get_queryset()``.
+* Fix validate_model_fields(), caused errors when metaclass raises errors
 
 
 Version 0.6 (2014-10-14)
