@@ -6,6 +6,7 @@ from __future__ import absolute_import
 
 from collections import defaultdict
 
+import django
 from django.db.models.query import QuerySet
 from django.contrib.contenttypes.models import ContentType
 from django.utils import six
@@ -95,10 +96,22 @@ class PolymorphicQuerySet(QuerySet):
     def _process_aggregate_args(self, args, kwargs):
         """for aggregate and annotate kwargs: allow ModelX___field syntax for kwargs, forbid it for args.
         Modifies kwargs if needed (these are Aggregate objects, we translate the lookup member variable)"""
+
+        def patch_lookup(a):
+            if django.VERSION < (1, 8):
+                a.lookup = translate_polymorphic_field_path(self.model, a.lookup)
+            else:
+                # With Django > 1.8, the field on which the aggregate operates is
+                # stored inside a query expression.
+                a.source_expressions[0].name = translate_polymorphic_field_path(
+                    self.model, a.source_expressions[0].name)
+
+        get_lookup = lambda a: a.lookup if django.VERSION < (1, 8) else a.source_expressions[0].name
+
         for a in args:
-            assert not '___' in a.lookup, 'PolymorphicModel: annotate()/aggregate(): ___ model lookup supported for keyword arguments only'
+            assert '___' not in get_lookup(a), 'PolymorphicModel: annotate()/aggregate(): ___ model lookup supported for keyword arguments only'
         for a in six.itervalues(kwargs):
-            a.lookup = translate_polymorphic_field_path(self.model, a.lookup)
+            patch_lookup(a)
 
     def annotate(self, *args, **kwargs):
         """translate the polymorphic field paths in the kwargs, then call vanilla annotate.

@@ -7,7 +7,15 @@ from __future__ import absolute_import
 from django.db import models
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import Q, FieldDoesNotExist
-from django.db.models.related import RelatedObject
+
+try:
+    from django.db.models.related import RelatedObject
+except ImportError:
+    # django.db.models.related.RelatedObject was replaced
+    # by django.db.models.fields.related.ForeignObjectRel in
+    # Django 1.8
+    from django.db.models.fields.related import ForeignObjectRel
+    RelatedObject = ForeignObjectRel
 
 from functools import reduce
 
