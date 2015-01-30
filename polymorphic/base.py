@@ -77,15 +77,17 @@ class PolymorphicModelBase(ModelBase):
         for source_name, mgr_name, manager in inherited_managers:
             #print '** add inherited manager from model %s, manager %s, %s' % (source_name, mgr_name, manager.__class__.__name__)
             new_manager = manager._copy_to_model(new_class)
-            new_class.add_to_class(mgr_name, new_manager)
+            if mgr_name == '_default_manager':
+                new_class._default_manager = new_manager
+            else:
+                new_class.add_to_class(mgr_name, new_manager)
 
         # get first user defined manager; if there is one, make it the _default_manager
         # this value is used by the related objects, restoring access to custom queryset methods on related objects.
         user_manager = self.get_first_user_defined_manager(new_class)
         if user_manager:
-            def_mgr = user_manager._copy_to_model(new_class)
             #print '## add default manager', type(def_mgr)
-            new_class.add_to_class('_default_manager', def_mgr)
+            new_class._default_manager = user_manager._copy_to_model(new_class)
             new_class._default_manager._inherited = False   # the default mgr was defined by the user, not inherited
 
         # validate resulting default manager
