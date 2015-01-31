@@ -283,6 +283,12 @@ class RelatedNameClash(ShowFieldType, PolymorphicModel):
 class TestParentLinkAndRelatedName(ModelShow1_plain):
     superclass = models.OneToOneField(ModelShow1_plain, parent_link=True, related_name='related_name_subclass')
 
+class CustomPkBase(ShowFieldTypeAndContent, PolymorphicModel):
+    b = models.CharField(max_length=1)
+class CustomPkInherit(CustomPkBase):
+    custom_id = models.AutoField(primary_key=True)
+    i = models.CharField(max_length=1)
+
 
 class PolymorphicTests(TestCase):
     """
@@ -303,7 +309,6 @@ class PolymorphicTests(TestCase):
             print('# known django model inheritance diamond problem detected')
             print('DiamondXY fields 1: field_b "{0}", field_x "{1}", field_y "{2}"'.format(o1.field_b, o1.field_x, o1.field_y))
             print('DiamondXY fields 2: field_b "{0}", field_x "{1}", field_y "{2}"'.format(o2.field_b, o2.field_x, o2.field_y))
-
 
     def test_annotate_aggregate_order(self):
         # create a blog of type BlogA
@@ -819,6 +824,13 @@ class PolymorphicTests(TestCase):
         self.assertIsInstance(objects[0], ProxyModelA)
         self.assertIsInstance(objects[1], ProxyModelB)
 
+    def test_custom_pk(self):
+        CustomPkBase.objects.create(b='b')
+        CustomPkInherit.objects.create(b='b', i='i')
+        qs = CustomPkBase.objects.all()
+        self.assertEqual(len(qs), 2)
+        self.assertEqual(repr(qs[0]), '<CustomPkBase: id 1, b (CharField) "b">')
+        self.assertEqual(repr(qs[1]), '<CustomPkInherit: id 2, b (CharField) "b", custom_id (AutoField/pk) 1, i (CharField) "i">')
 
     def test_fix_getattribute(self):
         ### fixed issue in PolymorphicModel.__getattribute__: field name same as model name
