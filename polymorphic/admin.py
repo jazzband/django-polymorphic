@@ -313,7 +313,10 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
             # See if the path started with an ID.
             try:
                 pos = path.find('/')
-                object_id = long(path[0:pos])
+                if pos == -1:
+                    object_id = long(path)
+                else:
+                    object_id = long(path[0:pos])
             except ValueError:
                 raise Http404("No ct_id parameter, unable to find admin subclass for path '{0}'.".format(path))
 
