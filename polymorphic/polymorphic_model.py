@@ -56,7 +56,7 @@ class PolymorphicModel(six.with_metaclass(PolymorphicModelBase, models.Model)):
 
     # avoid ContentType related field accessor clash (an error emitted by model validation)
     polymorphic_ctype = models.ForeignKey(ContentType, null=True, editable=False,
-                                related_name='polymorphic_%(app_label)s.%(class)s_set')
+                                related_name='polymorphic_%(app_label)s%(class)s_set')
 
     # some applications want to know the name of the fields that are added to its models
     polymorphic_internal_model_fields = ['polymorphic_ctype']
