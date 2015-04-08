@@ -103,8 +103,9 @@ class PolymorphicQuerySet(QuerySet):
             else:
                 # With Django > 1.8, the field on which the aggregate operates is
                 # stored inside a query expression.
-                a.source_expressions[0].name = translate_polymorphic_field_path(
-                    self.model, a.source_expressions[0].name)
+                if hasattr(a, 'source_expressions'):
+                    a.source_expressions[0].name = translate_polymorphic_field_path(
+                        self.model, a.source_expressions[0].name)
 
         get_lookup = lambda a: a.lookup if django.VERSION < (1, 8) else a.source_expressions[0].name
 
