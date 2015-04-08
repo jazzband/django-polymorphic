@@ -1,14 +1,15 @@
 Changelog
 ==========
 
-Version 0.7 (in git)
---------------------
+Version 0.7 (2015-04-08)
+------------------------
 
 * Added Django 1.8 support
 * Added support for custom primary key defined using ``mybase_ptr = models.OneToOneField(BaseClass, parent_link=True, related_name="...")``.
 * Fixed Python 3 issue in the admin
 * Fixed ``_default_manager`` to be consistent with Django, it's now assigned directly instead of using ``add_to_class()``
 * Fixed 500 error for admin URLs without a '/', e.g. ``admin/app/parentmodel/id``.
+* Fixed preserved filter for Django admin in delete views
 * Removed test noise for diamond inheritance problem (which Django 1.7 detects)
 
 
