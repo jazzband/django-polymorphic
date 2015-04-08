@@ -27,6 +27,9 @@ except ImportError:
     def add_preserved_filters(context, form_url):
         return form_url
 
+if sys.version_info[0] >= 3:
+    long = int
+
 
 __all__ = (
     'PolymorphicModelChoiceForm', 'PolymorphicParentModelAdmin',
