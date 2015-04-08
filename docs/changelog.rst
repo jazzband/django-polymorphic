@@ -5,6 +5,11 @@ Version 0.7 (in git)
 --------------------
 
 * Support custom primary key defined using ``mybase_ptr = models.OneToOneField(BaseClass, parent_link=True, related_name="...")``.
+* Fixed Django 1.8 issues (regarding related names and source_expression attributes).
+* Fixed Python 3 issue in the admin
+* Fixed ``_default_manager`` to be consistent with Django, it's now assigned directly instead of using ``add_to_class()``
+* Fixed 500 error for admin URLs without a '/', e.g. ``admin/app/parentmodel/id``.
+* Removed test noise for diamond inheritance problem (which Django 1.7 detects)
 
 
 Version 0.6.1 (2014-12-30)
