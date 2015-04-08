@@ -1,6 +1,7 @@
 """
 ModelAdmin code to display polymorphic models.
 """
+import sys
 from django import forms
 from django.conf.urls import patterns, url
 from django.contrib import admin
