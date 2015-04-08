@@ -506,6 +506,29 @@ class PolymorphicTests(TestCase):
         self.assertEqual(show_base_manager(One2OneRelatingModelDerived), "<class 'django.db.models.manager.Manager'> <class 'polymorphic.tests.One2OneRelatingModelDerived'>")
 
 
+    def test_instance_default_manager(self):
+        def show_default_manager(instance):
+            return "{0} {1}".format(
+                repr(type(instance._default_manager)),
+                repr(instance._default_manager.model)
+            )
+
+        plain_a = PlainA(field1='C1')
+        plain_b = PlainB(field2='C1')
+        plain_c = PlainC(field3='C1')
+
+        model_2a = Model2A(field1='C1')
+        model_2b = Model2B(field2='C1')
+        model_2c = Model2C(field3='C1')
+
+        self.assertEqual(show_default_manager(plain_a), "<class 'django.db.models.manager.Manager'> <class 'polymorphic.tests.PlainA'>")
+        self.assertEqual(show_default_manager(plain_b), "<class 'django.db.models.manager.Manager'> <class 'polymorphic.tests.PlainB'>")
+        self.assertEqual(show_default_manager(plain_c), "<class 'django.db.models.manager.Manager'> <class 'polymorphic.tests.PlainC'>")
+
+        self.assertEqual(show_default_manager(model_2a), "<class 'polymorphic.manager.PolymorphicManager'> <class 'polymorphic.tests.Model2A'>")
+        self.assertEqual(show_default_manager(model_2b), "<class 'polymorphic.manager.PolymorphicManager'> <class 'polymorphic.tests.Model2B'>")
+        self.assertEqual(show_default_manager(model_2c), "<class 'polymorphic.manager.PolymorphicManager'> <class 'polymorphic.tests.Model2C'>")
+
     def test_foreignkey_field(self):
         self.create_model2abcd()
 
