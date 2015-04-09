@@ -15,70 +15,70 @@ from .showfields import ShowFieldContent, ShowFieldType, ShowFieldTypeAndContent
 
 
 class PlainA(models.Model):
-    field1 = models.CharField(max_length=10)
+    field1 = models.CharField(max_length=50)
 
 
 class PlainB(PlainA):
-    field2 = models.CharField(max_length=10)
+    field2 = models.CharField(max_length=50)
 
 
 class PlainC(PlainB):
-    field3 = models.CharField(max_length=10)
+    field3 = models.CharField(max_length=50)
 
 
 ##
 
 
 class Model2A(ShowFieldType, PolymorphicModel):
-    field1 = models.CharField(max_length=10)
+    field1 = models.CharField(max_length=50)
 
 
 class Model2B(Model2A):
-    field2 = models.CharField(max_length=10)
+    field2 = models.CharField(max_length=50)
 
 
 class Model2C(Model2B):
-    field3 = models.CharField(max_length=10)
+    field3 = models.CharField(max_length=50)
 
 
 class Model2D(Model2C):
-    field4 = models.CharField(max_length=10)
+    field4 = models.CharField(max_length=50)
 
 
 ##
 
 
 class ModelExtraA(ShowFieldTypeAndContent, PolymorphicModel):
-    field1 = models.CharField(max_length=10)
+    field1 = models.CharField(max_length=50)
 
 
 class ModelExtraB(ModelExtraA):
-    field2 = models.CharField(max_length=10)
+    field2 = models.CharField(max_length=50)
 
 
 class ModelExtraC(ModelExtraB):
-    field3 = models.CharField(max_length=10)
+    field3 = models.CharField(max_length=50)
 
 
 class ModelExtraExternal(models.Model):
-    topic = models.CharField(max_length=10)
+    topic = models.CharField(max_length=50)
 
 
 ##
 
 
 class ModelShow1(ShowFieldType, PolymorphicModel):
-    field1 = models.CharField(max_length=10)
+    field1 = models.CharField(max_length=50)
     m2m = models.ManyToManyField('self')
 
 
 class ModelShow2(ShowFieldContent, PolymorphicModel):
-    field1 = models.CharField(max_length=10)
+    field1 = models.CharField(max_length=50)
     m2m = models.ManyToManyField('self')
 
 
 class ModelShow3(ShowFieldTypeAndContent, PolymorphicModel):
-    field1 = models.CharField(max_length=10)
+    field1 = models.CharField(max_length=50)
     m2m = models.ManyToManyField('self')
 
 
@@ -86,56 +86,56 @@ class ModelShow3(ShowFieldTypeAndContent, PolymorphicModel):
 
 
 class ModelShow1_plain(PolymorphicModel):
-    field1 = models.CharField(max_length=10)
+    field1 = models.CharField(max_length=50)
 
 
 class ModelShow2_plain(ModelShow1_plain):
-    field2 = models.CharField(max_length=10)
+    field2 = models.CharField(max_length=50)
 
 
 ##
 
 
 class Base(ShowFieldType, PolymorphicModel):
-    field_b = models.CharField(max_length=10)
+    field_b = models.CharField(max_length=50)
 
 
 class ModelX(Base):
-    field_x = models.CharField(max_length=10)
+    field_x = models.CharField(max_length=50)
 
 
 class ModelY(Base):
-    field_y = models.CharField(max_length=10)
+    field_y = models.CharField(max_length=50)
 
 
 ##
 
 
 class Enhance_Plain(models.Model):
-    field_p = models.CharField(max_length=10)
+    field_p = models.CharField(max_length=50)
 
 
 class Enhance_Base(ShowFieldTypeAndContent, PolymorphicModel):
-    field_b = models.CharField(max_length=10)
+    field_b = models.CharField(max_length=50)
 
 
 class Enhance_Inherit(Enhance_Base, Enhance_Plain):
-    field_i = models.CharField(max_length=10)
+    field_i = models.CharField(max_length=50)
 
 
 ##
 
 
 class DiamondBase(models.Model):
-    field_b = models.CharField(max_length=10)
+    field_b = models.CharField(max_length=50)
 
 
 class DiamondX(DiamondBase):
-    field_x = models.CharField(max_length=10)
+    field_x = models.CharField(max_length=50)
 
 
 class DiamondY(DiamondBase):
-    field_y = models.CharField(max_length=10)
+    field_y = models.CharField(max_length=50)
 
 
 class DiamondXY(DiamondX, DiamondY):
@@ -146,21 +146,21 @@ class DiamondXY(DiamondX, DiamondY):
 
 
 class RelationBase(ShowFieldTypeAndContent, PolymorphicModel):
-    field_base = models.CharField(max_length=10)
+    field_base = models.CharField(max_length=50)
     fk = models.ForeignKey('self', null=True, related_name='relationbase_set')
     m2m = models.ManyToManyField('self')
 
 
 class RelationA(RelationBase):
-    field_a = models.CharField(max_length=10)
+    field_a = models.CharField(max_length=50)
 
 
 class RelationB(RelationBase):
-    field_b = models.CharField(max_length=10)
+    field_b = models.CharField(max_length=50)
 
 
 class RelationBC(RelationB):
-    field_c = models.CharField(max_length=10)
+    field_c = models.CharField(max_length=50)
 
 
 ##
@@ -175,14 +175,14 @@ class RelatingModel(models.Model):
 
 class One2OneRelatingModel(PolymorphicModel):
     one2one = models.OneToOneField(Model2A)
-    field1 = models.CharField(max_length=10)
+    field1 = models.CharField(max_length=50)
 
 
 ##
 
 
 class One2OneRelatingModelDerived(One2OneRelatingModel):
-    field2 = models.CharField(max_length=10)
+    field2 = models.CharField(max_length=50)
 
 
 ##
@@ -206,7 +206,7 @@ class MyManager(PolymorphicManager):
 
 class ModelWithMyManager(ShowFieldTypeAndContent, Model2A):
     objects = MyManager()
-    field4 = models.CharField(max_length=10)
+    field4 = models.CharField(max_length=50)
 
 
 ##
@@ -249,7 +249,7 @@ class PlainChildModelWithManager(models.Model):
 
 class MROBase1(ShowFieldType, PolymorphicModel):
     objects = MyManager()
-    field1 = models.CharField(max_length=10)  # needed as MyManager uses it
+    field1 = models.CharField(max_length=50)  # needed as MyManager uses it
 
 
 class MROBase2(MROBase1):
@@ -269,7 +269,7 @@ class MRODerived(MROBase2, MROBase3):
 
 class MROPlainBase1(ShowFieldType, models.Model):
     objects = PlainMyManager()
-    field1 = models.CharField(max_length=10)  # needed as PlainMyManager uses it
+    field1 = models.CharField(max_length=50)  # needed as PlainMyManager uses it
 
 
 class MROPlainBase2(MROPlainBase1):
@@ -288,11 +288,11 @@ class MROPlainDerived(MROPlainBase2, MROPlainBase3):
 
 
 class BlogBase(ShowFieldTypeAndContent, PolymorphicModel):
-    name = models.CharField(max_length=10)
+    name = models.CharField(max_length=50)
 
 
 class BlogA(BlogBase):
-    info = models.CharField(max_length=10)
+    info = models.CharField(max_length=50)
 
 
 class BlogB(BlogBase):
@@ -301,7 +301,7 @@ class BlogB(BlogBase):
 
 class BlogEntry(ShowFieldTypeAndContent, PolymorphicModel):
     blog = models.ForeignKey(BlogA)
-    text = models.CharField(max_length=10)
+    text = models.CharField(max_length=50)
 
 
 ##
@@ -309,21 +309,21 @@ class BlogEntry(ShowFieldTypeAndContent, PolymorphicModel):
 
 class BlogEntry_limit_choices_to(ShowFieldTypeAndContent, PolymorphicModel):
     blog = models.ForeignKey(BlogBase)
-    text = models.CharField(max_length=10)
+    text = models.CharField(max_length=50)
 
 
 ##
 
 
 class ModelFieldNameTest(ShowFieldType, PolymorphicModel):
-    modelfieldnametest = models.CharField(max_length=10)
+    modelfieldnametest = models.CharField(max_length=50)
 
 
 ##
 
 
 class InitTestModel(ShowFieldType, PolymorphicModel):
-    bar = models.CharField(max_length=100)
+    bar = models.CharField(max_length=500)
 
     def __init__(self, *args, **kwargs):
         kwargs['bar'] = self.x()
@@ -374,15 +374,15 @@ class UUIDResearchProject(UUIDProject):
 
 class UUIDPlainA(models.Model):
     uuid_primary_key = UUIDField(primary_key=True)
-    field1 = models.CharField(max_length=10)
+    field1 = models.CharField(max_length=50)
 
 
 class UUIDPlainB(UUIDPlainA):
-    field2 = models.CharField(max_length=10)
+    field2 = models.CharField(max_length=50)
 
 
 class UUIDPlainC(UUIDPlainB):
-    field3 = models.CharField(max_length=10)
+    field3 = models.CharField(max_length=50)
 
 
 ##
@@ -401,7 +401,7 @@ class ProxyChild(ProxyBase):
 # base -> proxy -> real models
 
 class ProxiedBase(ShowFieldTypeAndContent, PolymorphicModel):
-    name = models.CharField(max_length=10)
+    name = models.CharField(max_length=50)
 
 
 class ProxyModelBase(ProxiedBase):
@@ -410,11 +410,11 @@ class ProxyModelBase(ProxiedBase):
 
 
 class ProxyModelA(ProxyModelBase):
-    field1 = models.CharField(max_length=10)
+    field1 = models.CharField(max_length=50)
 
 
 class ProxyModelB(ProxyModelBase):
-    field2 = models.CharField(max_length=10)
+    field2 = models.CharField(max_length=50)
 
 
 ##
@@ -429,10 +429,15 @@ class RelatedNameClash(ShowFieldType, PolymorphicModel):
 ##
 # Test primary key override
 
-class PrimaryKeyOverrideBase(PolymorphicModel):
-    field1 = models.CharField(max_length=10)
+class PrimaryKeyOverrideTop(PolymorphicModel):
+    field1 = models.CharField(max_length=50)
 
 
-class PrimaryKeyOverride(PrimaryKeyOverrideBase):
-    char_primary_key = models.CharField(max_length=10, primary_key=True)
-    field2 = models.CharField(max_length=10)
+class PrimaryKeyOverrideMiddle(PrimaryKeyOverrideTop):
+    char_primary_key = models.CharField(max_length=50, primary_key=True)
+    field2 = models.CharField(max_length=50)
+
+
+class PrimaryKeyOverrideBottom(PrimaryKeyOverrideMiddle):
+    uuid_primary_key = UUIDField(primary_key=True)
+    field3 = models.CharField(max_length=50)
