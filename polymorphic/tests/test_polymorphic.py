@@ -79,7 +79,6 @@ class PolymorphicTests(TestCase):
         entry1 = BlogEntry_limit_choices_to.objects.create(blog=blog_b, text='bla2')
         entry2 = BlogEntry_limit_choices_to.objects.create(blog=blog_b, text='bla2')
 
-
     def test_primary_key_custom_field_problem(self):
         """
         object retrieval problem occuring with some custom primary key fields (UUIDField as test case)
@@ -91,16 +90,12 @@ class PolymorphicTests(TestCase):
         UUIDArtProject.objects.create(topic="Sculpting with Tim", artist="T. Turner")
         UUIDResearchProject.objects.create(topic="Swallow Aerodynamics", supervisor="Dr. Winter")
 
-        qs = UUIDProject.objects.all()
-        ol = list(qs)
-        a = qs[0]
-        b = qs[1]
-        c = qs[2]
-        self.assertEqual(len(qs), 3)
-        self.assertIsInstance(a.uuid_primary_key, uuid.UUID)
-        self.assertIsInstance(a.pk, uuid.UUID)
+        ol = list(UUIDProject.objects.all())
+        self.assertEqual(len(ol), 3)
+        self.assertIsInstance(ol[0].uuid_primary_key, uuid.UUID)
+        self.assertIsInstance(ol[0].pk, uuid.UUID)
 
-        res = repr(qs)
+        res = repr(ol)
         res = re.sub(r' "[^"]*?\.\.", topic', ', topic', res)
         res_exp = '''[<UUIDProject: uuid_primary_key (UUIDField/pk), topic (CharField) "John's gathering">, <UUIDArtProject: uuid_primary_key (UUIDField/pk), topic (CharField) "Sculpting with Tim", artist (CharField) "T. Turner">, <UUIDResearchProject: uuid_primary_key (UUIDField/pk), topic (CharField) "Swallow Aerodynamics", supervisor (CharField) "Dr. Winter">]'''
         self.assertEqual(res, res_exp)
@@ -123,62 +118,62 @@ class PolymorphicTests(TestCase):
         this is reused in various tests.
         """
         from .models import Model2A, Model2B, Model2C, Model2D
-
-        Model2A.objects.create(field1='A1')
-        Model2B.objects.create(field1='B1', field2='B2')
-        Model2C.objects.create(field1='C1', field2='C2', field3='C3')
-        Model2D.objects.create(field1='D1', field2='D2', field3='D3', field4='D4')
+        oa = Model2A.objects.create(field1='A1')
+        ob = Model2B.objects.create(field1='B1', field2='B2')
+        oc = Model2C.objects.create(field1='C1', field2='C2', field3='C3')
+        od = Model2D.objects.create(field1='D1', field2='D2', field3='D3', field4='D4')
+        return oa.id, ob.id, oc.id, od.id
 
     def test_simple_inheritance(self):
         from .models import Model2A
 
-        self.create_model2abcd()
+        oa_id, ob_id, oc_id, od_id = self.create_model2abcd()
 
         objects = list(Model2A.objects.all())
-        self.assertEqual(repr(objects[0]), '<Model2A: id 1, field1 (CharField)>')
-        self.assertEqual(repr(objects[1]), '<Model2B: id 2, field1 (CharField), field2 (CharField)>')
-        self.assertEqual(repr(objects[2]), '<Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)>')
-        self.assertEqual(repr(objects[3]), '<Model2D: id 4, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField)>')
+        self.assertEqual(repr(objects[0]), '<Model2A: id %s, field1 (CharField)>' % oa_id)
+        self.assertEqual(repr(objects[1]), '<Model2B: id %s, field1 (CharField), field2 (CharField)>' % ob_id)
+        self.assertEqual(repr(objects[2]), '<Model2C: id %s, field1 (CharField), field2 (CharField), field3 (CharField)>' % oc_id)
+        self.assertEqual(repr(objects[3]), '<Model2D: id %s, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField)>' % od_id)
 
     def test_manual_get_real_instance(self):
         from .models import Model2A
 
-        self.create_model2abcd()
+        oa_id, ob_id, oc_id, od_id = self.create_model2abcd()
 
         o = Model2A.objects.non_polymorphic().get(field1='C1')
-        self.assertEqual(repr(o.get_real_instance()), '<Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)>')
+        self.assertEqual(repr(o.get_real_instance()), '<Model2C: id %s, field1 (CharField), field2 (CharField), field3 (CharField)>' % oc_id)
 
     def test_non_polymorphic(self):
         from .models import Model2A
 
-        self.create_model2abcd()
+        oa_id, ob_id, oc_id, od_id = self.create_model2abcd()
 
         objects = list(Model2A.objects.all().non_polymorphic())
-        self.assertEqual(repr(objects[0]), '<Model2A: id 1, field1 (CharField)>')
-        self.assertEqual(repr(objects[1]), '<Model2A: id 2, field1 (CharField)>')
-        self.assertEqual(repr(objects[2]), '<Model2A: id 3, field1 (CharField)>')
-        self.assertEqual(repr(objects[3]), '<Model2A: id 4, field1 (CharField)>')
+        self.assertEqual(repr(objects[0]), '<Model2A: id %s, field1 (CharField)>' % oa_id)
+        self.assertEqual(repr(objects[1]), '<Model2A: id %s, field1 (CharField)>' % ob_id)
+        self.assertEqual(repr(objects[2]), '<Model2A: id %s, field1 (CharField)>' % oc_id)
+        self.assertEqual(repr(objects[3]), '<Model2A: id %s, field1 (CharField)>' % od_id)
 
     def test_get_real_instances(self):
         from .models import Model2A
 
-        self.create_model2abcd()
+        oa_id, ob_id, oc_id, od_id = self.create_model2abcd()
 
         qs = Model2A.objects.all().non_polymorphic()
 
         # from queryset
         objects = qs.get_real_instances()
-        self.assertEqual(repr(objects[0]), '<Model2A: id 1, field1 (CharField)>')
-        self.assertEqual(repr(objects[1]), '<Model2B: id 2, field1 (CharField), field2 (CharField)>')
-        self.assertEqual(repr(objects[2]), '<Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)>')
-        self.assertEqual(repr(objects[3]), '<Model2D: id 4, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField)>')
+        self.assertEqual(repr(objects[0]), '<Model2A: id %s, field1 (CharField)>' % oa_id)
+        self.assertEqual(repr(objects[1]), '<Model2B: id %s, field1 (CharField), field2 (CharField)>' % ob_id)
+        self.assertEqual(repr(objects[2]), '<Model2C: id %s, field1 (CharField), field2 (CharField), field3 (CharField)>' % oc_id)
+        self.assertEqual(repr(objects[3]), '<Model2D: id %s, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField)>' % od_id)
 
         # from a manual list
         objects = Model2A.objects.get_real_instances(list(qs))
-        self.assertEqual(repr(objects[0]), '<Model2A: id 1, field1 (CharField)>')
-        self.assertEqual(repr(objects[1]), '<Model2B: id 2, field1 (CharField), field2 (CharField)>')
-        self.assertEqual(repr(objects[2]), '<Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)>')
-        self.assertEqual(repr(objects[3]), '<Model2D: id 4, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField)>')
+        self.assertEqual(repr(objects[0]), '<Model2A: id %s, field1 (CharField)>' % oa_id)
+        self.assertEqual(repr(objects[1]), '<Model2B: id %s, field1 (CharField), field2 (CharField)>' % ob_id)
+        self.assertEqual(repr(objects[2]), '<Model2C: id %s, field1 (CharField), field2 (CharField), field3 (CharField)>' % oc_id)
+        self.assertEqual(repr(objects[3]), '<Model2D: id %s, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField)>' % od_id)
 
     def test_base_manager(self):
         from .models import PlainA, PlainB, PlainC, Model2A, Model2B, Model2C, One2OneRelatingModel, One2OneRelatingModelDerived
@@ -197,26 +192,26 @@ class PolymorphicTests(TestCase):
     def test_foreignkey_field(self):
         from .models import Model2A, Model2B
 
-        self.create_model2abcd()
+        oa_id, ob_id, oc_id, od_id = self.create_model2abcd()
 
         object2a = Model2A.objects.get(field1='C1')
-        self.assertEqual(repr(object2a.model2b), '<Model2B: id 3, field1 (CharField), field2 (CharField)>')
+        self.assertEqual(repr(object2a.model2b), '<Model2B: id %s, field1 (CharField), field2 (CharField)>' % oc_id)
 
         object2b = Model2B.objects.get(field1='C1')
-        self.assertEqual(repr(object2b.model2c), '<Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)>')
+        self.assertEqual(repr(object2b.model2c), '<Model2C: id %s, field1 (CharField), field2 (CharField), field3 (CharField)>' % oc_id)
 
     def test_onetoone_field(self):
         from .models import Model2A, One2OneRelatingModelDerived
 
-        self.create_model2abcd()
+        oa_id, ob_id, oc_id, od_id = self.create_model2abcd()
 
         a = Model2A.objects.get(field1='C1')
         b = One2OneRelatingModelDerived.objects.create(one2one=a, field1='f1', field2='f2')
 
-        self.assertEqual(repr(b.one2one), '<Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)>')
+        self.assertEqual(repr(b.one2one), '<Model2C: id %s, field1 (CharField), field2 (CharField), field3 (CharField)>' % oc_id)
 
         c = One2OneRelatingModelDerived.objects.get(field1='f1')
-        self.assertEqual(repr(c.one2one), '<Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)>')
+        self.assertEqual(repr(c.one2one), '<Model2C: id %s, field1 (CharField), field2 (CharField), field3 (CharField)>' % oc_id)
         self.assertEqual(repr(a.one2onerelatingmodel), '<One2OneRelatingModelDerived: One2OneRelatingModelDerived object>')
 
     def test_manytomany_field(self):
@@ -246,17 +241,17 @@ class PolymorphicTests(TestCase):
         # no pretty printing
         ModelShow1_plain.objects.create(field1='abc')
         ModelShow2_plain.objects.create(field1='abc', field2='def')
-        self.assertEqual(repr(ModelShow1_plain.objects.all()), '[<ModelShow1_plain: ModelShow1_plain object>, <ModelShow2_plain_Deferred_field2: ModelShow2_plain_Deferred_field2 object>]')
+        self.assertEqual(repr(ModelShow1_plain.objects.all()), '[<ModelShow1_plain: ModelShow1_plain object>, <ModelShow2_plain_Polymorphic_field2: ModelShow2_plain_Polymorphic_field2 object>]')
 
     def test_extra_method(self):
         from .models import Model2A, ModelExtraA, ModelExtraB, ModelExtraC, ModelExtraExternal
 
-        self.create_model2abcd()
+        oa_id, ob_id, oc_id, od_id = self.create_model2abcd()
 
-        objects = list(Model2A.objects.extra(where=['id IN (2, 3)']))
+        objects = list(Model2A.objects.extra(where=['id IN (%s, %s)' % (ob_id, oc_id)]))
         self.assertEqual(len(objects), 2)
-        self.assertEqual(repr(objects[0]), '<Model2B: id 2, field1 (CharField), field2 (CharField)>')
-        self.assertEqual(repr(objects[1]), '<Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)>')
+        self.assertEqual(repr(objects[0]), '<Model2B: id %s, field1 (CharField), field2 (CharField)>' % ob_id)
+        self.assertEqual(repr(objects[1]), '<Model2C: id %s, field1 (CharField), field2 (CharField), field3 (CharField)>' % oc_id)
 
         objects = Model2A.objects.extra(select={"select_test": "field1 = 'A1'"}, where=["field1 = 'A1' OR field1 = 'B1'"], order_by=['-id'])
         self.assertEqual(len(objects), 2)
@@ -278,44 +273,44 @@ class PolymorphicTests(TestCase):
     def test_instance_of_filter(self):
         from .models import Model2A, Model2B
 
-        self.create_model2abcd()
+        oa_id, ob_id, oc_id, od_id = self.create_model2abcd()
 
         objects = Model2A.objects.instance_of(Model2B)
         self.assertEqual(len(objects), 3)
-        self.assertEqual(repr(objects[0]), '<Model2B: id 2, field1 (CharField), field2 (CharField)>')
-        self.assertEqual(repr(objects[1]), '<Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)>')
-        self.assertEqual(repr(objects[2]), '<Model2D: id 4, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField)>')
+        self.assertEqual(repr(objects[0]), '<Model2B: id %s, field1 (CharField), field2 (CharField)>' % ob_id)
+        self.assertEqual(repr(objects[1]), '<Model2C: id %s, field1 (CharField), field2 (CharField), field3 (CharField)>' % oc_id)
+        self.assertEqual(repr(objects[2]), '<Model2D: id %s, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField)>' % od_id)
 
         objects = Model2A.objects.not_instance_of(Model2B)
         self.assertEqual(len(objects), 1)
-        self.assertEqual(repr(objects[0]), '<Model2A: id 1, field1 (CharField)>')
+        self.assertEqual(repr(objects[0]), '<Model2A: id %s, field1 (CharField)>' % oa_id)
 
     def test_polymorphic___filter(self):
         from .models import Model2A
 
-        self.create_model2abcd()
+        oa_id, ob_id, oc_id, od_id = self.create_model2abcd()
 
         objects = Model2A.objects.filter(Q(model2b__field2='B2') | Q(model2b__model2c__field3='C3'))
         self.assertEqual(len(objects), 2)
-        self.assertEqual(repr(objects[0]), '<Model2B: id 2, field1 (CharField), field2 (CharField)>')
-        self.assertEqual(repr(objects[1]), '<Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)>')
+        self.assertEqual(repr(objects[0]), '<Model2B: id %s, field1 (CharField), field2 (CharField)>' % ob_id)
+        self.assertEqual(repr(objects[1]), '<Model2C: id %s, field1 (CharField), field2 (CharField), field3 (CharField)>' % oc_id)
 
     def test_delete(self):
         from .models import Model2A
 
-        self.create_model2abcd()
+        oa_id, ob_id, oc_id, od_id = self.create_model2abcd()
 
         self.assertEqual(Model2A.objects.count(), 4)
 
-        oa = Model2A.objects.get(id=2)
-        self.assertEqual(repr(oa), '<Model2B: id 2, field1 (CharField), field2 (CharField)>')
+        ob = Model2A.objects.get(id=ob_id)
+        self.assertEqual(repr(ob), '<Model2B: id %s, field1 (CharField), field2 (CharField)>' % ob_id)
 
-        oa.delete()
+        ob.delete()
         objects = Model2A.objects.all()
         self.assertEqual(len(objects), 3)
-        self.assertEqual(repr(objects[0]), '<Model2A: id 1, field1 (CharField)>')
-        self.assertEqual(repr(objects[1]), '<Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)>')
-        self.assertEqual(repr(objects[2]), '<Model2D: id 4, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField)>')
+        self.assertEqual(repr(objects[0]), '<Model2A: id %s, field1 (CharField)>' % oa_id)
+        self.assertEqual(repr(objects[1]), '<Model2C: id %s, field1 (CharField), field2 (CharField), field3 (CharField)>' % oc_id)
+        self.assertEqual(repr(objects[2]), '<Model2D: id %s, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField)>' % od_id)
 
     def test_combine_querysets(self):
         from .models import Base, ModelX, ModelY
@@ -348,51 +343,52 @@ class PolymorphicTests(TestCase):
         oc = RelationBC.objects.create(field_base='C1', field_b='C2', field_c='C3', fk=oa)
         oa.m2m.add(oa)
         oa.m2m.add(ob)
+        return obase.id, oa.id, ob.id, oc.id
 
     def test_relation_base(self):
         from .models import RelationBase, RelationA
 
-        self.create_relationbaseabc()
+        o_id, oa_id, ob_id, oc_id = self.create_relationbaseabc()
 
         objects = RelationBase.objects.all()
         self.assertEqual(len(objects), 4)
-        self.assertEqual(repr(objects[0]), '<RelationBase: id 1, field_base (CharField) "base", fk (ForeignKey) None, m2m (ManyToManyField) 0>')
-        self.assertEqual(repr(objects[1]), '<RelationA: id 2, field_base (CharField) "A1", fk (ForeignKey) RelationBase, field_a (CharField) "A2", m2m (ManyToManyField) 2>')
-        self.assertEqual(repr(objects[2]), '<RelationB: id 3, field_base (CharField) "B1", fk (ForeignKey) RelationA, field_b (CharField) "B2", m2m (ManyToManyField) 1>')
-        self.assertEqual(repr(objects[3]), '<RelationBC: id 4, field_base (CharField) "C1", fk (ForeignKey) RelationA, field_b (CharField) "C2", field_c (CharField) "C3", m2m (ManyToManyField) 0>')
+        self.assertEqual(repr(objects[0]), '<RelationBase: id %s, field_base (CharField) "base", fk (ForeignKey) None, m2m (ManyToManyField) 0>' % o_id)
+        self.assertEqual(repr(objects[1]), '<RelationA: id %s, field_base (CharField) "A1", fk (ForeignKey) RelationBase, field_a (CharField) "A2", m2m (ManyToManyField) 2>' % oa_id)
+        self.assertEqual(repr(objects[2]), '<RelationB: id %s, field_base (CharField) "B1", fk (ForeignKey) RelationA, field_b (CharField) "B2", m2m (ManyToManyField) 1>' % ob_id)
+        self.assertEqual(repr(objects[3]), '<RelationBC: id %s, field_base (CharField) "C1", fk (ForeignKey) RelationA, field_b (CharField) "C2", field_c (CharField) "C3", m2m (ManyToManyField) 0>' % oc_id)
 
-        oa = RelationBase.objects.get(id=2)
-        self.assertEqual(repr(oa.fk), '<RelationBase: id 1, field_base (CharField) "base", fk (ForeignKey) None, m2m (ManyToManyField) 0>')
+        oa = RelationBase.objects.get(id=oa_id)
+        self.assertEqual(repr(oa.fk), '<RelationBase: id %s, field_base (CharField) "base", fk (ForeignKey) None, m2m (ManyToManyField) 0>' % o_id)
 
         objects = oa.relationbase_set.all()
         self.assertEqual(len(objects), 2)
-        self.assertEqual(repr(objects[0]), '<RelationB: id 3, field_base (CharField) "B1", fk (ForeignKey) RelationA, field_b (CharField) "B2", m2m (ManyToManyField) 1>')
-        self.assertEqual(repr(objects[1]), '<RelationBC: id 4, field_base (CharField) "C1", fk (ForeignKey) RelationA, field_b (CharField) "C2", field_c (CharField) "C3", m2m (ManyToManyField) 0>')
+        self.assertEqual(repr(objects[0]), '<RelationB: id %s, field_base (CharField) "B1", fk (ForeignKey) RelationA, field_b (CharField) "B2", m2m (ManyToManyField) 1>' % ob_id)
+        self.assertEqual(repr(objects[1]), '<RelationBC: id %s, field_base (CharField) "C1", fk (ForeignKey) RelationA, field_b (CharField) "C2", field_c (CharField) "C3", m2m (ManyToManyField) 0>' % oc_id)
 
-        ob = RelationBase.objects.get(id=3)
-        self.assertEqual(repr(ob.fk), '<RelationA: id 2, field_base (CharField) "A1", fk (ForeignKey) RelationBase, field_a (CharField) "A2", m2m (ManyToManyField) 2>')
+        ob = RelationBase.objects.get(id=ob_id)
+        self.assertEqual(repr(ob.fk), '<RelationA: id %s, field_base (CharField) "A1", fk (ForeignKey) RelationBase, field_a (CharField) "A2", m2m (ManyToManyField) 2>' % oa_id)
 
-        oa = RelationA.objects.get()
+        oa = RelationA.objects.get(id=oa_id)
         objects = oa.m2m.all()
         self.assertEqual(len(objects), 2)
-        self.assertEqual(repr(objects[0]), '<RelationA: id 2, field_base (CharField) "A1", fk (ForeignKey) RelationBase, field_a (CharField) "A2", m2m (ManyToManyField) 2>')
-        self.assertEqual(repr(objects[1]), '<RelationB: id 3, field_base (CharField) "B1", fk (ForeignKey) RelationA, field_b (CharField) "B2", m2m (ManyToManyField) 1>')
+        self.assertEqual(repr(objects[0]), '<RelationA: id %s, field_base (CharField) "A1", fk (ForeignKey) RelationBase, field_a (CharField) "A2", m2m (ManyToManyField) 2>' % oa_id)
+        self.assertEqual(repr(objects[1]), '<RelationB: id %s, field_base (CharField) "B1", fk (ForeignKey) RelationA, field_b (CharField) "B2", m2m (ManyToManyField) 1>' % ob_id)
 
     @override_settings(DEBUG=True)
     def test_relation_base_select_related(self):
         from django.db import connection, reset_queries
         from .models import RelationBase
 
-        self.create_relationbaseabc()
+        o_id, oa_id, ob_id, oc_id = self.create_relationbaseabc()
 
         reset_queries()
-        oa = RelationBase.objects.select_related('fk').get(id=2)
+        oa = RelationBase.objects.select_related('fk').get(id=oa_id)
         self.assertEqual(oa.fk.field_base, "base")
         queries = len(connection.queries)
         self.assertEqual(queries, 1)
 
         reset_queries()
-        oa = RelationBase.objects.get(id=2)
+        oa = RelationBase.objects.get(id=oa_id)
         self.assertEqual(oa.fk.field_base, "base")
         queries = len(connection.queries)
         self.assertEqual(queries, 2)
@@ -400,15 +396,13 @@ class PolymorphicTests(TestCase):
     def test_user_defined_manager(self):
         from .models import ModelWithMyManager, MyManager
 
-        self.create_model2abcd()
-
-        ModelWithMyManager.objects.create(field1='D1a', field4='D4a')
-        ModelWithMyManager.objects.create(field1='D1b', field4='D4b')
+        ma = ModelWithMyManager.objects.create(field1='D1a', field4='D4a')
+        mb = ModelWithMyManager.objects.create(field1='D1b', field4='D4b')
 
         objects = ModelWithMyManager.objects.all()   # MyManager should reverse the sorting of field1
         self.assertEqual(len(objects), 2)
-        self.assertEqual(repr(objects[0]), '<ModelWithMyManager: id 6, field1 (CharField) "D1b", field4 (CharField) "D4b">')
-        self.assertEqual(repr(objects[1]), '<ModelWithMyManager: id 5, field1 (CharField) "D1a", field4 (CharField) "D4a">')
+        self.assertEqual(repr(objects[0]), '<ModelWithMyManager: id %s, field1 (CharField) "D1b", field4 (CharField) "D4b">' % mb.id)
+        self.assertEqual(repr(objects[1]), '<ModelWithMyManager: id %s, field1 (CharField) "D1a", field4 (CharField) "D4a">' % ma.id)
 
         self.assertIs(type(ModelWithMyManager.objects), MyManager)
         self.assertIs(type(ModelWithMyManager._default_manager), MyManager)
@@ -530,24 +524,75 @@ class PolymorphicTests(TestCase):
         o = InitTestModelSubclass.objects.create()
         self.assertEqual(o.bar, 'XYZ')
 
-    def test_primary_key_override(self):
-        from .models import PrimaryKeyOverrideBase, PrimaryKeyOverride
-        PrimaryKeyOverride.objects.create(char_primary_key='PK1', field1='object 1, field 1', field2='object 1, field 2')
-        PrimaryKeyOverride.objects.create(char_primary_key='PK2', field1='object 2, field 1', field2='object 2, field 2')
 
-        objects = list(PrimaryKeyOverrideBase.objects.all().order_by('id'))
+class PrimaryKeyOverrideTests(TestCase):
+    def setUp(self):
+        from .models import PrimaryKeyOverrideTop, PrimaryKeyOverrideMiddle, PrimaryKeyOverrideBottom
 
-        self.assertEqual(objects[0].id, 1)
-        self.assertEqual(objects[0].pk, 'PK1')
+        ot = PrimaryKeyOverrideTop.objects.create(field1='object 1, field 1')
+        om = PrimaryKeyOverrideMiddle.objects.create(char_primary_key='PK1', field1='object 2, field 1', field2='object 2, field 2')
+        ob = PrimaryKeyOverrideBottom.objects.create(char_primary_key='PK2', field1='object 3, field 1', field2='object 3, field 2', field3='object 3, field 3')
+        self.uuid_val = ob.uuid_primary_key
+        self.ot_id = ot.id
+        self.om_id = om.id
+        self.ob_id = ob.id
+
+    def test_primary_key_override_top(self):
+        from .models import PrimaryKeyOverrideTop
+
+        objects = list(PrimaryKeyOverrideTop.objects.all().order_by('id'))
+        self.assertEqual(len(objects), 3)
+
+        self.assertEqual(objects[0].id, self.ot_id)
+        self.assertEqual(objects[0].pk, objects[0].id)
+
+        self.assertEqual(objects[1].id, self.om_id)
+        self.assertEqual(objects[1].char_primary_key, 'PK1')
+        self.assertEqual(objects[1].pk, objects[1].char_primary_key)
+
+        self.assertEqual(objects[2].id, self.ob_id)
+        self.assertEqual(objects[2].char_primary_key, 'PK2')
+        self.assertEqual(objects[2].pk, self.uuid_val)
+        self.assertEqual(objects[2].pk, objects[2].uuid_primary_key)
+
+    def test_primary_key_override_middle(self):
+        from .models import PrimaryKeyOverrideMiddle
+
+        objects = list(PrimaryKeyOverrideMiddle.objects.all().order_by('id'))
+        self.assertEqual(len(objects), 2)
+
+        self.assertEqual(objects[0].id, self.om_id)
         self.assertEqual(objects[0].char_primary_key, 'PK1')
+        self.assertEqual(objects[0].pk, objects[0].char_primary_key)
 
-        self.assertEqual(objects[1].id, 2)
-        self.assertEqual(objects[1].pk, 'PK2')
+        self.assertEqual(objects[1].id, self.ob_id)
         self.assertEqual(objects[1].char_primary_key, 'PK2')
+        self.assertEqual(objects[1].pk, self.uuid_val)
+        self.assertEqual(objects[1].pk, objects[1].uuid_primary_key)
 
-        self.assertEqual(PrimaryKeyOverrideBase.objects.filter(pk=1).count(), 1)
-        self.assertEqual(PrimaryKeyOverride.objects.filter(id=1).count(), 1)
-        self.assertEqual(PrimaryKeyOverride.objects.filter(pk='PK1').count(), 1)
+    def test_primary_key_override_bottom(self):
+        from .models import PrimaryKeyOverrideBottom
+
+        objects = list(PrimaryKeyOverrideBottom.objects.all().order_by('id'))
+        self.assertEqual(len(objects), 1)
+
+        self.assertEqual(objects[0].id, self.ob_id)
+        self.assertEqual(objects[0].char_primary_key, 'PK2')
+        self.assertEqual(objects[0].pk, self.uuid_val)
+        self.assertEqual(objects[0].pk, objects[0].uuid_primary_key)
+
+    def test_primary_key_override_queries(self):
+        from .models import PrimaryKeyOverrideTop, PrimaryKeyOverrideMiddle, PrimaryKeyOverrideBottom
+
+        self.assertEqual(PrimaryKeyOverrideTop.objects.filter(pk=self.ot_id).count(), 1)
+
+        self.assertEqual(PrimaryKeyOverrideMiddle.objects.filter(id=self.om_id).count(), 1)
+        self.assertEqual(PrimaryKeyOverrideMiddle.objects.filter(char_primary_key='PK1').count(), 1)
+        self.assertEqual(PrimaryKeyOverrideMiddle.objects.filter(pk='PK1').count(), 1)
+
+        self.assertEqual(PrimaryKeyOverrideBottom.objects.filter(id=self.ob_id).count(), 1)
+        self.assertEqual(PrimaryKeyOverrideBottom.objects.filter(char_primary_key='PK2').count(), 1)
+        self.assertEqual(PrimaryKeyOverrideBottom.objects.filter(pk=self.uuid_val).count(), 1)
 
 
 class RegressionTests(TestCase):
