@@ -11,7 +11,7 @@ from django.db.models.fields.related import SingleRelatedObjectDescriptor, Rever
 from django.contrib.contenttypes.models import ContentType
 
 from .query import PolymorphicSingleRelatedObjectDescriptor, PolymorphicReverseSingleRelatedObjectDescriptor, polymorphic
-from .utils import deferred_class_factory
+from .utils import deferred_class_factory, get_roots
 
 
 class PolymorphicModelBase(ModelBase):
@@ -111,66 +111,65 @@ class PolymorphicModelBase(ModelBase):
         polymorphic_disabled = getattr(polymorphic, 'disabled', False)
 
         if args and not kwargs and not polymorphic_disabled:
-            # Get the polymorphic child model class.
             fields_attrs = [f.attname for f in cls._meta.concrete_fields]
-            polymorphic_ctype_id = args[fields_attrs.index('polymorphic_ctype_id')]
-            model = ContentType.objects.get_for_id(polymorphic_ctype_id).model_class()
 
-            if not issubclass(model, cls):
-                raise TypeError("expected a subclass of %s (got %s class instead)" % (cls._meta.object_name, model._meta.object_name))
+            # Build kwargs from args.
+            kwargs = dict(zip(fields_attrs, args))
+
+            # Get the polymorphic child model class.
+            polymorphic_ctype_id = args[fields_attrs.index('polymorphic_ctype_id')]
+            real_model = ContentType.objects.get_for_id(polymorphic_ctype_id).model_class()
+
+            if not issubclass(real_model, cls):
+                raise TypeError("expected a subclass of %s (got %s class instead)" % (cls._meta.object_name, real_model._meta.object_name))
 
             # Descriptors patching must be done as late as possible,
             # but only once for each polymorphic model.
-            if not hasattr(model, '_polymorphic_descriptors'):
+            if not hasattr(real_model, '_polymorphic_descriptors'):
                 # Inheritance creates a ForeignKey to it's parent model by appending
                 # ``_ptr`` to the ``model_name``, and a reverse to ``model_name``.
                 # In those cases, a real (non-polymorphic) object must be returned by
                 # the descriptors. Use our polymorphic ``SingleRelatedObjectDescriptor``
                 # and ``ReverseSingleRelatedObjectDescriptor``.
-                for n, f in model.__dict__.items():
+                for n, f in real_model.__dict__.items():
                     if isinstance(f, SingleRelatedObjectDescriptor) and not isinstance(f, PolymorphicSingleRelatedObjectDescriptor):
                         if n == f.related.model._meta.model_name:
-                            setattr(model, n, PolymorphicSingleRelatedObjectDescriptor(f.related))
+                            setattr(real_model, n, PolymorphicSingleRelatedObjectDescriptor(f.related))
                     elif isinstance(f, ReverseSingleRelatedObjectDescriptor) and not isinstance(f, PolymorphicReverseSingleRelatedObjectDescriptor):
                         if n == '%s_ptr' % f.field.rel.to._meta.model_name:
-                            setattr(model, n, PolymorphicReverseSingleRelatedObjectDescriptor(f.field))
-                model._polymorphic_descriptors = True
+                            setattr(real_model, n, PolymorphicReverseSingleRelatedObjectDescriptor(f.field))
+                real_model._polymorphic_descriptors = True
 
             # Figure out if it has to defer field loading.
             skip = set(f.field_name for f in cls.__dict__.values() if isinstance(f, DeferredAttribute))
-            bulk_skip = set(f.attname for f in model._meta.concrete_fields) - set(fields_attrs)
+            bulk_skip = set(f.attname for f in real_model._meta.concrete_fields) - set(fields_attrs)
 
             # Figure out all ancestors (and remove them from the bulk loading)
-            ancestor_links = [model._meta.get_ancestor_link(cls)]
-            for parent in model._meta.get_parent_list():
-                ancestor_links.append(model._meta.get_ancestor_link(parent._meta.proxy_for_model or parent))
-            for base in model._meta.get_base_chain(cls) or []:
-                ancestor_links.append(base._meta.get_ancestor_link(cls._meta.proxy_for_model or cls))
-
-            for ancestor_link in ancestor_links:
-                if ancestor_link:
-                    if ancestor_link.attname in bulk_skip:
-                        bulk_skip.remove(ancestor_link.attname)
-                    if ancestor_link.related_field.attname in bulk_skip:
-                        bulk_skip.remove(ancestor_link.related_field.attname)
+            modelclass = cls._meta.proxy_for_model or cls
+            for root in get_roots(real_model):
+                child = real_model
+                for parent in real_model._meta.get_base_chain(root):
+                    rel_field = child._meta.get_ancestor_link(parent)
+                    if rel_field:
+                        child = parent
+                        if child == modelclass:
+                            ancestor_pk = kwargs[rel_field.related_field.attname]
+                            kwargs[rel_field.attname] = ancestor_pk
+                            kwargs[rel_field.related_field.attname] = ancestor_pk
+                            bulk_skip.discard(rel_field.attname)
+                            bulk_skip.discard(rel_field.related_field.attname)
+                            break
 
             if skip or bulk_skip:
-                model = deferred_class_factory(model, cls, skip, bulk_skip)
+                real_model = deferred_class_factory(real_model, skip, bulk_skip)
 
-            # Build kwargs for new child model class.
-            kwargs = dict(zip(fields_attrs, args))
-            pk = kwargs[cls._meta.pk.attname]
-            for ancestor_link in ancestor_links:
-                if ancestor_link:
-                    kwargs[ancestor_link.attname] = pk
-                    kwargs[ancestor_link.related_field.attname] = pk
-            instance = model(**kwargs)
+            instance = real_model(**kwargs)
 
             # Main class pk attribute might not have ended with a valid value in
             # multiple inheritance where there may be multiple fields with the
             # same ``id`` attribute (only the first one gets set, popped out of
             # kwargs by ``__init__``, and the following get the default ``None``).
-            setattr(instance, cls._meta.pk.attname, pk)
+            setattr(instance, cls._meta.pk.attname, kwargs[cls._meta.pk.attname])
 
         else:
             instance = super(PolymorphicModelBase, cls).__call__(*args, **kwargs)

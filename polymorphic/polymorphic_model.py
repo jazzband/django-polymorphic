@@ -8,7 +8,7 @@ from django.utils import six
 from .base import PolymorphicModelBase
 from .manager import PolymorphicManager
 from .query import polymorphic
-from .utils import deferred_class_factory, transmogrify
+from .utils import deferred_class_factory, transmogrify, get_roots
 
 
 class PolymorphicModel(six.with_metaclass(PolymorphicModelBase, models.Model)):
@@ -22,6 +22,33 @@ class PolymorphicModel(six.with_metaclass(PolymorphicModelBase, models.Model)):
 
     class Meta:
         abstract = True
+
+    def _get_pk_val(self, meta=None):
+        if not meta:
+            meta = self._meta
+        return getattr(self, meta.pk.attname)
+
+    def _set_pk_val(self, value):
+        real_model = self.get_polymorphic_ctype().model_class()
+        modelclass = self._meta.model
+        if modelclass._deferred:
+            modelclass = modelclass._meta.proxy_for_model
+
+        for root in get_roots(real_model):
+            child = real_model
+            for parent in real_model._meta.get_base_chain(root):
+                rel_field = child._meta.get_ancestor_link(parent)
+                if rel_field:
+                    child = parent
+                    if child == modelclass:
+                        ancestor_pk = value
+                        setattr(self, rel_field.attname, ancestor_pk)
+                        setattr(self, rel_field.related_field.attname, ancestor_pk)
+                        break
+
+        return setattr(self, self._meta.pk.attname, value)
+
+    pk = property(_get_pk_val, _set_pk_val)
 
     def delete(self, using=None):
         polymorphic_disabled = getattr(polymorphic, 'disabled', False)
@@ -53,6 +80,6 @@ class PolymorphicModel(six.with_metaclass(PolymorphicModelBase, models.Model)):
         attrs = set(f.attname for f in real_model._meta.fields) - set(f.attname for f in self._meta.fields)
         if real_model._meta.pk.attname in attrs:
             attrs.remove(real_model._meta.pk.attname)
-        deferred_modelclass = deferred_class_factory(real_model, self._meta.model, set(), attrs)
+        deferred_modelclass = deferred_class_factory(real_model, set(), attrs)
 
         return transmogrify(deferred_modelclass, self)
