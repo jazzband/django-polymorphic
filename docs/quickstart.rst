@@ -12,7 +12,7 @@ Update the settings file::
         'django.contrib.contenttypes',
     )
 
-The current release of *django-polymorphic* supports Django 1.4, 1.5 and 1.6 and Python 3 is supported.
+The current release of *django-polymorphic* supports Django 1.4 till 1.8 and Python 3 is supported.
 
 Making Your Models Polymorphic
 ------------------------------
