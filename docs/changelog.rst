@@ -1,6 +1,12 @@
 Changelog
 ==========
 
+Version 0.7.1 (2015-04/30)
+--------------------------
+
+* Fixed Django 1.8 support for related field widgets.
+
+
 Version 0.7 (2015-04-08)
 ------------------------
 
