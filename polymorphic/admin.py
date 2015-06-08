@@ -125,7 +125,7 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
 
     def __init__(self, model, admin_site, *args, **kwargs):
         super(PolymorphicParentModelAdmin, self).__init__(model, admin_site, *args, **kwargs)
-        self._child_admin_site = AdminSite(name=self.admin_site.name)
+        self._child_admin_site = self.admin_site.__class__(name=self.admin_site.name)
         self._is_setup = False
 
 
