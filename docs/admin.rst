@@ -86,10 +86,12 @@ The models are taken from :ref:`advanced-features`.
 
 
     class ModelBAdmin(ModelAChildAdmin):
+        base_model = ModelB
         # define custom features here
 
 
     class ModelCAdmin(ModelBAdmin):
+        base_model = ModelC
         # define custom features here
 
 
