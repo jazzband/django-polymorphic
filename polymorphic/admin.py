@@ -6,7 +6,6 @@ from django import forms
 from django.conf.urls import patterns, url
 from django.contrib import admin
 from django.contrib.admin.helpers import AdminForm, AdminErrorList
-from django.contrib.admin.sites import AdminSite
 from django.contrib.admin.widgets import AdminRadioSelect
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import PermissionDenied
