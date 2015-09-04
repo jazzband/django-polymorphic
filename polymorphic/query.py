@@ -246,13 +246,13 @@ class PolymorphicQuerySet(QuerySet):
 
         # set polymorphic_annotate_names in all objects (currently just used for debugging/printing)
         if self.query.aggregates:
-            annotate_names = six.iterkeys(self.query.aggregates)  # get annotate field list
+            annotate_names = list(six.iterkeys(self.query.aggregates))  # get annotate field list
             for real_object in resultlist:
                 real_object.polymorphic_annotate_names = annotate_names
 
         # set polymorphic_extra_select_names in all objects (currently just used for debugging/printing)
         if self.query.extra_select:
-            extra_select_names = six.iterkeys(self.query.extra_select)  # get extra select field list
+            extra_select_names = list(six.iterkeys(self.query.extra_select))  # get extra select field list
             for real_object in resultlist:
                 real_object.polymorphic_extra_select_names = extra_select_names
 
