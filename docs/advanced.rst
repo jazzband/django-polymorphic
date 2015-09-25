@@ -176,8 +176,9 @@ About Queryset Methods
     methods now, it's best if you use ``Model.base_objects.values...`` as
     this is guaranteed to not change. 
 
-*   ``defer()`` and ``only()`` are not yet supported (support will be added
-    in the future). 
+*   ``defer()`` and ``only()`` work as expected. On Django 1.5+ they support
+    the ``ModelX___field`` syntax, but on Django 1.4 it is only possible to
+    pass fields on the base model into these methods.
 
 
 Using enhanced Q-objects in any Places
@@ -231,10 +232,10 @@ Restrictions & Caveats
 *   Database Performance regarding concrete Model inheritance in general.
     Please see the :ref:`performance`.
 
-*   Queryset methods ``values()``, ``values_list()``, ``select_related()``,
-    ``defer()`` and ``only()`` are not yet fully supported (see above).
-    ``extra()`` has one restriction: the resulting objects are required to have
-    a unique primary key within the result set.
+*   Queryset methods ``values()``, ``values_list()``, and ``select_related()``
+    are not yet fully supported (see above). ``extra()`` has one restriction:
+    the resulting objects are required to have a unique primary key within
+    the result set.
 
 *   Diamond shaped inheritance: There seems to be a general problem 
     with diamond shaped multiple model inheritance with Django models
