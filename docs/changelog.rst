@@ -1,7 +1,17 @@
 Changelog
 ==========
 
-Version 0.7.1 (2015-04/30)
+Version 0.7.2 (2015-10-01)
+--------------------------
+
+* Added ``queryset.as_manager()`` support for Django 1.7/1.8
+* Optimize model access for non-dumpdata usage; avoid ``__getattribute__()`` call each time to access the manager.
+* Fixed 500 error when using invalid PK's in the admin URL, return 404 instead.
+* Fixed possible issues when using an custom ``AdminSite`` class for the parent object.
+* Fixed Pickle exception when polymorphic model is cached.
+
+
+Version 0.7.1 (2015-04-30)
 --------------------------
 
 * Fixed Django 1.8 support for related field widgets.
