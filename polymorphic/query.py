@@ -64,6 +64,16 @@ class PolymorphicQuerySet(QuerySet):
         new.polymorphic_disabled = self.polymorphic_disabled
         return new
 
+    if django.VERSION >= (1,7):
+        def as_manager(cls):
+            # Make sure the Django 1.7 way of creating managers works.
+            from .manager import PolymorphicManager
+            manager = PolymorphicManager.from_queryset(cls)()
+            manager._built_with_as_manager = True
+            return manager
+        as_manager.queryset_only = True
+        as_manager = classmethod(as_manager)
+
     def non_polymorphic(self, *args, **kwargs):
         """switch off polymorphic behaviour for this query.
         When the queryset is evaluated, only objects of the type of the

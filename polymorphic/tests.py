@@ -6,6 +6,7 @@ from __future__ import print_function
 import uuid
 import re
 import django
+from unittest import skipIf
 from django.db.models.query import QuerySet
 
 from django.test import TestCase
@@ -112,6 +113,11 @@ class MyManager(PolymorphicManager):
 class ModelWithMyManager(ShowFieldTypeAndContent, Model2A):
     objects = MyManager()
     field4 = models.CharField(max_length=10)
+
+if django.VERSION >= (1,7):
+    class ModelWithMyManager2(ShowFieldTypeAndContent, Model2A):
+        objects = MyManagerQuerySet.as_manager()
+        field4 = models.CharField(max_length=10)
 
 class MROBase1(ShowFieldType, PolymorphicModel):
     objects = MyManager()
@@ -684,6 +690,21 @@ class PolymorphicTests(TestCase):
         self.assertIs(type(ModelWithMyManager._default_manager), MyManager)
         self.assertIs(type(ModelWithMyManager.base_objects), models.Manager)
 
+    @skipIf(django.VERSION < (1,7), "This test needs Django 1.7+")
+    def test_user_defined_queryset_as_manager(self):
+        self.create_model2abcd()
+        ModelWithMyManager2.objects.create(field1='D1a', field4='D4a')
+        ModelWithMyManager2.objects.create(field1='D1b', field4='D4b')
+
+        objects = ModelWithMyManager2.objects.all()
+        self.assertEqual(repr(objects[0]), '<ModelWithMyManager2: id 5, field1 (CharField) "D1a", field4 (CharField) "D4a">')
+        self.assertEqual(repr(objects[1]), '<ModelWithMyManager2: id 6, field1 (CharField) "D1b", field4 (CharField) "D4b">')
+        self.assertEqual(len(objects), 2)
+
+        self.assertEqual(type(ModelWithMyManager2.objects).__name__, 'PolymorphicManagerFromMyManagerQuerySet')
+        self.assertEqual(type(ModelWithMyManager2._default_manager).__name__, 'PolymorphicManagerFromMyManagerQuerySet')
+        self.assertIs(type(ModelWithMyManager2.base_objects), models.Manager)
+
 
     def test_manager_inheritance(self):
         # by choice of MRO, should be MyManager from MROBase1.
@@ -827,6 +848,7 @@ class PolymorphicTests(TestCase):
 
         #test that we can delete the object
         t.delete()
+
 
 
 class RegressionTests(TestCase):
