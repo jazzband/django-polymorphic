@@ -198,7 +198,11 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
 
 
     def _get_real_admin(self, object_id):
-        obj = self.model.objects.non_polymorphic().values('polymorphic_ctype').get(pk=object_id)
+        try:
+            obj = self.model.objects.non_polymorphic() \
+                .values('polymorphic_ctype').get(pk=object_id)
+        except self.model.DoesNotExist:
+            raise Http404
         return self._get_real_admin_by_ct(obj['polymorphic_ctype'])
 
 
