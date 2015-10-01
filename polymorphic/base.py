@@ -229,21 +229,20 @@ class PolymorphicModelBase(ModelBase):
     # Django's management command 'dumpdata' relies on non-polymorphic
     # behaviour of the _default_manager. Therefore, we catch any access to _default_manager
     # here and return the non-polymorphic default manager instead if we are called from 'dumpdata.py'
+    # Otherwise, the base objects will be upcasted to polymorphic models, and be outputted as such.
     # (non-polymorphic default manager is 'base_objects' for polymorphic models).
     # This way we don't need to patch django.core.management.commands.dumpdata
     # for all supported Django versions.
-    # TODO: investigate Django how this can be avoided
-    _dumpdata_command_running = False
-    if len(sys.argv) > 1:
-        _dumpdata_command_running = (sys.argv[1] == 'dumpdata')
+    if len(sys.argv) > 1 and sys.argv[1] == 'dumpdata':
+        # manage.py dumpdata is running
 
-    def __getattribute__(self, name):
-        if name == '_default_manager':
-            if self._dumpdata_command_running:
+        def __getattribute__(self, name):
+            if name == '_default_manager':
                 frm = inspect.stack()[1]  # frm[1] is caller file name, frm[3] is caller function name
                 if 'django/core/management/commands/dumpdata.py' in frm[1]:
                     return self.base_objects
                 #caller_mod_name = inspect.getmodule(frm[0]).__name__  # does not work with python 2.4
                 #if caller_mod_name == 'django.core.management.commands.dumpdata':
 
-        return super(PolymorphicModelBase, self).__getattribute__(name)
+            return super(PolymorphicModelBase, self).__getattribute__(name)
+    # TODO: investigate Django how this can be avoided
