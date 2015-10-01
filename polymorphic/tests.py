@@ -6,7 +6,7 @@ from __future__ import print_function
 import uuid
 import re
 import django
-from unittest import skipIf
+from django.utils.unittest import skipIf
 from django.db.models.query import QuerySet
 
 from django.test import TestCase
