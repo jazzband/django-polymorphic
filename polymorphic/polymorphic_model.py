@@ -173,10 +173,17 @@ class PolymorphicModel(six.with_metaclass(PolymorphicModelBase, models.Model)):
 
         subclasses_and_superclasses_accessors = self._get_inheritance_relation_fields_and_models()
 
-        from django.db.models.fields.related import SingleRelatedObjectDescriptor, ReverseSingleRelatedObjectDescriptor
+        try:
+            from django.db.models.fields.related import ReverseOneToOneDescriptor, ForwardManyToOneDescriptor
+        except ImportError:
+            # django < 1.9
+            from django.db.models.fields.related import (
+                SingleRelatedObjectDescriptor as ReverseOneToOneDescriptor,
+                ReverseSingleRelatedObjectDescriptor as ForwardManyToOneDescriptor,
+            )
         for name, model in subclasses_and_superclasses_accessors.items():
             orig_accessor = getattr(self.__class__, name, None)
-            if type(orig_accessor) in [SingleRelatedObjectDescriptor, ReverseSingleRelatedObjectDescriptor]:
+            if type(orig_accessor) in [ReverseOneToOneDescriptor, ForwardManyToOneDescriptor]:
                 #print >>sys.stderr, '---------- replacing', name, orig_accessor, '->', model
                 setattr(self.__class__, name, property(create_accessor_function_for_model(model, name)))
 
