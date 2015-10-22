@@ -2,7 +2,7 @@
 
 from django.db import models
 
-from polymorphic import PolymorphicModel, PolymorphicManager, PolymorphicQuerySet
+from polymorphic.models import PolymorphicModel
 from polymorphic.showfields import ShowFieldContent, ShowFieldType, ShowFieldTypeAndContent
 
 class Project(ShowFieldContent, PolymorphicModel):
