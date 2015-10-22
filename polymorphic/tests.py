@@ -8,7 +8,7 @@ import re
 import django
 try:
     from unittest import skipIf
-except:
+except ImportError:
     # python<2.7
     from django.utils.unittest import skipIf
 from django.db.models.query import QuerySet
@@ -23,7 +23,11 @@ from polymorphic.models import PolymorphicModel
 from polymorphic.manager import PolymorphicManager
 from polymorphic.query import PolymorphicQuerySet
 from polymorphic import ShowFieldContent, ShowFieldType, ShowFieldTypeAndContent
-from polymorphic.tools_for_tests import UUIDField
+try:
+    from django.db.models import UUIDField
+except ImportError:
+    # django<1.8
+    from polymorphic.tools_for_tests import UUIDField
 
 
 class PlainA(models.Model):
@@ -212,15 +216,15 @@ class Bottom(Middle):
     author = models.CharField(max_length=50)
 
 class UUIDProject(ShowFieldTypeAndContent, PolymorphicModel):
-        uuid_primary_key = UUIDField(primary_key = True)
-        topic = models.CharField(max_length = 30)
+     uuid_primary_key = UUIDField(primary_key = True, default=uuid.uuid1)
+     topic = models.CharField(max_length = 30)
 class UUIDArtProject(UUIDProject):
-        artist = models.CharField(max_length = 30)
+     artist = models.CharField(max_length = 30)
 class UUIDResearchProject(UUIDProject):
-        supervisor = models.CharField(max_length = 30)
+     supervisor = models.CharField(max_length = 30)
 
 class UUIDPlainA(models.Model):
-    uuid_primary_key = UUIDField(primary_key = True)
+    uuid_primary_key = UUIDField(primary_key = True, default=uuid.uuid1)
     field1 = models.CharField(max_length=10)
 class UUIDPlainB(UUIDPlainA):
     field2 = models.CharField(max_length=10)

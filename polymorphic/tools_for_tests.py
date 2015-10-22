@@ -1,13 +1,11 @@
-# -*- coding: utf-8 -*-
-
-####################################################################
-
+# Compatibility module for Django < 1.8
 import uuid
 
 from django import forms
 from django.db import models
 from django.utils.encoding import smart_text
 from django.utils import six
+
 
 class UUIDVersionError(Exception):
     pass
