@@ -3,7 +3,7 @@ ModelAdmin code to display polymorphic models.
 """
 import sys
 from django import forms
-from django.conf.urls import patterns, url
+from django.conf.urls import url
 from django.contrib import admin
 from django.contrib.admin.helpers import AdminForm, AdminErrorList
 from django.contrib.admin.widgets import AdminRadioSelect
@@ -304,9 +304,9 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
                 urls[i] = new_change_url
 
         # Define the catch-all for custom views
-        custom_urls = patterns('',
+        custom_urls = [
             url(r'^(?P<path>.+)$', self.admin_site.admin_view(self.subclass_view))
-        )
+        ]
 
         # At this point. all admin code needs to be known.
         self._lazy_setup()
