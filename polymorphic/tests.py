@@ -6,7 +6,11 @@ from __future__ import print_function
 import uuid
 import re
 import django
-from django.utils.unittest import skipIf
+try:
+    from unittest import skipIf
+except:
+    # python<2.7
+    from django.utils.unittest import skipIf
 from django.db.models.query import QuerySet
 
 from django.test import TestCase
@@ -15,7 +19,9 @@ from django.db import models
 from django.contrib.contenttypes.models import ContentType
 from django.utils import six
 
-from polymorphic import PolymorphicModel, PolymorphicManager, PolymorphicQuerySet
+from polymorphic.models import PolymorphicModel
+from polymorphic.manager import PolymorphicManager
+from polymorphic.query import PolymorphicQuerySet
 from polymorphic import ShowFieldContent, ShowFieldType, ShowFieldTypeAndContent
 from polymorphic.tools_for_tests import UUIDField
 

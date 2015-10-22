@@ -234,7 +234,7 @@ def _create_model_filter_Q(modellist, not_instance_of=False):
     if not modellist:
         return None
 
-    from .polymorphic_model import PolymorphicModel
+    from .models import PolymorphicModel
 
     if type(modellist) != list and type(modellist) != tuple:
         if issubclass(modellist, PolymorphicModel):

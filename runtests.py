@@ -30,8 +30,10 @@ if not settings.configured:
         TEMPLATE_LOADERS = (
             'django.template.loaders.app_directories.Loader',
         ),
-        TEMPLATE_CONTEXT_PROCESSORS = default_settings.TEMPLATE_CONTEXT_PROCESSORS + (
-            'django.core.context_processors.request',
+        TEMPLATE_CONTEXT_PROCESSORS=(
+            default_settings.TEMPLATE_CONTEXT_PROCESSORS + [
+                'django.core.context_processors.request',
+            ]
         ),
         TEST_RUNNER = 'django.test.runner.DiscoverRunner' if django.VERSION >= (1,7) else 'django.test.simple.DjangoTestSuiteRunner',
         INSTALLED_APPS = (
