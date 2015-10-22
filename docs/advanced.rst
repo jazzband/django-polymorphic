@@ -6,7 +6,7 @@ Advanced features
 In the examples below, these models are being used::
 
     from django.db import models
-    from polymorphic import PolymorphicModel
+    from polymorphic.models import PolymorphicModel
 
     class ModelA(PolymorphicModel):
         field1 = models.CharField(max_length=10)

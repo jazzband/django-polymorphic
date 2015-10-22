@@ -10,9 +10,10 @@ manager class, just derive your manager from ``PolymorphicManager`` instead of
 ``models.Manager``. As with vanilla Django, in your model class, you should
 explicitly add the default manager first, and then your custom manager::
 
-    from polymorphic import PolymorphicModel, PolymorphicManager
+    from polymorphic.models import PolymorphicModel
+    from polymorphic.manager import PolymorphicManager
 
-   class TimeOrderedManager(PolymorphicManager):
+    class TimeOrderedManager(PolymorphicManager):
         def get_queryset(self):
             qs = super(TimeOrderedManager,self).get_queryset()
             return qs.order_by('-start_date')        # order the queryset
@@ -41,9 +42,10 @@ base models, as long as these are polymorphic. This means that all
 managers defined in polymorphic base models continue to work as
 expected in models inheriting from this base model::
 
-   from polymorphic import PolymorphicModel, PolymorphicManager
+    from polymorphic.models import PolymorphicModel
+    from polymorphic.manager import PolymorphicManager
 
-   class TimeOrderedManager(PolymorphicManager):
+    class TimeOrderedManager(PolymorphicManager):
         def get_queryset(self):
             qs = super(TimeOrderedManager,self).get_queryset()
             return qs.order_by('-start_date')        # order the queryset
@@ -77,7 +79,9 @@ which is the queryset class the manager should use. Just as with vanilla Django,
 you may define your own custom queryset classes. Just use PolymorphicQuerySet
 instead of Django's QuerySet as the base class::
 
-        from polymorphic import PolymorphicModel, PolymorphicManager, PolymorphicQuerySet
+        from polymorphic.models import PolymorphicModel
+        from polymorphic.manager import PolymorphicManager
+        from polymorphic.query import PolymorphicQuerySet
 
         class MyQuerySet(PolymorphicQuerySet):
             def my_queryset_method(...):
