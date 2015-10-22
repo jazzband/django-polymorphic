@@ -383,7 +383,8 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
         context = {
             'title': _('Add %s') % force_text(opts.verbose_name),
             'adminform': adminForm,
-            'is_popup': "_popup" in request.REQUEST,
+            'is_popup': ("_popup" in request.POST or
+                         "_popup" in request.GET),
             'media': mark_safe(media),
             'errors': AdminErrorList(form, ()),
             'app_label': opts.app_label,
