@@ -466,7 +466,7 @@ class PolymorphicChildModelAdmin(admin.ModelAdmin):
         kwargs.setdefault('form', self.base_form or self.form)
 
         # prevent infinite recursion in django 1.6+
-        if not self.declared_fieldsets:
+        if not getattr(self, 'declared_fieldsets', None):
             kwargs.setdefault('fields', None)
 
         return super(PolymorphicChildModelAdmin, self).get_form(request, obj, **kwargs)
@@ -530,7 +530,8 @@ class PolymorphicChildModelAdmin(admin.ModelAdmin):
 
     def get_fieldsets(self, request, obj=None):
         # If subclass declares fieldsets, this is respected
-        if self.declared_fieldsets or not self.base_fieldsets:
+        if (hasattr(self, 'declared_fieldset') and self.declared_fieldsets) \
+           or not self.base_fieldsets:
             return super(PolymorphicChildModelAdmin, self).get_fieldsets(request, obj)
 
         # Have a reasonable default fieldsets,
