@@ -31,7 +31,9 @@ if not settings.configured:
             'django.template.loaders.app_directories.Loader',
         ),
         TEMPLATE_CONTEXT_PROCESSORS=(
-            default_settings.TEMPLATE_CONTEXT_PROCESSORS + [
+            # list() is only needed for older versions of django where this is
+            # a tuple:
+            list(default_settings.TEMPLATE_CONTEXT_PROCESSORS) + [
                 'django.core.context_processors.request',
             ]
         ),
