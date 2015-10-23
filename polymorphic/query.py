@@ -43,6 +43,14 @@ def transmogrify(cls, obj):
 ###################################################################################
 ### PolymorphicQuerySet
 
+def _query_annotations(query):
+    try:
+        return query.annotations
+    except AttributeError:
+        # Django < 1.8
+        return query.aggregates
+
+
 class PolymorphicQuerySet(QuerySet):
     """
     QuerySet for PolymorphicModel
@@ -239,8 +247,8 @@ class PolymorphicQuerySet(QuerySet):
                 if real_class != real_concrete_class:
                     real_object = transmogrify(real_class, real_object)
 
-                if self.query.annotations:
-                    for anno_field_name in six.iterkeys(self.query.annotations):
+                if _query_annotations(self.query):
+                    for anno_field_name in six.iterkeys(_query_annotations(self.query)):
                         attr = getattr(base_result_objects_by_id[o_pk], anno_field_name)
                         setattr(real_object, anno_field_name, attr)
 
@@ -255,8 +263,8 @@ class PolymorphicQuerySet(QuerySet):
         resultlist = [results[ordered_id] for ordered_id in ordered_id_list if ordered_id in results]
 
         # set polymorphic_annotate_names in all objects (currently just used for debugging/printing)
-        if self.query.annotations:
-            annotate_names = list(six.iterkeys(self.query.annotations))  # get annotate field list
+        if _query_annotations(self.query):
+            annotate_names = list(six.iterkeys(_query_annotations(self.query)))  # get annotate field list
             for real_object in resultlist:
                 real_object.polymorphic_annotate_names = annotate_names
 
