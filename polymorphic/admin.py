@@ -18,6 +18,7 @@ from django.utils.encoding import force_text
 from django.utils.http import urlencode
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
+import django
 
 
 try:
@@ -298,10 +299,16 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
 
         # Patch the change URL so it's not a big catch-all; allowing all custom URLs to be added to the end.
         # The url needs to be recreated, patching url.regex is not an option Django 1.4's LocaleRegexProvider changed it.
-        new_change_url = url(r'^{0}/$'.format(self.pk_regex), self.admin_site.admin_view(self.change_view), name='{0}_{1}_change'.format(*info))
-        for i, oldurl in enumerate(urls):
-            if oldurl.name == new_change_url.name:
-                urls[i] = new_change_url
+        if django.VERSION < (1, 9):
+            new_change_url = url(
+                r'^{0}/$'.format(self.pk_regex),
+                self.admin_site.admin_view(self.change_view),
+                name='{0}_{1}_change'.format(*info)
+            )
+
+            for i, oldurl in enumerate(urls):
+                if oldurl.name == new_change_url.name:
+                    urls[i] = new_change_url
 
         # Define the catch-all for custom views
         custom_urls = [
