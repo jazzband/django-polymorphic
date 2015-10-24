@@ -19,6 +19,7 @@ class ModelB(ModelA):
     field2 = models.CharField(max_length=10)
 class ModelC(ModelB):
     field3 = models.CharField(max_length=10)
+    field4 = models.ManyToManyField(ModelB, related_name='related_c')
 
 class nModelA(models.Model):
     field1 = models.CharField(max_length=10)
