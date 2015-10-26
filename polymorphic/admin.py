@@ -296,9 +296,14 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
         urls = super(PolymorphicParentModelAdmin, self).get_urls()
         info = _get_opt(self.model)
 
-        # Patch the change URL so it's not a big catch-all; allowing all custom URLs to be added to the end.
-        # The url needs to be recreated, patching url.regex is not an option Django 1.4's LocaleRegexProvider changed it.
+        # Patch the change view URL so it's not a big catch-all; allowing all
+        # custom URLs to be added to the end. This is done by adding '/$' to the
+        # end of the regex.  The url needs to be recreated, patching url.regex
+        # is not an option Django 1.4's LocaleRegexProvider changed it.
         if django.VERSION < (1, 9):
+            # On Django 1.9, the change view URL has been changed from
+            # /<app>/<model>/<pk>/ to /<app>/<model>/<pk>/change/, which is
+            # why we can skip this workaround for Django >= 1.9.
             new_change_url = url(
                 r'^{0}/$'.format(self.pk_regex),
                 self.admin_site.admin_view(self.change_view),
