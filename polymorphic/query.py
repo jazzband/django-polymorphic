@@ -297,7 +297,7 @@ class PolymorphicQuerySet(QuerySet):
         if self.polymorphic_disabled:
             for o in base_iter:
                 yield o
-            raise StopIteration
+            return
 
         while True:
             base_result_objects = []
@@ -317,7 +317,7 @@ class PolymorphicQuerySet(QuerySet):
                 yield o
 
             if reached_end:
-                raise StopIteration
+                return
 
     def __repr__(self, *args, **kwargs):
         if self.model.polymorphic_query_multiline_output:
