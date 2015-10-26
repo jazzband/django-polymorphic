@@ -19,6 +19,7 @@ Contributors
 * Evan Borgstrom
 * Gavin Wahl
 * Germán M. Bravo
+* Hugo Osvaldo Barrera
 * Jacob Rief
 * Jedediah Smith (proxy models support)
 * John Furr
