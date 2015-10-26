@@ -145,7 +145,18 @@ class PolymorphicQuerySet(QuerySet):
         qs = self.non_polymorphic()
         return super(PolymorphicQuerySet, qs).aggregate(*args, **kwargs)
 
-    # Since django_polymorphic 'V1.0 beta2', extra() always returns polymorphic results.^
+    if django.VERSION >= (1, 9):
+        # On Django < 1.9, 'qs.values(...)' returned a new special ValuesQuerySet
+        # object, which our polymorphic modifications didn't apply to.
+        # Starting with Django 1.9, the copy returned by 'qs.values(...)' has the
+        # same class as 'qs', so our polymorphic modifications would apply.
+        # We want to leave values queries untouched, so we set 'polymorphic_disabled'.
+        def _values(self, *args, **kwargs):
+            clone = super(PolymorphicQuerySet, self)._values(*args, **kwargs)
+            clone.polymorphic_disabled = True
+            return clone
+
+    # Since django_polymorphic 'V1.0 beta2', extra() always returns polymorphic results.
     # The resulting objects are required to have a unique primary key within the result set
     # (otherwise an error is thrown).
     # The "polymorphic" keyword argument is not supported anymore.
@@ -205,7 +216,7 @@ class PolymorphicQuerySet(QuerySet):
         for base_object in base_result_objects:
             ordered_id_list.append(base_object.pk)
 
-            # check if id of the result object occeres more than once - this can happen e.g. with base_objects.extra(tables=...)
+            # check if id of the result object occurres more than once - this can happen e.g. with base_objects.extra(tables=...)
             if not base_object.pk in base_result_objects_by_id:
                 base_result_objects_by_id[base_object.pk] = base_object
 
