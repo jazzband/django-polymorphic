@@ -12,17 +12,8 @@ def read(*parts):
     return codecs.open(file_path, encoding='utf-8').read()
 
 
-def find_version(*parts):
-    version_file = read(*parts)
-    version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]", version_file, re.M)
-    if version_match:
-        return str(version_match.group(1))
-    raise RuntimeError("Unable to find version string.")
-
-
 setup(
     name = 'django_polymorphic',
-    version = find_version('polymorphic', '__version__.py'),
     license = 'BSD',
 
     description = 'Seamless Polymorphic Inheritance for Django Models',
@@ -42,7 +33,6 @@ setup(
         ],
     },
 
-    install_requires=['setuptools'],
     test_suite='runtests',
 
     classifiers=[
@@ -62,5 +52,10 @@ setup(
         'Framework :: Django :: 1.7',
         'Framework :: Django :: 1.8',
         'Topic :: Software Development :: Libraries :: Python Modules',
-    ]
+    ],
+    use_scm_version={
+        'version_scheme': 'post-release',
+        'write_to': 'polymorphic/version.py',
+    },
+    setup_requires=['setuptools_scm'],
 )
