@@ -7,5 +7,8 @@ admin.autodiscover()
 
 urlpatterns = [
     url(r'^admin/', include(admin.site.urls)),
-    url(r'^$', RedirectView.as_view(url=reverse_lazy('admin:index'), permanent=False)),
+    url(
+        r'^$',
+        RedirectView.as_view(url=reverse_lazy('admin:index'), permanent=False)
+    ),
 ]

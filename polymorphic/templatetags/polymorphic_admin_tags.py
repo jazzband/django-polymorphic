@@ -7,7 +7,8 @@ register = Library()
 class BreadcrumbScope(Node):
     def __init__(self, base_opts, nodelist):
         self.base_opts = base_opts
-        self.nodelist = nodelist   # Note, takes advantage of Node.child_nodelists
+        # Note, takes advantage of Node.child_nodelists:
+        self.nodelist = nodelist
 
     @classmethod
     def parse(cls, parser, token):
@@ -23,12 +24,15 @@ class BreadcrumbScope(Node):
                 nodelist=nodelist
             )
         else:
-            raise TemplateSyntaxError("{0} tag expects 1 argument".format(token.contents[0]))
-
+            raise TemplateSyntaxError("{0} tag expects 1 argument".format(
+                token.contents[0])
+            )
 
     def render(self, context):
-        # app_label is really hard to overwrite in the standard Django ModelAdmin.
-        # To insert it in the template, the entire render_change_form() and delete_view() have to copied and adjusted.
+        # app_label is really hard to overwrite in the standard Django
+        # ModelAdmin.
+        # To insert it in the template, the entire render_change_form() and
+        # delete_view() have to copied and adjusted.
         # Instead, have an assignment tag that inserts that in the template.
         base_opts = self.base_opts.resolve(context)
         new_vars = {}
