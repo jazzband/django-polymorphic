@@ -3,10 +3,12 @@
 from django.db import models
 from django.utils import six
 
+
 class ShowFieldBase(object):
     """ base class for the ShowField... model mixins, does the work """
 
-    polymorphic_query_multiline_output = True  # cause nicer multiline PolymorphicQuery output
+    # cause nicer multiline PolymorphicQuery output:
+    polymorphic_query_multiline_output = True
 
     polymorphic_showfield_type = False
     polymorphic_showfield_content = False
@@ -40,7 +42,8 @@ class ShowFieldBase(object):
         else:
             txt = str(content)
             if len(txt) > self.polymorphic_showfield_max_field_width:
-                txt = txt[:self.polymorphic_showfield_max_field_width - 2] + '..'
+                txt = txt[:self.polymorphic_showfield_max_field_width - 2] + \
+                    '..'
             out += '"' + txt + '"'
         return out
 
@@ -48,7 +51,8 @@ class ShowFieldBase(object):
         "helper for __unicode__"
         done_fields = set()
         for field in self._meta.fields + self._meta.many_to_many:
-            if field.name in self.polymorphic_internal_model_fields or '_ptr' in field.name:
+            if field.name in self.polymorphic_internal_model_fields or \
+               '_ptr' in field.name:
                 continue
             if field.name in done_fields:
                 continue  # work around django diamond inheritance problem
@@ -56,11 +60,15 @@ class ShowFieldBase(object):
 
             out = field.name
 
-            # if this is the standard primary key named "id", print it as we did with older versions of django_polymorphic
-            if field.primary_key and field.name == 'id' and type(field) == models.AutoField:
+            # if this is the standard primary key named "id", print it as we
+            # did with older versions of django_polymorphic:
+            if field.primary_key and \
+               field.name == 'id' and \
+               type(field) == models.AutoField:
                 out += ' ' + str(getattr(self, field.name))
 
-            # otherwise, display it just like all other fields (with correct type, shortened content etc.)
+            # otherwise, display it just like all other fields (with correct
+            # type, shortened content etc.)
             else:
                 if self.polymorphic_showfield_type:
                     out += ' (' + type(field).__name__
@@ -69,7 +77,9 @@ class ShowFieldBase(object):
                     out += ')'
 
                 if self.polymorphic_showfield_content:
-                    out += self._showfields_get_content(field.name, type(field))
+                    out += self._showfields_get_content(
+                        field.name, type(field)
+                    )
 
             parts.append((False, out, ','))
 
@@ -98,11 +108,15 @@ class ShowFieldBase(object):
 
         # add annotate fields
         if hasattr(self, 'polymorphic_annotate_names'):
-            self._showfields_add_dynamic_fields(self.polymorphic_annotate_names, 'Ann', parts)
+            self._showfields_add_dynamic_fields(
+                self.polymorphic_annotate_names, 'Ann', parts
+            )
 
         # add extra() select fields
         if hasattr(self, 'polymorphic_extra_select_names'):
-            self._showfields_add_dynamic_fields(self.polymorphic_extra_select_names, 'Extra', parts)
+            self._showfields_add_dynamic_fields(
+                self.polymorphic_extra_select_names, 'Extra', parts
+            )
 
         # format result
 
@@ -118,9 +132,9 @@ class ShowFieldBase(object):
             if not final:
                 next_new_section, _, _ = parts[i + 1]
 
-            if (self.polymorphic_showfield_max_line_width
-                and xpos + len(p) > self.polymorphic_showfield_max_line_width
-                and possible_line_break_pos != None):
+            if self.polymorphic_showfield_max_line_width and \
+               xpos + len(p) > self.polymorphic_showfield_max_line_width and \
+               possible_line_break_pos is not None:
                 rest = out[possible_line_break_pos:]
                 out = out[:possible_line_break_pos]
                 out += '\n' + indentstr + rest
@@ -148,7 +162,8 @@ class ShowFieldType(ShowFieldBase):
 
 
 class ShowFieldContent(ShowFieldBase):
-    """ model mixin that shows the object's class, it's fields and field contents """
+    """ model mixin that shows the object's class, it's fields and field
+    contents """
     polymorphic_showfield_content = True
 
 

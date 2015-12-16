@@ -26,7 +26,8 @@ class UUIDField(six.with_metaclass(models.SubfieldBase, models.CharField)):
         'postgresql': 'uuid'
     }
 
-    def __init__(self, verbose_name=None, name=None, auto=True, version=1, node=None, clock_seq=None, namespace=None, **kwargs):
+    def __init__(self, verbose_name=None, name=None, auto=True, version=1,
+                 node=None, clock_seq=None, namespace=None, **kwargs):
         """Contruct a UUIDField.
 
         @param verbose_name: Optional verbose name to use in place of what
@@ -34,8 +35,11 @@ class UUIDField(six.with_metaclass(models.SubfieldBase, models.CharField)):
         @param name: Override Django's name assignment
         @param auto: If True, create a UUID value if one is not specified.
         @param version: By default we create a version 1 UUID.
-        @param node: Used for version 1 UUID's. If not supplied, then the uuid.getnode() function is called to obtain it. This can be slow.
-        @param clock_seq: Used for version 1 UUID's. If not supplied a random 14-bit sequence number is chosen
+        @param node: Used for version 1 UUID's. If not supplied, then the
+                     uuid.getnode() function is called to obtain it. This can
+                     be slow.
+        @param clock_seq: Used for version 1 UUID's. If not supplied a random
+                          14-bit sequence number is chosen
         @param namespace: Required for version 3 and version 5 UUID's.
         @param name: Required for version4 and version 5 UUID's.
 
@@ -62,8 +66,9 @@ class UUIDField(six.with_metaclass(models.SubfieldBase, models.CharField)):
         elif version == 3 or version == 5:
             self.namespace, self.name = namespace, name
 
-        super(UUIDField, self).__init__(verbose_name=verbose_name,
-            name=name, **kwargs)
+        super(UUIDField, self).__init__(
+            verbose_name=verbose_name, name=name, **kwargs
+        )
 
     def create_uuid(self):
         if not self.version or self.version == 4:
@@ -77,16 +82,21 @@ class UUIDField(six.with_metaclass(models.SubfieldBase, models.CharField)):
         elif self.version == 5:
             return uuid.uuid5(self.namespace, self.name)
         else:
-            raise UUIDVersionError("UUID version %s is not valid." % self.version)
+            raise UUIDVersionError(
+                "UUID version %s is not valid." % self.version
+            )
 
     def db_type(self, connection):
         from django.conf import settings
         full_database_type = settings.DATABASES['default']['ENGINE']
         database_type = full_database_type.split('.')[-1]
-        return UUIDField._CREATE_COLUMN_TYPES.get(database_type, "char(%s)" % self.max_length)
+        return UUIDField._CREATE_COLUMN_TYPES.get(
+            database_type, "char(%s)" % self.max_length
+        )
 
     def to_python(self, value):
-        """Return a uuid.UUID instance from the value returned by the database."""
+        """Return a uuid.UUID instance from the value returned by the
+        database."""
         #
         # This is the proper way... But this doesn't work correctly when
         # working with an inherited model
@@ -103,12 +113,12 @@ class UUIDField(six.with_metaclass(models.SubfieldBase, models.CharField)):
         # instance), everything works.
         #
 
-        #if not value:
-        # return None
-        #if isinstance(value, uuid.UUID):
-        # return smart_text(value)
-        #else:
-        # return value
+        # if not value:
+        #   return None
+        # if isinstance(value, uuid.UUID):
+        #   return smart_text(value)
+        # else:
+        #   return value
 
     def pre_save(self, model_instance, add):
         if self.auto and add:
@@ -122,7 +132,8 @@ class UUIDField(six.with_metaclass(models.SubfieldBase, models.CharField)):
         return value
 
     def get_db_prep_value(self, value, connection, prepared):
-        """Casts uuid.UUID values into the format expected by the back end for use in queries"""
+        """Casts uuid.UUID values into the format expected by the back end for
+        use in queries"""
         if isinstance(value, uuid.UUID):
             return smart_text(value)
         return value

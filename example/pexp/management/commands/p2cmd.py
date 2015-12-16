@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# flake8: noqa
 """
 This module is a scratchpad for general development, testing & debugging
 Well, even more so than pcmd.py. You best ignore p2cmd.py.
@@ -62,7 +63,7 @@ class Command(NoArgsCommand):
 
         f=print_timing(poly_sql_query,iterations=1000)
         f()
-        
+
         f=print_timing(poly_sql_query2,iterations=1000)
         f()
 

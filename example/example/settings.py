@@ -67,15 +67,16 @@ INSTALLED_APPS = (
     'django.contrib.admin',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
-    #'django.contrib.sites',
+    # 'django.contrib.sites',
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
-    'polymorphic',      # needed if you want to use the polymorphic admin
-    'pexp',             # this Django app is for testing and experimentation; not needed otherwise
+    'polymorphic',
+    # this Django app is for testing and experimentation; not needed otherwise:
+    'pexp',
 )
 
-if django.VERSION >= (1,7):
+if django.VERSION >= (1, 7):
     TEST_RUNNER = 'django.test.runner.DiscoverRunner'  # silence system checks
 
 # Logging configuration

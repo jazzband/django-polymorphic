@@ -10,7 +10,8 @@ http://chrisglass.github.com/django_polymorphic/
 http://github.com/chrisglass/django_polymorphic
 
 Copyright:
-This code and affiliated files are (C) by Bert Constantin and individual contributors.
+This code and affiliated files are (C) by Bert Constantin and individual
+contributors.
 Please see LICENSE and AUTHORS for more information.
 """
 from __future__ import absolute_import
@@ -18,13 +19,20 @@ from __future__ import absolute_import
 from django.db import models
 from django.contrib.contenttypes.models import ContentType
 from django.utils import six
+try:
+    from django.db.models.fields.related import \
+        ReverseOneToOneDescriptor, ForwardManyToOneDescriptor
+except ImportError:
+    # django < 1.9
+    from django.db.models.fields.related import (
+        SingleRelatedObjectDescriptor as ReverseOneToOneDescriptor,
+        ReverseSingleRelatedObjectDescriptor as ForwardManyToOneDescriptor,
+    )
 
 from .base import PolymorphicModelBase
 from .manager import PolymorphicManager
 from .query_translate import translate_polymorphic_Q_object
 
-###################################################################################
-### PolymorphicModel
 
 class PolymorphicModel(six.with_metaclass(PolymorphicModelBase, models.Model)):
     """
@@ -45,24 +53,34 @@ class PolymorphicModel(six.with_metaclass(PolymorphicModelBase, models.Model)):
         super(YourClass,self).save(*args,**kwargs)
     """
 
-    # for PolymorphicModelBase, so it can tell which models are polymorphic and which are not (duck typing)
+    # for PolymorphicModelBase, so it can tell which models are polymorphic and
+    # which are not (duck typing)
     polymorphic_model_marker = True
 
-    # for PolymorphicQuery, True => an overloaded __repr__ with nicer multi-line output is used by PolymorphicQuery
+    # for PolymorphicQuery, True => an overloaded __repr__ with nicer
+    # multi-line output is used by PolymorphicQuery
     polymorphic_query_multiline_output = False
 
     class Meta:
         abstract = True
 
-    # avoid ContentType related field accessor clash (an error emitted by model validation)
-    polymorphic_ctype = models.ForeignKey(ContentType, null=True, editable=False,
-                                related_name='polymorphic_%(app_label)s.%(class)s_set+')
+    # avoid ContentType related field accessor clash (an error emitted by model
+    # validation)
+    polymorphic_ctype = models.ForeignKey(
+        ContentType,
+        null=True,
+        editable=False,
+        related_name='polymorphic_%(app_label)s.%(class)s_set+'
+    )
 
-    # some applications want to know the name of the fields that are added to its models
+    # some applications want to know the name of the fields that are added to
+    # its models
     polymorphic_internal_model_fields = ['polymorphic_ctype']
 
-    # Note that Django 1.5 removes these managers because the model is abstract.
-    # They are pretended to be there by the metaclass in PolymorphicModelBase.get_inherited_managers()
+    # Note that Django 1.5 removes these managers because the model is
+    # abstract.
+    # They are pretended to be there by the metaclass in
+    # PolymorphicModelBase.get_inherited_managers()
     objects = PolymorphicManager()
     base_objects = models.Manager()
 
@@ -72,14 +90,19 @@ class PolymorphicModel(six.with_metaclass(PolymorphicModelBase, models.Model)):
 
     def pre_save_polymorphic(self):
         """Normally not needed.
-        This function may be called manually in special use-cases. When the object
-        is saved for the first time, we store its real class in polymorphic_ctype.
+        This function may be called manually in special use-cases. When the
+        object is saved for the first time, we store its real class in
+        polymorphic_ctype.
         When the object later is retrieved by PolymorphicQuerySet, it uses this
-        field to figure out the real class of this object
-        (used by PolymorphicQuerySet._get_real_instances)
+        field to figure out the real class of this object (used by
+        PolymorphicQuerySet._get_real_instances)
         """
         if not self.polymorphic_ctype_id:
-            self.polymorphic_ctype = ContentType.objects.get_for_model(self, for_concrete_model=False)
+            self.polymorphic_ctype = ContentType.objects.get_for_model(
+                self,
+                for_concrete_model=False
+            )
+
     pre_save_polymorphic.alters_data = True
 
     def save(self, *args, **kwargs):
@@ -96,13 +119,16 @@ class PolymorphicModel(six.with_metaclass(PolymorphicModelBase, models.Model)):
         retrieve objects, then the real class/type of these objects may be
         determined using this method.
         """
-        # the following line would be the easiest way to do this, but it produces sql queries
-        # return self.polymorphic_ctype.model_class()
-        # so we use the following version, which uses the ContentType manager cache.
-        # Note that model_class() can return None for stale content types;
-        # when the content type record still exists but no longer refers to an existing model.
+        # the following line would be the easiest way to do this, but it
+        # produces sql queries return self.polymorphic_ctype.model_class() so
+        # we use the following version, which uses the ContentType manager
+        # cache.
+        # Note that model_class() can return None for stale content types; when
+        # the content type record still exists but no longer refers to an
+        # existing model.
         try:
-            model = ContentType.objects.get_for_id(self.polymorphic_ctype_id).model_class()
+            model = ContentType.objects.get_for_id(self.polymorphic_ctype_id) \
+                .model_class()
         except AttributeError:
             # Django <1.6 workaround
             return None
@@ -110,24 +136,31 @@ class PolymorphicModel(six.with_metaclass(PolymorphicModelBase, models.Model)):
         # Protect against bad imports (dumpdata without --natural) or other
         # issues missing with the ContentType models.
         if model is not None \
-        and not issubclass(model, self.__class__) \
-        and not issubclass(model, self.__class__._meta.proxy_for_model):
-            raise RuntimeError("ContentType {0} for {1} #{2} does not point to a subclass!".format(
-                self.polymorphic_ctype_id, model, self.pk,
-            ))
+           and not issubclass(model, self.__class__) \
+           and not issubclass(model, self.__class__._meta.proxy_for_model):
+            raise RuntimeError(
+                "ContentType {0} for {1} #{2} does not point to a subclass!"
+                .format(self.polymorphic_ctype_id, model, self.pk,)
+            )
         return model
 
     def get_real_concrete_instance_class_id(self):
         model_class = self.get_real_instance_class()
         if model_class is None:
             return None
-        return ContentType.objects.get_for_model(model_class, for_concrete_model=True).pk
+        return ContentType.objects.get_for_model(
+            model_class,
+            for_concrete_model=True
+        ).pk
 
     def get_real_concrete_instance_class(self):
         model_class = self.get_real_instance_class()
         if model_class is None:
             return None
-        return ContentType.objects.get_for_model(model_class, for_concrete_model=True).model_class()
+        return ContentType.objects.get_for_model(
+            model_class,
+            for_concrete_model=True
+        ).model_class()
 
     def get_real_instance(self):
         """Normally not needed.
@@ -171,57 +204,70 @@ class PolymorphicModel(six.with_metaclass(PolymorphicModelBase, models.Model)):
                 return attr
             return accessor_function
 
-        subclasses_and_superclasses_accessors = self._get_inheritance_relation_fields_and_models()
+        subclasses_and_superclasses_accessors = \
+            self._get_inheritance_relation_fields_and_models()
 
-        try:
-            from django.db.models.fields.related import ReverseOneToOneDescriptor, ForwardManyToOneDescriptor
-        except ImportError:
-            # django < 1.9
-            from django.db.models.fields.related import (
-                SingleRelatedObjectDescriptor as ReverseOneToOneDescriptor,
-                ReverseSingleRelatedObjectDescriptor as ForwardManyToOneDescriptor,
-            )
         for name, model in subclasses_and_superclasses_accessors.items():
             orig_accessor = getattr(self.__class__, name, None)
-            if type(orig_accessor) in [ReverseOneToOneDescriptor, ForwardManyToOneDescriptor]:
-                #print >>sys.stderr, '---------- replacing', name, orig_accessor, '->', model
-                setattr(self.__class__, name, property(create_accessor_function_for_model(model, name)))
+            if type(orig_accessor) in [
+                ReverseOneToOneDescriptor, ForwardManyToOneDescriptor
+            ]:
+                setattr(
+                    self.__class__,
+                    name,
+                    property(create_accessor_function_for_model(model, name))
+                )
 
     def _get_inheritance_relation_fields_and_models(self):
         """helper function for __init__:
-        determine names of all Django inheritance accessor member functions for type(self)"""
+        determine names of all Django inheritance accessor member functions for
+        type(self)"""
 
         def add_model(model, field_name, result):
             result[field_name] = model
 
         def add_model_if_regular(model, field_name, result):
-            if (issubclass(model, models.Model)
-                and model != models.Model
-                and model != self.__class__
-                and model != PolymorphicModel):
+            if issubclass(model, models.Model) and \
+               model != models.Model and \
+               model != self.__class__ and \
+               model != PolymorphicModel:
                 add_model(model, field_name, result)
 
-        def add_all_super_models(model, result):    
+        def add_all_super_models(model, result):
             for super_cls, field_to_super in model._meta.parents.items():
-                if field_to_super is not None:  #if not a link to a proxy model
-                    field_name = field_to_super.name #the field on model can have a different name to super_cls._meta.module_name, if the field is created manually using 'parent_link'
+                if field_to_super is not None:  # if not a link to a proxy
+                    # the field on model can have a different name to
+                    # super_cls._meta.module_name, if the field is created
+                    # manually using 'parent_link':
+                    field_name = field_to_super.name
                     add_model_if_regular(super_cls, field_name, result)
                     add_all_super_models(super_cls, result)
 
-        def add_all_sub_models(super_cls, result):            
-            for sub_cls in super_cls.__subclasses__(): #go through all subclasses of model  
-                if super_cls in sub_cls._meta.parents: #super_cls may not be in sub_cls._meta.parents if super_cls is a proxy model
-                    field_to_super = sub_cls._meta.parents[super_cls] #get the field that links sub_cls to super_cls    
-                    if field_to_super is not None:    # if filed_to_super is not a link to a proxy model
+        def add_all_sub_models(super_cls, result):
+            # go through all subclasses of model
+            for sub_cls in super_cls.__subclasses__():
+                # super_cls may not be in sub_cls._meta.parents if super_cls is
+                # a proxy model:
+                if super_cls in sub_cls._meta.parents:
+                    # get the field that links sub_cls to super_cls:
+                    field_to_super = sub_cls._meta.parents[super_cls]
+                    # if filed_to_super is not a link to a proxy model:
+                    if field_to_super is not None:
                         super_to_sub_related_field = field_to_super.rel
                         if super_to_sub_related_field.related_name is None:
-                            #if related name is None the related field is the name of the subclass
+                            # if related name is None the related field is the
+                            # name of the subclass:
                             to_subclass_fieldname = sub_cls.__name__.lower()
                         else:
-                            #otherwise use the given related name
-                            to_subclass_fieldname = super_to_sub_related_field.related_name
-                            
-                        add_model_if_regular(sub_cls, to_subclass_fieldname, result)
+                            # otherwise use the given related name:
+                            to_subclass_fieldname = \
+                                super_to_sub_related_field.related_name
+
+                        add_model_if_regular(
+                            sub_cls,
+                            to_subclass_fieldname,
+                            result
+                        )
 
         result = {}
         add_all_super_models(self.__class__, result)
