@@ -162,7 +162,7 @@ def translate_polymorphic_field_path(queryset_model, field_path):
         # so no tripple ClassName___field was intended.
         try:
             # rel = (field_object, model, direct, m2m)
-            field = queryset_model._meta.get_field_by_name(classname)[0]
+            field = queryset_model._meta.get_field(classname)
             if isinstance(field, RelatedObject):
                 # Can also test whether the field exists in the related object to avoid ambiguity between
                 # class names and field names, but that never happens when your class names are in CamelCase.
@@ -234,7 +234,7 @@ def _create_model_filter_Q(modellist, not_instance_of=False):
     if not modellist:
         return None
 
-    from .polymorphic_model import PolymorphicModel
+    from .models import PolymorphicModel
 
     if type(modellist) != list and type(modellist) != tuple:
         if issubclass(modellist, PolymorphicModel):

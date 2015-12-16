@@ -3,7 +3,7 @@ ModelAdmin code to display polymorphic models.
 """
 import sys
 from django import forms
-from django.conf.urls import patterns, url
+from django.conf.urls import url
 from django.contrib import admin
 from django.contrib.admin.helpers import AdminForm, AdminErrorList
 from django.contrib.admin.widgets import AdminRadioSelect
@@ -18,6 +18,7 @@ from django.utils.encoding import force_text
 from django.utils.http import urlencode
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
+import django
 
 
 try:
@@ -268,7 +269,6 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
 
     def change_view(self, request, object_id, *args, **kwargs):
         """Redirect the change view to the real admin."""
-        # between Django 1.3 and 1.4 this method signature differs. Hence the *args, **kwargs
         real_admin = self._get_real_admin(object_id)
         return real_admin.change_view(request, object_id, *args, **kwargs)
 
@@ -296,17 +296,28 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
         urls = super(PolymorphicParentModelAdmin, self).get_urls()
         info = _get_opt(self.model)
 
-        # Patch the change URL so it's not a big catch-all; allowing all custom URLs to be added to the end.
-        # The url needs to be recreated, patching url.regex is not an option Django 1.4's LocaleRegexProvider changed it.
-        new_change_url = url(r'^{0}/$'.format(self.pk_regex), self.admin_site.admin_view(self.change_view), name='{0}_{1}_change'.format(*info))
-        for i, oldurl in enumerate(urls):
-            if oldurl.name == new_change_url.name:
-                urls[i] = new_change_url
+        # Patch the change view URL so it's not a big catch-all; allowing all
+        # custom URLs to be added to the end. This is done by adding '/$' to the
+        # end of the regex.  The url needs to be recreated, patching url.regex
+        # is not an option Django 1.4's LocaleRegexProvider changed it.
+        if django.VERSION < (1, 9):
+            # On Django 1.9, the change view URL has been changed from
+            # /<app>/<model>/<pk>/ to /<app>/<model>/<pk>/change/, which is
+            # why we can skip this workaround for Django >= 1.9.
+            new_change_url = url(
+                r'^{0}/$'.format(self.pk_regex),
+                self.admin_site.admin_view(self.change_view),
+                name='{0}_{1}_change'.format(*info)
+            )
+
+            for i, oldurl in enumerate(urls):
+                if oldurl.name == new_change_url.name:
+                    urls[i] = new_change_url
 
         # Define the catch-all for custom views
-        custom_urls = patterns('',
+        custom_urls = [
             url(r'^(?P<path>.+)$', self.admin_site.admin_view(self.subclass_view))
-        )
+        ]
 
         # At this point. all admin code needs to be known.
         self._lazy_setup()
@@ -383,7 +394,8 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
         context = {
             'title': _('Add %s') % force_text(opts.verbose_name),
             'adminform': adminForm,
-            'is_popup': "_popup" in request.REQUEST,
+            'is_popup': ("_popup" in request.POST or
+                         "_popup" in request.GET),
             'media': mark_safe(media),
             'errors': AdminErrorList(form, ()),
             'app_label': opts.app_label,
@@ -465,7 +477,7 @@ class PolymorphicChildModelAdmin(admin.ModelAdmin):
         kwargs.setdefault('form', self.base_form or self.form)
 
         # prevent infinite recursion in django 1.6+
-        if not self.declared_fieldsets:
+        if not getattr(self, 'declared_fieldsets', None):
             kwargs.setdefault('fields', None)
 
         return super(PolymorphicChildModelAdmin, self).get_form(request, obj, **kwargs)
@@ -529,7 +541,8 @@ class PolymorphicChildModelAdmin(admin.ModelAdmin):
 
     def get_fieldsets(self, request, obj=None):
         # If subclass declares fieldsets, this is respected
-        if self.declared_fieldsets or not self.base_fieldsets:
+        if (hasattr(self, 'declared_fieldset') and self.declared_fieldsets) \
+           or not self.base_fieldsets:
             return super(PolymorphicChildModelAdmin, self).get_fieldsets(request, obj)
 
         # Have a reasonable default fieldsets,

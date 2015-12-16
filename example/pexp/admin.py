@@ -42,36 +42,34 @@ class ModelAAdmin(PolymorphicParentModelAdmin):
 admin.site.register(ModelA, ModelAAdmin)
 
 
-if 'Model2A' in globals():
-    class Model2AChildAdmin(PolymorphicChildModelAdmin):
-        base_model = Model2A
+class Model2AChildAdmin(PolymorphicChildModelAdmin):
+    base_model = Model2A
 
-    class Model2AAdmin(PolymorphicParentModelAdmin):
-        base_model = Model2A
-        list_filter = (PolymorphicChildModelFilter,)
-        child_models = (
-            (Model2A, Model2AChildAdmin),
-            (Model2B, Model2AChildAdmin),
-            (Model2C, Model2AChildAdmin),
-        )
+class Model2AAdmin(PolymorphicParentModelAdmin):
+    base_model = Model2A
+    list_filter = (PolymorphicChildModelFilter,)
+    child_models = (
+        (Model2A, Model2AChildAdmin),
+        (Model2B, Model2AChildAdmin),
+        (Model2C, Model2AChildAdmin),
+    )
 
-    admin.site.register(Model2A, Model2AAdmin)
+admin.site.register(Model2A, Model2AAdmin)
 
 
-if 'UUIDModelA' in globals():
-    class UUIDModelAChildAdmin(PolymorphicChildModelAdmin):
-        base_model = UUIDModelA
+class UUIDModelAChildAdmin(PolymorphicChildModelAdmin):
+    base_model = UUIDModelA
 
-    class UUIDModelAAdmin(PolymorphicParentModelAdmin):
-        base_model = UUIDModelA
-        list_filter = (PolymorphicChildModelFilter,)
-        child_models = (
-            (UUIDModelA, UUIDModelAChildAdmin),
-            (UUIDModelB, UUIDModelAChildAdmin),
-            (UUIDModelC, UUIDModelAChildAdmin),
-        )
+class UUIDModelAAdmin(PolymorphicParentModelAdmin):
+    base_model = UUIDModelA
+    list_filter = (PolymorphicChildModelFilter,)
+    child_models = (
+        (UUIDModelA, UUIDModelAChildAdmin),
+        (UUIDModelB, UUIDModelAChildAdmin),
+        (UUIDModelC, UUIDModelAChildAdmin),
+    )
 
-    admin.site.register(UUIDModelA, UUIDModelAAdmin)
+admin.site.register(UUIDModelA, UUIDModelAAdmin)
 
 
 class ProxyChildAdmin(PolymorphicChildModelAdmin):

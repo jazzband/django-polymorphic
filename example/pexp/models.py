@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 
+import django
 from django.db import models
 
-from polymorphic import PolymorphicModel, PolymorphicManager, PolymorphicQuerySet
+from polymorphic.models import PolymorphicModel
 from polymorphic.showfields import ShowFieldContent, ShowFieldType, ShowFieldTypeAndContent
 
 class Project(ShowFieldContent, PolymorphicModel):
@@ -18,6 +19,7 @@ class ModelB(ModelA):
     field2 = models.CharField(max_length=10)
 class ModelC(ModelB):
     field3 = models.CharField(max_length=10)
+    field4 = models.ManyToManyField(ModelB, related_name='related_c')
 
 class nModelA(models.Model):
     field1 = models.CharField(max_length=10)
@@ -26,27 +28,25 @@ class nModelB(nModelA):
 class nModelC(nModelB):
     field3 = models.CharField(max_length=10)
 
-# for Django 1.2+, test models with same names in different apps
-# (the other models with identical names are in polymorphic/tests.py)
-from django import VERSION as django_VERSION
-if not (django_VERSION[0]<=1 and django_VERSION[1]<=1):
-    class Model2A(PolymorphicModel):
-        field1 = models.CharField(max_length=10)
-    class Model2B(Model2A):
-        field2 = models.CharField(max_length=10)
-    class Model2C(Model2B):
-        field3 = models.CharField(max_length=10)
+class Model2A(PolymorphicModel):
+    field1 = models.CharField(max_length=10)
+class Model2B(Model2A):
+    field2 = models.CharField(max_length=10)
+class Model2C(Model2B):
+    field3 = models.CharField(max_length=10)
 
-try: from polymorphic.test_tools  import UUIDField
-except: pass
-if 'UUIDField' in globals():
-    class UUIDModelA(ShowFieldTypeAndContent, PolymorphicModel):
-        uuid_primary_key = UUIDField(primary_key = True)
-        field1 = models.CharField(max_length=10)
-    class UUIDModelB(UUIDModelA):
-        field2 = models.CharField(max_length=10)
-    class UUIDModelC(UUIDModelB):
-        field3 = models.CharField(max_length=10)
+if django.VERSION < (1,8):
+    from polymorphic.tools_for_tests import UUIDField
+else:
+    from django.db.models import UUIDField
+
+class UUIDModelA(ShowFieldTypeAndContent, PolymorphicModel):
+    uuid_primary_key = UUIDField(primary_key = True)
+    field1 = models.CharField(max_length=10)
+class UUIDModelB(UUIDModelA):
+    field2 = models.CharField(max_length=10)
+class UUIDModelC(UUIDModelB):
+    field3 = models.CharField(max_length=10)
 
 class ProxyBase(PolymorphicModel):
     title = models.CharField(max_length=200)

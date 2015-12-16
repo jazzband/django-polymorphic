@@ -43,6 +43,14 @@ def transmogrify(cls, obj):
 ###################################################################################
 ### PolymorphicQuerySet
 
+def _query_annotations(query):
+    try:
+        return query.annotations
+    except AttributeError:
+        # Django < 1.8
+        return query.aggregates
+
+
 class PolymorphicQuerySet(QuerySet):
     """
     QuerySet for PolymorphicModel
@@ -137,7 +145,18 @@ class PolymorphicQuerySet(QuerySet):
         qs = self.non_polymorphic()
         return super(PolymorphicQuerySet, qs).aggregate(*args, **kwargs)
 
-    # Since django_polymorphic 'V1.0 beta2', extra() always returns polymorphic results.^
+    if django.VERSION >= (1, 9):
+        # On Django < 1.9, 'qs.values(...)' returned a new special ValuesQuerySet
+        # object, which our polymorphic modifications didn't apply to.
+        # Starting with Django 1.9, the copy returned by 'qs.values(...)' has the
+        # same class as 'qs', so our polymorphic modifications would apply.
+        # We want to leave values queries untouched, so we set 'polymorphic_disabled'.
+        def _values(self, *args, **kwargs):
+            clone = super(PolymorphicQuerySet, self)._values(*args, **kwargs)
+            clone.polymorphic_disabled = True
+            return clone
+
+    # Since django_polymorphic 'V1.0 beta2', extra() always returns polymorphic results.
     # The resulting objects are required to have a unique primary key within the result set
     # (otherwise an error is thrown).
     # The "polymorphic" keyword argument is not supported anymore.
@@ -197,7 +216,7 @@ class PolymorphicQuerySet(QuerySet):
         for base_object in base_result_objects:
             ordered_id_list.append(base_object.pk)
 
-            # check if id of the result object occeres more than once - this can happen e.g. with base_objects.extra(tables=...)
+            # check if id of the result object occurres more than once - this can happen e.g. with base_objects.extra(tables=...)
             if not base_object.pk in base_result_objects_by_id:
                 base_result_objects_by_id[base_object.pk] = base_object
 
@@ -239,8 +258,8 @@ class PolymorphicQuerySet(QuerySet):
                 if real_class != real_concrete_class:
                     real_object = transmogrify(real_class, real_object)
 
-                if self.query.aggregates:
-                    for anno_field_name in six.iterkeys(self.query.aggregates):
+                if _query_annotations(self.query):
+                    for anno_field_name in six.iterkeys(_query_annotations(self.query)):
                         attr = getattr(base_result_objects_by_id[o_pk], anno_field_name)
                         setattr(real_object, anno_field_name, attr)
 
@@ -255,8 +274,8 @@ class PolymorphicQuerySet(QuerySet):
         resultlist = [results[ordered_id] for ordered_id in ordered_id_list if ordered_id in results]
 
         # set polymorphic_annotate_names in all objects (currently just used for debugging/printing)
-        if self.query.aggregates:
-            annotate_names = list(six.iterkeys(self.query.aggregates))  # get annotate field list
+        if _query_annotations(self.query):
+            annotate_names = list(six.iterkeys(_query_annotations(self.query)))  # get annotate field list
             for real_object in resultlist:
                 real_object.polymorphic_annotate_names = annotate_names
 
@@ -289,7 +308,7 @@ class PolymorphicQuerySet(QuerySet):
         if self.polymorphic_disabled:
             for o in base_iter:
                 yield o
-            raise StopIteration
+            return
 
         while True:
             base_result_objects = []
@@ -309,7 +328,7 @@ class PolymorphicQuerySet(QuerySet):
                 yield o
 
             if reached_end:
-                raise StopIteration
+                return
 
     def __repr__(self, *args, **kwargs):
         if self.model.polymorphic_query_multiline_output:
