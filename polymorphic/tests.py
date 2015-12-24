@@ -124,6 +124,18 @@ class ModelWithMyManager(ShowFieldTypeAndContent, Model2A):
     objects = MyManager()
     field4 = models.CharField(max_length=10)
 
+
+class ModelWithMyManagerNoDefault(ShowFieldTypeAndContent, Model2A):
+    objects = PolymorphicManager()
+    my_objects = MyManager()
+    field4 = models.CharField(max_length=10)
+
+class ModelWithMyManagerDefault(ShowFieldTypeAndContent, Model2A):
+    my_objects = MyManager()
+    objects = PolymorphicManager()
+    field4 = models.CharField(max_length=10)
+
+
 if django.VERSION >= (1,7):
     class ModelWithMyManager2(ShowFieldTypeAndContent, Model2A):
         objects = MyManagerQuerySet.as_manager()
@@ -699,6 +711,31 @@ class PolymorphicTests(TestCase):
         self.assertIs(type(ModelWithMyManager.objects), MyManager)
         self.assertIs(type(ModelWithMyManager._default_manager), MyManager)
         self.assertIs(type(ModelWithMyManager.base_objects), models.Manager)
+
+    def test_user_defined_manager_as_secondary(self):
+        self.create_model2abcd()
+        ModelWithMyManagerNoDefault.objects.create(field1='D1a', field4='D4a')
+        ModelWithMyManagerNoDefault.objects.create(field1='D1b', field4='D4b')
+
+        objects = ModelWithMyManagerNoDefault.my_objects.all()   # MyManager should reverse the sorting of field1
+        self.assertEqual(repr(objects[0]), '<ModelWithMyManagerNoDefault: id 6, field1 (CharField) "D1b", field4 (CharField) "D4b">')
+        self.assertEqual(repr(objects[1]), '<ModelWithMyManagerNoDefault: id 5, field1 (CharField) "D1a", field4 (CharField) "D4a">')
+        self.assertEqual(len(objects), 2)
+
+        self.assertIs(type(ModelWithMyManagerNoDefault.my_objects), MyManager)
+        self.assertIs(type(ModelWithMyManagerNoDefault.objects), PolymorphicManager)
+        self.assertIs(type(ModelWithMyManagerNoDefault._default_manager), PolymorphicManager)
+        self.assertIs(type(ModelWithMyManagerNoDefault.base_objects), models.Manager)
+
+    def test_user_objects_manager_as_secondary(self):
+        self.create_model2abcd()
+        ModelWithMyManagerDefault.objects.create(field1='D1a', field4='D4a')
+        ModelWithMyManagerDefault.objects.create(field1='D1b', field4='D4b')
+
+        self.assertIs(type(ModelWithMyManagerDefault.my_objects), MyManager)
+        self.assertIs(type(ModelWithMyManagerDefault.objects), PolymorphicManager)
+        self.assertIs(type(ModelWithMyManagerDefault._default_manager), MyManager)
+        self.assertIs(type(ModelWithMyManagerDefault.base_objects), models.Manager)
 
     @skipIf(django.VERSION < (1,7), "This test needs Django 1.7+")
     def test_user_defined_queryset_as_manager(self):
