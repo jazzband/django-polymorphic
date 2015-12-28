@@ -21,7 +21,11 @@ def reset_queries():
 
 
 def show_queries():
-    print; print 'QUERIES:', len(connection.queries); pprint(connection.queries); print; reset_queries()
+    print
+    print 'QUERIES:', len(connection.queries)
+    pprint(connection.queries)
+    print
+    reset_queries()
 
 import time
 
@@ -39,7 +43,8 @@ def print_timing(func, message='', iterations=1):
             t2 = time.time()
             results.append((t2 - t1) * 1000.0)
         res_sum = 0
-        for r in results: res_sum += r
+        for r in results:
+            res_sum += r
         median = res_sum / len(results)
         print '%s%-19s: %.0f ms, %i queries' % (
             message, func.func_name,

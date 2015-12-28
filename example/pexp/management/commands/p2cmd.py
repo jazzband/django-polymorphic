@@ -9,7 +9,8 @@ import django
 from django.core.management.base import NoArgsCommand
 from django.db import connection
 from pprint import pprint
-import time, sys
+import time
+import sys
 
 from pexp.models import *
 
@@ -22,7 +23,11 @@ def reset_queries():
 
 
 def show_queries():
-    print; print 'QUERIES:', len(connection.queries); pprint(connection.queries); print; connection.queries = []
+    print
+    print 'QUERIES:', len(connection.queries)
+    pprint(connection.queries)
+    print
+    connection.queries = []
 
 
 def print_timing(func, message='', iterations=1):
@@ -35,7 +40,8 @@ def print_timing(func, message='', iterations=1):
             t2 = time.time()
             results.append((t2 - t1) * 1000.0)
         res_sum = 0
-        for r in results: res_sum += r
+        for r in results:
+            res_sum += r
         median = res_sum / len(results)
         print '%s%-19s: %.4f ms, %i queries (%i times)' % (
             message, func.func_name,
@@ -57,7 +63,7 @@ class Command(NoArgsCommand):
             b = ModelB.objects.create(field1='B1', field2='B2')
             c = ModelC.objects.create(field1='C1', field2='C2', field3='C3')
             reset_queries()
-            print ModelC.base_objects.all();
+            print ModelC.base_objects.all()
             show_queries()
 
         if False:
@@ -66,7 +72,8 @@ class Command(NoArgsCommand):
                 a = ModelA.objects.create(field1=str(i % 100))
                 b = ModelB.objects.create(field1=str(i % 100), field2=str(i % 200))
                 c = ModelC.objects.create(field1=str(i % 100), field2=str(i % 200), field3=str(i % 300))
-                if i % 100 == 0: print i
+                if i % 100 == 0:
+                    print i
 
         f = print_timing(poly_sql_query, iterations=1000)
         f()
@@ -81,7 +88,8 @@ class Command(NoArgsCommand):
         b = nModelB.objects.create(field1='B1', field2='B2')
         c = nModelC.objects.create(field1='C1', field2='C2', field3='C3')
         qs = ModelA.objects.raw("SELECT * from pexp_modela")
-        for o in list(qs): print o
+        for o in list(qs):
+            print o
 
 from django.db import connection, transaction
 from random import Random

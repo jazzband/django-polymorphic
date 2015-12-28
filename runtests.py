@@ -19,15 +19,15 @@ sys.stderr.write('Using Django version {0} from {1}\n'.format(
 
 if not settings.configured:
     settings.configure(
-        DEBUG = True,
-        TEMPLATE_DEBUG = True,
-        DATABASES = {
+        DEBUG=True,
+        TEMPLATE_DEBUG=True,
+        DATABASES={
             'default': {
                 'ENGINE': 'django.db.backends.sqlite3',
                 'NAME': ':memory:'
             }
         },
-        TEMPLATE_LOADERS = (
+        TEMPLATE_LOADERS=(
             'django.template.loaders.app_directories.Loader',
         ),
         TEMPLATE_CONTEXT_PROCESSORS=(
@@ -37,7 +37,7 @@ if not settings.configured:
                 'django.core.context_processors.request',
             ]
         ),
-        TEST_RUNNER = 'django.test.runner.DiscoverRunner' if django.VERSION >= (1,7) else 'django.test.simple.DjangoTestSuiteRunner',
+        TEST_RUNNER = 'django.test.runner.DiscoverRunner' if django.VERSION >= (1, 7) else 'django.test.simple.DjangoTestSuiteRunner',
         INSTALLED_APPS = (
             'django.contrib.auth',
             'django.contrib.contenttypes',

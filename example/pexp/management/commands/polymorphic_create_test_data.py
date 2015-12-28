@@ -15,7 +15,11 @@ def reset_queries():
 
 
 def show_queries():
-    print; print 'QUERIES:', len(connection.queries); pprint(connection.queries); print; connection.queries = []
+    print
+    print 'QUERIES:', len(connection.queries)
+    pprint(connection.queries)
+    print
+    connection.queries = []
 
 
 class Command(NoArgsCommand):
