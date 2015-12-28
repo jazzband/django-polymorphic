@@ -5,8 +5,9 @@ Version 0.8 (2015-12-28)
 ------------------------
 
 * Added Django 1.9 compatibility.
-
-**NOTE:** The import paths have changed. Instead of ``from polymorphic import X``,
+* Renamed ``polymorphic.manager`` => ``polymorphic.managers`` for consistentcy.
+* **BACKWARDS INCOMPATIBILITY:** The import paths have changed to support Django 1.9.
+  Instead of ``from polymorphic import X``,
 you'll have to import from the proper package. For example:
 
 .. code-block:: python
@@ -15,9 +16,8 @@ you'll have to import from the proper package. For example:
     polymorphic.managers import PolymorphicManager, PolymorphicQuerySet
     polymorphic.showfields import ShowFieldContent, ShowFieldType, ShowFieldTypeAndContent
 
-* Removed ``__version__.py`` in favor of a standard ``__version__`` in ``polymorphic/__init__.py``.
-* Renamed ``polymorphic.manager`` => ``polymorphic.managers`` for consistentcy.
-* Removed automatic proxying of method calls to the queryset class.
+* **BACKWARDS INCOMPATIBILITY:** Removed ``__version__.py`` in favor of a standard ``__version__`` in ``polymorphic/__init__.py``.
+* **BACKWARDS INCOMPATIBILITY:** Removed automatic proxying of method calls to the queryset class.
   Use the standard Django methods instead:
 
 .. code-block:: python
@@ -27,6 +27,7 @@ you'll have to import from the proper package. For example:
 
     # For manager code:
     MyCustomManager = PolymorphicManager.from_queryset(MyCustomQuerySet)
+
 
 
 Version 0.7.2 (2015-10-01)
