@@ -22,7 +22,7 @@ def find_version(*parts):
 
 setup(
     name = 'django_polymorphic',
-    version = find_version('polymorphic', '__version__.py'),
+    version = find_version('polymorphic', '__init__.py'),
     license = 'BSD',
 
     description = 'Seamless Polymorphic Inheritance for Django Models',
