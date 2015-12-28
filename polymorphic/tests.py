@@ -174,6 +174,9 @@ class MyManager(PolymorphicManager):
     def get_queryset(self):
         return super(MyManager, self).get_queryset().order_by('-field1')
 
+    def my_queryset_foo(self):
+        return self.all().my_queryset_foo()
+
     # Django <= 1.5 compatibility
     get_query_set = get_queryset
 

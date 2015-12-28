@@ -82,7 +82,7 @@ class PolymorphicQuerySet(QuerySet):
         as_manager.queryset_only = True
         as_manager = classmethod(as_manager)
 
-    def non_polymorphic(self, *args, **kwargs):
+    def non_polymorphic(self):
         """switch off polymorphic behaviour for this query.
         When the queryset is evaluated, only objects of the type of the
         base class used for this query are returned."""
