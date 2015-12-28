@@ -20,7 +20,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.utils import six
 
 from .base import PolymorphicModelBase
-from .manager import PolymorphicManager
+from .managers import PolymorphicManager
 from .query_translate import translate_polymorphic_Q_object
 
 ###################################################################################

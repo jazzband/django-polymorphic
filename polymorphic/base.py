@@ -12,7 +12,7 @@ from django.db import models
 from django.db.models.base import ModelBase
 from django.db.models.manager import ManagerDescriptor
 
-from .manager import PolymorphicManager
+from .managers import PolymorphicManager
 from .query import PolymorphicQuerySet
 
 # PolymorphicQuerySet Q objects (and filter()) support these additional key words.
