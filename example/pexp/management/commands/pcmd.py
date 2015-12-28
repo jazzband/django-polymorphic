@@ -9,27 +9,29 @@ from pprint import pprint
 
 from pexp.models import *
 
+
 def reset_queries():
-    connection.queries=[]
+    connection.queries = []
+
 
 def show_queries():
-    print; print 'QUERIES:',len(connection.queries); pprint(connection.queries); print; connection.queries=[]
+    print; print 'QUERIES:', len(connection.queries); pprint(connection.queries); print; connection.queries = []
+
 
 class Command(NoArgsCommand):
     help = ""
 
     def handle_noargs(self, **options):
         Project.objects.all().delete()
-        a=Project.objects.create(topic="John's gathering")
-        b=ArtProject.objects.create(topic="Sculpting with Tim", artist="T. Turner")
-        c=ResearchProject.objects.create(topic="Swallow Aerodynamics", supervisor="Dr. Winter")
+        a = Project.objects.create(topic="John's gathering")
+        b = ArtProject.objects.create(topic="Sculpting with Tim", artist="T. Turner")
+        c = ResearchProject.objects.create(topic="Swallow Aerodynamics", supervisor="Dr. Winter")
         print Project.objects.all()
         print
 
         ModelA.objects.all().delete()
-        a=ModelA.objects.create(field1='A1')
-        b=ModelB.objects.create(field1='B1', field2='B2')
-        c=ModelC.objects.create(field1='C1', field2='C2', field3='C3')
+        a = ModelA.objects.create(field1='A1')
+        b = ModelB.objects.create(field1='B1', field2='B2')
+        c = ModelC.objects.create(field1='C1', field2='C2', field3='C3')
         print ModelA.objects.all()
         print
-

@@ -57,7 +57,7 @@ class PolymorphicModelBase(ModelBase):
 
         # Workaround compatibility issue with six.with_metaclass() and custom Django model metaclasses:
         if not attrs and model_name == 'NewBase':
-            if django.VERSION < (1,5):
+            if django.VERSION < (1, 5):
                 # Let Django fully ignore the class which is inserted in between.
                 # Django 1.5 fixed this, see https://code.djangoproject.com/ticket/19688
                 attrs['__module__'] = 'django.utils.six'
@@ -191,9 +191,9 @@ class PolymorphicModelBase(ModelBase):
         # app_label here for PolymorphicModel.
         meta = attrs.get('Meta', None)
         do_app_label_workaround = (meta
-                                    and attrs['__module__'] == 'polymorphic'
-                                    and model_name == 'PolymorphicModel'
-                                    and getattr(meta, 'app_label', None) is None)
+                                   and attrs['__module__'] == 'polymorphic'
+                                   and model_name == 'PolymorphicModel'
+                                   and getattr(meta, 'app_label', None) is None)
 
         if do_app_label_workaround:
             meta.app_label = 'poly_dummy_app_label'

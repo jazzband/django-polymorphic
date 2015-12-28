@@ -42,6 +42,7 @@ class RegistrationClosed(RuntimeError):
     "The admin model can't be registered anymore at this point."
     pass
 
+
 class ChildAdminNotRegistered(RuntimeError):
     "The admin site for the model is not registered."
     pass
@@ -122,12 +123,10 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
     #: If your primary key consists of string values, update this regular expression.
     pk_regex = '(\d+|__fk__)'
 
-
     def __init__(self, model, admin_site, *args, **kwargs):
         super(PolymorphicParentModelAdmin, self).__init__(model, admin_site, *args, **kwargs)
         self._child_admin_site = self.admin_site.__class__(name=self.admin_site.name)
         self._is_setup = False
-
 
     def _lazy_setup(self):
         if self._is_setup:
@@ -150,7 +149,6 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
         self._child_admin_site._registry = complete_registry
         self._is_setup = True
 
-
     def register_child(self, model, model_admin):
         """
         Register a model with admin to display.
@@ -167,7 +165,6 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
 
         self._child_admin_site.register(model, model_admin)
 
-
     def get_child_models(self):
         """
         Return the derived model classes which this admin should handle.
@@ -180,7 +177,6 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
             raise NotImplementedError("Implement get_child_models() or child_models")
 
         return self.child_models
-
 
     def get_child_type_choices(self, request, action):
         """
@@ -197,7 +193,6 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
             choices.append((ct.id, model._meta.verbose_name))
         return choices
 
-
     def _get_real_admin(self, object_id):
         try:
             obj = self.model.objects.non_polymorphic() \
@@ -205,7 +200,6 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
         except self.model.DoesNotExist:
             raise Http404
         return self._get_real_admin_by_ct(obj['polymorphic_ctype'])
-
 
     def _get_real_admin_by_ct(self, ct_id):
         try:
@@ -218,7 +212,6 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
             raise Http404("No model found for '{0}.{1}'.".format(*ct.natural_key()))  # Handle model deletion
 
         return self._get_real_admin_by_model(model_class)
-
 
     def _get_real_admin_by_model(self, model_class):
         # In case of a ?ct_id=### parameter, the view is already checked for permissions.
@@ -233,7 +226,6 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
         except KeyError:
             raise ChildAdminNotRegistered("No child admin site was registered for a '{0}' model.".format(model_class))
 
-
     def get_queryset(self, request):
         # optimize the list display.
         qs = super(PolymorphicParentModelAdmin, self).get_queryset(request)
@@ -241,14 +233,12 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
             qs = qs.non_polymorphic()
         return qs
 
-
     # For Django 1.5:
     def queryset(self, request):
         qs = super(PolymorphicParentModelAdmin, self).queryset(request)
         if not self.polymorphic_list:
             qs = qs.non_polymorphic()
         return qs
-
 
     def add_view(self, request, form_url='', extra_context=None):
         """Redirect the add view to the real admin."""
@@ -266,12 +256,10 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
             )
             return real_admin.add_view(request, form_url, extra_context)
 
-
     def change_view(self, request, object_id, *args, **kwargs):
         """Redirect the change view to the real admin."""
         real_admin = self._get_real_admin(object_id)
         return real_admin.change_view(request, object_id, *args, **kwargs)
-
 
     def delete_view(self, request, object_id, extra_context=None):
         """Redirect the delete view to the real admin."""
@@ -331,7 +319,6 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
 
         return urls + custom_urls + dummy_urls
 
-
     def subclass_view(self, request, path):
         """
         Forward any request to a custom view of the real admin.
@@ -350,7 +337,6 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
 
             ct_id = self.model.objects.values_list('polymorphic_ctype_id', flat=True).get(pk=object_id)
 
-
         real_admin = self._get_real_admin_by_ct(ct_id)
         resolver = RegexURLResolver('^', real_admin.urls)
         resolvermatch = resolver.resolve(path)  # May raise Resolver404
@@ -358,7 +344,6 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
             raise Http404("No match for path '{0}' in admin subclass.".format(path))
 
         return resolvermatch.func(request, *resolvermatch.args, **resolvermatch.kwargs)
-
 
     def add_type_view(self, request, form_url=''):
         """
@@ -402,7 +387,6 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
         }
         return self.render_add_type_form(request, context, form_url)
 
-
     def render_add_type_form(self, request, context, form_url=''):
         """
         Render the page type choice form.
@@ -426,7 +410,6 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
             "admin/add_type_form.html"
         ], context, context_instance=context_instance)
 
-
     @property
     def change_list_template(self):
         opts = self.model._meta
@@ -444,7 +427,6 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
             "admin/%s/change_list.html" % base_app_label,
             "admin/change_list.html"
         ]
-
 
 
 class PolymorphicChildModelAdmin(admin.ModelAdmin):
@@ -465,7 +447,6 @@ class PolymorphicChildModelAdmin(admin.ModelAdmin):
     base_fieldsets = None
     extra_fieldset_title = _("Contents")  # Default title for extra fieldset
 
-
     def get_form(self, request, obj=None, **kwargs):
         # The django admin validation requires the form to have a 'class Meta: model = ..'
         # attribute, or it will complain that the fields are missing.
@@ -481,7 +462,6 @@ class PolymorphicChildModelAdmin(admin.ModelAdmin):
             kwargs.setdefault('fields', None)
 
         return super(PolymorphicChildModelAdmin, self).get_form(request, obj, **kwargs)
-
 
     @property
     def change_form_template(self):
@@ -502,7 +482,6 @@ class PolymorphicChildModelAdmin(admin.ModelAdmin):
             "admin/change_form.html"
         ]
 
-
     @property
     def delete_confirmation_template(self):
         opts = self.model._meta
@@ -522,20 +501,17 @@ class PolymorphicChildModelAdmin(admin.ModelAdmin):
             "admin/delete_confirmation.html"
         ]
 
-
     def render_change_form(self, request, context, add=False, change=False, form_url='', obj=None):
         context.update({
             'base_opts': self.base_model._meta,
         })
         return super(PolymorphicChildModelAdmin, self).render_change_form(request, context, add=add, change=change, form_url=form_url, obj=obj)
 
-
     def delete_view(self, request, object_id, context=None):
         extra_context = {
             'base_opts': self.base_model._meta,
         }
         return super(PolymorphicChildModelAdmin, self).delete_view(request, object_id, extra_context)
-
 
     # ---- Extra: improving the form/fieldset default display ----
 
@@ -556,7 +532,6 @@ class PolymorphicChildModelAdmin(admin.ModelAdmin):
             ) + self.base_fieldsets[1:]
         else:
             return self.base_fieldsets
-
 
     def get_subclass_fields(self, request, obj=None):
         # Find out how many fields would really be on the form,

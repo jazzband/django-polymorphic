@@ -14,7 +14,7 @@ except ImportError:
 from django.db.models.query import QuerySet
 
 from django.test import TestCase
-from django.db.models import Q,Count
+from django.db.models import Q, Count
 from django.db import models
 from django.contrib.contenttypes.models import ContentType
 from django.utils import six
@@ -32,84 +32,132 @@ except ImportError:
 
 class PlainA(models.Model):
     field1 = models.CharField(max_length=10)
+
+
 class PlainB(PlainA):
     field2 = models.CharField(max_length=10)
+
+
 class PlainC(PlainB):
     field3 = models.CharField(max_length=10)
 
+
 class Model2A(ShowFieldType, PolymorphicModel):
     field1 = models.CharField(max_length=10)
+
+
 class Model2B(Model2A):
     field2 = models.CharField(max_length=10)
+
+
 class Model2C(Model2B):
     field3 = models.CharField(max_length=10)
+
+
 class Model2D(Model2C):
     field4 = models.CharField(max_length=10)
 
+
 class ModelExtraA(ShowFieldTypeAndContent, PolymorphicModel):
     field1 = models.CharField(max_length=10)
+
+
 class ModelExtraB(ModelExtraA):
     field2 = models.CharField(max_length=10)
+
+
 class ModelExtraC(ModelExtraB):
     field3 = models.CharField(max_length=10)
+
+
 class ModelExtraExternal(models.Model):
     topic = models.CharField(max_length=10)
 
-class ModelShow1(ShowFieldType,PolymorphicModel):
+
+class ModelShow1(ShowFieldType, PolymorphicModel):
     field1 = models.CharField(max_length=10)
     m2m = models.ManyToManyField('self')
+
+
 class ModelShow2(ShowFieldContent, PolymorphicModel):
     field1 = models.CharField(max_length=10)
     m2m = models.ManyToManyField('self')
+
+
 class ModelShow3(ShowFieldTypeAndContent, PolymorphicModel):
     field1 = models.CharField(max_length=10)
     m2m = models.ManyToManyField('self')
 
+
 class ModelShow1_plain(PolymorphicModel):
     field1 = models.CharField(max_length=10)
+
+
 class ModelShow2_plain(ModelShow1_plain):
     field2 = models.CharField(max_length=10)
 
 
 class Base(ShowFieldType, PolymorphicModel):
     field_b = models.CharField(max_length=10)
+
+
 class ModelX(Base):
     field_x = models.CharField(max_length=10)
+
+
 class ModelY(Base):
     field_y = models.CharField(max_length=10)
 
+
 class Enhance_Plain(models.Model):
     field_p = models.CharField(max_length=10)
+
+
 class Enhance_Base(ShowFieldTypeAndContent, PolymorphicModel):
     base_id = models.AutoField(primary_key=True)
     field_b = models.CharField(max_length=10)
+
+
 class Enhance_Inherit(Enhance_Base, Enhance_Plain):
     field_i = models.CharField(max_length=10)
+
 
 class RelationBase(ShowFieldTypeAndContent, PolymorphicModel):
     field_base = models.CharField(max_length=10)
     fk = models.ForeignKey('self', null=True, related_name='relationbase_set')
     m2m = models.ManyToManyField('self')
+
+
 class RelationA(RelationBase):
     field_a = models.CharField(max_length=10)
+
+
 class RelationB(RelationBase):
     field_b = models.CharField(max_length=10)
+
+
 class RelationBC(RelationB):
     field_c = models.CharField(max_length=10)
 
+
 class RelatingModel(models.Model):
     many2many = models.ManyToManyField(Model2A)
+
 
 class One2OneRelatingModel(PolymorphicModel):
     one2one = models.OneToOneField(Model2A)
     field1 = models.CharField(max_length=10)
 
+
 class One2OneRelatingModelDerived(One2OneRelatingModel):
     field2 = models.CharField(max_length=10)
 
+
 class MyManagerQuerySet(PolymorphicQuerySet):
+
     def my_queryset_foo(self):
         return self.all()  # Just a method to prove the existance of the custom queryset.
+
 
 class MyManager(PolymorphicManager):
     queryset_class = MyManagerQuerySet
@@ -120,27 +168,38 @@ class MyManager(PolymorphicManager):
     # Django <= 1.5 compatibility
     get_query_set = get_queryset
 
+
 class ModelWithMyManager(ShowFieldTypeAndContent, Model2A):
     objects = MyManager()
     field4 = models.CharField(max_length=10)
 
-if django.VERSION >= (1,7):
+if django.VERSION >= (1, 7):
     class ModelWithMyManager2(ShowFieldTypeAndContent, Model2A):
         objects = MyManagerQuerySet.as_manager()
         field4 = models.CharField(max_length=10)
 
+
 class MROBase1(ShowFieldType, PolymorphicModel):
     objects = MyManager()
-    field1 = models.CharField(max_length=10) # needed as MyManager uses it
+    field1 = models.CharField(max_length=10)  # needed as MyManager uses it
+
+
 class MROBase2(MROBase1):
-    pass # Django vanilla inheritance does not inherit MyManager as _default_manager here
+    pass  # Django vanilla inheritance does not inherit MyManager as _default_manager here
+
+
 class MROBase3(models.Model):
     objects = PolymorphicManager()
+
+
 class MRODerived(MROBase2, MROBase3):
     pass
 
+
 class ParentModelWithManager(PolymorphicModel):
     pass
+
+
 class ChildModelWithManager(PolymorphicModel):
     # Also test whether foreign keys receive the manager:
     fk = models.ForeignKey(ParentModelWithManager, related_name='childmodel_set')
@@ -148,10 +207,13 @@ class ChildModelWithManager(PolymorphicModel):
 
 
 class PlainMyManagerQuerySet(QuerySet):
+
     def my_queryset_foo(self):
         return self.all()  # Just a method to prove the existance of the custom queryset.
 
+
 class PlainMyManager(models.Manager):
+
     def my_queryset_foo(self):
         return self.get_queryset().my_queryset_foo()
 
@@ -161,8 +223,10 @@ class PlainMyManager(models.Manager):
     # Django <= 1.5 compatibility
     get_query_set = get_queryset
 
+
 class PlainParentModelWithManager(models.Model):
     pass
+
 
 class PlainChildModelWithManager(models.Model):
     fk = models.ForeignKey(PlainParentModelWithManager, related_name='childmodel_set')
@@ -173,82 +237,132 @@ class MgrInheritA(models.Model):
     mgrA = models.Manager()
     mgrA2 = models.Manager()
     field1 = models.CharField(max_length=10)
+
+
 class MgrInheritB(MgrInheritA):
     mgrB = models.Manager()
     field2 = models.CharField(max_length=10)
+
+
 class MgrInheritC(ShowFieldTypeAndContent, MgrInheritB):
     pass
 
+
 class BlogBase(ShowFieldTypeAndContent, PolymorphicModel):
     name = models.CharField(max_length=10)
+
+
 class BlogA(BlogBase):
     info = models.CharField(max_length=10)
+
+
 class BlogB(BlogBase):
     pass
+
+
 class BlogEntry(ShowFieldTypeAndContent, PolymorphicModel):
     blog = models.ForeignKey(BlogA)
     text = models.CharField(max_length=10)
+
 
 class BlogEntry_limit_choices_to(ShowFieldTypeAndContent, PolymorphicModel):
     blog = models.ForeignKey(BlogBase)
     text = models.CharField(max_length=10)
 
+
 class ModelFieldNameTest(ShowFieldType, PolymorphicModel):
     modelfieldnametest = models.CharField(max_length=10)
 
+
 class InitTestModel(ShowFieldType, PolymorphicModel):
     bar = models.CharField(max_length=100)
+
     def __init__(self, *args, **kwargs):
         kwargs['bar'] = self.x()
         super(InitTestModel, self).__init__(*args, **kwargs)
+
+
 class InitTestModelSubclass(InitTestModel):
+
     def x(self):
         return 'XYZ'
 
 # models from github issue
+
+
 class Top(PolymorphicModel):
     name = models.CharField(max_length=50)
+
     class Meta:
         ordering = ('pk',)
+
+
 class Middle(Top):
     description = models.TextField()
+
+
 class Bottom(Middle):
     author = models.CharField(max_length=50)
 
+
 class UUIDProject(ShowFieldTypeAndContent, PolymorphicModel):
-     uuid_primary_key = UUIDField(primary_key = True, default=uuid.uuid1)
-     topic = models.CharField(max_length = 30)
+    uuid_primary_key = UUIDField(primary_key=True, default=uuid.uuid1)
+    topic = models.CharField(max_length=30)
+
+
 class UUIDArtProject(UUIDProject):
-     artist = models.CharField(max_length = 30)
+    artist = models.CharField(max_length=30)
+
+
 class UUIDResearchProject(UUIDProject):
-     supervisor = models.CharField(max_length = 30)
+    supervisor = models.CharField(max_length=30)
+
 
 class UUIDPlainA(models.Model):
-    uuid_primary_key = UUIDField(primary_key = True, default=uuid.uuid1)
+    uuid_primary_key = UUIDField(primary_key=True, default=uuid.uuid1)
     field1 = models.CharField(max_length=10)
+
+
 class UUIDPlainB(UUIDPlainA):
     field2 = models.CharField(max_length=10)
+
+
 class UUIDPlainC(UUIDPlainB):
     field3 = models.CharField(max_length=10)
 
 # base -> proxy
+
+
 class ProxyBase(PolymorphicModel):
     some_data = models.CharField(max_length=128)
+
+
 class ProxyChild(ProxyBase):
+
     class Meta:
         proxy = True
+
 
 class NonProxyChild(ProxyBase):
-    name=models.CharField(max_length=10)
+    name = models.CharField(max_length=10)
 
 # base -> proxy -> real models
+
+
 class ProxiedBase(ShowFieldTypeAndContent, PolymorphicModel):
     name = models.CharField(max_length=10)
+
+
 class ProxyModelBase(ProxiedBase):
+
     class Meta:
         proxy = True
+
+
 class ProxyModelA(ProxyModelBase):
     field1 = models.CharField(max_length=10)
+
+
 class ProxyModelB(ProxyModelBase):
     field2 = models.CharField(max_length=10)
 
@@ -264,11 +378,16 @@ class RelatedNameClash(ShowFieldType, PolymorphicModel):
     ctype = models.ForeignKey(ContentType, null=True, editable=False)
 
 #class with a parent_link to superclass, and a related_name back to subclass
+
+
 class TestParentLinkAndRelatedName(ModelShow1_plain):
     superclass = models.OneToOneField(ModelShow1_plain, parent_link=True, related_name='related_name_subclass')
 
+
 class CustomPkBase(ShowFieldTypeAndContent, PolymorphicModel):
     b = models.CharField(max_length=1)
+
+
 class CustomPkInherit(CustomPkBase):
     custom_id = models.AutoField(primary_key=True)
     i = models.CharField(max_length=1)
@@ -323,7 +442,7 @@ class PolymorphicTests(TestCase):
 
         # test ordering for field in one subclass only
         # MySQL and SQLite return this order
-        expected1='''
+        expected1 = '''
 [ <BlogA: id 8, name (CharField) "B5", info (CharField) "i5">,
   <BlogA: id 7, name (CharField) "B4", info (CharField) "i4">,
   <BlogA: id 6, name (CharField) "B3", info (CharField) "i3">,
@@ -334,7 +453,7 @@ class PolymorphicTests(TestCase):
   <BlogB: id 4, name (CharField) "Bb3"> ]'''
 
         # PostgreSQL returns this order
-        expected2='''
+        expected2 = '''
 [ <BlogB: id 2, name (CharField) "Bb1">,
   <BlogB: id 3, name (CharField) "Bb2">,
   <BlogB: id 4, name (CharField) "Bb3">,
@@ -347,7 +466,6 @@ class PolymorphicTests(TestCase):
         x = '\n' + repr(BlogBase.objects.order_by('-BlogA___info'))
         self.assertTrue(x == expected1 or x == expected2)
 
-
     def test_limit_choices_to(self):
         """
         this is not really a testcase, as limit_choices_to only affects the Django admin
@@ -358,7 +476,6 @@ class PolymorphicTests(TestCase):
         # create two blog entries
         entry1 = BlogEntry_limit_choices_to.objects.create(blog=blog_b, text='bla2')
         entry2 = BlogEntry_limit_choices_to.objects.create(blog=blog_b, text='bla2')
-
 
     def test_primary_key_custom_field_problem(self):
         """
@@ -377,7 +494,7 @@ class PolymorphicTests(TestCase):
         self.assertIsInstance(a.uuid_primary_key, uuid.UUID)
         self.assertIsInstance(a.pk, uuid.UUID)
 
-        res = re.sub(' "(.*?)..", topic',', topic', repr(qs))
+        res = re.sub(' "(.*?)..", topic', ', topic', repr(qs))
         res_exp = """[ <UUIDProject: uuid_primary_key (UUIDField/pk), topic (CharField) "John's gathering">,
   <UUIDArtProject: uuid_primary_key (UUIDField/pk), topic (CharField) "Sculpting with Tim", artist (CharField) "T. Turner">,
   <UUIDResearchProject: uuid_primary_key (UUIDField/pk), topic (CharField) "Swallow Aerodynamics", supervisor (CharField) "Dr. Winter"> ]"""
@@ -401,7 +518,6 @@ class PolymorphicTests(TestCase):
         Model2C.objects.create(field1='C1', field2='C2', field3='C3')
         Model2D.objects.create(field1='D1', field2='D2', field3='D3', field4='D4')
 
-
     def test_simple_inheritance(self):
         self.create_model2abcd()
 
@@ -411,13 +527,11 @@ class PolymorphicTests(TestCase):
         self.assertEqual(repr(objects[2]), '<Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)>')
         self.assertEqual(repr(objects[3]), '<Model2D: id 4, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField)>')
 
-
     def test_manual_get_real_instance(self):
         self.create_model2abcd()
 
         o = Model2A.objects.non_polymorphic().get(field1='C1')
         self.assertEqual(repr(o.get_real_instance()), '<Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)>')
-
 
     def test_non_polymorphic(self):
         self.create_model2abcd()
@@ -427,7 +541,6 @@ class PolymorphicTests(TestCase):
         self.assertEqual(repr(objects[1]), '<Model2A: id 2, field1 (CharField)>')
         self.assertEqual(repr(objects[2]), '<Model2A: id 3, field1 (CharField)>')
         self.assertEqual(repr(objects[3]), '<Model2A: id 4, field1 (CharField)>')
-
 
     def test_get_real_instances(self):
         self.create_model2abcd()
@@ -447,7 +560,6 @@ class PolymorphicTests(TestCase):
         self.assertEqual(repr(objects[2]), '<Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)>')
         self.assertEqual(repr(objects[3]), '<Model2D: id 4, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField)>')
 
-
     def test_translate_polymorphic_q_object(self):
         self.create_model2abcd()
 
@@ -455,7 +567,6 @@ class PolymorphicTests(TestCase):
         objects = Model2A.objects.filter(q)
         self.assertEqual(repr(objects[0]), '<Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)>')
         self.assertEqual(repr(objects[1]), '<Model2D: id 4, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField)>')
-
 
     def test_base_manager(self):
         def show_base_manager(model):
@@ -474,7 +585,6 @@ class PolymorphicTests(TestCase):
 
         self.assertEqual(show_base_manager(One2OneRelatingModel), "<class 'polymorphic.manager.PolymorphicManager'> <class 'polymorphic.tests.One2OneRelatingModel'>")
         self.assertEqual(show_base_manager(One2OneRelatingModelDerived), "<class 'django.db.models.manager.Manager'> <class 'polymorphic.tests.One2OneRelatingModelDerived'>")
-
 
     def test_instance_default_manager(self):
         def show_default_manager(instance):
@@ -508,7 +618,6 @@ class PolymorphicTests(TestCase):
         object2b = Model2B.base_objects.get(field1='C1')
         self.assertEqual(repr(object2b.model2c), '<Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)>')
 
-
     def test_onetoone_field(self):
         self.create_model2abcd()
 
@@ -521,7 +630,6 @@ class PolymorphicTests(TestCase):
         c = One2OneRelatingModelDerived.objects.get(field1='f1')
         self.assertEqual(repr(c.one2one), '<Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)>')
         self.assertEqual(repr(a.one2onerelatingmodel), '<One2OneRelatingModelDerived: One2OneRelatingModelDerived object>')
-
 
     def test_manytomany_field(self):
         # Model 1
@@ -537,7 +645,7 @@ class PolymorphicTests(TestCase):
         self.assertEqual(repr(ModelShow2.objects.all()), '[ <ModelShow2: id 1, field1 "abc", m2m 1> ]')
 
         # Model 3
-        o=ModelShow3.objects.create(field1='abc')
+        o = ModelShow3.objects.create(field1='abc')
         o.m2m.add(o)
         o.save()
         self.assertEqual(repr(ModelShow3.objects.all()), '[ <ModelShow3: id 1, field1 (CharField) "abc", m2m (ManyToManyField) 1> ]')
@@ -549,7 +657,6 @@ class PolymorphicTests(TestCase):
         ModelShow1_plain.objects.create(field1='abc')
         ModelShow2_plain.objects.create(field1='abc', field2='def')
         self.assertEqual(repr(ModelShow1_plain.objects.all()), '[<ModelShow1_plain: ModelShow1_plain object>, <ModelShow2_plain: ModelShow2_plain object>]')
-
 
     def test_extra_method(self):
         self.create_model2abcd()
@@ -569,7 +676,7 @@ class PolymorphicTests(TestCase):
         ModelExtraExternal.objects.create(topic='extra1')
         ModelExtraExternal.objects.create(topic='extra2')
         ModelExtraExternal.objects.create(topic='extra3')
-        objects = ModelExtraA.objects.extra(tables=["polymorphic_modelextraexternal"], select={"topic":"polymorphic_modelextraexternal.topic"}, where=["polymorphic_modelextraa.id = polymorphic_modelextraexternal.id"])
+        objects = ModelExtraA.objects.extra(tables=["polymorphic_modelextraexternal"], select={"topic": "polymorphic_modelextraexternal.topic"}, where=["polymorphic_modelextraa.id = polymorphic_modelextraexternal.id"])
         if six.PY3:
             self.assertEqual(repr(objects[0]), '<ModelExtraA: id 1, field1 (CharField) "A1" - Extra: topic (str) "extra1">')
             self.assertEqual(repr(objects[1]), '<ModelExtraB: id 2, field1 (CharField) "B1", field2 (CharField) "B2" - Extra: topic (str) "extra2">')
@@ -579,7 +686,6 @@ class PolymorphicTests(TestCase):
             self.assertEqual(repr(objects[1]), '<ModelExtraB: id 2, field1 (CharField) "B1", field2 (CharField) "B2" - Extra: topic (unicode) "extra2">')
             self.assertEqual(repr(objects[2]), '<ModelExtraC: id 3, field1 (CharField) "C1", field2 (CharField) "C2", field3 (CharField) "C3" - Extra: topic (unicode) "extra3">')
         self.assertEqual(len(objects), 3)
-
 
     def test_instance_of_filter(self):
         self.create_model2abcd()
@@ -606,15 +712,13 @@ class PolymorphicTests(TestCase):
         self.assertEqual(repr(objects[0]), '<Model2A: id 1, field1 (CharField)>')
         self.assertEqual(len(objects), 1)
 
-
     def test_polymorphic___filter(self):
         self.create_model2abcd()
 
-        objects = Model2A.objects.filter(Q( Model2B___field2='B2') | Q( Model2C___field3='C3'))
+        objects = Model2A.objects.filter(Q(Model2B___field2='B2') | Q(Model2C___field3='C3'))
         self.assertEqual(len(objects), 2)
         self.assertEqual(repr(objects[0]), '<Model2B: id 2, field1 (CharField), field2 (CharField)>')
         self.assertEqual(repr(objects[1]), '<Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)>')
-
 
     def test_delete(self):
         self.create_model2abcd()
@@ -630,7 +734,6 @@ class PolymorphicTests(TestCase):
         self.assertEqual(repr(objects[2]), '<Model2D: id 4, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField)>')
         self.assertEqual(len(objects), 3)
 
-
     def test_combine_querysets(self):
         ModelX.objects.create(field_x='x')
         ModelY.objects.create(field_y='y')
@@ -639,7 +742,6 @@ class PolymorphicTests(TestCase):
         self.assertEqual(repr(qs[0]), '<ModelX: id 1, field_b (CharField), field_x (CharField)>')
         self.assertEqual(repr(qs[1]), '<ModelY: id 2, field_b (CharField), field_y (CharField)>')
         self.assertEqual(len(qs), 2)
-
 
     def test_multiple_inheritance(self):
         # multiple inheritance, subclassing third party models (mix PolymorphicModel with models.Model)
@@ -685,7 +787,6 @@ class PolymorphicTests(TestCase):
         self.assertEqual(repr(objects[1]), '<RelationB: id 3, field_base (CharField) "B1", fk (ForeignKey) RelationA, field_b (CharField) "B2", m2m (ManyToManyField) 1>')
         self.assertEqual(len(objects), 2)
 
-
     def test_user_defined_manager(self):
         self.create_model2abcd()
         ModelWithMyManager.objects.create(field1='D1a', field4='D4a')
@@ -700,7 +801,7 @@ class PolymorphicTests(TestCase):
         self.assertIs(type(ModelWithMyManager._default_manager), MyManager)
         self.assertIs(type(ModelWithMyManager.base_objects), models.Manager)
 
-    @skipIf(django.VERSION < (1,7), "This test needs Django 1.7+")
+    @skipIf(django.VERSION < (1, 7), "This test needs Django 1.7+")
     def test_user_defined_queryset_as_manager(self):
         self.create_model2abcd()
         ModelWithMyManager2.objects.create(field1='D1a', field4='D4a')
@@ -715,7 +816,6 @@ class PolymorphicTests(TestCase):
         self.assertEqual(type(ModelWithMyManager2._default_manager).__name__, 'PolymorphicManagerFromMyManagerQuerySet')
         self.assertIs(type(ModelWithMyManager2.base_objects), models.Manager)
 
-
     def test_manager_inheritance(self):
         # by choice of MRO, should be MyManager from MROBase1.
         self.assertIs(type(MRODerived.objects), MyManager)
@@ -725,7 +825,6 @@ class PolymorphicTests(TestCase):
 
         # Django vanilla inheritance does not inherit MyManager as _default_manager here
         self.assertIs(type(MROBase2._default_manager), MyManager)
-
 
     def test_queryset_assignment(self):
         # This is just a consistency check for now, testing standard Django behavior.
@@ -750,7 +849,6 @@ class PolymorphicTests(TestCase):
         # A related set is created using the model's _default_manager, so does gain extra methods.
         self.assertIs(type(parent.childmodel_set.my_queryset_foo()), MyManagerQuerySet)
 
-
     def test_proxy_models(self):
         # prepare some data
         for data in ('bleep bloop', 'I am a', 'computer'):
@@ -771,7 +869,7 @@ class PolymorphicTests(TestCase):
         This unit test guards that this check is working properly. For instance,
         proxy child models need to be handled separately.
         """
-        name="Item1"
+        name = "Item1"
         nonproxychild = NonProxyChild.objects.create(name=name)
 
         pb = ProxyBase.objects.get(id=1)
@@ -791,7 +889,6 @@ class PolymorphicTests(TestCase):
 
         ct = ContentType.objects.get_for_model(ProxyChild, for_concrete_model=False)
         self.assertEqual(ProxyChild, ct.model_class())
-
 
     def test_proxy_model_inheritance(self):
         """
@@ -852,13 +949,12 @@ class PolymorphicTests(TestCase):
 
         #check that the accessors to parent and sublass work correctly and return the right object
         p = ModelShow1_plain.objects.non_polymorphic().get(field1="TestParentLinkAndRelatedName")
-        self.assertNotEqual(p, t) #p should be Plain1 and t TestParentLinkAndRelatedName, so not equal
+        self.assertNotEqual(p, t)  # p should be Plain1 and t TestParentLinkAndRelatedName, so not equal
         self.assertEqual(p, t.superclass)
         self.assertEqual(p.related_name_subclass, t)
 
         #test that we can delete the object
         t.delete()
-
 
 
 class RegressionTests(TestCase):
@@ -881,4 +977,3 @@ class RegressionTests(TestCase):
 
         expected_queryset = [bottom]
         self.assertQuerysetEqual(Bottom.objects.all(), [repr(r) for r in expected_queryset])
-

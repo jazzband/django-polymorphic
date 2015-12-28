@@ -248,7 +248,7 @@ def _create_model_filter_Q(modellist, not_instance_of=False):
             q = q | q_class_with_subclasses(subclass)
         return q
 
-    qlist = [q_class_with_subclasses(m)  for m in modellist]
+    qlist = [q_class_with_subclasses(m) for m in modellist]
 
     q_ored = reduce(lambda a, b: a | b, qlist)
     if not_instance_of:

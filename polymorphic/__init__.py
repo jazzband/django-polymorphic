@@ -29,9 +29,9 @@ if django.VERSION[:2] < (1, 5):
             ct = self._get_from_cache(opts)
         except KeyError:
             ct, created = self.get_or_create(
-                app_label = opts.app_label,
-                model = opts.object_name.lower(),
-                defaults = {'name': smart_text(opts.verbose_name_raw)},
+                app_label=opts.app_label,
+                model=opts.object_name.lower(),
+                defaults={'name': smart_text(opts.verbose_name_raw)},
             )
             self._add_to_cache(self.db, ct)
 
@@ -39,4 +39,3 @@ if django.VERSION[:2] < (1, 5):
 
     ContentTypeManager.get_for_model__original = ContentTypeManager.get_for_model
     ContentTypeManager.get_for_model = get_for_model
-
