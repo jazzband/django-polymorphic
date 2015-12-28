@@ -8,14 +8,7 @@ from django.db import models
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import Q, FieldDoesNotExist
 
-try:
-    from django.db.models.related import RelatedObject
-except ImportError:
-    # django.db.models.related.RelatedObject was replaced
-    # by django.db.models.fields.related.ForeignObjectRel in
-    # Django 1.8
-    from django.db.models.fields.related import ForeignObjectRel
-    RelatedObject = ForeignObjectRel
+from django.db.models.fields.related import RelatedField  # Django 1.8
 
 from functools import reduce
 
@@ -163,7 +156,7 @@ def translate_polymorphic_field_path(queryset_model, field_path):
         try:
             # rel = (field_object, model, direct, m2m)
             field = queryset_model._meta.get_field(classname)
-            if isinstance(field, RelatedObject):
+            if isinstance(field, RelatedField):
                 # Can also test whether the field exists in the related object to avoid ambiguity between
                 # class names and field names, but that never happens when your class names are in CamelCase.
                 return field_path  # No exception raised, field does exist.

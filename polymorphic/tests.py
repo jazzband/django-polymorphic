@@ -153,6 +153,15 @@ class One2OneRelatingModelDerived(One2OneRelatingModel):
     field2 = models.CharField(max_length=10)
 
 
+class ModelUnderRelParent(PolymorphicModel):
+    field1 = models.CharField(max_length=10)
+    _private = models.CharField(max_length=10)
+
+
+class ModelUnderRelChild(PolymorphicModel):
+    parent = models.ForeignKey(ModelUnderRelParent)
+
+
 class MyManagerQuerySet(PolymorphicQuerySet):
 
     def my_queryset_foo(self):
@@ -719,6 +728,14 @@ class PolymorphicTests(TestCase):
         self.assertEqual(len(objects), 2)
         self.assertEqual(repr(objects[0]), '<Model2B: id 2, field1 (CharField), field2 (CharField)>')
         self.assertEqual(repr(objects[1]), '<Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)>')
+
+    def test_polymorphic___filter_field(self):
+        p = ModelUnderRelParent.objects.create(_private=True, field1='AA')
+        ModelUnderRelChild.objects.create(parent=p)
+
+        # The "___" filter should also parse to "parent" -> "_private" as fallback.
+        objects = ModelUnderRelChild.objects.filter(parent___private=True)
+        self.assertEqual(len(objects), 1)
 
     def test_delete(self):
         self.create_model2abcd()
