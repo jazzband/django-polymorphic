@@ -96,7 +96,7 @@ def poly_sql_query():
         WHERE pexp_modela.field1=%i
         ORDER BY pexp_modela.id
         """ % rnd.randint(0, 100) )
-    #row=cursor.fetchone()
+    # row=cursor.fetchone()
     return
 
 
@@ -108,5 +108,5 @@ def poly_sql_query2():
         WHERE pexp_modela.field1=%i
         ORDER BY pexp_modela.id
         """ % rnd.randint(0, 100) )
-    #row=cursor.fetchone()
+    # row=cursor.fetchone()
     return

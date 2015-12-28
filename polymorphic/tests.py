@@ -368,7 +368,7 @@ class ProxyModelB(ProxyModelBase):
 
 
 # test bad field name
-#class TestBadFieldModel(ShowFieldType, PolymorphicModel):
+# class TestBadFieldModel(ShowFieldType, PolymorphicModel):
 #    instance_of = models.CharField(max_length=10)
 
 # validation error: "polymorphic.relatednameclash: Accessor for field 'polymorphic_ctype' clashes
@@ -377,7 +377,7 @@ class ProxyModelB(ProxyModelBase):
 class RelatedNameClash(ShowFieldType, PolymorphicModel):
     ctype = models.ForeignKey(ContentType, null=True, editable=False)
 
-#class with a parent_link to superclass, and a related_name back to subclass
+# class with a parent_link to superclass, and a related_name back to subclass
 
 
 class TestParentLinkAndRelatedName(ModelShow1_plain):
@@ -929,7 +929,7 @@ class PolymorphicTests(TestCase):
         self.assertEqual(repr(qs[1]), '<CustomPkInherit: id 2, b (CharField) "b", custom_id (AutoField/pk) 1, i (CharField) "i">')
 
     def test_fix_getattribute(self):
-        ### fixed issue in PolymorphicModel.__getattribute__: field name same as model name
+        # fixed issue in PolymorphicModel.__getattribute__: field name same as model name
         o = ModelFieldNameTest.objects.create(modelfieldnametest='1')
         self.assertEqual(repr(o), '<ModelFieldNameTest: id 1, modelfieldnametest (CharField)>')
 
@@ -943,17 +943,17 @@ class PolymorphicTests(TestCase):
         t.save()
         p = ModelShow1_plain.objects.get(field1="TestParentLinkAndRelatedName")
 
-        #check that p is equal to the
+        # check that p is equal to the
         self.assertIsInstance(p, TestParentLinkAndRelatedName)
         self.assertEqual(p, t)
 
-        #check that the accessors to parent and sublass work correctly and return the right object
+        # check that the accessors to parent and sublass work correctly and return the right object
         p = ModelShow1_plain.objects.non_polymorphic().get(field1="TestParentLinkAndRelatedName")
         self.assertNotEqual(p, t)  # p should be Plain1 and t TestParentLinkAndRelatedName, so not equal
         self.assertEqual(p, t.superclass)
         self.assertEqual(p.related_name_subclass, t)
 
-        #test that we can delete the object
+        # test that we can delete the object
         t.delete()
 
 

@@ -103,11 +103,11 @@ class UUIDField(six.with_metaclass(models.SubfieldBase, models.CharField)):
         # instance), everything works.
         #
 
-        #if not value:
+        # if not value:
         # return None
-        #if isinstance(value, uuid.UUID):
+        # if isinstance(value, uuid.UUID):
         # return smart_text(value)
-        #else:
+        # else:
         # return value
 
     def pre_save(self, model_instance, add):

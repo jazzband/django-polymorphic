@@ -24,7 +24,7 @@ from .manager import PolymorphicManager
 from .query_translate import translate_polymorphic_Q_object
 
 ###################################################################################
-### PolymorphicModel
+# PolymorphicModel
 
 
 class PolymorphicModel(six.with_metaclass(PolymorphicModelBase, models.Model)):
@@ -216,10 +216,10 @@ class PolymorphicModel(six.with_metaclass(PolymorphicModelBase, models.Model)):
                     if field_to_super is not None:    # if filed_to_super is not a link to a proxy model
                         super_to_sub_related_field = field_to_super.rel
                         if super_to_sub_related_field.related_name is None:
-                            #if related name is None the related field is the name of the subclass
+                            # if related name is None the related field is the name of the subclass
                             to_subclass_fieldname = sub_cls.__name__.lower()
                         else:
-                            #otherwise use the given related name
+                            # otherwise use the given related name
                             to_subclass_fieldname = super_to_sub_related_field.related_name
 
                         add_model_if_regular(sub_cls, to_subclass_fieldname, result)

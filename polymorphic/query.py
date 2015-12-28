@@ -41,7 +41,7 @@ def transmogrify(cls, obj):
 
 
 ###################################################################################
-### PolymorphicQuerySet
+# PolymorphicQuerySet
 
 def _query_annotations(query):
     try:
@@ -160,7 +160,7 @@ class PolymorphicQuerySet(QuerySet):
     # The resulting objects are required to have a unique primary key within the result set
     # (otherwise an error is thrown).
     # The "polymorphic" keyword argument is not supported anymore.
-    #def extra(self, *args, **kwargs):
+    # def extra(self, *args, **kwargs):
 
     def _get_real_instances(self, base_result_objects):
         """

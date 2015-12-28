@@ -21,7 +21,7 @@ from functools import reduce
 
 
 ###################################################################################
-### PolymorphicQuerySet support functions
+# PolymorphicQuerySet support functions
 
 # These functions implement the additional filter- and Q-object functionality.
 # They form a kind of small framework for easily adding more

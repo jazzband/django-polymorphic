@@ -22,7 +22,7 @@ def show_queries():
 import time
 
 ###################################################################################
-### benchmark wrappers
+# benchmark wrappers
 
 
 def print_timing(func, message='', iterations=1):
@@ -54,12 +54,12 @@ def run_vanilla_any_poly(func, iterations=1):
 
 
 ###################################################################################
-### benchmarks
+# benchmarks
 
 def bench_create(model):
     for i in xrange(num_objects):
         model.objects.create(field1='abc' + str(i), field2='abcd' + str(i), field3='abcde' + str(i))
-    #print 'count:',model.objects.count()
+    # print 'count:',model.objects.count()
 
 
 def bench_load1(model):
@@ -92,7 +92,7 @@ def bench_delete(model):
     model.objects.all().delete()
 
 ###################################################################################
-### Command
+# Command
 
 
 class Command(NoArgsCommand):

@@ -26,7 +26,7 @@ except ImportError:
 
 
 ###################################################################################
-### PolymorphicModel meta class
+# PolymorphicModel meta class
 
 class PolymorphicModelBase(ModelBase):
     """
@@ -53,7 +53,7 @@ class PolymorphicModelBase(ModelBase):
     """
 
     def __new__(self, model_name, bases, attrs):
-        #print; print '###', model_name, '- bases:', bases
+        # print; print '###', model_name, '- bases:', bases
 
         # Workaround compatibility issue with six.with_metaclass() and custom Django model metaclasses:
         if not attrs and model_name == 'NewBase':
@@ -75,7 +75,7 @@ class PolymorphicModelBase(ModelBase):
 
         # add the managers to the new model
         for source_name, mgr_name, manager in inherited_managers:
-            #print '** add inherited manager from model %s, manager %s, %s' % (source_name, mgr_name, manager.__class__.__name__)
+            # print '** add inherited manager from model %s, manager %s, %s' % (source_name, mgr_name, manager.__class__.__name__)
             new_manager = manager._copy_to_model(new_class)
             if mgr_name == '_default_manager':
                 new_class._default_manager = new_manager
@@ -86,7 +86,7 @@ class PolymorphicModelBase(ModelBase):
         # this value is used by the related objects, restoring access to custom queryset methods on related objects.
         user_manager = self.get_first_user_defined_manager(new_class)
         if user_manager:
-            #print '## add default manager', type(def_mgr)
+            # print '## add default manager', type(def_mgr)
             new_class._default_manager = user_manager._copy_to_model(new_class)
             new_class._default_manager._inherited = False   # the default mgr was defined by the user, not inherited
 
@@ -111,7 +111,7 @@ class PolymorphicModelBase(ModelBase):
         use correct mro, only use managers with _inherited==False (they are of no use),
         skip managers that are overwritten by the user with same-named class attributes (in attrs)
         """
-        #print "** ", self.__name__
+        # print "** ", self.__name__
         add_managers = []
         add_managers_keys = set()
         for base in self.__mro__[1:]:
@@ -147,7 +147,7 @@ class PolymorphicModelBase(ModelBase):
                     continue       # manager with that name already added, skip
                 if manager._inherited:
                     continue             # inherited managers (on the bases) have no significance, they are just copies
-                #print '## {0} {1}'.format(self.__name__, key)
+                # print '## {0} {1}'.format(self.__name__, key)
 
                 if isinstance(manager, PolymorphicManager):  # validate any inherited polymorphic managers
                     self.validate_model_manager(manager, self.__name__, key)
@@ -175,7 +175,7 @@ class PolymorphicModelBase(ModelBase):
         # if there are user defined managers, use first one as _default_manager
         if mgr_list:
             _, manager_name, manager = sorted(mgr_list)[0]
-            #sys.stderr.write( '\n# first user defined manager for model "{model}":\n#  "{mgrname}": {mgr}\n#  manager model: {mgrmodel}\n\n'
+            # sys.stderr.write( '\n# first user defined manager for model "{model}":\n#  "{mgrname}": {mgr}\n#  manager model: {mgrmodel}\n\n'
             #    .format( model=self.__name__, mgrname=manager_name, mgr=manager, mgrmodel=manager.model ) )
             return manager
         return None
@@ -241,8 +241,8 @@ class PolymorphicModelBase(ModelBase):
                 frm = inspect.stack()[1]  # frm[1] is caller file name, frm[3] is caller function name
                 if 'django/core/management/commands/dumpdata.py' in frm[1]:
                     return self.base_objects
-                #caller_mod_name = inspect.getmodule(frm[0]).__name__  # does not work with python 2.4
-                #if caller_mod_name == 'django.core.management.commands.dumpdata':
+                # caller_mod_name = inspect.getmodule(frm[0]).__name__  # does not work with python 2.4
+                # if caller_mod_name == 'django.core.management.commands.dumpdata':
 
             return super(PolymorphicModelBase, self).__getattribute__(name)
     # TODO: investigate Django how this can be avoided
