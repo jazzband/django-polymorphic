@@ -3,8 +3,9 @@
 This module is a scratchpad for general development, testing & debugging
 """
 
+import django
 from django.core.management.base import NoArgsCommand
-from django.db.models import connection
+from django.db import connection
 from pprint import pprint
 import sys
 from pexp.models import *
@@ -13,7 +14,10 @@ num_objects = 1000
 
 
 def reset_queries():
-    connection.queries = []
+    if django.VERSION < (1, 9):
+        connection.queries = []
+    else:
+        connection.queries_log.clear()
 
 
 def show_queries():

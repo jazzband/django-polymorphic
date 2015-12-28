@@ -4,9 +4,10 @@ This module is a scratchpad for general development, testing & debugging
 Well, even more so than pcmd.py. You best ignore p2cmd.py.
 """
 import uuid
+import django
 
 from django.core.management.base import NoArgsCommand
-from django.db.models import connection
+from django.db import connection
 from pprint import pprint
 import time, sys
 
@@ -14,7 +15,10 @@ from pexp.models import *
 
 
 def reset_queries():
-    connection.queries = []
+    if django.VERSION < (1, 9):
+        connection.queries = []
+    else:
+        connection.queries_log.clear()
 
 
 def show_queries():
