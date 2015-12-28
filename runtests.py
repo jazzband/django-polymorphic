@@ -50,9 +50,15 @@ if not settings.configured:
         SITE_ID = 3,
     )
 
+DEFAULT_TEST_APPS = [
+    'polymorphic',
+]
+
 
 def runtests():
-    argv = sys.argv[:1] + ['test', 'polymorphic', '--traceback'] + sys.argv[1:]
+    other_args = list(filter(lambda arg: arg.startswith('-'), sys.argv[1:]))
+    test_apps = list(filter(lambda arg: not arg.startswith('-'), sys.argv[1:])) or DEFAULT_TEST_APPS
+    argv = sys.argv[:1] + ['test', '--traceback'] + other_args + test_apps
     execute_from_command_line(argv)
 
 if __name__ == '__main__':
