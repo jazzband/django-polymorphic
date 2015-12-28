@@ -202,7 +202,7 @@ Nicely Displaying Polymorphic Querysets
 In order to get the output as seen in all examples here, you need to use the
 :class:`~polymorphic.showfields.ShowFieldType` class mixin::
 
-    from polymorphic import PolymorphicModel, ShowFieldType
+    from polymorphic.showfields import PolymorphicModel, ShowFieldType
 
     class ModelA(ShowFieldType, PolymorphicModel):
         field1 = models.CharField(max_length=10)
