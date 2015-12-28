@@ -22,7 +22,7 @@ from django.utils import six
 from polymorphic.models import PolymorphicModel
 from polymorphic.managers import PolymorphicManager
 from polymorphic.query import PolymorphicQuerySet
-from polymorphic import ShowFieldContent, ShowFieldType, ShowFieldTypeAndContent
+from polymorphic.showfields import ShowFieldContent, ShowFieldType, ShowFieldTypeAndContent
 try:
     from django.db.models import UUIDField
 except ImportError:
