@@ -4,24 +4,31 @@
 """
 from __future__ import absolute_import
 
+import django
 from django.db import models
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import Q, FieldDoesNotExist
 
-try:
-    from django.db.models.related import RelatedObject
-except ImportError:
-    # django.db.models.related.RelatedObject was replaced
-    # by django.db.models.fields.related.ForeignObjectRel in
-    # Django 1.8
+from django.db.models.fields.related import RelatedField
+if django.VERSION < (1, 6):
+    # There was no common base class in Django 1.5, mention all variants here.
+    from django.db.models.fields.related import RelatedObject, ManyToOneRel, ManyToManyRel
+    REL_FIELD_CLASSES = (RelatedField, RelatedObject, ManyToOneRel, ManyToManyRel)  # Leaving GenericRel out.
+elif django.VERSION < (1, 8):
+    # As of Django 1.6 there is a ForeignObjectRel.
+    from django.db.models.fields.related import ForeignObjectRel, RelatedObject
+    REL_FIELD_CLASSES = (RelatedField, ForeignObjectRel, RelatedObject)
+else:
+    # As of Django 1.8 the base class serves everything. RelatedObject is gone.
     from django.db.models.fields.related import ForeignObjectRel
-    RelatedObject = ForeignObjectRel
+    REL_FIELD_CLASSES = (RelatedField, ForeignObjectRel)
+
 
 from functools import reduce
 
 
 ###################################################################################
-### PolymorphicQuerySet support functions
+# PolymorphicQuerySet support functions
 
 # These functions implement the additional filter- and Q-object functionality.
 # They form a kind of small framework for easily adding more
@@ -161,9 +168,13 @@ def translate_polymorphic_field_path(queryset_model, field_path):
         # Test whether it's actually a regular relation__ _fieldname (the field starting with an _)
         # so no tripple ClassName___field was intended.
         try:
-            # rel = (field_object, model, direct, m2m)
-            field = queryset_model._meta.get_field(classname)
-            if isinstance(field, RelatedObject):
+            if django.VERSION >= (1, 8):
+                # This also retreives M2M relations now (including reverse foreign key relations)
+                field = queryset_model._meta.get_field(classname)
+            else:
+                field = queryset_model._meta.get_field_by_name(classname)[0]
+
+            if isinstance(field, REL_FIELD_CLASSES):
                 # Can also test whether the field exists in the related object to avoid ambiguity between
                 # class names and field names, but that never happens when your class names are in CamelCase.
                 return field_path  # No exception raised, field does exist.
@@ -248,7 +259,7 @@ def _create_model_filter_Q(modellist, not_instance_of=False):
             q = q | q_class_with_subclasses(subclass)
         return q
 
-    qlist = [q_class_with_subclasses(m)  for m in modellist]
+    qlist = [q_class_with_subclasses(m) for m in modellist]
 
     q_ored = reduce(lambda a, b: a | b, qlist)
     if not_instance_of:

@@ -20,11 +20,12 @@ from django.contrib.contenttypes.models import ContentType
 from django.utils import six
 
 from .base import PolymorphicModelBase
-from .manager import PolymorphicManager
+from .managers import PolymorphicManager
 from .query_translate import translate_polymorphic_Q_object
 
 ###################################################################################
-### PolymorphicModel
+# PolymorphicModel
+
 
 class PolymorphicModel(six.with_metaclass(PolymorphicModelBase, models.Model)):
     """
@@ -56,7 +57,7 @@ class PolymorphicModel(six.with_metaclass(PolymorphicModelBase, models.Model)):
 
     # avoid ContentType related field accessor clash (an error emitted by model validation)
     polymorphic_ctype = models.ForeignKey(ContentType, null=True, editable=False,
-                                related_name='polymorphic_%(app_label)s.%(class)s_set+')
+                                          related_name='polymorphic_%(app_label)s.%(class)s_set+')
 
     # some applications want to know the name of the fields that are added to its models
     polymorphic_internal_model_fields = ['polymorphic_ctype']
@@ -110,8 +111,8 @@ class PolymorphicModel(six.with_metaclass(PolymorphicModelBase, models.Model)):
         # Protect against bad imports (dumpdata without --natural) or other
         # issues missing with the ContentType models.
         if model is not None \
-        and not issubclass(model, self.__class__) \
-        and not issubclass(model, self.__class__._meta.proxy_for_model):
+                and not issubclass(model, self.__class__) \
+                and not issubclass(model, self.__class__._meta.proxy_for_model):
             raise RuntimeError("ContentType {0} for {1} #{2} does not point to a subclass!".format(
                 self.polymorphic_ctype_id, model, self.pk,
             ))
@@ -196,31 +197,31 @@ class PolymorphicModel(six.with_metaclass(PolymorphicModelBase, models.Model)):
 
         def add_model_if_regular(model, field_name, result):
             if (issubclass(model, models.Model)
-                and model != models.Model
-                and model != self.__class__
-                and model != PolymorphicModel):
+                    and model != models.Model
+                    and model != self.__class__
+                    and model != PolymorphicModel):
                 add_model(model, field_name, result)
 
-        def add_all_super_models(model, result):    
+        def add_all_super_models(model, result):
             for super_cls, field_to_super in model._meta.parents.items():
-                if field_to_super is not None:  #if not a link to a proxy model
-                    field_name = field_to_super.name #the field on model can have a different name to super_cls._meta.module_name, if the field is created manually using 'parent_link'
+                if field_to_super is not None:  # if not a link to a proxy model
+                    field_name = field_to_super.name  # the field on model can have a different name to super_cls._meta.module_name, if the field is created manually using 'parent_link'
                     add_model_if_regular(super_cls, field_name, result)
                     add_all_super_models(super_cls, result)
 
-        def add_all_sub_models(super_cls, result):            
-            for sub_cls in super_cls.__subclasses__(): #go through all subclasses of model  
-                if super_cls in sub_cls._meta.parents: #super_cls may not be in sub_cls._meta.parents if super_cls is a proxy model
-                    field_to_super = sub_cls._meta.parents[super_cls] #get the field that links sub_cls to super_cls    
+        def add_all_sub_models(super_cls, result):
+            for sub_cls in super_cls.__subclasses__():  # go through all subclasses of model
+                if super_cls in sub_cls._meta.parents:  # super_cls may not be in sub_cls._meta.parents if super_cls is a proxy model
+                    field_to_super = sub_cls._meta.parents[super_cls]  # get the field that links sub_cls to super_cls
                     if field_to_super is not None:    # if filed_to_super is not a link to a proxy model
                         super_to_sub_related_field = field_to_super.rel
                         if super_to_sub_related_field.related_name is None:
-                            #if related name is None the related field is the name of the subclass
+                            # if related name is None the related field is the name of the subclass
                             to_subclass_fieldname = sub_cls.__name__.lower()
                         else:
-                            #otherwise use the given related name
+                            # otherwise use the given related name
                             to_subclass_fieldname = super_to_sub_related_field.related_name
-                            
+
                         add_model_if_regular(sub_cls, to_subclass_fieldname, result)
 
         result = {}

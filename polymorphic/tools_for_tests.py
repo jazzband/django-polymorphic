@@ -63,7 +63,7 @@ class UUIDField(six.with_metaclass(models.SubfieldBase, models.CharField)):
             self.namespace, self.name = namespace, name
 
         super(UUIDField, self).__init__(verbose_name=verbose_name,
-            name=name, **kwargs)
+                                        name=name, **kwargs)
 
     def create_uuid(self):
         if not self.version or self.version == 4:
@@ -103,11 +103,11 @@ class UUIDField(six.with_metaclass(models.SubfieldBase, models.CharField)):
         # instance), everything works.
         #
 
-        #if not value:
+        # if not value:
         # return None
-        #if isinstance(value, uuid.UUID):
+        # if isinstance(value, uuid.UUID):
         # return smart_text(value)
-        #else:
+        # else:
         # return value
 
     def pre_save(self, model_instance, add):
@@ -139,6 +139,6 @@ class UUIDField(six.with_metaclass(models.SubfieldBase, models.CharField)):
         defaults = {
             'form_class': forms.CharField,
             'max_length': self.max_length
-            }
+        }
         defaults.update(kwargs)
         return super(UUIDField, self).formfield(**defaults)

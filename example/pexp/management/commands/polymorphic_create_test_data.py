@@ -4,27 +4,31 @@ This module is a scratchpad for general development, testing & debugging
 """
 
 from django.core.management.base import NoArgsCommand
-from django.db.models import connection
+from django.db import connection
 from pprint import pprint
 
 from pexp.models import *
 
+
 def reset_queries():
-    connection.queries=[]
+    connection.queries = []
+
 
 def show_queries():
-    print; print 'QUERIES:',len(connection.queries); pprint(connection.queries); print; connection.queries=[]
-    
+    print
+    print 'QUERIES:', len(connection.queries)
+    pprint(connection.queries)
+    print
+    connection.queries = []
+
+
 class Command(NoArgsCommand):
     help = ""
 
     def handle_noargs(self, **options):
         Project.objects.all().delete()
-        o=Project.objects.create(topic="John's gathering")
-        o=ArtProject.objects.create(topic="Sculpting with Tim", artist="T. Turner")
-        o=ResearchProject.objects.create(topic="Swallow Aerodynamics", supervisor="Dr. Winter")
+        o = Project.objects.create(topic="John's gathering")
+        o = ArtProject.objects.create(topic="Sculpting with Tim", artist="T. Turner")
+        o = ResearchProject.objects.create(topic="Swallow Aerodynamics", supervisor="Dr. Winter")
         print Project.objects.all()
         print
-        
-
-

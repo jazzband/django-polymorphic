@@ -5,6 +5,7 @@ register = Library()
 
 
 class BreadcrumbScope(Node):
+
     def __init__(self, base_opts, nodelist):
         self.base_opts = base_opts
         self.nodelist = nodelist   # Note, takes advantage of Node.child_nodelists
@@ -24,7 +25,6 @@ class BreadcrumbScope(Node):
             )
         else:
             raise TemplateSyntaxError("{0} tag expects 1 argument".format(token.contents[0]))
-
 
     def render(self, context):
         # app_label is really hard to overwrite in the standard Django ModelAdmin.

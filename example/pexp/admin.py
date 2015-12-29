@@ -14,6 +14,7 @@ class ProjectChildAdmin(PolymorphicChildModelAdmin):
         }),
     )
 
+
 class ProjectAdmin(PolymorphicParentModelAdmin):
     base_model = Project
     list_filter = (PolymorphicChildModelFilter,)
@@ -26,9 +27,9 @@ class ProjectAdmin(PolymorphicParentModelAdmin):
 admin.site.register(Project, ProjectAdmin)
 
 
-
 class ModelAChildAdmin(PolymorphicChildModelAdmin):
     base_model = ModelA
+
 
 class ModelAAdmin(PolymorphicParentModelAdmin):
     base_model = ModelA
@@ -45,6 +46,7 @@ admin.site.register(ModelA, ModelAAdmin)
 class Model2AChildAdmin(PolymorphicChildModelAdmin):
     base_model = Model2A
 
+
 class Model2AAdmin(PolymorphicParentModelAdmin):
     base_model = Model2A
     list_filter = (PolymorphicChildModelFilter,)
@@ -60,6 +62,7 @@ admin.site.register(Model2A, Model2AAdmin)
 class UUIDModelAChildAdmin(PolymorphicChildModelAdmin):
     base_model = UUIDModelA
 
+
 class UUIDModelAAdmin(PolymorphicParentModelAdmin):
     base_model = UUIDModelA
     list_filter = (PolymorphicChildModelFilter,)
@@ -74,6 +77,7 @@ admin.site.register(UUIDModelA, UUIDModelAAdmin)
 
 class ProxyChildAdmin(PolymorphicChildModelAdmin):
     base_model = ProxyBase
+
 
 class ProxyAdmin(PolymorphicParentModelAdmin):
     base_model = ProxyBase

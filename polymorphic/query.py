@@ -35,13 +35,13 @@ def transmogrify(cls, obj):
     else:
         # Run constructor, reassign values
         new = cls()
-        for k,v in obj.__dict__.items():
+        for k, v in obj.__dict__.items():
             new.__dict__[k] = v
     return new
 
 
 ###################################################################################
-### PolymorphicQuerySet
+# PolymorphicQuerySet
 
 def _query_annotations(query):
     try:
@@ -72,17 +72,17 @@ class PolymorphicQuerySet(QuerySet):
         new.polymorphic_disabled = self.polymorphic_disabled
         return new
 
-    if django.VERSION >= (1,7):
+    if django.VERSION >= (1, 7):
         def as_manager(cls):
             # Make sure the Django 1.7 way of creating managers works.
-            from .manager import PolymorphicManager
+            from .managers import PolymorphicManager
             manager = PolymorphicManager.from_queryset(cls)()
             manager._built_with_as_manager = True
             return manager
         as_manager.queryset_only = True
         as_manager = classmethod(as_manager)
 
-    def non_polymorphic(self, *args, **kwargs):
+    def non_polymorphic(self):
         """switch off polymorphic behaviour for this query.
         When the queryset is evaluated, only objects of the type of the
         base class used for this query are returned."""
@@ -160,7 +160,7 @@ class PolymorphicQuerySet(QuerySet):
     # The resulting objects are required to have a unique primary key within the result set
     # (otherwise an error is thrown).
     # The "polymorphic" keyword argument is not supported anymore.
-    #def extra(self, *args, **kwargs):
+    # def extra(self, *args, **kwargs):
 
     def _get_real_instances(self, base_result_objects):
         """
@@ -333,14 +333,15 @@ class PolymorphicQuerySet(QuerySet):
     def __repr__(self, *args, **kwargs):
         if self.model.polymorphic_query_multiline_output:
             result = [repr(o) for o in self.all()]
-            return  '[ ' + ',\n  '.join(result) + ' ]'
+            return '[ ' + ',\n  '.join(result) + ' ]'
         else:
             return super(PolymorphicQuerySet, self).__repr__(*args, **kwargs)
 
     class _p_list_class(list):
+
         def __repr__(self, *args, **kwargs):
             result = [repr(o) for o in self]
-            return  '[ ' + ',\n  '.join(result) + ' ]'
+            return '[ ' + ',\n  '.join(result) + ' ]'
 
     def get_real_instances(self, base_result_objects=None):
         "same as _get_real_instances, but make sure that __repr__ for ShowField... creates correct output"

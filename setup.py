@@ -21,22 +21,22 @@ def find_version(*parts):
 
 
 setup(
-    name = 'django_polymorphic',
-    version = find_version('polymorphic', '__version__.py'),
-    license = 'BSD',
+    name='django_polymorphic',
+    version=find_version('polymorphic', '__init__.py'),
+    license='BSD',
 
-    description = 'Seamless Polymorphic Inheritance for Django Models',
-    long_description = read('README.rst'),
-    url = 'https://github.com/chrisglass/django_polymorphic',
+    description='Seamless Polymorphic Inheritance for Django Models',
+    long_description=read('README.rst'),
+    url='https://github.com/chrisglass/django_polymorphic',
 
-    author = 'Bert Constantin',
-    author_email = 'bert.constantin@gmx.de',
+    author='Bert Constantin',
+    author_email='bert.constantin@gmx.de',
 
-    maintainer = 'Christopher Glass',
-    maintainer_email = 'tribaal@gmail.com',
+    maintainer='Christopher Glass',
+    maintainer_email='tribaal@gmail.com',
 
-    packages = find_packages(),
-    package_data = {
+    packages=find_packages(),
+    package_data={
         'polymorphic': [
             'templates/admin/polymorphic/*.html',
         ],

@@ -3,6 +3,7 @@
 from django.db import models
 from django.utils import six
 
+
 class ShowFieldBase(object):
     """ base class for the ShowField... model mixins, does the work """
 
@@ -119,8 +120,8 @@ class ShowFieldBase(object):
                 next_new_section, _, _ = parts[i + 1]
 
             if (self.polymorphic_showfield_max_line_width
-                and xpos + len(p) > self.polymorphic_showfield_max_line_width
-                and possible_line_break_pos != None):
+                    and xpos + len(p) > self.polymorphic_showfield_max_line_width
+                    and possible_line_break_pos != None):
                 rest = out[possible_line_break_pos:]
                 out = out[:possible_line_break_pos]
                 out += '\n' + indentstr + rest

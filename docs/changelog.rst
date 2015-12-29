@@ -1,6 +1,42 @@
 Changelog
 ==========
 
+Version 0.8.1 (2015-12-29)
+--------------------------
+
+* Fixed support for reverse relations for ``relname___field`` when the field starts with an ``_`` character.
+  Otherwise, the query will be interpreted as subclass lookup (``ClassName___field``).
+
+
+Version 0.8 (2015-12-28)
+------------------------
+
+* Added Django 1.9 compatibility.
+* Renamed ``polymorphic.manager`` => ``polymorphic.managers`` for consistentcy.
+* **BACKWARDS INCOMPATIBILITY:** The import paths have changed to support Django 1.9.
+  Instead of ``from polymorphic import X``,
+you'll have to import from the proper package. For example:
+
+.. code-block:: python
+
+    polymorphic.models import PolymorphicModel
+    polymorphic.managers import PolymorphicManager, PolymorphicQuerySet
+    polymorphic.showfields import ShowFieldContent, ShowFieldType, ShowFieldTypeAndContent
+
+* **BACKWARDS INCOMPATIBILITY:** Removed ``__version__.py`` in favor of a standard ``__version__`` in ``polymorphic/__init__.py``.
+* **BACKWARDS INCOMPATIBILITY:** Removed automatic proxying of method calls to the queryset class.
+  Use the standard Django methods instead:
+
+.. code-block:: python
+
+    # In model code:
+    objects = PolymorphicQuerySet.as_manager()
+
+    # For manager code:
+    MyCustomManager = PolymorphicManager.from_queryset(MyCustomQuerySet)
+
+
+
 Version 0.7.2 (2015-10-01)
 --------------------------
 
