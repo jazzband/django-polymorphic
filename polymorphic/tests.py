@@ -159,7 +159,8 @@ class ModelUnderRelParent(PolymorphicModel):
 
 
 class ModelUnderRelChild(PolymorphicModel):
-    parent = models.ForeignKey(ModelUnderRelParent)
+    parent = models.ForeignKey(ModelUnderRelParent, related_name='children')
+    _private2 = models.CharField(max_length=10)
 
 
 class MyManagerQuerySet(PolymorphicQuerySet):
@@ -734,10 +735,18 @@ class PolymorphicTests(TestCase):
 
     def test_polymorphic___filter_field(self):
         p = ModelUnderRelParent.objects.create(_private=True, field1='AA')
-        ModelUnderRelChild.objects.create(parent=p)
+        ModelUnderRelChild.objects.create(parent=p, _private2=True)
 
         # The "___" filter should also parse to "parent" -> "_private" as fallback.
         objects = ModelUnderRelChild.objects.filter(parent___private=True)
+        self.assertEqual(len(objects), 1)
+
+    def test_polymorphic___filter_reverse_field(self):
+        p = ModelUnderRelParent.objects.create(_private=True, field1='BB')
+        ModelUnderRelChild.objects.create(parent=p, _private2=True)
+
+        # Also test for reverse relations
+        objects = ModelUnderRelParent.objects.filter(children___private2=True)
         self.assertEqual(len(objects), 1)
 
     def test_delete(self):

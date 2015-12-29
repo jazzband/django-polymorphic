@@ -1,6 +1,13 @@
 Changelog
 ==========
 
+Version 0.8.1 (2015-12-29)
+--------------------------
+
+* Fixed support for reverse relations for ``relname___field`` when the field starts with an ``_`` character.
+  Otherwise, the query will be interpreted as subclass lookup (``ClassName___field``).
+
+
 Version 0.8 (2015-12-28)
 ------------------------
 

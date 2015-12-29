@@ -4,11 +4,25 @@
 """
 from __future__ import absolute_import
 
+import django
 from django.db import models
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import Q, FieldDoesNotExist
 
-from django.db.models.fields.related import RelatedField  # Django 1.8
+from django.db.models.fields.related import RelatedField
+if django.VERSION < (1, 6):
+    # There was no common base class in Django 1.5, mention all variants here.
+    from django.db.models.fields.related import RelatedObject, ManyToOneRel, ManyToManyRel
+    REL_FIELD_CLASSES = (RelatedField, RelatedObject, ManyToOneRel, ManyToManyRel)  # Leaving GenericRel out.
+elif django.VERSION < (1, 8):
+    # As of Django 1.6 there is a ForeignObjectRel.
+    from django.db.models.fields.related import ForeignObjectRel, RelatedObject
+    REL_FIELD_CLASSES = (RelatedField, ForeignObjectRel, RelatedObject)
+else:
+    # As of Django 1.8 the base class serves everything. RelatedObject is gone.
+    from django.db.models.fields.related import ForeignObjectRel
+    REL_FIELD_CLASSES = (RelatedField, ForeignObjectRel)
+
 
 from functools import reduce
 
@@ -154,9 +168,13 @@ def translate_polymorphic_field_path(queryset_model, field_path):
         # Test whether it's actually a regular relation__ _fieldname (the field starting with an _)
         # so no tripple ClassName___field was intended.
         try:
-            # rel = (field_object, model, direct, m2m)
-            field = queryset_model._meta.get_field(classname)
-            if isinstance(field, RelatedField):
+            if django.VERSION >= (1, 8):
+                # This also retreives M2M relations now (including reverse foreign key relations)
+                field = queryset_model._meta.get_field(classname)
+            else:
+                field = queryset_model._meta.get_field_by_name(classname)[0]
+
+            if isinstance(field, REL_FIELD_CLASSES):
                 # Can also test whether the field exists in the related object to avoid ambiguity between
                 # class names and field names, but that never happens when your class names are in CamelCase.
                 return field_path  # No exception raised, field does exist.
