@@ -35,6 +35,9 @@ the performance hit of retrieving child models.
 This can be controlled by setting the ``polymorphic_list`` property on the
 parent admin.  Setting it to True will provide child models to the list template.
 
+Note: If you are using non-integer primary keys in your model, you have to edit ``pk_regex``, 
+for example ``pk_regex = '([\w-]+)'`` if you use UUIDs. Otherwise you cannot change model entries.
+
 The child models
 ----------------
 
