@@ -167,7 +167,7 @@ class PolymorphicModelBase(ModelBase):
         for key, val in new_class.__dict__.items():
             if isinstance(val, ManagerDescriptor):
                 val = val.manager
-            if not isinstance(val, PolymorphicManager) or type(val) is PolymorphicManager:
+            if not isinstance(val, PolymorphicManager):
                 continue
 
             mgr_list.append((val.creation_counter, key, val))
