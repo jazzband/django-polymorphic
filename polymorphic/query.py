@@ -7,12 +7,12 @@ from __future__ import absolute_import
 from collections import defaultdict
 
 import django
-from django.db.models.query import QuerySet
+from django.db.models.query import QuerySet, Q
 from django.contrib.contenttypes.models import ContentType
 from django.utils import six
 
 from .query_translate import translate_polymorphic_filter_definitions_in_kwargs, translate_polymorphic_filter_definitions_in_args
-from .query_translate import translate_polymorphic_field_path
+from .query_translate import translate_polymorphic_field_path, translate_polymorphic_Q_object
 
 # chunk-size: maximum number of objects requested per db-request
 # by the polymorphic queryset.iterator() implementation; we use the same chunk size as Django
@@ -115,21 +115,27 @@ class PolymorphicQuerySet(QuerySet):
         """for aggregate and annotate kwargs: allow ModelX___field syntax for kwargs, forbid it for args.
         Modifies kwargs if needed (these are Aggregate objects, we translate the lookup member variable)"""
 
-        def patch_lookup(a):
-            if django.VERSION < (1, 8):
-                a.lookup = translate_polymorphic_field_path(self.model, a.lookup)
+        def patch_lookup_lt_18(a):
+            a.lookup = translate_polymorphic_field_path(self.model, a.lookup)
+
+                    
+        def patch_lookup_gte_18(a):
+            # With Django > 1.8, the field on which the aggregate operates is
+            # stored inside a complex query expression.
+            if isinstance(a, Q):
+                translate_polymorphic_Q_object(self.model, a)
+            elif hasattr(a, 'get_source_expressions'):
+                for source_expression in a.get_source_expressions():
+                    patch_lookup_gte_18(source_expression)
             else:
-                # With Django > 1.8, the field on which the aggregate operates is
-                # stored inside a query expression.
-                if hasattr(a, 'source_expressions'):
-                    a.source_expressions[0].name = translate_polymorphic_field_path(
-                        self.model, a.source_expressions[0].name)
+                a.name = translate_polymorphic_field_path(self.model, a.name)
 
         get_lookup = lambda a: a.lookup if django.VERSION < (1, 8) else a.source_expressions[0].name
 
         for a in args:
             assert '___' not in get_lookup(a), 'PolymorphicModel: annotate()/aggregate(): ___ model lookup supported for keyword arguments only'
         for a in six.itervalues(kwargs):
+            patch_lookup = patch_lookup_lt_18 if django.VERSION < (1, 8) else patch_lookup_gte_18
             patch_lookup(a)
 
     def annotate(self, *args, **kwargs):
