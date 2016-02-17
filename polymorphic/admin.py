@@ -261,6 +261,11 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
         real_admin = self._get_real_admin(object_id)
         return real_admin.change_view(request, object_id, *args, **kwargs)
 
+    def history_view(self, request, object_id, extra_context=None):
+        """Redirect the history view to the real admin."""
+        real_admin = self._get_real_admin(object_id)
+        return real_admin.history_view(request, object_id, extra_context=extra_context)
+
     def delete_view(self, request, object_id, extra_context=None):
         """Redirect the delete view to the real admin."""
         real_admin = self._get_real_admin(object_id)
