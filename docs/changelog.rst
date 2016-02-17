@@ -31,9 +31,9 @@ Version 0.8 (2015-12-28)
 
 .. code-block:: python
 
-    polymorphic.models import PolymorphicModel
-    polymorphic.managers import PolymorphicManager, PolymorphicQuerySet
-    polymorphic.showfields import ShowFieldContent, ShowFieldType, ShowFieldTypeAndContent
+    from polymorphic.models import PolymorphicModel
+    from polymorphic.managers import PolymorphicManager, PolymorphicQuerySet
+    from polymorphic.showfields import ShowFieldContent, ShowFieldType, ShowFieldTypeAndContent
 
 * **BACKWARDS INCOMPATIBILITY:** Removed ``__version__.py`` in favor of a standard ``__version__`` in ``polymorphic/__init__.py``.
 * **BACKWARDS INCOMPATIBILITY:** Removed automatic proxying of method calls to the queryset class.
