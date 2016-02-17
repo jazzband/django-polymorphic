@@ -6,9 +6,9 @@ During the migrating, the ``polymorphic_ctype`` field needs to be filled in.
 
 This can be done in the following steps:
 
-1. Inherit your model from :class:`~polymorphic.models.PolymorphicModel`
-2. Create a Django migration file to create the ``polymorphic_ctype_id`` database column.
-2. Make sure the proper :class:`~django.contrib.contenttypes.models.ContentType` value is filled in.
+#. Inherit your model from :class:`~polymorphic.models.PolymorphicModel`.
+#. Create a Django migration file to create the ``polymorphic_ctype_id`` database column.
+#. Make sure the proper :class:`~django.contrib.contenttypes.models.ContentType` value is filled in.
 
 Filling the content type value
 ------------------------------
