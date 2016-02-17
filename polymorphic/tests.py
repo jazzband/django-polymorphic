@@ -15,6 +15,8 @@ from django.db.models.query import QuerySet
 
 from django.test import TestCase
 from django.db.models import Q, Count
+if django.VERSION >= (1, 8):
+    from django.db.models import Case, When
 from django.db import models
 from django.contrib.contenttypes.models import ContentType
 from django.utils import six
@@ -1021,6 +1023,50 @@ class PolymorphicTests(TestCase):
 
         # test that we can delete the object
         t.delete()
+        
+    def test_polymorphic__aggregate(self):
+        """ test ModelX___field syntax on aggregate (should work for annotate either) """
+        
+        Model2A.objects.create(field1='A1')
+        Model2B.objects.create(field1='A1', field2='B2')
+        Model2B.objects.create(field1='A1', field2='B2')
+        
+        # aggregate using **kwargs
+        result = Model2A.objects.aggregate(cnt=Count('Model2B___field2'))
+        self.assertEqual(result, {'cnt': 2})
+        
+        # aggregate using **args
+        with self.assertRaisesMessage(AssertionError, 'PolymorphicModel: annotate()/aggregate(): ___ model lookup supported for keyword arguments only'):
+            Model2A.objects.aggregate(Count('Model2B___field2'))
+        
+        
+        
+    @skipIf(django.VERSION < (1,8,), "This test needs Django >=1.8")
+    def test_polymorphic__complex_aggregate(self):
+        """ test (complex expression on) aggregate (should work for annotate either) """
+        
+        Model2A.objects.create(field1='A1')
+        Model2B.objects.create(field1='A1', field2='B2')
+        Model2B.objects.create(field1='A1', field2='B2')
+        
+        # aggregate using **kwargs
+        result = Model2A.objects.aggregate(
+            cnt_a1=Count(Case(When(field1='A1', then=1))),
+            cnt_b2=Count(Case(When(Model2B___field2='B2', then=1))),
+        )
+        self.assertEqual(result, {'cnt_b2': 2, 'cnt_a1': 3})
+
+        # aggregate using **args
+        # we have to set the defaul alias or django won't except a complex expression
+        # on aggregate/annotate
+        def ComplexAgg(expression):
+            complexagg = Count(expression)*10
+            complexagg.default_alias = 'complexagg'
+            return complexagg
+        
+        with self.assertRaisesMessage(AssertionError, 'PolymorphicModel: annotate()/aggregate(): ___ model lookup supported for keyword arguments only'):
+            Model2A.objects.aggregate(ComplexAgg('Model2B___field2'))
+
 
 
 class RegressionTests(TestCase):
