@@ -53,3 +53,10 @@ class PolymorphicManager(models.Manager):
 
     def get_real_instances(self, base_result_objects=None):
         return self.all().get_real_instances(base_result_objects=base_result_objects)
+
+    if django.VERSION >= (1, 7):
+        @classmethod
+        def from_queryset(cls, queryset_class, class_name=None):
+            manager = super(PolymorphicManager, cls).from_queryset(queryset_class, class_name=class_name)
+            manager.queryset_class = queryset_class  # also set our version, Django uses _queryset_class
+            return manager
