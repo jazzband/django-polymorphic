@@ -1,5 +1,17 @@
 Changelog
-==========
+=========
+
+Version 0.9 (2016-02-17)
+------------------------
+
+* Added ``.only()`` and ``.defer()`` support.
+* Added support for Django 1.8 complex expressions in ``.annotate()`` / ``.aggregate()``.
+* Fix Django 1.9 handling of custom URLs.
+  The new change-URL redirect overlapped any custom URLs defined in the child admin.
+* Fix Django 1.9 support in the admin.
+* Fix missing ``history_view`` redirection to the child admin, which is important for django-reversion_ support.
+  See the documentation for hints for :ref:`django-reversion-compare support <django-reversion-compare-support>`.
+
 
 Version 0.8.1 (2015-12-29)
 --------------------------
@@ -15,7 +27,7 @@ Version 0.8 (2015-12-28)
 * Renamed ``polymorphic.manager`` => ``polymorphic.managers`` for consistentcy.
 * **BACKWARDS INCOMPATIBILITY:** The import paths have changed to support Django 1.9.
   Instead of ``from polymorphic import X``,
-you'll have to import from the proper package. For example:
+  you'll have to import from the proper package. For example:
 
 .. code-block:: python
 
@@ -188,3 +200,5 @@ For a detailed list of it's changes, see the :doc:`archived changelog <changelog
 
 .. _Grappelli: http://grappelliproject.com/
 .. _django-parler: https://github.com/edoburu/django-parler
+.. _django-reversion: https://github.com/etianen/django-reversion
+.. _django-reversion-compare: https://github.com/jedie/django-reversion-compare

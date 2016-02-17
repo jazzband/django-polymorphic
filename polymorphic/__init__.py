@@ -7,7 +7,7 @@ This code and affiliated files are (C) by Bert Constantin and individual contrib
 Please see LICENSE and AUTHORS for more information.
 """
 # See PEP 440 (https://www.python.org/dev/peps/pep-0440/)
-__version__ = "0.8.1"
+__version__ = "0.9"
 
 
 # Monkey-patch Django < 1.5 to allow ContentTypes for proxy models.
