@@ -1,6 +1,14 @@
 Changelog
 =========
 
+Changes in git
+--------------
+
+* Fixed support for ``PolymorphicManager.from_queryset()`` for custom query sets.
+* Fixed Django 1.7 ``changeform_view()`` redirection to the child admin site.
+  This fixes custom admin code that uses these views, such as django-reversion_'s ``revision_view()`` / ``recover_view()``.
+
+
 Version 0.9 (2016-02-17)
 ------------------------
 
@@ -9,7 +17,7 @@ Version 0.9 (2016-02-17)
 * Fix Django 1.9 handling of custom URLs.
   The new change-URL redirect overlapped any custom URLs defined in the child admin.
 * Fix Django 1.9 support in the admin.
-* Fix missing ``history_view`` redirection to the child admin, which is important for django-reversion_ support.
+* Fix missing ``history_view()`` redirection to the child admin, which is important for django-reversion_ support.
   See the documentation for hints for :ref:`django-reversion-compare support <django-reversion-compare-support>`.
 
 

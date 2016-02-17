@@ -262,6 +262,18 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
         real_admin = self._get_real_admin(object_id)
         return real_admin.change_view(request, object_id, *args, **kwargs)
 
+    if django.VERSION >= (1, 7):
+        def changeform_view(self, request, object_id=None, *args, **kwargs):
+            # The `changeform_view` is available as of Django 1.7, combining the add_view and change_view.
+            # As it's directly called by django-reversion, this method is also overwritten to make sure it
+            # also redirects to the child admin.
+            if object_id:
+                real_admin = self._get_real_admin(object_id)
+                return real_admin.changeform_view(request, object_id, *args, **kwargs)
+            else:
+                # Add view. As it should already be handled via `add_view`, this means something custom is done here!
+                return super(PolymorphicParentModelAdmin, self).changeform_view(request, object_id, *args, **kwargs)
+
     def history_view(self, request, object_id, extra_context=None):
         """Redirect the history view to the real admin."""
         real_admin = self._get_real_admin(object_id)
