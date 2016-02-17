@@ -298,9 +298,15 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
                 name='{0}_{1}_change'.format(*info)
             )
 
+            redirect_urls = []
             for i, oldurl in enumerate(urls):
                 if oldurl.name == new_change_url.name:
                     urls[i] = new_change_url
+        else:
+            # For Django 1.9, the redirect at the end acts as catch all.
+            # The custom urls need to be inserted before that.
+            redirect_urls = [pat for pat in urls if not pat.name]  # redirect URL has no name.
+            urls = [pat for pat in urls if pat.name]
 
         # Define the catch-all for custom views
         custom_urls = [
@@ -317,7 +323,7 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
             admin = self._get_real_admin_by_model(model)
             dummy_urls += admin.get_urls()
 
-        return urls + custom_urls + dummy_urls
+        return urls + custom_urls + dummy_urls + redirect_urls
 
     def subclass_view(self, request, path):
         """
