@@ -1,8 +1,8 @@
 Changelog
 =========
 
-Changes in git
---------------
+Version 0.9.1 (2016-02-18)
+--------------------------
 
 * Fixed support for ``PolymorphicManager.from_queryset()`` for custom query sets.
 * Fixed Django 1.7 ``changeform_view()`` redirection to the child admin site.
