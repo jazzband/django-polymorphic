@@ -525,6 +525,25 @@ class PolymorphicChildModelAdmin(admin.ModelAdmin):
             "admin/delete_confirmation.html"
         ]
 
+    @property
+    def object_history_template(self):
+        opts = self.model._meta
+        app_label = opts.app_label
+
+        # Pass the base options
+        base_opts = self.base_model._meta
+        base_app_label = base_opts.app_label
+
+        return [
+            "admin/%s/%s/object_history.html" % (app_label, opts.object_name.lower()),
+            "admin/%s/object_history.html" % app_label,
+            # Added:
+            "admin/%s/%s/object_history.html" % (base_app_label, base_opts.object_name.lower()),
+            "admin/%s/object_history.html" % base_app_label,
+            "admin/polymorphic/object_history.html",
+            "admin/object_history.html"
+        ]
+
     def render_change_form(self, request, context, add=False, change=False, form_url='', obj=None):
         context.update({
             'base_opts': self.base_model._meta,
@@ -536,6 +555,16 @@ class PolymorphicChildModelAdmin(admin.ModelAdmin):
             'base_opts': self.base_model._meta,
         }
         return super(PolymorphicChildModelAdmin, self).delete_view(request, object_id, extra_context)
+
+    def history_view(self, request, object_id, extra_context=None):
+        # Make sure the history view can also display polymorphic breadcrumbs
+        context = {
+            'base_opts': self.base_model._meta,
+        }
+        if extra_context:
+            context.update(extra_context)
+        return super(PolymorphicChildModelAdmin, self).history_view(request, object_id, extra_context=context)
+
 
     # ---- Extra: improving the form/fieldset default display ----
 

@@ -8,6 +8,10 @@ Changes in git
 * Fixed Django 1.7 ``changeform_view()`` redirection to the child admin site.
   This fixes custom admin code that uses these views, such as django-reversion_'s ``revision_view()`` / ``recover_view()``.
 * Fixed ``.only('pk')`` field support.
+* Fixed ``object_history_template`` breadcrumb.
+  **NOTE:** when using django-reversion_ / django-reversion-compare_, make sure to implement
+  a ``admin/polymorphic/object_history.html`` template in your project that extends
+  from ``reversion/object_history.html`` or ``reversion-compare/object_history.html`` respectively.
 
 
 Version 0.9 (2016-02-17)
