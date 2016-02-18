@@ -7,6 +7,7 @@ Changes in git
 * Fixed support for ``PolymorphicManager.from_queryset()`` for custom query sets.
 * Fixed Django 1.7 ``changeform_view()`` redirection to the child admin site.
   This fixes custom admin code that uses these views, such as django-reversion_'s ``revision_view()`` / ``recover_view()``.
+* Fixed ``.only('pk')`` field support.
 
 
 Version 0.9 (2016-02-17)

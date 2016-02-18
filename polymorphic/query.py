@@ -169,7 +169,7 @@ class PolymorphicQuerySet(QuerySet):
         field_names = set(field_names)
         if 'pk' in field_names:
             field_names.remove('pk')
-            field_names.add(self.get_meta().pk.name)
+            field_names.add(self.model._meta.pk.name)
 
         if defer:
             # Remove any existing deferred names from the current set before

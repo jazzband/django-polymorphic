@@ -569,7 +569,7 @@ class PolymorphicTests(TestCase):
         self.assertEqual(repr(objects_deferred[3]),
             '<Model2D_Deferred_field1: id 4, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField)>')
 
-        objects_only = Model2A.objects.only('polymorphic_ctype', 'field1')
+        objects_only = Model2A.objects.only('pk', 'polymorphic_ctype', 'field1')
         self.assertIn('field1', objects_only[0].__dict__,
             'qs.only("field1") was used, but field1 was incorrectly deferred')
         self.assertIn('field1', objects_only[3].__dict__,
@@ -580,13 +580,13 @@ class PolymorphicTests(TestCase):
         self.assertEqual(repr(objects_only[0]),
             '<Model2A: id 1, field1 (CharField)>')
         self.assertEqual(repr(objects_only[1]),
-            '<Model2B_Deferred_field2_id: '
+            '<Model2B_Deferred_field2: '
             'id 2, field1 (CharField), field2 (CharField)>')
         self.assertEqual(repr(objects_only[2]),
-            '<Model2C_Deferred_field2_field3_id_model2a_ptr_id: '
+            '<Model2C_Deferred_field2_field3_model2a_ptr_id: '
             'id 3, field1 (CharField), field2 (CharField), field3 (CharField)>')
         self.assertEqual(repr(objects_only[3]),
-            '<Model2D_Deferred_field2_field3_field4_id_model2a_ptr_id_model2b_ptr_id: '
+            '<Model2D_Deferred_field2_field3_field4_model2a_ptr_id_model2b_ptr_id: '
             'id 4, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField)>')
 
     # A bug in Django 1.4 prevents using defer across reverse relations
