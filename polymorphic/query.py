@@ -194,7 +194,8 @@ class PolymorphicQuerySet(QuerySet):
                 translate_polymorphic_Q_object(self.model, a)
             elif hasattr(a, 'get_source_expressions'):
                 for source_expression in a.get_source_expressions():
-                    patch_lookup_gte_18(source_expression)
+                    if source_expression is not None:
+                        patch_lookup_gte_18(source_expression)
             else:
                 a.name = translate_polymorphic_field_path(self.model, a.name)
 
