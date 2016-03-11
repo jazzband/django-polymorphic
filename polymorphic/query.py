@@ -186,7 +186,7 @@ class PolymorphicQuerySet(QuerySet):
         def patch_lookup_lt_18(a):
             a.lookup = translate_polymorphic_field_path(self.model, a.lookup)
 
-                    
+
         def patch_lookup_gte_18(a):
             # With Django > 1.8, the field on which the aggregate operates is
             # stored inside a complex query expression.
@@ -197,11 +197,11 @@ class PolymorphicQuerySet(QuerySet):
                     patch_lookup_gte_18(source_expression)
             else:
                 a.name = translate_polymorphic_field_path(self.model, a.name)
-                
+
         ___lookup_assert_msg = 'PolymorphicModel: annotate()/aggregate(): ___ model lookup supported for keyword arguments only'
         def test___lookup_for_args_lt_18(a):
             assert '___' not in a.lookup, ___lookup_assert_msg
-            
+
         def test___lookup_for_args_gte_18(a):
             """ *args might be complex expressions too in django 1.8 so
             the testing for a '___' is rather complex on this one """
@@ -210,21 +210,21 @@ class PolymorphicQuerySet(QuerySet):
                     " process all children of this Q node "
                     for i in range(len(node.children)):
                         child = node.children[i]
-            
+
                         if type(child) == tuple:
                             # this Q object child is a tuple => a kwarg like Q( instance_of=ModelB )
                             assert '___' not in child[0], ___lookup_assert_msg
                         else:
                             # this Q object child is another Q object, recursively process this as well
                             tree_node_test___lookup(my_model, child)
-                            
+
                 tree_node_test___lookup(self.model, a)
             elif hasattr(a, 'get_source_expressions'):
                 for source_expression in a.get_source_expressions():
                     test___lookup_for_args_gte_18(source_expression)
             else:
                 assert '___' not in a.name, ___lookup_assert_msg
-                    
+
         for a in args:
             test___lookup = test___lookup_for_args_lt_18 if django.VERSION < (1, 8) else test___lookup_for_args_gte_18
             test___lookup(a)
