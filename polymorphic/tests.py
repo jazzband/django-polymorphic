@@ -420,6 +420,11 @@ class CustomPkInherit(CustomPkBase):
     i = models.CharField(max_length=1)
 
 
+class DateModel(PolymorphicModel):
+
+    date = models.DateTimeField()
+
+
 class PolymorphicTests(TestCase):
     """
     The test suite
@@ -1137,6 +1142,15 @@ class PolymorphicTests(TestCase):
         with self.assertRaisesMessage(AssertionError, 'PolymorphicModel: annotate()/aggregate(): ___ model lookup supported for keyword arguments only'):
             Model2A.objects.aggregate(ComplexAgg('Model2B___field2'))
 
+    @skipIf(django.VERSION < (1,8,), "This test needs Django >=1.8")
+    def test_polymorphic__expressions(self):
+
+        from django.db.models.expressions import DateTime
+        from django.utils.timezone import utc
+
+        # no exception raised
+        result = DateModel.objects.annotate(val=DateTime('date', 'day', utc))
+        self.assertEqual(list(result), [])
 
 
 class RegressionTests(TestCase):
