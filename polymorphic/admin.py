@@ -426,13 +426,21 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
         })
         if hasattr(self.admin_site, 'root_path'):
             context['root_path'] = self.admin_site.root_path  # Django < 1.4
-        context_instance = RequestContext(request, current_app=self.admin_site.name)
-        return render_to_response(self.add_type_template or [
+
+        templates = self.add_type_template or [
             "admin/%s/%s/add_type_form.html" % (app_label, opts.object_name.lower()),
             "admin/%s/add_type_form.html" % app_label,
             "admin/polymorphic/add_type_form.html",  # added default here
             "admin/add_type_form.html"
-        ], context, context_instance=context_instance)
+        ]
+
+        if django.VERSION >= (1, 8):
+            from django.template.response import TemplateResponse
+            request.current_app = self.admin_site.name
+            return TemplateResponse(request, templates, context)
+        else:
+            context_instance = RequestContext(request, current_app=self.admin_site.name)
+            return render_to_response(templates, context, context_instance=context_instance)
 
     @property
     def change_list_template(self):
