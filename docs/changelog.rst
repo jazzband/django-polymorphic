@@ -1,6 +1,13 @@
 Changelog
 =========
 
+Version 0.9.2 (2016-05-04)
+--------------------------
+
+* Fix error when using ``date_hierarchy`` field in the admin
+* Fixed Django 1.10 warning in admin add-type view.
+
+
 Version 0.9.1 (2016-02-18)
 --------------------------
 
