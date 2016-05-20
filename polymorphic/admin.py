@@ -2,14 +2,17 @@
 ModelAdmin code to display polymorphic models.
 """
 import sys
+import warnings
+
+import django
 from django import forms
 from django.conf.urls import url
 from django.contrib import admin
-from django.contrib.admin.helpers import AdminForm, AdminErrorList
+from django.contrib.admin.helpers import AdminErrorList, AdminForm
 from django.contrib.admin.widgets import AdminRadioSelect
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import PermissionDenied
-from django.core.urlresolvers import RegexURLResolver
+from django.core.urlresolvers import RegexURLResolver, resolve
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext
@@ -18,8 +21,6 @@ from django.utils.encoding import force_text
 from django.utils.http import urlencode
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
-import django
-
 
 try:
     # Django 1.6 implements this
@@ -125,8 +126,6 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
 
     def __init__(self, model, admin_site, *args, **kwargs):
         super(PolymorphicParentModelAdmin, self).__init__(model, admin_site, *args, **kwargs)
-        self._child_admin_site = self.admin_site.__class__(name=self.admin_site.name)
-        self._child_admin_site.get_app_list = lambda request: ()  # HACK: workaround for Django 1.9
         self._is_setup = False
 
     def _lazy_setup(self):
@@ -136,6 +135,23 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
         # By not having this in __init__() there is less stress on import dependencies as well,
         # considering an advanced use cases where a plugin system scans for the child models.
         child_models = self.get_child_models()
+        # Check if child_models are provided via new syntax (iterable of models) or compatibility syntax
+        # (iterable of (Model, Admin). When no child_models are provided, assume new syntax.
+        self._compat_mode = len(child_models) and isinstance(child_models[0], (list, tuple))
+        if not self._compat_mode:
+            self._child_models = child_models
+            self._child_admin_site = self.admin_site
+            self._is_setup = True
+            return
+
+        # Continue only if in compatibility mode
+        warnings.warn("Using tuples of (Model, ModelAdmin) in PolymorphicParentModelAdmin.child_models is "
+                      "deprecated; instead child_models should be iterable of child models eg. "
+                      "(Model1, Model2, ..) and child admins should be registered to default admin site",
+                      DeprecationWarning)
+        self._child_admin_site = self.admin_site.__class__(name=self.admin_site.name)
+        self._child_admin_site.get_app_list = lambda request: ()  # HACK: workaround for Django 1.9
+
         for Model, Admin in child_models:
             self.register_child(Model, Admin)
         self._child_models = dict(child_models)
@@ -183,8 +199,13 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
         """
         Return a list of polymorphic types for which the user has the permission to perform the given action.
         """
+        self._lazy_setup()
         choices = []
-        for model, _ in self.get_child_models():
+        for child_model_desc in self.get_child_models():
+            if self._compat_mode:
+                model = child_model_desc[0]
+            else:
+                model = child_model_desc
             perm_function_name = 'has_{0}_permission'.format(action)
             model_admin = self._get_real_admin_by_model(model)
             perm_function = getattr(model_admin, perm_function_name)
@@ -300,6 +321,14 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
         Expose the custom URLs for the subclasses and the URL resolver.
         """
         urls = super(PolymorphicParentModelAdmin, self).get_urls()
+
+        # At this point. all admin code needs to be known.
+        self._lazy_setup()
+
+        # Continue only if in compatibility mode
+        if not self._compat_mode:
+            return urls
+
         info = _get_opt(self.model)
 
         # Patch the change view URL so it's not a big catch-all; allowing all
@@ -330,9 +359,6 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
         custom_urls = [
             url(r'^(?P<path>.+)$', self.admin_site.admin_view(self.subclass_view))
         ]
-
-        # At this point. all admin code needs to be known.
-        self._lazy_setup()
 
         # Add reverse names for all polymorphic models, so the delete button and "save and add" just work.
         # These definitions are masked by the definition above, since it needs special handling (and a ct_id parameter).
@@ -478,6 +504,7 @@ class PolymorphicChildModelAdmin(admin.ModelAdmin):
     base_form = None
     base_fieldsets = None
     extra_fieldset_title = _("Contents")  # Default title for extra fieldset
+    show_in_index = False
 
     def get_form(self, request, obj=None, **kwargs):
         # The django admin validation requires the form to have a 'class Meta: model = ..'
@@ -494,6 +521,13 @@ class PolymorphicChildModelAdmin(admin.ModelAdmin):
             kwargs.setdefault('fields', None)
 
         return super(PolymorphicChildModelAdmin, self).get_form(request, obj, **kwargs)
+
+    def get_model_perms(self, request):
+        match = resolve(request.path)
+
+        if not self.show_in_index and match.app_name == 'admin' and match.url_name in ('index', 'app_list'):
+            return {'add': False, 'change': False, 'delete': False}
+        return super(PolymorphicChildModelAdmin, self).get_model_perms(request)
 
     @property
     def change_form_template(self):
