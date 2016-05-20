@@ -14,7 +14,6 @@ The polymorphic admin is implemented via a parent admin that forwards the *edit*
 to the ``ModelAdmin`` of the derived child model. The *list* page is still implemented by the parent model admin.
 
 Both the parent model and child model need to have a ``ModelAdmin`` class.
-Only the ``ModelAdmin`` class of the parent/base model has to be registered in the Django admin site.
 
 The parent model
 ----------------
@@ -22,7 +21,7 @@ The parent model
 The parent model needs to inherit ``PolymorphicParentModelAdmin``, and implement the following:
 
 * ``base_model`` should be set
-* ``child_models`` or ``get_child_models()`` should return a list with (Model, ModelAdmin) tuple.
+* ``child_models`` or ``get_child_models()`` should return an iterable of Model classes.
 
 The exact implementation can depend on the way your module is structured.
 For simple inheritance situations, ``child_models`` is the best solution.
@@ -49,6 +48,8 @@ This class implements the following features:
 * It extends the template lookup paths, to look for both the parent model and child model in the ``admin/app/model/change_form.html`` path.
 * It allows to set ``base_form`` so the derived class will automatically include other fields in the form.
 * It allows to set ``base_fieldsets`` so the derived class will automatically display any extra fields.
+* Although it must be registered with admin site, by default it's hidden from admin site index page.
+  This can be overriden by adding ``show_in_index = True`` in admin class.
 
 The standard ``ModelAdmin`` attributes ``form`` and ``fieldsets`` should rather be avoided at the base class,
 because it will hide any additional fields which are defined in the derived model. Instead,
@@ -95,16 +96,14 @@ The models are taken from :ref:`advanced-features`.
 
     class ModelCAdmin(ModelBAdmin):
         base_model = ModelC
+        show_in_index = True  # makes child model admin visible in main admin site
         # define custom features here
 
 
     class ModelAParentAdmin(PolymorphicParentModelAdmin):
         """ The parent model admin """
         base_model = ModelA
-        child_models = (
-            (ModelB, ModelBAdmin),
-            (ModelC, ModelCAdmin),
-        )
+        child_models = (ModelB, ModelC)
 
 
     class ModelBInline(admin.StackedInline):
@@ -119,4 +118,6 @@ The models are taken from :ref:`advanced-features`.
 
     # Only the parent needs to be registered:
     admin.site.register(ModelA, ModelAParentAdmin)
+    admin.site.register(ModelB, ModelBAdmin)
+    admin.site.register(ModelC, ModelCAdmin)
     admin.site.register(StandardModel, StandardModelAdmin)
