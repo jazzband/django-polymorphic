@@ -1006,6 +1006,16 @@ class PolymorphicTests(TestCase):
 
         self.assertIsInstance(items[0], ProxyChild)
 
+    def test_queryset_on_proxy_model_does_not_return_superclasses(self):
+        ProxyBase.objects.create(some_data='Base1')
+        ProxyBase.objects.create(some_data='Base2')
+        ProxyChild.objects.create(some_data='Child1')
+        ProxyChild.objects.create(some_data='Child2')
+        ProxyChild.objects.create(some_data='Child3')
+
+        self.assertEquals(5, ProxyBase.objects.count())
+        self.assertEquals(3, ProxyChild.objects.count())
+
     def test_proxy_get_real_instance_class(self):
         """
         The call to ``get_real_instance()`` also checks whether the returned model is of the correct type.
@@ -1020,7 +1030,7 @@ class PolymorphicTests(TestCase):
         self.assertEqual(pb.get_real_instance(), nonproxychild)
         self.assertEqual(pb.name, name)
 
-        pbm = ProxyChild.objects.get(id=1)
+        pbm = NonProxyChild.objects.get(id=1)
         self.assertEqual(pbm.get_real_instance_class(), NonProxyChild)
         self.assertEqual(pbm.get_real_instance(), nonproxychild)
         self.assertEqual(pbm.name, name)
