@@ -102,6 +102,7 @@ The models are taken from :ref:`advanced-features`.
         """ The parent model admin """
         base_model = ModelA
         child_models = (
+            (ModelA, admin.ModelAdmin), # To allow parent model to be used in the admin as standalone
             (ModelB, ModelBAdmin),
             (ModelC, ModelCAdmin),
         )
