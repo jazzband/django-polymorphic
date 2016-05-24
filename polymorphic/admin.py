@@ -135,8 +135,8 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
         # By not having this in __init__() there is less stress on import dependencies as well,
         # considering an advanced use cases where a plugin system scans for the child models.
         child_models = self.get_child_models()
-        # Check if child_models are provided via new syntax (iterable of models) or compatibility syntax
-        # (iterable of (Model, Admin). When no child_models are provided, assume new syntax.
+        # Check if get_child_models() returns an iterable of models (new format) or an iterable
+        # of (Model, Admin) (legacy format). When iterable is empty, assume the new format.
         self._compat_mode = len(child_models) and isinstance(child_models[0], (list, tuple))
         if not self._compat_mode:
             self._child_models = child_models
