@@ -309,8 +309,9 @@ class PolymorphicQuerySet(QuerySet):
         # - also record the correct result order in "ordered_id_list"
         # - store objects that already have the correct class into "results"
         base_result_objects_by_id = {}
-        self_model_class_id = ContentType.objects.get_for_model(self.model, for_concrete_model=False).pk
-        self_concrete_model_class_id = ContentType.objects.get_for_model(self.model, for_concrete_model=True).pk
+        content_type_manager = ContentType.objects.db_manager(self._db)
+        self_model_class_id = content_type_manager.get_for_model(self.model, for_concrete_model=False).pk
+        self_concrete_model_class_id = content_type_manager.get_for_model(self.model, for_concrete_model=True).pk
 
         for base_object in base_result_objects:
             ordered_id_list.append(base_object.pk)
@@ -335,7 +336,7 @@ class PolymorphicQuerySet(QuerySet):
                         # upcast it and put it in the results
                         results[base_object.pk] = transmogrify(real_concrete_class, base_object)
                     else:
-                        real_concrete_class = ContentType.objects.get_for_id(real_concrete_class_id).model_class()
+                        real_concrete_class = content_type_manager.get_for_id(real_concrete_class_id).model_class()
                         idlist_per_model[real_concrete_class].append(getattr(base_object, pk_name))
 
         # For each model in "idlist_per_model" request its objects (the real model)
