@@ -121,13 +121,13 @@ class PolymorphicModel(six.with_metaclass(PolymorphicModelBase, models.Model)):
         return model
 
     def get_real_concrete_instance_class_id(self, using=DEFAULT_DB_ALIAS):
-        model_class = self.get_real_instance_class()
+        model_class = self.get_real_instance_class(using=using)
         if model_class is None:
             return None
         return ContentType.objects.db_manager(using).get_for_model(model_class, for_concrete_model=True).pk
 
     def get_real_concrete_instance_class(self, using=DEFAULT_DB_ALIAS):
-        model_class = self.get_real_instance_class()
+        model_class = self.get_real_instance_class(using=using)
         if model_class is None:
             return None
         return ContentType.objects.db_manager(using).get_for_model(model_class, for_concrete_model=True).model_class()
@@ -138,7 +138,7 @@ class PolymorphicModel(six.with_metaclass(PolymorphicModelBase, models.Model)):
         retrieve objects, then the complete object with it's real class/type
         and all fields may be retrieved with this method.
         Each method call executes one db query (if necessary)."""
-        real_model = self.get_real_instance_class()
+        real_model = self.get_real_instance_class(using=using)
         if real_model == self.__class__:
             return self
         return real_model.objects.db_manager(using).get(pk=self.pk)

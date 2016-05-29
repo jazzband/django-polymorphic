@@ -325,8 +325,8 @@ class PolymorphicQuerySet(QuerySet):
                     results[base_object.pk] = base_object
 
                 else:
-                    real_concrete_class = base_object.get_real_instance_class()
-                    real_concrete_class_id = base_object.get_real_concrete_instance_class_id()
+                    real_concrete_class = base_object.get_real_instance_class(using=self._db)
+                    real_concrete_class_id = base_object.get_real_concrete_instance_class_id(using=self._db)
 
                     if real_concrete_class_id is None:
                         # Dealing with a stale content type
@@ -372,7 +372,7 @@ class PolymorphicQuerySet(QuerySet):
 
             for real_object in real_objects:
                 o_pk = getattr(real_object, pk_name)
-                real_class = real_object.get_real_instance_class()
+                real_class = real_object.get_real_instance_class(using=self._db)
 
                 # If the real class is a proxy, upcast it
                 if real_class != real_concrete_class:
