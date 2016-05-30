@@ -87,12 +87,12 @@ class PolymorphicModel(six.with_metaclass(PolymorphicModelBase, models.Model)):
     def save(self, *args, **kwargs):
         """Overridden model save function which supports the polymorphism
         functionality (through pre_save_polymorphic)."""
-        using = kwargs.get('using', DEFAULT_DB_ALIAS)
+        using = kwargs.get('using', self._state.db or DEFAULT_DB_ALIAS)
         self.pre_save_polymorphic(using=using)
         return super(PolymorphicModel, self).save(*args, **kwargs)
     save.alters_data = True
 
-    def get_real_instance_class(self, using=DEFAULT_DB_ALIAS):
+    def get_real_instance_class(self):
         """
         Normally not needed.
         If a non-polymorphic manager (like base_objects) has been used to
@@ -105,7 +105,7 @@ class PolymorphicModel(six.with_metaclass(PolymorphicModelBase, models.Model)):
         # Note that model_class() can return None for stale content types;
         # when the content type record still exists but no longer refers to an existing model.
         try:
-            model = ContentType.objects.db_manager(using).get_for_id(self.polymorphic_ctype_id).model_class()
+            model = ContentType.objects.db_manager(self._state.db).get_for_id(self.polymorphic_ctype_id).model_class()
         except AttributeError:
             # Django <1.6 workaround
             return None
@@ -120,28 +120,28 @@ class PolymorphicModel(six.with_metaclass(PolymorphicModelBase, models.Model)):
             ))
         return model
 
-    def get_real_concrete_instance_class_id(self, using=DEFAULT_DB_ALIAS):
-        model_class = self.get_real_instance_class(using=using)
+    def get_real_concrete_instance_class_id(self):
+        model_class = self.get_real_instance_class()
         if model_class is None:
             return None
-        return ContentType.objects.db_manager(using).get_for_model(model_class, for_concrete_model=True).pk
+        return ContentType.objects.db_manager(self._state.db).get_for_model(model_class, for_concrete_model=True).pk
 
-    def get_real_concrete_instance_class(self, using=DEFAULT_DB_ALIAS):
-        model_class = self.get_real_instance_class(using=using)
+    def get_real_concrete_instance_class(self):
+        model_class = self.get_real_instance_class()
         if model_class is None:
             return None
-        return ContentType.objects.db_manager(using).get_for_model(model_class, for_concrete_model=True).model_class()
+        return ContentType.objects.db_manager(self._state.db).get_for_model(model_class, for_concrete_model=True).model_class()
 
-    def get_real_instance(self, using=DEFAULT_DB_ALIAS):
+    def get_real_instance(self):
         """Normally not needed.
         If a non-polymorphic manager (like base_objects) has been used to
         retrieve objects, then the complete object with it's real class/type
         and all fields may be retrieved with this method.
         Each method call executes one db query (if necessary)."""
-        real_model = self.get_real_instance_class(using=using)
+        real_model = self.get_real_instance_class()
         if real_model == self.__class__:
             return self
-        return real_model.objects.db_manager(using).get(pk=self.pk)
+        return real_model.objects.db_manager(self._state.db).get(pk=self.pk)
 
     def __init__(self, * args, ** kwargs):
         """Replace Django's inheritance accessor member functions for our model

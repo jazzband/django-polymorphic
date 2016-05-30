@@ -112,8 +112,8 @@ class PolymorphicQuerySet(QuerySet):
 
     def _filter_or_exclude(self, negate, *args, **kwargs):
         "We override this internal Django functon as it is used for all filter member functions."
-        translate_polymorphic_filter_definitions_in_args(self.model, args)  # the Q objects
-        additional_args = translate_polymorphic_filter_definitions_in_kwargs(self.model, kwargs)  # filter_field='data'
+        translate_polymorphic_filter_definitions_in_args(self.model, args, using=self._db)  # the Q objects
+        additional_args = translate_polymorphic_filter_definitions_in_kwargs(self.model, kwargs, using=self._db)  # filter_field='data'
         return super(PolymorphicQuerySet, self)._filter_or_exclude(negate, *(list(args) + additional_args), **kwargs)
 
     def order_by(self, *args, **kwargs):
@@ -325,8 +325,8 @@ class PolymorphicQuerySet(QuerySet):
                     results[base_object.pk] = base_object
 
                 else:
-                    real_concrete_class = base_object.get_real_instance_class(using=self._db)
-                    real_concrete_class_id = base_object.get_real_concrete_instance_class_id(using=self._db)
+                    real_concrete_class = base_object.get_real_instance_class()
+                    real_concrete_class_id = base_object.get_real_concrete_instance_class_id()
 
                     if real_concrete_class_id is None:
                         # Dealing with a stale content type
@@ -345,7 +345,7 @@ class PolymorphicQuerySet(QuerySet):
         # Then we copy the extra() select fields from the base objects to the real objects.
         # TODO: defer(), only(): support for these would be around here
         for real_concrete_class, idlist in idlist_per_model.items():
-            real_objects = real_concrete_class.base_objects.filter(**{
+            real_objects = real_concrete_class.base_objects.db_manager(self._db).filter(**{
                 ('%s__in' % pk_name): idlist,
             })
             real_objects.query.select_related = self.query.select_related  # copy select related configuration to new qs
@@ -372,7 +372,7 @@ class PolymorphicQuerySet(QuerySet):
 
             for real_object in real_objects:
                 o_pk = getattr(real_object, pk_name)
-                real_class = real_object.get_real_instance_class(using=self._db)
+                real_class = real_object.get_real_instance_class()
 
                 # If the real class is a proxy, upcast it
                 if real_class != real_concrete_class:

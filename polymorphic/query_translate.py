@@ -36,7 +36,7 @@ from functools import reduce
 # functionality to filters and Q objects.
 # Probably a more general queryset enhancement class could be made out of them.
 
-def translate_polymorphic_filter_definitions_in_kwargs(queryset_model, kwargs):
+def translate_polymorphic_filter_definitions_in_kwargs(queryset_model, kwargs, using=DEFAULT_DB_ALIAS):
     """
     Translate the keyword argument list for PolymorphicQuerySet.filter()
 
@@ -51,7 +51,6 @@ def translate_polymorphic_filter_definitions_in_kwargs(queryset_model, kwargs):
     Returns: a list of non-keyword-arguments (Q objects) to be added to the filter() query.
     """
     additional_args = []
-    using = kwargs.get('using', DEFAULT_DB_ALIAS)
     for field_path, val in kwargs.copy().items():  # Python 3 needs copy
 
         new_expr = _translate_polymorphic_filter_definition(queryset_model, field_path, val, using=using)
@@ -90,7 +89,7 @@ def translate_polymorphic_Q_object(queryset_model, potential_q_object, using=DEF
     return potential_q_object
 
 
-def translate_polymorphic_filter_definitions_in_args(queryset_model, args):
+def translate_polymorphic_filter_definitions_in_args(queryset_model, args, using=DEFAULT_DB_ALIAS):
     """
     Translate the non-keyword argument list for PolymorphicQuerySet.filter()
 
@@ -104,7 +103,7 @@ def translate_polymorphic_filter_definitions_in_args(queryset_model, args):
     """
 
     for q in args:
-        translate_polymorphic_Q_object(queryset_model, q)
+        translate_polymorphic_Q_object(queryset_model, q, using=using)
 
 
 def _translate_polymorphic_filter_definition(queryset_model, field_path, field_val, using=DEFAULT_DB_ALIAS):
