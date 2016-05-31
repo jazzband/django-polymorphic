@@ -8,6 +8,7 @@ import django
 from django.db import models
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import Q, FieldDoesNotExist
+from django.db.utils import DEFAULT_DB_ALIAS
 
 from django.db.models.fields.related import RelatedField
 if django.VERSION < (1, 6):
@@ -35,7 +36,7 @@ from functools import reduce
 # functionality to filters and Q objects.
 # Probably a more general queryset enhancement class could be made out of them.
 
-def translate_polymorphic_filter_definitions_in_kwargs(queryset_model, kwargs):
+def translate_polymorphic_filter_definitions_in_kwargs(queryset_model, kwargs, using=DEFAULT_DB_ALIAS):
     """
     Translate the keyword argument list for PolymorphicQuerySet.filter()
 
@@ -52,7 +53,7 @@ def translate_polymorphic_filter_definitions_in_kwargs(queryset_model, kwargs):
     additional_args = []
     for field_path, val in kwargs.copy().items():  # Python 3 needs copy
 
-        new_expr = _translate_polymorphic_filter_definition(queryset_model, field_path, val)
+        new_expr = _translate_polymorphic_filter_definition(queryset_model, field_path, val, using=using)
 
         if type(new_expr) == tuple:
             # replace kwargs element
@@ -66,7 +67,7 @@ def translate_polymorphic_filter_definitions_in_kwargs(queryset_model, kwargs):
     return additional_args
 
 
-def translate_polymorphic_Q_object(queryset_model, potential_q_object):
+def translate_polymorphic_Q_object(queryset_model, potential_q_object, using=DEFAULT_DB_ALIAS):
     def tree_node_correct_field_specs(my_model, node):
         " process all children of this Q node "
         for i in range(len(node.children)):
@@ -75,7 +76,7 @@ def translate_polymorphic_Q_object(queryset_model, potential_q_object):
             if type(child) == tuple:
                 # this Q object child is a tuple => a kwarg like Q( instance_of=ModelB )
                 key, val = child
-                new_expr = _translate_polymorphic_filter_definition(my_model, key, val)
+                new_expr = _translate_polymorphic_filter_definition(my_model, key, val, using=using)
                 if new_expr:
                     node.children[i] = new_expr
             else:
@@ -88,7 +89,7 @@ def translate_polymorphic_Q_object(queryset_model, potential_q_object):
     return potential_q_object
 
 
-def translate_polymorphic_filter_definitions_in_args(queryset_model, args):
+def translate_polymorphic_filter_definitions_in_args(queryset_model, args, using=DEFAULT_DB_ALIAS):
     """
     Translate the non-keyword argument list for PolymorphicQuerySet.filter()
 
@@ -102,10 +103,10 @@ def translate_polymorphic_filter_definitions_in_args(queryset_model, args):
     """
 
     for q in args:
-        translate_polymorphic_Q_object(queryset_model, q)
+        translate_polymorphic_Q_object(queryset_model, q, using=using)
 
 
-def _translate_polymorphic_filter_definition(queryset_model, field_path, field_val):
+def _translate_polymorphic_filter_definition(queryset_model, field_path, field_val, using=DEFAULT_DB_ALIAS):
     """
     Translate a keyword argument (field_path=field_val), as used for
     PolymorphicQuerySet.filter()-like functions (and Q objects).
@@ -120,9 +121,9 @@ def _translate_polymorphic_filter_definition(queryset_model, field_path, field_v
     # handle instance_of expressions or alternatively,
     # if this is a normal Django filter expression, return None
     if field_path == 'instance_of':
-        return _create_model_filter_Q(field_val)
+        return _create_model_filter_Q(field_val, using=using)
     elif field_path == 'not_instance_of':
-        return _create_model_filter_Q(field_val, not_instance_of=True)
+        return _create_model_filter_Q(field_val, not_instance_of=True, using=using)
     elif not '___' in field_path:
         return None  # no change
 
@@ -229,7 +230,7 @@ def translate_polymorphic_field_path(queryset_model, field_path):
     return newpath
 
 
-def _create_model_filter_Q(modellist, not_instance_of=False):
+def _create_model_filter_Q(modellist, not_instance_of=False, using=DEFAULT_DB_ALIAS):
     """
     Helper function for instance_of / not_instance_of
     Creates and returns a Q object that filters for the models in modellist,
@@ -254,7 +255,7 @@ def _create_model_filter_Q(modellist, not_instance_of=False):
             assert False, 'PolymorphicModel: instance_of expects a list of (polymorphic) models or a single (polymorphic) model'
 
     def q_class_with_subclasses(model):
-        q = Q(polymorphic_ctype=ContentType.objects.get_for_model(model, for_concrete_model=False))
+        q = Q(polymorphic_ctype=ContentType.objects.db_manager(using).get_for_model(model, for_concrete_model=False))
         for subclass in model.__subclasses__():
             q = q | q_class_with_subclasses(subclass)
         return q

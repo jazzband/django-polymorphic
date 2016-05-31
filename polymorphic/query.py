@@ -112,8 +112,8 @@ class PolymorphicQuerySet(QuerySet):
 
     def _filter_or_exclude(self, negate, *args, **kwargs):
         "We override this internal Django functon as it is used for all filter member functions."
-        translate_polymorphic_filter_definitions_in_args(self.model, args)  # the Q objects
-        additional_args = translate_polymorphic_filter_definitions_in_kwargs(self.model, kwargs)  # filter_field='data'
+        translate_polymorphic_filter_definitions_in_args(self.model, args, using=self._db)  # the Q objects
+        additional_args = translate_polymorphic_filter_definitions_in_kwargs(self.model, kwargs, using=self._db)  # filter_field='data'
         return super(PolymorphicQuerySet, self)._filter_or_exclude(negate, *(list(args) + additional_args), **kwargs)
 
     def order_by(self, *args, **kwargs):
@@ -309,8 +309,9 @@ class PolymorphicQuerySet(QuerySet):
         # - also record the correct result order in "ordered_id_list"
         # - store objects that already have the correct class into "results"
         base_result_objects_by_id = {}
-        self_model_class_id = ContentType.objects.get_for_model(self.model, for_concrete_model=False).pk
-        self_concrete_model_class_id = ContentType.objects.get_for_model(self.model, for_concrete_model=True).pk
+        content_type_manager = ContentType.objects.db_manager(self._db)
+        self_model_class_id = content_type_manager.get_for_model(self.model, for_concrete_model=False).pk
+        self_concrete_model_class_id = content_type_manager.get_for_model(self.model, for_concrete_model=True).pk
 
         for base_object in base_result_objects:
             ordered_id_list.append(base_object.pk)
@@ -335,7 +336,7 @@ class PolymorphicQuerySet(QuerySet):
                         # upcast it and put it in the results
                         results[base_object.pk] = transmogrify(real_concrete_class, base_object)
                     else:
-                        real_concrete_class = ContentType.objects.get_for_id(real_concrete_class_id).model_class()
+                        real_concrete_class = content_type_manager.get_for_id(real_concrete_class_id).model_class()
                         idlist_per_model[real_concrete_class].append(getattr(base_object, pk_name))
 
         # For each model in "idlist_per_model" request its objects (the real model)
@@ -344,7 +345,7 @@ class PolymorphicQuerySet(QuerySet):
         # Then we copy the extra() select fields from the base objects to the real objects.
         # TODO: defer(), only(): support for these would be around here
         for real_concrete_class, idlist in idlist_per_model.items():
-            real_objects = real_concrete_class.base_objects.filter(**{
+            real_objects = real_concrete_class.base_objects.db_manager(self._db).filter(**{
                 ('%s__in' % pk_name): idlist,
             })
             real_objects.query.select_related = self.query.select_related  # copy select related configuration to new qs

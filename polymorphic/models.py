@@ -16,6 +16,7 @@ Please see LICENSE and AUTHORS for more information.
 from __future__ import absolute_import
 
 from django.db import models
+from django.db.utils import DEFAULT_DB_ALIAS
 from django.contrib.contenttypes.models import ContentType
 from django.utils import six
 
@@ -71,7 +72,7 @@ class PolymorphicModel(six.with_metaclass(PolymorphicModelBase, models.Model)):
     def translate_polymorphic_Q_object(self_class, q):
         return translate_polymorphic_Q_object(self_class, q)
 
-    def pre_save_polymorphic(self):
+    def pre_save_polymorphic(self, using=DEFAULT_DB_ALIAS):
         """Normally not needed.
         This function may be called manually in special use-cases. When the object
         is saved for the first time, we store its real class in polymorphic_ctype.
@@ -80,13 +81,14 @@ class PolymorphicModel(six.with_metaclass(PolymorphicModelBase, models.Model)):
         (used by PolymorphicQuerySet._get_real_instances)
         """
         if not self.polymorphic_ctype_id:
-            self.polymorphic_ctype = ContentType.objects.get_for_model(self, for_concrete_model=False)
+            self.polymorphic_ctype = ContentType.objects.db_manager(using).get_for_model(self, for_concrete_model=False)
     pre_save_polymorphic.alters_data = True
 
     def save(self, *args, **kwargs):
         """Overridden model save function which supports the polymorphism
         functionality (through pre_save_polymorphic)."""
-        self.pre_save_polymorphic()
+        using = kwargs.get('using', self._state.db or DEFAULT_DB_ALIAS)
+        self.pre_save_polymorphic(using=using)
         return super(PolymorphicModel, self).save(*args, **kwargs)
     save.alters_data = True
 
@@ -103,7 +105,7 @@ class PolymorphicModel(six.with_metaclass(PolymorphicModelBase, models.Model)):
         # Note that model_class() can return None for stale content types;
         # when the content type record still exists but no longer refers to an existing model.
         try:
-            model = ContentType.objects.get_for_id(self.polymorphic_ctype_id).model_class()
+            model = ContentType.objects.db_manager(self._state.db).get_for_id(self.polymorphic_ctype_id).model_class()
         except AttributeError:
             # Django <1.6 workaround
             return None
@@ -122,13 +124,13 @@ class PolymorphicModel(six.with_metaclass(PolymorphicModelBase, models.Model)):
         model_class = self.get_real_instance_class()
         if model_class is None:
             return None
-        return ContentType.objects.get_for_model(model_class, for_concrete_model=True).pk
+        return ContentType.objects.db_manager(self._state.db).get_for_model(model_class, for_concrete_model=True).pk
 
     def get_real_concrete_instance_class(self):
         model_class = self.get_real_instance_class()
         if model_class is None:
             return None
-        return ContentType.objects.get_for_model(model_class, for_concrete_model=True).model_class()
+        return ContentType.objects.db_manager(self._state.db).get_for_model(model_class, for_concrete_model=True).model_class()
 
     def get_real_instance(self):
         """Normally not needed.
@@ -139,7 +141,7 @@ class PolymorphicModel(six.with_metaclass(PolymorphicModelBase, models.Model)):
         real_model = self.get_real_instance_class()
         if real_model == self.__class__:
             return self
-        return real_model.objects.get(pk=self.pk)
+        return real_model.objects.db_manager(self._state.db).get(pk=self.pk)
 
     def __init__(self, * args, ** kwargs):
         """Replace Django's inheritance accessor member functions for our model
