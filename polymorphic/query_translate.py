@@ -93,17 +93,15 @@ def translate_polymorphic_filter_definitions_in_args(queryset_model, args, using
     """
     Translate the non-keyword argument list for PolymorphicQuerySet.filter()
 
-    In the args list, we replace all kwargs to Q-objects that contain special
+    In the args list, we return all kwargs to Q-objects that contain special
     polymorphic functionality with their vanilla django equivalents.
     We traverse the Q object tree for this (which is simple).
 
-    TODO: investigate: we modify the Q-objects ina args in-place. Is this OK?
 
-    Modifies: args list
+    Returns: modified Q objects
     """
+    return [translate_polymorphic_Q_object(queryset_model, q.clone(), using=using) for q in args]
 
-    for q in args:
-        translate_polymorphic_Q_object(queryset_model, q, using=using)
 
 
 def _translate_polymorphic_filter_definition(queryset_model, field_path, field_val, using=DEFAULT_DB_ALIAS):
@@ -266,3 +264,4 @@ def _create_model_filter_Q(modellist, not_instance_of=False, using=DEFAULT_DB_AL
     if not_instance_of:
         q_ored = ~q_ored
     return q_ored
+

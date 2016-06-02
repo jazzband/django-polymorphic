@@ -824,6 +824,23 @@ class PolymorphicTests(TestCase):
         self.assertEqual(repr(objects[0]), '<Model2B: id 2, field1 (CharField), field2 (CharField)>')
         self.assertEqual(repr(objects[1]), '<Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)>')
 
+    def test_query_filter_exclude_is_immutable(self):
+        # given
+        q_to_reuse = Q(Model2B___field2='something')
+        untouched_q_object = Q(Model2B___field2='something')
+        # when
+        Model2A.objects.filter(q_to_reuse).all()
+        # then
+        self.assertEquals(q_to_reuse.children, untouched_q_object.children)
+
+        # given
+        q_to_reuse = Q(Model2B___field2='something')
+        untouched_q_object = Q(Model2B___field2='something')
+        # when
+        Model2B.objects.filter(q_to_reuse).all()
+        # then
+        self.assertEquals(q_to_reuse.children, untouched_q_object.children)
+
     def test_polymorphic___filter_field(self):
         p = ModelUnderRelParent.objects.create(_private=True, field1='AA')
         ModelUnderRelChild.objects.create(parent=p, _private2=True)
@@ -1224,3 +1241,4 @@ class RegressionTests(TestCase):
 
         expected_queryset = [bottom]
         self.assertQuerysetEqual(Bottom.objects.all(), [repr(r) for r in expected_queryset])
+
