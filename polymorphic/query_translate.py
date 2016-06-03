@@ -100,7 +100,8 @@ def translate_polymorphic_filter_definitions_in_args(queryset_model, args, using
 
     Returns: modified Q objects
     """
-    return [translate_polymorphic_Q_object(queryset_model, q.clone(), using=using) for q in args]
+    q_objects = [q if django.VERSION < (1, 6) else q.clone() for q in args]
+    return [translate_polymorphic_Q_object(queryset_model, q, using=using) for q in q_objects]
 
 
 
