@@ -824,6 +824,24 @@ class PolymorphicTests(TestCase):
         self.assertEqual(repr(objects[0]), '<Model2B: id 2, field1 (CharField), field2 (CharField)>')
         self.assertEqual(repr(objects[1]), '<Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)>')
 
+    @skipIf(django.VERSION < (1, 6), "Django 1.4 and 1.5 don't support q.clone()")
+    def test_query_filter_exclude_is_immutable(self):
+        # given
+        q_to_reuse = Q(Model2B___field2='something')
+        untouched_q_object = Q(Model2B___field2='something')
+        # when
+        Model2A.objects.filter(q_to_reuse).all()
+        # then
+        self.assertEquals(q_to_reuse.children, untouched_q_object.children)
+
+        # given
+        q_to_reuse = Q(Model2B___field2='something')
+        untouched_q_object = Q(Model2B___field2='something')
+        # when
+        Model2B.objects.filter(q_to_reuse).all()
+        # then
+        self.assertEquals(q_to_reuse.children, untouched_q_object.children)
+
     def test_polymorphic___filter_field(self):
         p = ModelUnderRelParent.objects.create(_private=True, field1='AA')
         ModelUnderRelChild.objects.create(parent=p, _private2=True)
@@ -1110,32 +1128,32 @@ class PolymorphicTests(TestCase):
 
         # test that we can delete the object
         t.delete()
-        
+
     def test_polymorphic__aggregate(self):
         """ test ModelX___field syntax on aggregate (should work for annotate either) """
-        
+
         Model2A.objects.create(field1='A1')
         Model2B.objects.create(field1='A1', field2='B2')
         Model2B.objects.create(field1='A1', field2='B2')
-        
+
         # aggregate using **kwargs
         result = Model2A.objects.aggregate(cnt=Count('Model2B___field2'))
         self.assertEqual(result, {'cnt': 2})
-        
+
         # aggregate using **args
         with self.assertRaisesMessage(AssertionError, 'PolymorphicModel: annotate()/aggregate(): ___ model lookup supported for keyword arguments only'):
             Model2A.objects.aggregate(Count('Model2B___field2'))
-        
-        
-        
+
+
+
     @skipIf(django.VERSION < (1,8,), "This test needs Django >=1.8")
     def test_polymorphic__complex_aggregate(self):
         """ test (complex expression on) aggregate (should work for annotate either) """
-        
+
         Model2A.objects.create(field1='A1')
         Model2B.objects.create(field1='A1', field2='B2')
         Model2B.objects.create(field1='A1', field2='B2')
-        
+
         # aggregate using **kwargs
         result = Model2A.objects.aggregate(
             cnt_a1=Count(Case(When(field1='A1', then=1))),
@@ -1150,7 +1168,7 @@ class PolymorphicTests(TestCase):
             complexagg = Count(expression)*10
             complexagg.default_alias = 'complexagg'
             return complexagg
-        
+
         with self.assertRaisesMessage(AssertionError, 'PolymorphicModel: annotate()/aggregate(): ___ model lookup supported for keyword arguments only'):
             Model2A.objects.aggregate(ComplexAgg('Model2B___field2'))
 
@@ -1169,7 +1187,7 @@ class PolymorphicTests(TestCase):
         Model2C(field1='C1', field2='C2', field3='C3').save(using='secondary')
         Model2B.objects.create(field1='B1', field2='B2')
         Model2D(field1='D1', field2='D2', field3='D3', field4='D4').save('secondary')
-        
+
         default_objects = list(Model2A.objects.order_by('id'))
         self.assertEqual(len(default_objects), 2)
         self.assertEqual(repr(default_objects[0]), '<Model2B: id 1, field1 (CharField), field2 (CharField)>')
@@ -1224,3 +1242,4 @@ class RegressionTests(TestCase):
 
         expected_queryset = [bottom]
         self.assertQuerysetEqual(Bottom.objects.all(), [repr(r) for r in expected_queryset])
+
