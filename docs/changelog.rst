@@ -1,6 +1,14 @@
 Changelog
 =========
 
+Changes in git
+--------------
+
+* Added support for polymorphic queryset limiting effects on proxy models.
+* Added support for multiple databases with ``.using()`` method and ``using=..`` keyword argument.
+* Fixed modifying passed ``Q()`` objects in place.
+
+
 Version 0.9.2 (2016-05-04)
 --------------------------
 
