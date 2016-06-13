@@ -4,7 +4,7 @@ import django
 from django.db import models
 
 from polymorphic.models import PolymorphicModel
-from polymorphic.showfields import ShowFieldContent, ShowFieldType, ShowFieldTypeAndContent
+from polymorphic.showfields import ShowFieldContent, ShowFieldTypeAndContent
 
 
 class Project(ShowFieldContent, PolymorphicModel):

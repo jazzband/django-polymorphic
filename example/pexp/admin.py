@@ -3,6 +3,12 @@ from polymorphic.admin import PolymorphicParentModelAdmin, PolymorphicChildModel
 from pexp.models import *
 
 
+class ProjectAdmin(PolymorphicParentModelAdmin):
+    base_model = Project
+    list_filter = (PolymorphicChildModelFilter,)
+    child_models = (Project, ArtProject, ResearchProject)
+
+
 class ProjectChildAdmin(PolymorphicChildModelAdmin):
     base_model = Project
 
@@ -15,76 +21,66 @@ class ProjectChildAdmin(PolymorphicChildModelAdmin):
     )
 
 
-class ProjectAdmin(PolymorphicParentModelAdmin):
-    base_model = Project
-    list_filter = (PolymorphicChildModelFilter,)
-    child_models = (
-        (Project, ProjectChildAdmin),
-        (ArtProject, ProjectChildAdmin),
-        (ResearchProject, ProjectChildAdmin),
-    )
-
 admin.site.register(Project, ProjectAdmin)
+admin.site.register(ArtProject, ProjectChildAdmin)
+admin.site.register(ResearchProject, ProjectChildAdmin)
+
+
+class ModelAAdmin(PolymorphicParentModelAdmin):
+    base_model = ModelA
+    list_filter = (PolymorphicChildModelFilter,)
+    child_models = (ModelA, ModelB, ModelC)
 
 
 class ModelAChildAdmin(PolymorphicChildModelAdmin):
     base_model = ModelA
 
 
-class ModelAAdmin(PolymorphicParentModelAdmin):
-    base_model = ModelA
-    list_filter = (PolymorphicChildModelFilter,)
-    child_models = (
-        (ModelA, ModelAChildAdmin),
-        (ModelB, ModelAChildAdmin),
-        (ModelC, ModelAChildAdmin),
-    )
-
 admin.site.register(ModelA, ModelAAdmin)
+admin.site.register(ModelB, ModelAChildAdmin)
+admin.site.register(ModelC, ModelAChildAdmin)
+
+
+class Model2AAdmin(PolymorphicParentModelAdmin):
+    base_model = Model2A
+    list_filter = (PolymorphicChildModelFilter,)
+    child_models = (Model2A, Model2B, Model2C)
 
 
 class Model2AChildAdmin(PolymorphicChildModelAdmin):
     base_model = Model2A
 
 
-class Model2AAdmin(PolymorphicParentModelAdmin):
-    base_model = Model2A
-    list_filter = (PolymorphicChildModelFilter,)
-    child_models = (
-        (Model2A, Model2AChildAdmin),
-        (Model2B, Model2AChildAdmin),
-        (Model2C, Model2AChildAdmin),
-    )
-
 admin.site.register(Model2A, Model2AAdmin)
+admin.site.register(Model2B, Model2AChildAdmin)
+admin.site.register(Model2C, Model2AChildAdmin)
+
+
+class UUIDModelAAdmin(PolymorphicParentModelAdmin):
+    base_model = UUIDModelA
+    list_filter = (PolymorphicChildModelFilter,)
+    child_models = (UUIDModelA, UUIDModelB)
 
 
 class UUIDModelAChildAdmin(PolymorphicChildModelAdmin):
     base_model = UUIDModelA
 
 
-class UUIDModelAAdmin(PolymorphicParentModelAdmin):
-    base_model = UUIDModelA
-    list_filter = (PolymorphicChildModelFilter,)
-    child_models = (
-        (UUIDModelA, UUIDModelAChildAdmin),
-        (UUIDModelB, UUIDModelAChildAdmin),
-        (UUIDModelC, UUIDModelAChildAdmin),
-    )
-
 admin.site.register(UUIDModelA, UUIDModelAAdmin)
+admin.site.register(UUIDModelB, UUIDModelAChildAdmin)
+admin.site.register(UUIDModelC, UUIDModelAChildAdmin)
+
+
+class ProxyAdmin(PolymorphicParentModelAdmin):
+    base_model = ProxyBase
+    list_filter = (PolymorphicChildModelFilter,)
+    child_models = (ProxyA, ProxyB)
 
 
 class ProxyChildAdmin(PolymorphicChildModelAdmin):
     base_model = ProxyBase
 
 
-class ProxyAdmin(PolymorphicParentModelAdmin):
-    base_model = ProxyBase
-    list_filter = (PolymorphicChildModelFilter,)
-    child_models = (
-        (ProxyA, ProxyChildAdmin),
-        (ProxyB, ProxyChildAdmin),
-    )
-
 admin.site.register(ProxyBase, ProxyAdmin)
+admin.site.register(ProxyA, ProxyChildAdmin)
+admin.site.register(ProxyB, ProxyChildAdmin)
