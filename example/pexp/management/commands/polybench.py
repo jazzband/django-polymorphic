@@ -3,7 +3,6 @@
 This module is a scratchpad for general development, testing & debugging
 """
 
-import django
 from django.core.management.base import NoArgsCommand
 from django.db import connection
 from pprint import pprint
@@ -14,7 +13,7 @@ num_objects = 1000
 
 
 def reset_queries():
-    if django.VERSION < (1, 9):
+    if django.VERSION < (1, 8):
         connection.queries = []
     else:
         connection.queries_log.clear()
@@ -57,9 +56,9 @@ def print_timing(func, message='', iterations=1):
 
 def run_vanilla_any_poly(func, iterations=1):
     f = print_timing(func, '     ', iterations)
-    f(nModelC)
+    f(NormalModelC)
     f = print_timing(func, 'poly ', iterations)
-    f(ModelC)
+    f(TestModelC)
 
 
 ###################################################################################

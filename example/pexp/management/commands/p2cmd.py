@@ -3,11 +3,7 @@
 This module is a scratchpad for general development, testing & debugging
 Well, even more so than pcmd.py. You best ignore p2cmd.py.
 """
-import uuid
-import django
-
 from django.core.management.base import NoArgsCommand
-from django.db import connection
 from pprint import pprint
 import time
 import sys
@@ -16,7 +12,7 @@ from pexp.models import *
 
 
 def reset_queries():
-    if django.VERSION < (1, 9):
+    if django.VERSION < (1, 8):
         connection.queries = []
     else:
         connection.queries_log.clear()
@@ -58,20 +54,20 @@ class Command(NoArgsCommand):
 
     def handle_noargs(self, **options):
         if False:
-            ModelA.objects.all().delete()
-            a = ModelA.objects.create(field1='A1')
-            b = ModelB.objects.create(field1='B1', field2='B2')
-            c = ModelC.objects.create(field1='C1', field2='C2', field3='C3')
+            TestModelA.objects.all().delete()
+            a = TestModelA.objects.create(field1='A1')
+            b = TestModelB.objects.create(field1='B1', field2='B2')
+            c = TestModelC.objects.create(field1='C1', field2='C2', field3='C3')
             reset_queries()
-            print ModelC.base_objects.all()
+            print TestModelC.base_objects.all()
             show_queries()
 
         if False:
-            ModelA.objects.all().delete()
+            TestModelA.objects.all().delete()
             for i in xrange(1000):
-                a = ModelA.objects.create(field1=str(i % 100))
-                b = ModelB.objects.create(field1=str(i % 100), field2=str(i % 200))
-                c = ModelC.objects.create(field1=str(i % 100), field2=str(i % 200), field3=str(i % 300))
+                a = TestModelA.objects.create(field1=str(i % 100))
+                b = TestModelB.objects.create(field1=str(i % 100), field2=str(i % 200))
+                c = TestModelC.objects.create(field1=str(i % 100), field2=str(i % 200), field3=str(i % 300))
                 if i % 100 == 0:
                     print i
 
@@ -83,11 +79,11 @@ class Command(NoArgsCommand):
 
         return
 
-        nModelA.objects.all().delete()
-        a = nModelA.objects.create(field1='A1')
-        b = nModelB.objects.create(field1='B1', field2='B2')
-        c = nModelC.objects.create(field1='C1', field2='C2', field3='C3')
-        qs = ModelA.objects.raw("SELECT * from pexp_modela")
+        NormalModelA.objects.all().delete()
+        a = NormalModelA.objects.create(field1='A1')
+        b = NormalModelB.objects.create(field1='B1', field2='B2')
+        c = NormalModelC.objects.create(field1='C1', field2='C2', field3='C3')
+        qs = TestModelA.objects.raw("SELECT * from pexp_testmodela")
         for o in list(qs):
             print o
 
@@ -99,14 +95,14 @@ rnd = Random()
 def poly_sql_query():
     cursor = connection.cursor()
     cursor.execute("""
-        SELECT id, pexp_modela.field1, pexp_modelb.field2, pexp_modelc.field3
-        FROM pexp_modela
-        LEFT OUTER JOIN pexp_modelb
-        ON pexp_modela.id = pexp_modelb.modela_ptr_id
-        LEFT OUTER JOIN pexp_modelc
-        ON pexp_modelb.modela_ptr_id = pexp_modelc.modelb_ptr_id
-        WHERE pexp_modela.field1=%i
-        ORDER BY pexp_modela.id
+        SELECT id, pexp_testmodela.field1, pexp_testmodelb.field2, pexp_testmodelc.field3
+        FROM pexp_testmodela
+        LEFT OUTER JOIN pexp_testmodelb
+        ON pexp_testmodela.id = pexp_testmodelb.testmodela_ptr_id
+        LEFT OUTER JOIN pexp_testmodelc
+        ON pexp_testmodelb.testmodela_ptr_id = pexp_testmodelc.testmodelb_ptr_id
+        WHERE pexp_testmodela.field1=%i
+        ORDER BY pexp_testmodela.id
         """ % rnd.randint(0, 100) )
     # row=cursor.fetchone()
     return
@@ -115,10 +111,10 @@ def poly_sql_query():
 def poly_sql_query2():
     cursor = connection.cursor()
     cursor.execute("""
-        SELECT id, pexp_modela.field1
-        FROM pexp_modela
-        WHERE pexp_modela.field1=%i
-        ORDER BY pexp_modela.id
+        SELECT id, pexp_testmodela.field1
+        FROM pexp_testmodela
+        WHERE pexp_testmodela.field1=%i
+        ORDER BY pexp_testmodela.id
         """ % rnd.randint(0, 100) )
     # row=cursor.fetchone()
     return

@@ -5,20 +5,11 @@ This module is a scratchpad for general development, testing & debugging.
 
 from django.core.management.base import NoArgsCommand
 from django.db import connection
-from pprint import pprint
 
 from pexp.models import *
 
 
 def reset_queries():
-    connection.queries = []
-
-
-def show_queries():
-    print
-    print 'QUERIES:', len(connection.queries)
-    pprint(connection.queries)
-    print
     connection.queries = []
 
 
@@ -33,9 +24,9 @@ class Command(NoArgsCommand):
         print Project.objects.all()
         print
 
-        ModelA.objects.all().delete()
-        a = ModelA.objects.create(field1='A1')
-        b = ModelB.objects.create(field1='B1', field2='B2')
-        c = ModelC.objects.create(field1='C1', field2='C2', field3='C3')
-        print ModelA.objects.all()
+        TestModelA.objects.all().delete()
+        a = TestModelA.objects.create(field1='A1')
+        b = TestModelB.objects.create(field1='B1', field2='B2')
+        c = TestModelC.objects.create(field1='C1', field2='C2', field3='C3')
+        print TestModelA.objects.all()
         print

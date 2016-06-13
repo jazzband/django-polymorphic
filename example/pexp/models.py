@@ -8,6 +8,7 @@ from polymorphic.showfields import ShowFieldContent, ShowFieldTypeAndContent
 
 
 class Project(ShowFieldContent, PolymorphicModel):
+    """Polymorphic model"""
     topic = models.CharField(max_length=30)
 
 
@@ -19,42 +20,6 @@ class ResearchProject(Project):
     supervisor = models.CharField(max_length=30)
 
 
-class ModelA(ShowFieldTypeAndContent, PolymorphicModel):
-    field1 = models.CharField(max_length=10)
-
-
-class ModelB(ModelA):
-    field2 = models.CharField(max_length=10)
-
-
-class ModelC(ModelB):
-    field3 = models.CharField(max_length=10)
-    field4 = models.ManyToManyField(ModelB, related_name='related_c')
-
-
-class nModelA(models.Model):
-    field1 = models.CharField(max_length=10)
-
-
-class nModelB(nModelA):
-    field2 = models.CharField(max_length=10)
-
-
-class nModelC(nModelB):
-    field3 = models.CharField(max_length=10)
-
-
-class Model2A(PolymorphicModel):
-    field1 = models.CharField(max_length=10)
-
-
-class Model2B(Model2A):
-    field2 = models.CharField(max_length=10)
-
-
-class Model2C(Model2B):
-    field3 = models.CharField(max_length=10)
-
 if django.VERSION < (1, 8):
     from polymorphic.tools_for_tests import UUIDField
 else:
@@ -62,6 +27,7 @@ else:
 
 
 class UUIDModelA(ShowFieldTypeAndContent, PolymorphicModel):
+    """UUID as primary key example"""
     uuid_primary_key = UUIDField(primary_key=True)
     field1 = models.CharField(max_length=10)
 
@@ -75,6 +41,7 @@ class UUIDModelC(UUIDModelB):
 
 
 class ProxyBase(PolymorphicModel):
+    """Proxy model example - a single table with multiple types."""
     title = models.CharField(max_length=200)
 
     def __unicode__(self):
@@ -100,3 +67,31 @@ class ProxyB(ProxyBase):
 
     def __unicode__(self):
         return u"<ProxyB: {0}>".format(self.title)
+
+
+# Internals for management command tests
+
+class TestModelA(ShowFieldTypeAndContent, PolymorphicModel):
+    field1 = models.CharField(max_length=10)
+
+
+class TestModelB(TestModelA):
+    field2 = models.CharField(max_length=10)
+
+
+class TestModelC(TestModelB):
+    field3 = models.CharField(max_length=10)
+    field4 = models.ManyToManyField(TestModelB, related_name='related_c')
+
+
+class NormalModelA(models.Model):
+    """Normal Django inheritance, no polymorphic behavior"""
+    field1 = models.CharField(max_length=10)
+
+
+class NormalModelB(NormalModelA):
+    field2 = models.CharField(max_length=10)
+
+
+class NormalModelC(NormalModelB):
+    field3 = models.CharField(max_length=10)

@@ -4,22 +4,8 @@ This module is a scratchpad for general development, testing & debugging
 """
 
 from django.core.management.base import NoArgsCommand
-from django.db import connection
-from pprint import pprint
 
 from pexp.models import *
-
-
-def reset_queries():
-    connection.queries = []
-
-
-def show_queries():
-    print
-    print 'QUERIES:', len(connection.queries)
-    pprint(connection.queries)
-    print
-    connection.queries = []
 
 
 class Command(NoArgsCommand):

@@ -26,36 +26,6 @@ admin.site.register(ArtProject, ProjectChildAdmin)
 admin.site.register(ResearchProject, ProjectChildAdmin)
 
 
-class ModelAAdmin(PolymorphicParentModelAdmin):
-    base_model = ModelA
-    list_filter = (PolymorphicChildModelFilter,)
-    child_models = (ModelA, ModelB, ModelC)
-
-
-class ModelAChildAdmin(PolymorphicChildModelAdmin):
-    base_model = ModelA
-
-
-admin.site.register(ModelA, ModelAAdmin)
-admin.site.register(ModelB, ModelAChildAdmin)
-admin.site.register(ModelC, ModelAChildAdmin)
-
-
-class Model2AAdmin(PolymorphicParentModelAdmin):
-    base_model = Model2A
-    list_filter = (PolymorphicChildModelFilter,)
-    child_models = (Model2A, Model2B, Model2C)
-
-
-class Model2AChildAdmin(PolymorphicChildModelAdmin):
-    base_model = Model2A
-
-
-admin.site.register(Model2A, Model2AAdmin)
-admin.site.register(Model2B, Model2AChildAdmin)
-admin.site.register(Model2C, Model2AChildAdmin)
-
-
 class UUIDModelAAdmin(PolymorphicParentModelAdmin):
     base_model = UUIDModelA
     list_filter = (PolymorphicChildModelFilter,)
