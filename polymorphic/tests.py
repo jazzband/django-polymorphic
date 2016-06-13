@@ -1203,11 +1203,12 @@ class RegressionTests(TestCase):
 class MultipleDatabasesTests(TestCase):
     multi_db = True
 
+    @skipIf(django.VERSION < (1,5,), "This test needs Django >=1.5")
     def test_save_to_non_default_database(self):
         Model2A.objects.db_manager('secondary').create(field1='A1')
         Model2C(field1='C1', field2='C2', field3='C3').save(using='secondary')
         Model2B.objects.create(field1='B1', field2='B2')
-        Model2D(field1='D1', field2='D2', field3='D3', field4='D4').save('secondary')
+        Model2D(field1='D1', field2='D2', field3='D3', field4='D4').save()
 
         default_objects = list(Model2A.objects.order_by('id'))
         self.assertEqual(len(default_objects), 2)
