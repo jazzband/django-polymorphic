@@ -18,7 +18,7 @@ However, they require more setup than standard models. That's become:
 Example
 ~~~~~~~
 
-The admin :ref:`admin-example` becomes:
+The admin :ref:`admin example <admin-example>` becomes:
 
 .. code-block:: python
 

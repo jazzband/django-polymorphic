@@ -34,6 +34,8 @@ the performance hit of retrieving child models.
 This can be controlled by setting the ``polymorphic_list`` property on the
 parent admin.  Setting it to True will provide child models to the list template.
 
+If you use other applications such as django-reversion_ or django-mptt_, please check +:ref:`third-party`.
+
 Note: If you are using non-integer primary keys in your model, you have to edit ``pk_regex``, 
 for example ``pk_regex = '([\w-]+)'`` if you use UUIDs. Otherwise you cannot change model entries.
 
@@ -73,7 +75,7 @@ The models are taken from :ref:`advanced-features`.
 .. code-block:: python
 
     from django.contrib import admin
-    from polymorphic.admin import PolymorphicParentModelAdmin, PolymorphicChildModelAdmin
+    from polymorphic.admin import PolymorphicParentModelAdmin, PolymorphicChildModelAdmin, PolymorphicChildModelFilter
     from .models import ModelA, ModelB, ModelC, StandardModel
 
 
@@ -104,6 +106,7 @@ The models are taken from :ref:`advanced-features`.
         """ The parent model admin """
         base_model = ModelA
         child_models = (ModelB, ModelC)
+        list_filter = (PolymorphicChildModelFilter,)  # This is optional.
 
 
     class ModelBInline(admin.StackedInline):
@@ -121,3 +124,13 @@ The models are taken from :ref:`advanced-features`.
     admin.site.register(ModelB, ModelBAdmin)
     admin.site.register(ModelC, ModelCAdmin)
     admin.site.register(StandardModel, StandardModelAdmin)
+
+
+Filtering child types
+---------------------
+
+Child model types can be filtered by adding a :class:`~polymorphic.admin.PolymorphicChildModelFilter`
+to the ``list_filter`` attribute. See the example above.
+
+.. _django-reversion: https://github.com/etianen/django-reversion
+.. _django-mptt: https://github.com/django-mptt/django-mptt
