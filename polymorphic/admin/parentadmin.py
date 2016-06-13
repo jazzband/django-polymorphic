@@ -167,15 +167,15 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
             choices.append((ct.id, model._meta.verbose_name))
         return choices
 
-    def _get_real_admin(self, object_id):
+    def _get_real_admin(self, object_id, super_if_self=True):
         try:
             obj = self.model.objects.non_polymorphic() \
                 .values('polymorphic_ctype').get(pk=object_id)
         except self.model.DoesNotExist:
             raise Http404
-        return self._get_real_admin_by_ct(obj['polymorphic_ctype'])
+        return self._get_real_admin_by_ct(obj['polymorphic_ctype'], super_if_self=super_if_self)
 
-    def _get_real_admin_by_ct(self, ct_id):
+    def _get_real_admin_by_ct(self, ct_id, super_if_self=True):
         try:
             ct = ContentType.objects.get_for_id(ct_id)
         except ContentType.DoesNotExist as e:
@@ -185,9 +185,9 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
         if not model_class:
             raise Http404("No model found for '{0}.{1}'.".format(*ct.natural_key()))  # Handle model deletion
 
-        return self._get_real_admin_by_model(model_class)
+        return self._get_real_admin_by_model(model_class, super_if_self=super_if_self)
 
-    def _get_real_admin_by_model(self, model_class):
+    def _get_real_admin_by_model(self, model_class, super_if_self=True):
         # In case of a ?ct_id=### parameter, the view is already checked for permissions.
         # Hence, make sure this is a derived object, or risk exposing other admin interfaces.
         if model_class not in self._child_models:
@@ -196,9 +196,14 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
         try:
             # HACK: the only way to get the instance of an model admin,
             # is to read the registry of the AdminSite.
-            return self._child_admin_site._registry[model_class]
+            real_admin = self._child_admin_site._registry[model_class]
         except KeyError:
             raise ChildAdminNotRegistered("No child admin site was registered for a '{0}' model.".format(model_class))
+
+        if super_if_self and real_admin is self:
+            return super(PolymorphicParentModelAdmin, self)
+        else:
+            return real_admin
 
     def get_queryset(self, request):
         # optimize the list display.
