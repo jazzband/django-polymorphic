@@ -5,7 +5,7 @@ This makes sure that admin fieldsets/layout settings are exported to the templat
 """
 from django.contrib.admin.helpers import InlineAdminFormSet, InlineAdminForm
 
-from ..formsets import BasePolymorphicModelFormSet
+from polymorphic.formsets import BasePolymorphicModelFormSet
 
 
 class InlinePolymorphicAdminForm(InlineAdminForm):
@@ -75,6 +75,14 @@ class InlinePolymorphicAdminFormSet(InlineAdminFormSet):
 class PolymorphicInlineSupportMixin(object):
     """
     A Mixin to add to the regular admin, so it can work with our polymorphic inlines.
+
+    This mixin needs to be included in the admin that hosts the ``inlines``.
+    It makes sure the generated admin forms have different fieldsets/fields
+    depending on the polymorphic type of the form instance.
+
+    This is achieved by overwriting :func:`get_inline_formsets` to return
+    an :class:`InlinePolymorphicAdminFormSet` instead of a standard Django
+    :class:`~django.contrib.admin.helpers.InlineAdminFormSet` for the polymorphic formsets.
     """
 
     def get_inline_formsets(self, request, formsets, inline_instances, obj=None):
@@ -88,7 +96,8 @@ class PolymorphicInlineSupportMixin(object):
 
         for admin_formset in inline_admin_formsets:
             if isinstance(admin_formset.formset, BasePolymorphicModelFormSet):
-                # Downcast the admin
+                # This is a polymorphic formset, which belongs to our inline.
+                # Downcast the admin wrapper that generates the form fields.
                 admin_formset.__class__ = InlinePolymorphicAdminFormSet
                 admin_formset.request = request
                 admin_formset.obj = obj

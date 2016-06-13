@@ -6,8 +6,10 @@ from django.core.urlresolvers import resolve
 from django.utils import six
 from django.utils.translation import ugettext_lazy as _
 
+from .helpers import PolymorphicInlineSupportMixin
 
-class PolymorphicChildModelAdmin(admin.ModelAdmin):
+
+class PolymorphicChildModelAdmin(PolymorphicInlineSupportMixin, admin.ModelAdmin):
     """
     The *optional* base class for the admin interface of derived models.
 

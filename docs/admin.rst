@@ -57,10 +57,12 @@ use the ``base_form`` and ``base_fieldsets`` instead. The ``PolymorphicChildMode
 automatically detect the additional fields that the child model has, display those in a separate fieldset.
 
 
-Polymorphic Inlines
--------------------
+Using polymorphic models in standard inlines
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-To add a polymorphic child model as an Inline for another model, add a field to the inline's readonly_fields list formed by the lowercased name of the polymorphic parent model with the string "_ptr" appended to it. Otherwise, trying to save that model in the admin will raise an AttributeError with the message "can't set attribute".
+To add a polymorphic child model as an Inline for another model, add a field to the inline's ``readonly_fields`` list
+formed by the lowercased name of the polymorphic parent model with the string ``_ptr`` appended to it.
+Otherwise, trying to save that model in the admin will raise an AttributeError with the message "can't set attribute".
 
 
 .. _admin-example:

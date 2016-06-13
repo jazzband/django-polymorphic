@@ -17,11 +17,10 @@ class PolymorphicParentInlineModelAdmin(InlineModelAdmin):
     """
     A polymorphic inline, where each formset row can be a different form.
 
-    Note that
+    Note that:
 
     * Permissions are only checked on the base model.
     * The child inlines can't override the base model fields, only this parent inline can do that.
-    * Child formset media is not yet processed.
     """
     formset = BasePolymorphicInlineFormSet
 
@@ -79,7 +78,7 @@ class PolymorphicParentInlineModelAdmin(InlineModelAdmin):
 
         # Instead of completely redefining super().get_formset(), we use
         # the regular inlineformset_factory(), and amend that with our extra bits.
-        # This is identical to what polymorphic_inlineformset_factory() does.
+        # This code line is the essence of what polymorphic_inlineformset_factory() does.
         FormSet.child_forms = polymorphic_child_forms_factory(
             formset_children=self.get_formset_children(request, obj=obj)
         )

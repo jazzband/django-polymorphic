@@ -14,6 +14,7 @@ class PolymorphicFormSetChild(object):
     Metadata to define the inline of a polymorphic child.
     Provide this information in the :func:`polymorphic_inlineformset_factory` construction.
     """
+
     def __init__(self, model, form=ModelForm, fields=None, exclude=None,
                  formfield_callback=None, widgets=None, localized_fields=None,
                  labels=None, help_texts=None, error_messages=None):
@@ -77,6 +78,9 @@ class PolymorphicFormSetChild(object):
 def polymorphic_child_forms_factory(formset_children, **kwargs):
     """
     Construct the forms for the formset children.
+    This is mostly used internally, and rarely needs to be used by external projects.
+    When using the factory methods (:func:`polymorphic_inlineformset_factory`),
+    this feature is called already for you.
     """
     child_forms = OrderedDict()
 
@@ -97,6 +101,7 @@ class BasePolymorphicModelFormSet(BaseModelFormSet):
     note that the ID field will no longer be named ``model_ptr``,
     but just appear as ``id``.
     """
+
     # Assigned by the factory
     child_forms = OrderedDict()
 
@@ -191,6 +196,9 @@ class BasePolymorphicModelFormSet(BaseModelFormSet):
         super(BasePolymorphicModelFormSet, self).add_fields(form, index)
 
     def get_form_class(self, model):
+        """
+        Return the proper form class for the given model.
+        """
         if not self.child_forms:
             raise ImproperlyConfigured("No 'child_forms' defined in {0}".format(self.__class__.__name__))
         return self.child_forms[model]
