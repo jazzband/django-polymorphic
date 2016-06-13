@@ -112,8 +112,8 @@ class PolymorphicQuerySet(QuerySet):
 
     def _filter_or_exclude(self, negate, *args, **kwargs):
         "We override this internal Django functon as it is used for all filter member functions."
-        q_objects = translate_polymorphic_filter_definitions_in_args(self.model, args, using=self._db)  # the Q objects
-        additional_args = translate_polymorphic_filter_definitions_in_kwargs(self.model, kwargs, using=self._db)  # filter_field='data'
+        q_objects = translate_polymorphic_filter_definitions_in_args(self.model, args, using=self.db)  # the Q objects
+        additional_args = translate_polymorphic_filter_definitions_in_kwargs(self.model, kwargs, using=self.db)  # filter_field='data'
         return super(PolymorphicQuerySet, self)._filter_or_exclude(negate, *(list(q_objects) + additional_args), **kwargs)
 
     def order_by(self, *args, **kwargs):
@@ -309,7 +309,7 @@ class PolymorphicQuerySet(QuerySet):
         # - also record the correct result order in "ordered_id_list"
         # - store objects that already have the correct class into "results"
         base_result_objects_by_id = {}
-        content_type_manager = ContentType.objects.db_manager(self._db)
+        content_type_manager = ContentType.objects.db_manager(self.db)
         self_model_class_id = content_type_manager.get_for_model(self.model, for_concrete_model=False).pk
         self_concrete_model_class_id = content_type_manager.get_for_model(self.model, for_concrete_model=True).pk
 
@@ -345,7 +345,7 @@ class PolymorphicQuerySet(QuerySet):
         # Then we copy the extra() select fields from the base objects to the real objects.
         # TODO: defer(), only(): support for these would be around here
         for real_concrete_class, idlist in idlist_per_model.items():
-            real_objects = real_concrete_class.base_objects.db_manager(self._db).filter(**{
+            real_objects = real_concrete_class.base_objects.db_manager(self.db).filter(**{
                 ('%s__in' % pk_name): idlist,
             })
             real_objects.query.select_related = self.query.select_related  # copy select related configuration to new qs

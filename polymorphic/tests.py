@@ -429,9 +429,6 @@ class PolymorphicTests(TestCase):
     """
     The test suite
     """
-
-    multi_db = True
-
     def test_annotate_aggregate_order(self):
         # create a blog of type BlogA
         # create two blog entries in BlogA
@@ -1182,6 +1179,30 @@ class PolymorphicTests(TestCase):
         result = DateModel.objects.annotate(val=DateTime('date', 'day', utc))
         self.assertEqual(list(result), [])
 
+class RegressionTests(TestCase):
+
+    def test_for_query_result_incomplete_with_inheritance(self):
+        """ https://github.com/bconstantin/django_polymorphic/issues/15 """
+
+        top = Top()
+        top.save()
+        middle = Middle()
+        middle.save()
+        bottom = Bottom()
+        bottom.save()
+
+        expected_queryset = [top, middle, bottom]
+        self.assertQuerysetEqual(Top.objects.all(), [repr(r) for r in expected_queryset])
+
+        expected_queryset = [middle, bottom]
+        self.assertQuerysetEqual(Middle.objects.all(), [repr(r) for r in expected_queryset])
+
+        expected_queryset = [bottom]
+        self.assertQuerysetEqual(Bottom.objects.all(), [repr(r) for r in expected_queryset])
+
+class MultipleDatabasesTests(TestCase):
+    multi_db = True
+
     def test_save_to_non_default_database(self):
         Model2A.objects.db_manager('secondary').create(field1='A1')
         Model2C(field1='C1', field2='C2', field3='C3').save(using='secondary')
@@ -1222,24 +1243,47 @@ class PolymorphicTests(TestCase):
         self.assertEqual(repr(objects[0]), '<ModelX: id 2, field_b (CharField), field_x (CharField)>')
         self.assertEqual(repr(objects[1]), '<ModelY: id 3, field_b (CharField), field_y (CharField)>')
 
-class RegressionTests(TestCase):
+    def test_forward_many_to_one_descriptor_on_non_default_database(self):
+        def func():
+            blog = BlogA.objects.db_manager('secondary').create(name='Blog', info='Info')
+            entry = BlogEntry.objects.db_manager('secondary').create(blog=blog, text='Text')
+            ContentType.objects.clear_cache()
+            entry = BlogEntry.objects.db_manager('secondary').get(pk=entry.id)
+            self.assertEqual(blog, entry.blog)
 
-    def test_for_query_result_incomplete_with_inheritance(self):
-        """ https://github.com/bconstantin/django_polymorphic/issues/15 """
+        # Ensure no queries are made using the default database.
+        self.assertNumQueries(0, func)
 
-        top = Top()
-        top.save()
-        middle = Middle()
-        middle.save()
-        bottom = Bottom()
-        bottom.save()
+    def test_reverse_many_to_one_descriptor_on_non_default_database(self):
+        def func():
+            blog = BlogA.objects.db_manager('secondary').create(name='Blog', info='Info')
+            entry = BlogEntry.objects.db_manager('secondary').create(blog=blog, text='Text')
+            ContentType.objects.clear_cache()
+            blog = BlogA.objects.db_manager('secondary').get(pk=blog.id)
+            self.assertEqual(entry, blog.blogentry_set.using('secondary').get())
 
-        expected_queryset = [top, middle, bottom]
-        self.assertQuerysetEqual(Top.objects.all(), [repr(r) for r in expected_queryset])
+        # Ensure no queries are made using the default database.
+        self.assertNumQueries(0, func)
 
-        expected_queryset = [middle, bottom]
-        self.assertQuerysetEqual(Middle.objects.all(), [repr(r) for r in expected_queryset])
+    def test_reverse_one_to_one_descriptor_on_non_default_database(self):
+        def func():
+            m2a = Model2A.objects.db_manager('secondary').create(field1='A1')
+            one2one = One2OneRelatingModel.objects.db_manager('secondary').create(one2one=m2a, field1='121')
+            ContentType.objects.clear_cache()
+            m2a = Model2A.objects.db_manager('secondary').get(pk=m2a.id)
+            self.assertEqual(one2one, m2a.one2onerelatingmodel)
 
-        expected_queryset = [bottom]
-        self.assertQuerysetEqual(Bottom.objects.all(), [repr(r) for r in expected_queryset])
+        # Ensure no queries are made using the default database.
+        self.assertNumQueries(0, func)
 
+    def test_many_to_many_descriptor_on_non_default_database(self):
+        def func():
+            m2a = Model2A.objects.db_manager('secondary').create(field1='A1')
+            rm = RelatingModel.objects.db_manager('secondary').create()
+            rm.many2many.add(m2a)
+            ContentType.objects.clear_cache()
+            m2a = Model2A.objects.db_manager('secondary').get(pk=m2a.id)
+            self.assertEqual(rm, m2a.relatingmodel_set.using('secondary').get())
+
+        # Ensure no queries are made using the default database.
+        self.assertNumQueries(0, func)

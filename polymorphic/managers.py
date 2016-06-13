@@ -32,7 +32,7 @@ class PolymorphicManager(models.Manager):
         super(PolymorphicManager, self).__init__(*args, **kwrags)
 
     def get_queryset(self):
-        qs = self.queryset_class(self.model, using=self._db)
+        qs = self.queryset_class(self.model, using=self._db, hints=self._hints)
         if self.model._meta.proxy:
             qs = qs.instance_of(self.model)
         return qs
