@@ -106,6 +106,20 @@ class PolymorphicChildModelAdmin(admin.ModelAdmin):
             "admin/object_history.html"
         ]
 
+    def _get_parent_admin(self):
+        # this returns parent admin instance on which to call response_post_save methods
+        parent_model = self.model._meta.get_field('polymorphic_ctype').model
+        if parent_model == self.model:
+            # when parent_model is in among child_models, just return super instance
+            return super(PolymorphicChildModelAdmin, self)
+        return self.admin_site._registry.get(parent_model)
+
+    def response_post_save_add(self, request, obj):
+        return self._get_parent_admin().response_post_save_add(request, obj)
+
+    def response_post_save_change(self, request, obj):
+        return self._get_parent_admin().response_post_save_change(request, obj)
+
     def render_change_form(self, request, context, add=False, change=False, form_url='', obj=None):
         context.update({
             'base_opts': self.base_model._meta,
