@@ -52,7 +52,7 @@ Django to perform an ``INNER JOIN`` to fetch the model fields from the database.
 While taking this in mind, there are valid reasons for using subclassed models.
 That's what this library is designed for!
 
-For more information, see the `documentation at Read the Docs <https://django-polymorphic.readthedocs.org/>`_.
+For more information, see the `documentation at Read the Docs <https://django-polymorphic.readthedocs.io/>`_.
 
 License
 =======

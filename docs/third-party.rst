@@ -10,7 +10,7 @@ However, they require more setup than standard models. That's become:
 * The children models are not registered in the admin site.
   You will therefore need to manually register them to django-reversion_.
 * Polymorphic models use `multi-table inheritance <https://docs.djangoproject.com/en/dev/topics/db/models/#multi-table-inheritance>`_.
-  See the `reversion documentation <http://django-reversion.readthedocs.org/en/latest/api.html#multi-table-inheritance>`_
+  See the `reversion documentation <https://django-reversion.readthedocs.io/en/latest/api.html#multi-table-inheritance>`_
   how to deal with this by adding a ``follow`` field for the primary key.
 * Both admin classes redefine ``object_history_template``.
 
