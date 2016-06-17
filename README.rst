@@ -2,8 +2,6 @@
     :target: http://travis-ci.org/django-polymorphic/django-polymorphic
 .. image:: https://img.shields.io/pypi/v/django-polymorphic-tree.svg
     :target: https://pypi.python.org/pypi/django-polymorphic-tree/
-.. image:: https://img.shields.io/pypi/dm/django-polymorphic-tree.svg
-    :target: https://pypi.python.org/pypi/django-polymorphic-tree/
 
 Polymorphic Models for Django
 =============================
