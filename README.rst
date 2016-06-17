@@ -13,20 +13,26 @@ When a query is made at the base model, the inherited model classes are returned
 
 When we store models that inherit from a ``Project`` model...
 
->>> Project.objects.create(topic="Department Party")
->>> ArtProject.objects.create(topic="Painting with Tim", artist="T. Turner")
->>> ResearchProject.objects.create(topic="Swallow Aerodynamics", supervisor="Dr. Winter")
+.. code-block:: python
+
+    >>> Project.objects.create(topic="Department Party")
+    >>> ArtProject.objects.create(topic="Painting with Tim", artist="T. Turner")
+    >>> ResearchProject.objects.create(topic="Swallow Aerodynamics", supervisor="Dr. Winter")
 
 ...and want to retrieve all our projects, the subclassed models are returned!
 
->>> Project.objects.all()
+.. code-block:: python
+
+    >>> Project.objects.all()
     [ <Project:         id 1, topic "Department Party">,
       <ArtProject:      id 2, topic "Painting with Tim", artist "T. Turner">,
       <ResearchProject: id 3, topic "Swallow Aerodynamics", supervisor "Dr. Winter"> ]
 
 Using vanilla Django, we get the base class objects, which is rarely what we wanted:
 
->>> Project.objects.all()
+.. code-block:: python
+
+    >>> Project.objects.all()
     [ <Project: id 1, topic "Department Party">,
       <Project: id 2, topic "Painting with Tim">,
       <Project: id 3, topic "Swallow Aerodynamics"> ]
