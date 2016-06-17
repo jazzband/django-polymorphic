@@ -47,16 +47,18 @@ matrix:
   - python: "2.6"
     env: DJANGO=">=1.9,<1.10"
 
+before_install:
+- pip install codecov
+
 install:
+  - pip install -U pip wheel
   - pip install django$DJANGO coverage==3.6
 
 script:
   - coverage run --source=polymorphic runtests.py
-  - coverage report -m
 
 after_success:
-  - pip install coveralls==0.2
-  - coveralls
+- codecov
 
 branches:
   only:
