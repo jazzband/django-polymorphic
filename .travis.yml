@@ -51,7 +51,6 @@ before_install:
 - pip install codecov
 
 install:
-  - pip install -U pip wheel
   - pip install django$DJANGO coverage==3.6
 
 script:
