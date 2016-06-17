@@ -3,7 +3,7 @@ Contributing
 
 You can contribute to *django-polymorphic* to forking the code on GitHub:
 
-  https://github.com/chrisglass/django_polymorphic
+  https://github.com/django-polymorphic/django-polymorphic
 
 
 Running tests

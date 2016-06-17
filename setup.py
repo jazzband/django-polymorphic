@@ -21,13 +21,13 @@ def find_version(*parts):
 
 
 setup(
-    name='django_polymorphic',
+    name='django-polymorphic',
     version=find_version('polymorphic', '__init__.py'),
     license='BSD',
 
     description='Seamless Polymorphic Inheritance for Django Models',
     long_description=read('README.rst'),
-    url='https://github.com/chrisglass/django_polymorphic',
+    url='https://github.com/django-polymorphic/django-polymorphic',
 
     author='Bert Constantin',
     author_email='bert.constantin@gmx.de',
