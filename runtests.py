@@ -18,6 +18,16 @@ sys.stderr.write('Using Django version {0} from {1}\n'.format(
 )
 
 if not settings.configured:
+    context_processors = [
+        'django.contrib.auth.context_processors.auth',
+        'django.template.context_processors.debug',
+        'django.template.context_processors.i18n',
+        'django.template.context_processors.media',
+        'django.template.context_processors.static',
+        'django.template.context_processors.tz',
+        'django.contrib.messages.context_processors.messages',
+        'django.core.context_processors.request',
+    ]
     settings.configure(
         DEBUG=True,
         TEMPLATE_DEBUG=True,
@@ -34,13 +44,17 @@ if not settings.configured:
         TEMPLATE_LOADERS=(
             'django.template.loaders.app_directories.Loader',
         ),
-        TEMPLATE_CONTEXT_PROCESSORS=(
-            # list() is only needed for older versions of django where this is
-            # a tuple:
-            list(default_settings.TEMPLATE_CONTEXT_PROCESSORS) + [
-                'django.core.context_processors.request',
-            ]
-        ),
+        TEMPLATE_CONTEXT_PROCESSORS=context_processors,
+        TEMPLATES = [
+            {
+                'BACKEND': 'django.template.backends.django.DjangoTemplates',
+                'DIRS': [],
+                'APP_DIRS': True,
+                'OPTIONS': {
+                    'context_processors': context_processors,
+                },
+            },
+        ],
         TEST_RUNNER = 'django.test.runner.DiscoverRunner' if django.VERSION >= (1, 7) else 'django.test.simple.DjangoTestSuiteRunner',
         INSTALLED_APPS = (
             'django.contrib.auth',
