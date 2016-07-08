@@ -7,6 +7,11 @@ from django.utils import six
 from django.utils.translation import ugettext_lazy as _
 
 
+class ParentAdminNotRegistered(RuntimeError):
+    "The admin site for the model is not registered."
+    pass
+
+
 class PolymorphicChildModelAdmin(admin.ModelAdmin):
     """
     The *optional* base class for the admin interface of derived models.
@@ -112,7 +117,11 @@ class PolymorphicChildModelAdmin(admin.ModelAdmin):
         if parent_model == self.model:
             # when parent_model is in among child_models, just return super instance
             return super(PolymorphicChildModelAdmin, self)
-        return self.admin_site._registry.get(parent_model)
+
+        try:
+            return self.admin_site._registry[parent_model]
+        except KeyError:
+            raise ParentAdminNotRegistered("No parent admin was registered for a '{0}' model.".format(parent_model))
 
     def response_post_save_add(self, request, obj):
         return self._get_parent_admin().response_post_save_add(request, obj)
