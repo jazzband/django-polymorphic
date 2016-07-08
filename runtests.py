@@ -1,36 +1,61 @@
 #!/usr/bin/env python
-import django
 import os
 import sys
+import django
+
 from django.conf import settings
 from django.core.management import execute_from_command_line
-
 from django.conf import settings, global_settings as default_settings
 from django.core.management import call_command
-from os.path import dirname, realpath
+from os.path import dirname, realpath, abspath
 
 
 # Give feedback on used versions
 sys.stderr.write('Using Python version {0} from {1}\n'.format(sys.version[:5], sys.executable))
 sys.stderr.write('Using Django version {0} from {1}\n'.format(
     django.get_version(),
-    os.path.dirname(os.path.abspath(django.__file__)))
+    dirname(abspath(django.__file__)))
 )
 
 if not settings.configured:
-    context_processors = [
-        'django.contrib.auth.context_processors.auth',
-        'django.template.context_processors.debug',
-        'django.template.context_processors.i18n',
-        'django.template.context_processors.media',
-        'django.template.context_processors.static',
-        'django.template.context_processors.tz',
-        'django.contrib.messages.context_processors.messages',
-        'django.core.context_processors.request',
-    ]
+    if django.VERSION >= (1, 8):
+        template_settings = dict(
+            TEMPLATES = [
+                {
+                    'BACKEND': 'django.template.backends.django.DjangoTemplates',
+                    'DIRS': (),
+                    'OPTIONS': {
+                        'loaders': (
+                            'django.template.loaders.filesystem.Loader',
+                            'django.template.loaders.app_directories.Loader',
+                        ),
+                        'context_processors': (
+                            'django.template.context_processors.debug',
+                            'django.template.context_processors.i18n',
+                            'django.template.context_processors.media',
+                            'django.template.context_processors.request',
+                            'django.template.context_processors.static',
+                            'django.contrib.messages.context_processors.messages',
+                            'django.contrib.auth.context_processors.auth',
+                        ),
+                    },
+                },
+            ]
+        )
+    else:
+        template_settings = dict(
+            TEMPLATE_LOADERS = (
+                'django.template.loaders.app_directories.Loader',
+                'django.template.loaders.filesystem.Loader',
+            ),
+            TEMPLATE_CONTEXT_PROCESSORS = list(default_settings.TEMPLATE_CONTEXT_PROCESSORS) + [
+                'django.contrib.messages.context_processors.messages',
+                'django.core.context_processors.request',
+            ],
+        )
+
     settings.configure(
-        DEBUG=True,
-        TEMPLATE_DEBUG=True,
+        DEBUG=False,
         DATABASES={
             'default': {
                 'ENGINE': 'django.db.backends.sqlite3',
@@ -41,20 +66,6 @@ if not settings.configured:
                 'NAME': ':memory:'
             }
         },
-        TEMPLATE_LOADERS=(
-            'django.template.loaders.app_directories.Loader',
-        ),
-        TEMPLATE_CONTEXT_PROCESSORS=context_processors,
-        TEMPLATES = [
-            {
-                'BACKEND': 'django.template.backends.django.DjangoTemplates',
-                'DIRS': [],
-                'APP_DIRS': True,
-                'OPTIONS': {
-                    'context_processors': context_processors,
-                },
-            },
-        ],
         TEST_RUNNER = 'django.test.runner.DiscoverRunner' if django.VERSION >= (1, 7) else 'django.test.simple.DjangoTestSuiteRunner',
         INSTALLED_APPS = (
             'django.contrib.auth',
@@ -66,6 +77,7 @@ if not settings.configured:
         ),
         MIDDLEWARE_CLASSES = (),
         SITE_ID = 3,
+        **template_settings
     )
 
 DEFAULT_TEST_APPS = [
