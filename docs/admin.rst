@@ -21,7 +21,7 @@ The parent model
 The parent model needs to inherit ``PolymorphicParentModelAdmin``, and implement the following:
 
 * ``base_model`` should be set
-* ``child_models`` or ``get_child_models()`` should return an iterable of Model classes.
+* ``child_models`` or ``get_child_models()`` should return an iterable of ``(Modelclass, Adminclass)`` two-tuples.
 
 The exact implementation can depend on the way your module is structured.
 For simple inheritance situations, ``child_models`` is the best solution.
@@ -105,7 +105,10 @@ The models are taken from :ref:`advanced-features`.
     class ModelAParentAdmin(PolymorphicParentModelAdmin):
         """ The parent model admin """
         base_model = ModelA
-        child_models = (ModelB, ModelC)
+        child_models = [
+            (ModelB, ModelBAdmin),
+            (ModelC, ModelCAdmin),
+        ]
         list_filter = (PolymorphicChildModelFilter,)  # This is optional.
 
 
