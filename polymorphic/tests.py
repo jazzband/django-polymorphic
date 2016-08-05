@@ -757,7 +757,7 @@ class PolymorphicTests(TestCase):
         # no pretty printing
         ModelShow1_plain.objects.create(field1='abc')
         ModelShow2_plain.objects.create(field1='abc', field2='def')
-        self.assertEqual(repr(ModelShow1_plain.objects.all()), '[<ModelShow1_plain: ModelShow1_plain object>, <ModelShow2_plain: ModelShow2_plain object>]')
+        self.assertEqual(qrepr(ModelShow1_plain.objects.all()), '<QuerySet [<ModelShow1_plain: ModelShow1_plain object>, <ModelShow2_plain: ModelShow2_plain object>]>')
 
     def test_extra_method(self):
         self.create_model2abcd()
@@ -1288,3 +1288,16 @@ class MultipleDatabasesTests(TestCase):
 
         # Ensure no queries are made using the default database.
         self.assertNumQueries(0, func)
+
+
+def qrepr(data):
+    """
+    Ensure consistent repr() output for the QuerySet object.
+    """
+    if isinstance(data, models.QuerySet):
+        if django.VERSION >= (1, 10):
+            return repr(data)
+        else:
+            return '<QuerySet %r>' % data
+
+    return repr(data)
