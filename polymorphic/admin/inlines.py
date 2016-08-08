@@ -7,10 +7,12 @@ from functools import partial
 
 from django.contrib.admin.options import InlineModelAdmin
 from django.contrib.admin.utils import flatten_fieldsets
+from django.core.exceptions import ImproperlyConfigured
 from django.forms import Media
 
 from polymorphic.formsets import polymorphic_child_forms_factory, BasePolymorphicInlineFormSet, PolymorphicFormSetChild
 from polymorphic.formsets.utils import add_media
+from .helpers import PolymorphicInlineSupportMixin
 
 
 class PolymorphicInlineModelAdmin(InlineModelAdmin):
@@ -49,6 +51,16 @@ class PolymorphicInlineModelAdmin(InlineModelAdmin):
 
     def __init__(self, parent_model, admin_site):
         super(PolymorphicInlineModelAdmin, self).__init__(parent_model, admin_site)
+
+        # Extra check to avoid confusion
+        # While we could monkeypatch the admin here, better stay explicit.
+        parent_admin = admin_site._registry.get(parent_model, None)
+        if parent_admin is not None:  # Can be None during check
+            if not isinstance(parent_admin, PolymorphicInlineSupportMixin):
+                raise ImproperlyConfigured(
+                    "To use polymorphic inlines, add the `PolymorphicInlineSupportMixin` mixin "
+                    "to the ModelAdmin that hosts the inline."
+                )
 
         # While the inline is created per request, the 'request' object is not known here.
         # Hence, creating all child inlines unconditionally, without checking permissions.
