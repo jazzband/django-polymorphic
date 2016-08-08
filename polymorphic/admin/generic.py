@@ -2,15 +2,15 @@ from django.contrib.contenttypes.admin import GenericInlineModelAdmin
 from django.contrib.contenttypes.models import ContentType
 from django.utils.functional import cached_property
 
-from polymorphic.formsets import polymorphic_child_forms_factory, BasePolymorphicGenericInlineFormSet, PolymorphicGenericFormSetChild
-from .inlines import PolymorphicParentInlineModelAdmin, PolymorphicChildInlineModelAdmin
+from polymorphic.formsets import polymorphic_child_forms_factory, BaseGenericPolymorphicInlineFormSet, GenericPolymorphicFormSetChild
+from .inlines import PolymorphicInlineModelAdmin
 
 
-class PolymorphicParentGenericInlineModelAdmin(PolymorphicParentInlineModelAdmin, GenericInlineModelAdmin):
+class GenericPolymorphicInlineModelAdmin(PolymorphicInlineModelAdmin, GenericInlineModelAdmin):
     """
-    Variation for inlines based on generic foreign keys.
+    Base class for variation of inlines based on generic foreign keys.
     """
-    formset = BasePolymorphicGenericInlineFormSet
+    formset = BaseGenericPolymorphicInlineFormSet
 
     def get_formset(self, request, obj=None, **kwargs):
         """
@@ -26,30 +26,36 @@ class PolymorphicParentGenericInlineModelAdmin(PolymorphicParentInlineModelAdmin
         )
         return FormSet
 
-
-class PolymorphicChildGenericInlineModelAdmin(PolymorphicChildInlineModelAdmin):
-    """
-    Variation for generic inlines.
-    """
-    # Make sure that the GFK fields are excluded from the child forms
-    formset_child = PolymorphicGenericFormSetChild
-    ct_field = "content_type"
-    ct_fk_field = "object_id"
-
-    @cached_property
-    def content_type(self):
+    class Child(PolymorphicInlineModelAdmin.Child):
         """
-        Expose the ContentType that the child relates to.
-        This can be used for the ``polymorphic_ctype`` field.
+        Variation for generic inlines.
         """
-        return ContentType.objects.get_for_model(self.model)
+        # Make sure that the GFK fields are excluded from the child forms
+        formset_child = GenericPolymorphicFormSetChild
+        ct_field = "content_type"
+        ct_fk_field = "object_id"
 
-    def get_formset_child(self, request, obj=None, **kwargs):
-        # Similar to GenericInlineModelAdmin.get_formset(),
-        # make sure the GFK is automatically excluded from the form
-        defaults = {
-            "ct_field": self.ct_field,
-            "fk_field": self.ct_fk_field,
-        }
-        defaults.update(kwargs)
-        return super(PolymorphicChildGenericInlineModelAdmin, self).get_formset_child(request, obj=obj, **defaults)
+        @cached_property
+        def content_type(self):
+            """
+            Expose the ContentType that the child relates to.
+            This can be used for the ``polymorphic_ctype`` field.
+            """
+            return ContentType.objects.get_for_model(self.model)
+
+        def get_formset_child(self, request, obj=None, **kwargs):
+            # Similar to GenericInlineModelAdmin.get_formset(),
+            # make sure the GFK is automatically excluded from the form
+            defaults = {
+                "ct_field": self.ct_field,
+                "fk_field": self.ct_fk_field,
+            }
+            defaults.update(kwargs)
+            return super(GenericPolymorphicInlineModelAdmin.Child, self).get_formset_child(request, obj=obj, **defaults)
+
+
+class GenericStackedPolymorphicInline(GenericPolymorphicInlineModelAdmin):
+    """
+    The stacked layout for generic inlines.
+    """
+    template = 'admin/polymorphic/edit_inline/stacked.html'

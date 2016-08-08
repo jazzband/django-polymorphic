@@ -7,14 +7,14 @@ from django.forms.models import ModelForm
 from .models import BasePolymorphicModelFormSet, polymorphic_child_forms_factory, PolymorphicFormSetChild
 
 
-class PolymorphicGenericFormSetChild(PolymorphicFormSetChild):
+class GenericPolymorphicFormSetChild(PolymorphicFormSetChild):
     """
     Formset child for generic inlines
     """
     def __init__(self, *args, **kwargs):
         self.ct_field = kwargs.pop('ct_field', 'content_type')
         self.fk_field = kwargs.pop('fk_field', 'object_id')
-        super(PolymorphicGenericFormSetChild, self).__init__(*args, **kwargs)
+        super(GenericPolymorphicFormSetChild, self).__init__(*args, **kwargs)
 
     def get_form(self, ct_field="content_type", fk_field="object_id", **kwargs):
         """
@@ -42,17 +42,17 @@ class PolymorphicGenericFormSetChild(PolymorphicFormSetChild):
         exclude.extend([ct_field.name, fk_field.name])
         kwargs['exclude'] = exclude
 
-        return super(PolymorphicGenericFormSetChild, self).get_form(**kwargs)
+        return super(GenericPolymorphicFormSetChild, self).get_form(**kwargs)
 
 
-class BasePolymorphicGenericInlineFormSet(BaseGenericInlineFormSet, BasePolymorphicModelFormSet):
+class BaseGenericPolymorphicInlineFormSet(BaseGenericInlineFormSet, BasePolymorphicModelFormSet):
     """
     Polymorphic formset variation for inline generic formsets
     """
 
 
-def polymorphic_generic_inlineformset_factory(model, formset_children, form=ModelForm,
-                                              formset=BasePolymorphicGenericInlineFormSet,
+def generic_polymorphic_inlineformset_factory(model, formset_children, form=ModelForm,
+                                              formset=BaseGenericPolymorphicInlineFormSet,
                                               ct_field="content_type", fk_field="object_id",
                                               # Base form
                                               # TODO: should these fields be removed in favor of creating

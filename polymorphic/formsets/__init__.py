@@ -34,18 +34,18 @@ from .models import (
 )
 from .generic import (
     # Can import generic here, as polymorphic already depends on the 'contenttypes' app.
-    BasePolymorphicGenericInlineFormSet,
-    PolymorphicGenericFormSetChild,
-    polymorphic_generic_inlineformset_factory,
+    BaseGenericPolymorphicInlineFormSet,
+    GenericPolymorphicFormSetChild,
+    generic_polymorphic_inlineformset_factory,
 )
 
 __all__ = (
     'BasePolymorphicModelFormSet',
     'BasePolymorphicInlineFormSet',
-    'BasePolymorphicGenericInlineFormSet',
     'PolymorphicFormSetChild',
-    'PolymorphicGenericFormSetChild',
     'polymorphic_inlineformset_factory',
-    'polymorphic_generic_inlineformset_factory',
     'polymorphic_child_forms_factory',
+    'BaseGenericPolymorphicInlineFormSet',
+    'GenericPolymorphicFormSetChild',
+    'generic_polymorphic_inlineformset_factory',
 )

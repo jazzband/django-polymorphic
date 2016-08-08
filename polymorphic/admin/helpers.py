@@ -3,19 +3,19 @@ Rendering utils for admin forms;
 
 This makes sure that admin fieldsets/layout settings are exported to the template.
 """
-from django.contrib.admin.helpers import InlineAdminFormSet, InlineAdminForm
+import django
+from django.contrib.admin.helpers import InlineAdminFormSet, InlineAdminForm, AdminField
 
 from polymorphic.formsets import BasePolymorphicModelFormSet
 
 
-class InlinePolymorphicAdminForm(InlineAdminForm):
+class PolymorphicInlineAdminForm(InlineAdminForm):
     """
     Expose the admin configuration for a form
     """
-    pass
 
 
-class InlinePolymorphicAdminFormSet(InlineAdminFormSet):
+class PolymorphicInlineAdminFormSet(InlineAdminFormSet):
     """
     Internally used class to expose the formset in the template.
     """
@@ -23,7 +23,7 @@ class InlinePolymorphicAdminFormSet(InlineAdminFormSet):
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request', None)  # Assigned later via PolymorphicInlineSupportMixin later.
         self.obj = kwargs.pop('obj', None)
-        super(InlinePolymorphicAdminFormSet, self).__init__(*args, **kwargs)
+        super(PolymorphicInlineAdminFormSet, self).__init__(*args, **kwargs)
 
     def __iter__(self):
         """
@@ -35,7 +35,7 @@ class InlinePolymorphicAdminFormSet(InlineAdminFormSet):
             child_inline = self.opts.get_child_inline_instance(model)
             view_on_site_url = self.opts.get_view_on_site_url(original)
 
-            yield InlinePolymorphicAdminForm(
+            yield PolymorphicInlineAdminForm(
                 formset=self.formset,
                 form=form,
                 fieldsets=self.get_child_fieldsets(child_inline),
@@ -50,7 +50,7 @@ class InlinePolymorphicAdminFormSet(InlineAdminFormSet):
         for form in self.formset.extra_forms + self.formset.empty_forms:
             model = form._meta.model
             child_inline = self.opts.get_child_inline_instance(model)
-            yield InlinePolymorphicAdminForm(
+            yield PolymorphicInlineAdminForm(
                 formset=self.formset,
                 form=form,
                 fieldsets=self.get_child_fieldsets(child_inline),
@@ -81,7 +81,7 @@ class PolymorphicInlineSupportMixin(object):
     depending on the polymorphic type of the form instance.
 
     This is achieved by overwriting :func:`get_inline_formsets` to return
-    an :class:`InlinePolymorphicAdminFormSet` instead of a standard Django
+    an :class:`PolymorphicInlineAdminFormSet` instead of a standard Django
     :class:`~django.contrib.admin.helpers.InlineAdminFormSet` for the polymorphic formsets.
     """
 
@@ -98,7 +98,7 @@ class PolymorphicInlineSupportMixin(object):
             if isinstance(admin_formset.formset, BasePolymorphicModelFormSet):
                 # This is a polymorphic formset, which belongs to our inline.
                 # Downcast the admin wrapper that generates the form fields.
-                admin_formset.__class__ = InlinePolymorphicAdminFormSet
+                admin_formset.__class__ = PolymorphicInlineAdminFormSet
                 admin_formset.request = request
                 admin_formset.obj = obj
         return inline_admin_formsets

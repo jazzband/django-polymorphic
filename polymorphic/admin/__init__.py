@@ -14,22 +14,22 @@ from .filters import PolymorphicChildModelFilter
 
 # Inlines
 from .inlines import (
-    PolymorphicParentInlineModelAdmin,
-    PolymorphicChildInlineModelAdmin,
+    PolymorphicInlineModelAdmin,  # base class
+    StackedPolymorphicInline,  # stacked inline
 )
 
 # Helpers for the inlines
 from .helpers import (
-    InlinePolymorphicAdminForm,
-    InlinePolymorphicAdminFormSet,
+    PolymorphicInlineAdminForm,
+    PolymorphicInlineAdminFormSet,
     PolymorphicInlineSupportMixin,  # mixin for the regular model admin!
 )
 
 # Expose generic admin features too. There is no need to split those
 # as the admin already relies on contenttypes.
 from .generic import (
-    PolymorphicParentGenericInlineModelAdmin,
-    PolymorphicChildGenericInlineModelAdmin,
+    GenericPolymorphicInlineModelAdmin,  # base class
+    GenericStackedPolymorphicInline,  # stacked inline
 )
 
 __all__ = (
@@ -37,11 +37,10 @@ __all__ = (
     'PolymorphicChildModelAdmin',
     'PolymorphicModelChoiceForm',
     'PolymorphicChildModelFilter',
-    'InlinePolymorphicAdminForm',
-    'InlinePolymorphicAdminFormSet',
+    'PolymorphicInlineAdminForm',
+    'PolymorphicInlineAdminFormSet',
     'PolymorphicInlineSupportMixin',
-    'PolymorphicParentInlineModelAdmin',
-    'PolymorphicChildInlineModelAdmin',
-    'PolymorphicParentGenericInlineModelAdmin',
-    'PolymorphicChildGenericInlineModelAdmin',
+    'PolymorphicInlineModelAdmin',
+    'GenericPolymorphicInlineModelAdmin',
+    'GenericStackedPolymorphicInline',
 )
