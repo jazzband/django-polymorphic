@@ -3,8 +3,13 @@ Rendering utils for admin forms;
 
 This makes sure that admin fieldsets/layout settings are exported to the template.
 """
+import json
+
 import django
 from django.contrib.admin.helpers import InlineAdminFormSet, InlineAdminForm, AdminField
+from django.utils.encoding import force_text
+from django.utils.text import capfirst
+from django.utils.translation import ugettext
 
 from polymorphic.formsets import BasePolymorphicModelFormSet
 
@@ -13,6 +18,9 @@ class PolymorphicInlineAdminForm(InlineAdminForm):
     """
     Expose the admin configuration for a form
     """
+
+    def polymorphic_ctype_field(self):
+        return AdminField(self.form, 'polymorphic_ctype', False)
 
 
 class PolymorphicInlineAdminFormSet(InlineAdminFormSet):
@@ -70,6 +78,30 @@ class PolymorphicInlineAdminFormSet(InlineAdminFormSet):
         fields = self.prepopulated_fields.copy()
         fields.update(child_inline.get_prepopulated_fields(self.request, self.obj))
         return fields
+
+    # The polymorphic template follows the same method like all other inlines do in Django 1.10.
+    # This method is added for compatibility with older Django versions.
+    def inline_formset_data(self):
+        """
+        A JavaScript data structure for the JavaScript code
+        """
+        verbose_name = self.opts.verbose_name
+        return json.dumps({
+            'name': '#%s' % self.formset.prefix,
+            'options': {
+                'prefix': self.formset.prefix,
+                'addText': ugettext('Add another %(verbose_name)s') % {
+                    'verbose_name': capfirst(verbose_name),
+                },
+                'childTypes': [
+                    {
+                        'type': model._meta.model_name,
+                        'name': force_text(model._meta.verbose_name)
+                    } for model in self.formset.child_forms.keys()
+                ],
+                'deleteText': ugettext('Remove'),
+            }
+        })
 
 
 class PolymorphicInlineSupportMixin(object):

@@ -1,0 +1,27 @@
+.add-row-choice {
+  position: relative;
+}
+
+.add-row-choice a:focus {
+  text-decoration: none;
+}
+
+.add-row .inline-type-choice {
+  position: absolute;
+  top: 2.2em;
+  left: 0.5em;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 2px;
+  background-color: #fff;
+}
+
+.add-row .inline-type-choice ul {
+  padding: 2px;
+  margin: 0;
+}
+
+.add-row .inline-type-choice li {
+  list-style: none inside none;
+  padding: 4px 8px;
+}

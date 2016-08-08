@@ -22,7 +22,21 @@ class PolymorphicInlineModelAdmin(InlineModelAdmin):
     * Permissions are only checked on the base model.
     * The child inlines can't override the base model fields, only this parent inline can do that.
     """
+
     formset = BasePolymorphicInlineFormSet
+
+    #: The extra media to add for the polymorphic inlines effect.
+    #: This can be redefined for subclasses.
+    polymorphic_media = Media(
+        js=(
+            'polymorphic/js/jquery.django-inlines.js',
+        ),
+        css={
+            'all': (
+                'polymorphic/css/polymorphic_inlines.css',
+            )
+        }
+    )
 
     #: The extra forms to show
     #: By default there are no 'extra' forms as the desired type is unknown.

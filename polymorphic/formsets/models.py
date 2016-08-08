@@ -26,7 +26,7 @@ class PolymorphicFormSetChild(object):
         # This is mostly needed for the generic inline formsets
         self._form_base = form
         self.fields = fields
-        self.exclude = exclude
+        self.exclude = exclude or ()
         self.formfield_callback = formfield_callback
         self.widgets = widgets
         self.localized_fields = localized_fields
