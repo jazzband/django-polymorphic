@@ -4,6 +4,8 @@ Changelog
 Changes in git
 --------------
 
+* Added admin inline support for polymorphic models.
+* Added formset support for polymorphic models.
 * Added support for polymorphic queryset limiting effects on proxy models.
 * Added support for multiple databases with ``.using()`` method and ``using=..`` keyword argument.
 * Fixed modifying passed ``Q()`` objects in place.
