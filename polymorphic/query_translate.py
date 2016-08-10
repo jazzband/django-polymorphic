@@ -4,6 +4,7 @@
 """
 from __future__ import absolute_import
 
+import copy
 import django
 from django.db import models
 from django.contrib.contenttypes.models import ContentType
@@ -100,7 +101,9 @@ def translate_polymorphic_filter_definitions_in_args(queryset_model, args, using
 
     Returns: modified Q objects
     """
-    if django.VERSION >= (1, 6):
+    if django.VERSION >= (1, 10):
+        q_objects = [copy.deepcopy(q) for q in args]
+    elif django.VERSION >= (1, 6):
         q_objects = [q.clone() for q in args]
     else:
         q_objects = args  # NOTE: edits existing objects in place.

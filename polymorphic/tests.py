@@ -46,6 +46,7 @@ class PlainC(PlainB):
 
 class Model2A(ShowFieldType, PolymorphicModel):
     field1 = models.CharField(max_length=10)
+    polymorphic_showfield_deferred = True
 
 
 class Model2B(Model2A):
@@ -562,36 +563,36 @@ class PolymorphicTests(TestCase):
         self.create_model2abcd()
 
         objects_deferred = Model2A.objects.defer('field1')
-        self.assertNotIn('field1', objects_deferred[0].__dict__,
-            'field1 was not deferred (using defer())')
+
+        self.assertNotIn('field1', objects_deferred[0].__dict__, 'field1 was not deferred (using defer())')
         self.assertEqual(repr(objects_deferred[0]),
-            '<Model2A_Deferred_field1: id 1, field1 (CharField)>')
+                         '<Model2A: id 1, field1 (CharField), deferred[field1]>')
         self.assertEqual(repr(objects_deferred[1]),
-            '<Model2B_Deferred_field1: id 2, field1 (CharField), field2 (CharField)>')
+                         '<Model2B: id 2, field1 (CharField), field2 (CharField), deferred[field1]>')
         self.assertEqual(repr(objects_deferred[2]),
-            '<Model2C_Deferred_field1: id 3, field1 (CharField), field2 (CharField), field3 (CharField)>')
+                         '<Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField), deferred[field1]>')
         self.assertEqual(repr(objects_deferred[3]),
-            '<Model2D_Deferred_field1: id 4, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField)>')
+                         '<Model2D: id 4, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField), deferred[field1]>')
 
         objects_only = Model2A.objects.only('pk', 'polymorphic_ctype', 'field1')
+
         self.assertIn('field1', objects_only[0].__dict__,
-            'qs.only("field1") was used, but field1 was incorrectly deferred')
+                      'qs.only("field1") was used, but field1 was incorrectly deferred')
         self.assertIn('field1', objects_only[3].__dict__,
-            'qs.only("field1") was used, but field1 was incorrectly deferred'
-            ' on a child model')
+                      'qs.only("field1") was used, but field1 was incorrectly deferred'
+                      ' on a child model')
         self.assertNotIn('field4', objects_only[3].__dict__,
-            'field4 was not deferred (using only())')
+                         'field4 was not deferred (using only())')
         self.assertEqual(repr(objects_only[0]),
-            '<Model2A: id 1, field1 (CharField)>')
+                         '<Model2A: id 1, field1 (CharField)>')
         self.assertEqual(repr(objects_only[1]),
-            '<Model2B_Deferred_field2: '
-            'id 2, field1 (CharField), field2 (CharField)>')
+                         '<Model2B: id 2, field1 (CharField), field2 (CharField), deferred[field2]>')
         self.assertEqual(repr(objects_only[2]),
-            '<Model2C_Deferred_field2_field3_model2a_ptr_id: '
-            'id 3, field1 (CharField), field2 (CharField), field3 (CharField)>')
+                         '<Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField), '
+                         'deferred[field2,field3,model2a_ptr_id]>')
         self.assertEqual(repr(objects_only[3]),
-            '<Model2D_Deferred_field2_field3_field4_model2a_ptr_id_model2b_ptr_id: '
-            'id 4, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField)>')
+                         '<Model2D: id 4, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField), '
+                         'deferred[field2,field3,field4,model2a_ptr_id,model2b_ptr_id]>')
 
     # A bug in Django 1.4 prevents using defer across reverse relations
     # <https://code.djangoproject.com/ticket/14694>. Since polymorphic
@@ -603,15 +604,15 @@ class PolymorphicTests(TestCase):
 
         objects_deferred_field4 = Model2A.objects.defer('Model2D___field4')
         self.assertNotIn('field4', objects_deferred_field4[3].__dict__,
-            'field4 was not deferred (using defer(), traversing inheritance)')
+                         'field4 was not deferred (using defer(), traversing inheritance)')
         self.assertEqual(repr(objects_deferred_field4[0]),
-            '<Model2A: id 1, field1 (CharField)>')
+                         '<Model2A: id 1, field1 (CharField)>')
         self.assertEqual(repr(objects_deferred_field4[1]),
-            '<Model2B: id 2, field1 (CharField), field2 (CharField)>')
+                         '<Model2B: id 2, field1 (CharField), field2 (CharField)>')
         self.assertEqual(repr(objects_deferred_field4[2]),
-            '<Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)>')
+                         '<Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)>')
         self.assertEqual(repr(objects_deferred_field4[3]),
-            '<Model2D_Deferred_field4: id 4, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField)>')
+                         '<Model2D: id 4, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField), deferred[field4]>')
 
         objects_only_field4 = Model2A.objects.only(
             'polymorphic_ctype', 'field1',
@@ -619,13 +620,13 @@ class PolymorphicTests(TestCase):
             'Model2C___id', 'Model2C___field3', 'Model2C___model2b_ptr',
             'Model2D___id', 'Model2D___model2c_ptr')
         self.assertEqual(repr(objects_only_field4[0]),
-            '<Model2A: id 1, field1 (CharField)>')
+                         '<Model2A: id 1, field1 (CharField)>')
         self.assertEqual(repr(objects_only_field4[1]),
-            '<Model2B: id 2, field1 (CharField), field2 (CharField)>')
+                         '<Model2B: id 2, field1 (CharField), field2 (CharField)>')
         self.assertEqual(repr(objects_only_field4[2]),
-            '<Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)>')
+                         '<Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)>')
         self.assertEqual(repr(objects_only_field4[3]),
-            '<Model2D_Deferred_field4: id 4, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField)>')
+                         '<Model2D: id 4, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField), deferred[field4]>')
 
 
     def test_manual_get_real_instance(self):
@@ -681,17 +682,26 @@ class PolymorphicTests(TestCase):
         self.assertEqual(show_base_manager(PlainC), "<class 'django.db.models.manager.Manager'> <class 'polymorphic.tests.PlainC'>")
 
         self.assertEqual(show_base_manager(Model2A), "<class 'polymorphic.managers.PolymorphicManager'> <class 'polymorphic.tests.Model2A'>")
-        self.assertEqual(show_base_manager(Model2B), "<class 'django.db.models.manager.Manager'> <class 'polymorphic.tests.Model2B'>")
-        self.assertEqual(show_base_manager(Model2C), "<class 'django.db.models.manager.Manager'> <class 'polymorphic.tests.Model2C'>")
+        if django.VERSION >= (1, 10):
+            # The new inheritance makes all model levels polymorphic
+            self.assertEqual(show_base_manager(Model2B), "<class 'polymorphic.managers.PolymorphicManager'> <class 'polymorphic.tests.Model2B'>")
+            self.assertEqual(show_base_manager(Model2C), "<class 'polymorphic.managers.PolymorphicManager'> <class 'polymorphic.tests.Model2C'>")
+        else:
+            self.assertEqual(show_base_manager(Model2B), "<class 'django.db.models.manager.Manager'> <class 'polymorphic.tests.Model2B'>")
+            self.assertEqual(show_base_manager(Model2C), "<class 'django.db.models.manager.Manager'> <class 'polymorphic.tests.Model2C'>")
 
         self.assertEqual(show_base_manager(One2OneRelatingModel), "<class 'polymorphic.managers.PolymorphicManager'> <class 'polymorphic.tests.One2OneRelatingModel'>")
-        self.assertEqual(show_base_manager(One2OneRelatingModelDerived), "<class 'django.db.models.manager.Manager'> <class 'polymorphic.tests.One2OneRelatingModelDerived'>")
+        if django.VERSION >= (1, 10):
+            # The new inheritance makes all model levels polymorphic
+            self.assertEqual(show_base_manager(One2OneRelatingModelDerived), "<class 'polymorphic.managers.PolymorphicManager'> <class 'polymorphic.tests.One2OneRelatingModelDerived'>")
+        else:
+            self.assertEqual(show_base_manager(One2OneRelatingModelDerived), "<class 'django.db.models.manager.Manager'> <class 'polymorphic.tests.One2OneRelatingModelDerived'>")
 
     def test_instance_default_manager(self):
         def show_default_manager(instance):
             return "{0} {1}".format(
-                repr(type(instance._default_manager)),
-                repr(instance._default_manager.model)
+                repr(type(instance.__class__._default_manager)),
+                repr(instance.__class__._default_manager.model)
             )
 
         plain_a = PlainA(field1='C1')
@@ -757,7 +767,7 @@ class PolymorphicTests(TestCase):
         # no pretty printing
         ModelShow1_plain.objects.create(field1='abc')
         ModelShow2_plain.objects.create(field1='abc', field2='def')
-        self.assertEqual(repr(ModelShow1_plain.objects.all()), '[<ModelShow1_plain: ModelShow1_plain object>, <ModelShow2_plain: ModelShow2_plain object>]')
+        self.assertEqual(qrepr(ModelShow1_plain.objects.all()), '<QuerySet [<ModelShow1_plain: ModelShow1_plain object>, <ModelShow2_plain: ModelShow2_plain object>]>')
 
     def test_extra_method(self):
         self.create_model2abcd()
@@ -1138,10 +1148,11 @@ class PolymorphicTests(TestCase):
         self.assertEqual(result, {'cnt': 2})
 
         # aggregate using **args
-        with self.assertRaisesMessage(AssertionError, 'PolymorphicModel: annotate()/aggregate(): ___ model lookup supported for keyword arguments only'):
-            Model2A.objects.aggregate(Count('Model2B___field2'))
-
-
+        self.assertRaisesMessage(
+            AssertionError,
+            'PolymorphicModel: annotate()/aggregate(): ___ model lookup supported for keyword arguments only',
+            lambda: Model2A.objects.aggregate(Count('Model2B___field2'))
+        )
 
     @skipIf(django.VERSION < (1,8,), "This test needs Django >=1.8")
     def test_polymorphic__complex_aggregate(self):
@@ -1172,11 +1183,10 @@ class PolymorphicTests(TestCase):
     @skipIf(django.VERSION < (1,8,), "This test needs Django >=1.8")
     def test_polymorphic__expressions(self):
 
-        from django.db.models.expressions import DateTime
-        from django.utils.timezone import utc
+        from django.db.models.functions import Concat
 
         # no exception raised
-        result = DateModel.objects.annotate(val=DateTime('date', 'day', utc))
+        result = Model2B.objects.annotate(val=Concat('field1', 'field2'))
         self.assertEqual(list(result), [])
 
 class RegressionTests(TestCase):
@@ -1288,3 +1298,16 @@ class MultipleDatabasesTests(TestCase):
 
         # Ensure no queries are made using the default database.
         self.assertNumQueries(0, func)
+
+
+def qrepr(data):
+    """
+    Ensure consistent repr() output for the QuerySet object.
+    """
+    if isinstance(data, QuerySet):
+        if django.VERSION >= (1, 10):
+            return repr(data)
+        else:
+            return '<QuerySet %r>' % data
+
+    return repr(data)
