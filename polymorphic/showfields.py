@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
-
+import django
 from django.db import models
 from django.utils import six
+from django.utils.six import python_2_unicode_compatible
 
 
+@python_2_unicode_compatible
 class ShowFieldBase(object):
     """ base class for the ShowField... model mixins, does the work """
 
@@ -11,6 +13,7 @@ class ShowFieldBase(object):
 
     polymorphic_showfield_type = False
     polymorphic_showfield_content = False
+    polymorphic_showfield_deferred = False
 
     # these may be overridden by the user
     polymorphic_showfield_max_line_width = None
@@ -87,12 +90,12 @@ class ShowFieldBase(object):
 
             parts.append((False, out, ','))
 
-    def __unicode__(self):
+    def __str__(self):
         # create list ("parts") containing one tuple for each title/field:
         # ( bool: new section , item-text , separator to use after item )
 
         # start with model name
-        parts = [(True, self.__class__.__name__, ':')]
+        parts = [(True, self._meta.object_name, ':')]
 
         # add all regular fields
         self._showfields_add_regular_fields(parts)
@@ -104,6 +107,11 @@ class ShowFieldBase(object):
         # add extra() select fields
         if hasattr(self, 'polymorphic_extra_select_names'):
             self._showfields_add_dynamic_fields(self.polymorphic_extra_select_names, 'Extra', parts)
+
+        if self.polymorphic_showfield_deferred:
+            fields = self.get_deferred_fields()
+            if fields:
+                parts.append((False, u"deferred[{0}]".format(",".join(sorted(fields))), ''))
 
         # format result
 
@@ -141,6 +149,11 @@ class ShowFieldBase(object):
                 possible_line_break_pos = len(out)
 
         return '<' + out + '>'
+
+    if django.VERSION < (1, 8):
+        def get_deferred_fields(self):
+            from django.db.models import DeferredAttribute
+            return set(attr for attr, value in self.__class__ if isinstance(value, DeferredAttribute))
 
 
 class ShowFieldType(ShowFieldBase):
