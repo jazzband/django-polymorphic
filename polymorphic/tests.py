@@ -690,8 +690,8 @@ class PolymorphicTests(TestCase):
     def test_instance_default_manager(self):
         def show_default_manager(instance):
             return "{0} {1}".format(
-                repr(type(instance._default_manager)),
-                repr(instance._default_manager.model)
+                repr(type(instance.__class__._default_manager)),
+                repr(instance.__class__._default_manager.model)
             )
 
         plain_a = PlainA(field1='C1')
@@ -1172,11 +1172,10 @@ class PolymorphicTests(TestCase):
     @skipIf(django.VERSION < (1,8,), "This test needs Django >=1.8")
     def test_polymorphic__expressions(self):
 
-        from django.db.models.expressions import DateTime
-        from django.utils.timezone import utc
+        from django.db.models.functions import Concat
 
         # no exception raised
-        result = DateModel.objects.annotate(val=DateTime('date', 'day', utc))
+        result = Model2B.objects.annotate(val=Concat('field1', 'field2'))
         self.assertEqual(list(result), [])
 
 class RegressionTests(TestCase):
