@@ -28,7 +28,7 @@ class ShowFieldBase(object):
     polymorphic_showfield_old_format = False
 
     def __repr__(self):
-        return self.__unicode__()
+        return self.__str__()
 
     def _showfields_get_content(self, field_name, field_type=type(None)):
         "helper for __unicode__"

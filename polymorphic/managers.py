@@ -8,7 +8,13 @@ import django
 from django.db import models
 from polymorphic.query import PolymorphicQuerySet
 
+try:
+    from django.utils.six import python_2_unicode_compatible
+except ImportError:
+    from django.utils.encoding import python_2_unicode_compatible  # Django 1.5
 
+
+@python_2_unicode_compatible
 class PolymorphicManager(models.Manager):
     """
     Manager for PolymorphicModel
@@ -44,7 +50,7 @@ class PolymorphicManager(models.Manager):
     if django.VERSION < (1, 7):
         get_query_set = get_queryset
 
-    def __unicode__(self):
+    def __str__(self):
         return '%s (PolymorphicManager) using %s' % (self.__class__.__name__, self.queryset_class.__name__)
 
     # Proxied methods
