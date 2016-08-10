@@ -55,7 +55,6 @@ Getting started
 
    quickstart
    admin
-   formsets
    performance
 
 Advanced topics
@@ -64,9 +63,10 @@ Advanced topics
 .. toctree::
    :maxdepth: 2
 
+   formsets
    migrating
-   advanced
    managers
+   advanced
    third-party
    changelog
    contributing

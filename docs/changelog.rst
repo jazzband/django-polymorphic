@@ -227,6 +227,6 @@ It supports Django 1.1 up till 1.4 and Python 2.4 up till 2.7.
 For a detailed list of it's changes, see the :doc:`archived changelog <changelog_archive>`.
 
 .. _Grappelli: http://grappelliproject.com/
-.. _django-parler: https://github.com/edoburu/django-parler
+.. _django-parler: https://github.com/django-parler/django-parler
 .. _django-reversion: https://github.com/etianen/django-reversion
 .. _django-reversion-compare: https://github.com/jedie/django-reversion-compare

@@ -1,14 +1,24 @@
 Third-party applications support
 ================================
 
+
+django-mptt support
+-------------------
+
+Combining polymorphic with django-mptt_ is certainly possible, but not straightforward.
+It involves combining both managers, querysets, models, meta-classes and admin classes
+using multiple inheritance.
+
+The django-polymorphic-tree_ package provides this out of the box.
+
+
 django-reversion support
 ------------------------
 
 Support for django-reversion_ works as expected with polymorphic models.
 However, they require more setup than standard models. That's become:
 
-* The children models are not registered in the admin site.
-  You will therefore need to manually register them to django-reversion_.
+* Manually register the child models with django-reversion_, so their ``follow`` parameter can be set.
 * Polymorphic models use `multi-table inheritance <https://docs.djangoproject.com/en/dev/topics/db/models/#multi-table-inheritance>`_.
   See the `reversion documentation <https://django-reversion.readthedocs.io/en/latest/api.html#multi-table-inheritance>`_
   how to deal with this by adding a ``follow`` field for the primary key.
@@ -87,17 +97,7 @@ This doesn't work, since it needs to look for revisions of the child model. Usin
 the view of the actual child model is used, similar to the way the regular change and delete views are redirected.
 
 
-django-mptt support
--------------------
-
-Combining polymorphic with django-mptt_ is certainly possible, but not straightforward.
-It involves combining both managers, querysets, models, meta-classes and admin classes
-using multiple inheritance.
-
-The django-polymorphic-tree_ package provides this out of the box.
-
-
 .. _django-reversion: https://github.com/etianen/django-reversion
 .. _django-reversion-compare: https://github.com/jedie/django-reversion-compare
 .. _django-mptt: https://github.com/django-mptt/django-mptt
-.. _django-polymorphic-tree: https://github.com/edoburu/django-polymorphic-tree
+.. _django-polymorphic-tree: https://github.com/django-polymorphic/django-polymorphic-tree
