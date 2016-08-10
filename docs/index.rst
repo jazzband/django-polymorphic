@@ -55,6 +55,7 @@ Getting started
 
    quickstart
    admin
+   formsets
    performance
 
 Advanced topics

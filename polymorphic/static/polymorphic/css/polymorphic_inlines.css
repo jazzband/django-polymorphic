@@ -1,0 +1,27 @@
+.polymorphic-add-choice {
+  position: relative;
+}
+
+.polymorphic-add-choice a:focus {
+  text-decoration: none;
+}
+
+.polymorphic-type-menu {
+  position: absolute;
+  top: 2.2em;
+  left: 0.5em;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 2px;
+  background-color: #fff;
+}
+
+.polymorphic-type-menu ul {
+  padding: 2px;
+  margin: 0;
+}
+
+.polymorphic-type-menu li {
+  list-style: none inside none;
+  padding: 4px 8px;
+}

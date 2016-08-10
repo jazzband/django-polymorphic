@@ -73,6 +73,7 @@ INSTALLED_APPS = (
 
     'polymorphic',      # needed if you want to use the polymorphic admin
     'pexp',             # this Django app is for testing and experimentation; not needed otherwise
+    'orders',
 )
 
 if django.VERSION >= (1, 7):
