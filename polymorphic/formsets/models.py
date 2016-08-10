@@ -4,7 +4,7 @@ import django
 from django import forms
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ImproperlyConfigured, ValidationError
-from django.forms.models import ModelForm, BaseModelFormSet, BaseInlineFormSet, modelform_factory, inlineformset_factory
+from django.forms.models import ModelForm, BaseModelFormSet, BaseInlineFormSet, modelform_factory, modelformset_factory, inlineformset_factory
 from django.utils.functional import cached_property
 from .utils import add_media
 
@@ -245,6 +245,62 @@ class BasePolymorphicModelFormSet(BaseModelFormSet):
     def empty_form(self):
         # TODO: make an exception when can_add_base is defined?
         raise RuntimeError("'empty_form' is not used in polymorphic formsets, use 'empty_forms' instead.")
+
+
+def polymorphic_modelformset_factory(model, formset_children,
+                                     formset=BasePolymorphicModelFormSet, fk_name=None,
+                                     # Base field
+                                     # TODO: should these fields be removed in favor of creating
+                                     # the base form as a formset child too?
+                                     form=ModelForm,
+                                     fields=None, exclude=None, extra=1, can_order=False,
+                                     can_delete=True, max_num=None, formfield_callback=None,
+                                     widgets=None, validate_max=False, localized_fields=None,
+                                     labels=None, help_texts=None, error_messages=None,
+                                     min_num=None, validate_min=False, field_classes=None, child_form_kwargs=None):
+    """
+    Construct the class for an polymorphic model formset.
+
+    All arguments are identical to :func:`~django.forms.models.modelformset_factory`,
+    with the exception of the ``formset_children`` argument.
+
+    :param formset_children: A list of all child :class:`PolymorphicFormSetChild` objects
+                             that tell the inline how to render the child model types.
+    :type formset_children: Iterable[PolymorphicFormSetChild]
+    :rtype: type
+    """
+    kwargs = {
+        'model': model,
+        'form': form,
+        'formfield_callback': formfield_callback,
+        'formset': formset,
+        'fk_name': fk_name,
+        'extra': extra,
+        'can_delete': can_delete,
+        'can_order': can_order,
+        'fields': fields,
+        'exclude': exclude,
+        'min_num': min_num,
+        'max_num': max_num,
+        'widgets': widgets,
+        'validate_min': validate_min,
+        'validate_max': validate_max,
+        'localized_fields': localized_fields,
+        'labels': labels,
+        'help_texts': help_texts,
+        'error_messages': error_messages,
+        'field_classes': field_classes,
+    }
+    FormSet = modelformset_factory(**kwargs)
+
+    child_kwargs = {
+        #'exclude': exclude,
+    }
+    if child_form_kwargs:
+        child_kwargs.update(child_form_kwargs)
+
+    FormSet.child_forms = polymorphic_child_forms_factory(formset_children, **child_kwargs)
+    return FormSet
 
 
 class BasePolymorphicInlineFormSet(BaseInlineFormSet, BasePolymorphicModelFormSet):

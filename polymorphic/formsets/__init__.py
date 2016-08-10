@@ -29,6 +29,7 @@ from .models import (
     BasePolymorphicModelFormSet,
     BasePolymorphicInlineFormSet,
     PolymorphicFormSetChild,
+    polymorphic_modelformset_factory,
     polymorphic_inlineformset_factory,
     polymorphic_child_forms_factory,
 )
@@ -43,6 +44,7 @@ __all__ = (
     'BasePolymorphicModelFormSet',
     'BasePolymorphicInlineFormSet',
     'PolymorphicFormSetChild',
+    'polymorphic_modelformset_factory',
     'polymorphic_inlineformset_factory',
     'polymorphic_child_forms_factory',
     'BaseGenericPolymorphicInlineFormSet',
