@@ -1139,10 +1139,11 @@ class PolymorphicTests(TestCase):
         self.assertEqual(result, {'cnt': 2})
 
         # aggregate using **args
-        with self.assertRaisesMessage(AssertionError, 'PolymorphicModel: annotate()/aggregate(): ___ model lookup supported for keyword arguments only'):
-            Model2A.objects.aggregate(Count('Model2B___field2'))
-
-
+        self.assertRaisesMessage(
+            AssertionError,
+            'PolymorphicModel: annotate()/aggregate(): ___ model lookup supported for keyword arguments only',
+            lambda: Model2A.objects.aggregate(Count('Model2B___field2'))
+        )
 
     @skipIf(django.VERSION < (1,8,), "This test needs Django >=1.8")
     def test_polymorphic__complex_aggregate(self):
@@ -1294,7 +1295,7 @@ def qrepr(data):
     """
     Ensure consistent repr() output for the QuerySet object.
     """
-    if isinstance(data, models.QuerySet):
+    if isinstance(data, QuerySet):
         if django.VERSION >= (1, 10):
             return repr(data)
         else:
