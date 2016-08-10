@@ -118,7 +118,7 @@ class ShowFieldBase(object):
         if self.polymorphic_showfield_deferred:
             fields = self.get_deferred_fields()
             if fields:
-                parts.append((False, u"deferred[{0}]".format(",".join(sorted(fields))), ''))
+                parts.append((False, "deferred[{0}]".format(",".join(sorted(fields))), ''))
 
         # format result
 
