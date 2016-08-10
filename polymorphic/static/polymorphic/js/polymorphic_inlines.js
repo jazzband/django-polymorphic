@@ -1,4 +1,8 @@
 /*global DateTimeShortcuts, SelectFilter*/
+
+// This is a slightly adapted version of Django's inlines.js
+// Forked for polymorphic by Diederik van der Boor
+
 /**
  * Django admin inlines
  *
@@ -17,8 +21,8 @@
  */
 (function($) {
     'use strict';
-    $.fn.formset = function(opts) {
-        var options = $.extend({}, $.fn.formset.defaults, opts);
+    $.fn.polymorphicFormset = function(opts) {
+        var options = $.extend({}, $.fn.polymorphicFormset.defaults, opts);
         var $this = $(this);
         var $parent = $this.parent();
         var updateElementIndex = function(el, prefix, ndx) {
@@ -44,23 +48,55 @@
             $(this).not("." + options.emptyCssClass).addClass(options.formCssClass);
         });
         if ($this.length && showAddButton) {
-            var addButton = options.addButton;
-            if (addButton === null) {
-                if ($this.prop("tagName") === "TR") {
-                    // If forms are laid out as table rows, insert the
-                    // "add" button in a new table row:
-                    var numCols = this.eq(-1).children().length;
-                    $parent.append('<tr class="' + options.addCssClass + '"><td colspan="' + numCols + '"><a href="#">' + options.addText + "</a></tr>");
-                    addButton = $parent.find("tr:last a");
-                } else {
-                    // Otherwise, insert it immediately after the last form:
-                    $this.filter(":last").after('<div class="' + options.addCssClass + '"><a href="#">' + options.addText + "</a></div>");
-                    addButton = $this.filter(":last").next().find("a");
-                }
+            var addContainer;
+            var menuButton;
+            var addButtons;
+
+            // For Polymorphic inlines, the add button opens a menu.
+            var menu = '<div class="polymorphic-type-menu" style="display: none;"><ul>';
+            for (var i = 0; i < options.childTypes.length; i++) {
+                var obj = options.childTypes[i];
+                menu += '<li><a href="#" data-type="' + obj.type + '">' + obj.name + '</a></li>';
             }
-            addButton.click(function(e) {
-                e.preventDefault();
-                var template = $("#" + options.prefix + "-empty");
+            menu += '</ul></div>';
+
+            if ($this.prop("tagName") === "TR") {
+                // If forms are laid out as table rows, insert the
+                // "add" button in a new table row:
+                var numCols = this.eq(-1).children().length;
+                $parent.append('<tr class="' + options.addCssClass + ' polymorphic-add-choice"><td colspan="' + numCols + '"><a href="#">' + options.addText + "</a>" + menu + "</tr>");
+                addContainer = $parent.find("tr:last > td");
+                menuButton = addContainer.children('a');
+                addButtons = addContainer.find("li a");
+            } else {
+                // Otherwise, insert it immediately after the last form:
+                $this.filter(":last").after('<div class="' + options.addCssClass + ' polymorphic-add-choice"><a href="#">' + options.addText + "</a>" + menu + "</div>");
+                addContainer = $this.filter(":last").next();
+                menuButton = addContainer.children('a');
+                addButtons = addContainer.find("li a");
+            }
+
+            menuButton.click(function(event) {
+                event.preventDefault();
+                event.stopPropagation();  // for menu hide
+                var $menu = $(event.target).next('.polymorphic-type-menu');
+
+                if(! $menu.is(':visible')) {
+                    var hideMenu = function() {
+                        $menu.slideUp(50);
+                        $(document).unbind('click', hideMenu);
+                    };
+
+                    $(document).click(hideMenu);
+                }
+
+                $menu.slideToggle(50);
+            });
+
+            addButtons.click(function(event) {
+                event.preventDefault();
+                var polymorphicType = $(event.target).attr('data-type');  // Select polymorphic type.
+                var template = $("#" + polymorphicType + "-empty");
                 var row = template.clone(true);
                 row.removeClass(options.emptyCssClass)
                 .addClass(options.formCssClass)
@@ -88,7 +124,7 @@
                 nextIndex += 1;
                 // Hide add button in case we've hit the max, except we want to add infinitely
                 if ((maxForms.val() !== '') && (maxForms.val() - totalForms.val()) <= 0) {
-                    addButton.parent().hide();
+                    addButtons.parent().hide();
                 }
                 // The delete button of each row triggers a bunch of other things
                 row.find("a." + options.deleteCssClass).click(function(e1) {
@@ -106,7 +142,7 @@
                     $("#id_" + options.prefix + "-TOTAL_FORMS").val(forms.length);
                     // Show add button again once we drop below max
                     if ((maxForms.val() === '') || (maxForms.val() - forms.length) > 0) {
-                        addButton.parent().show();
+                        addButtons.parent().show();
                     }
                     // Also, update names and ids for all remaining form controls
                     // so they remain in sequence:
@@ -130,9 +166,10 @@
     };
 
     /* Setup plugin defaults */
-    $.fn.formset.defaults = {
+    $.fn.polymorphicFormset.defaults = {
         prefix: "form",          // The form prefix for your django formset
         addText: "add another",      // Text for the add link
+        childTypes: null,           // defined by the client.
         deleteText: "remove",      // Text for the delete link
         addCssClass: "add-row",      // CSS class applied to the add link
         deleteCssClass: "delete-row",  // CSS class applied to the delete link
@@ -145,7 +182,7 @@
 
 
     // Tabular inlines ---------------------------------------------------------
-    $.fn.tabularFormset = function(options) {
+    $.fn.tabularPolymorphicFormset = function(options) {
         var $rows = $(this);
         var alternatingRows = function(row) {
             $($rows.selector).not(".add-row").removeClass("row1 row2")
@@ -191,9 +228,10 @@
             });
         };
 
-        $rows.formset({
+        $rows.polymorphicFormset({
             prefix: options.prefix,
             addText: options.addText,
+            childTypes: options.childTypes,
             formCssClass: "dynamic-" + options.prefix,
             deleteCssClass: "inline-deletelink",
             deleteText: options.deleteText,
@@ -212,7 +250,7 @@
     };
 
     // Stacked inlines ---------------------------------------------------------
-    $.fn.stackedFormset = function(options) {
+    $.fn.stackedPolymorphicFormset = function(options) {
         var $rows = $(this);
         var updateInlineLabel = function(row) {
             $($rows.selector).find(".inline_label").each(function(i) {
@@ -258,9 +296,10 @@
             });
         };
 
-        $rows.formset({
+        $rows.polymorphicFormset({
             prefix: options.prefix,
             addText: options.addText,
+            childTypes: options.childTypes,
             formCssClass: "dynamic-" + options.prefix,
             deleteCssClass: "inline-deletelink",
             deleteText: options.deleteText,
@@ -279,15 +318,15 @@
     };
 
     $(document).ready(function() {
-        $(".js-inline-admin-formset").each(function() {
+        $(".js-inline-polymorphic-admin-formset").each(function() {
             var data = $(this).data(),
                 inlineOptions = data.inlineFormset;
             switch(data.inlineType) {
             case "stacked":
-                $(inlineOptions.name + "-group .inline-related").stackedFormset(inlineOptions.options);
+                $(inlineOptions.name + "-group .inline-related").stackedPolymorphicFormset(inlineOptions.options);
                 break;
             case "tabular":
-                $(inlineOptions.name + "-group .tabular.inline-related tbody tr").tabularFormset(inlineOptions.options);
+                $(inlineOptions.name + "-group .tabular.inline-related tbody tr").tabularPolymorphicFormset(inlineOptions.options);
                 break;
             }
         });

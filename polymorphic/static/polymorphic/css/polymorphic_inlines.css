@@ -1,12 +1,12 @@
-.add-row-choice {
+.polymorphic-add-choice {
   position: relative;
 }
 
-.add-row-choice a:focus {
+.polymorphic-add-choice a:focus {
   text-decoration: none;
 }
 
-.add-row .inline-type-choice {
+.polymorphic-type-menu {
   position: absolute;
   top: 2.2em;
   left: 0.5em;
@@ -16,12 +16,12 @@
   background-color: #fff;
 }
 
-.add-row .inline-type-choice ul {
+.polymorphic-type-menu ul {
   padding: 2px;
   margin: 0;
 }
 
-.add-row .inline-type-choice li {
+.polymorphic-type-menu li {
   list-style: none inside none;
   padding: 4px 8px;
 }

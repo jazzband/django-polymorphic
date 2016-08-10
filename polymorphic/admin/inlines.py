@@ -31,7 +31,7 @@ class PolymorphicInlineModelAdmin(InlineModelAdmin):
     #: This can be redefined for subclasses.
     polymorphic_media = Media(
         js=(
-            'polymorphic/js/jquery.django-inlines.js',
+            'polymorphic/js/polymorphic_inlines.js',
         ),
         css={
             'all': (
