@@ -566,33 +566,33 @@ class PolymorphicTests(TestCase):
 
         self.assertNotIn('field1', objects_deferred[0].__dict__, 'field1 was not deferred (using defer())')
         self.assertEqual(repr(objects_deferred[0]),
-            '<Model2A: id 1, field1 (CharField), deferred[field1]>')
+                         '<Model2A: id 1, field1 (CharField), deferred[field1]>')
         self.assertEqual(repr(objects_deferred[1]),
-            '<Model2B: id 2, field1 (CharField), field2 (CharField), deferred[field1]>')
+                         '<Model2B: id 2, field1 (CharField), field2 (CharField), deferred[field1]>')
         self.assertEqual(repr(objects_deferred[2]),
-            '<Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField), deferred[field1]>')
+                         '<Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField), deferred[field1]>')
         self.assertEqual(repr(objects_deferred[3]),
-            '<Model2D: id 4, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField), deferred[field1]>')
+                         '<Model2D: id 4, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField), deferred[field1]>')
 
         objects_only = Model2A.objects.only('pk', 'polymorphic_ctype', 'field1')
 
         self.assertIn('field1', objects_only[0].__dict__,
-            'qs.only("field1") was used, but field1 was incorrectly deferred')
+                      'qs.only("field1") was used, but field1 was incorrectly deferred')
         self.assertIn('field1', objects_only[3].__dict__,
-            'qs.only("field1") was used, but field1 was incorrectly deferred'
-            ' on a child model')
+                      'qs.only("field1") was used, but field1 was incorrectly deferred'
+                      ' on a child model')
         self.assertNotIn('field4', objects_only[3].__dict__,
-            'field4 was not deferred (using only())')
+                         'field4 was not deferred (using only())')
         self.assertEqual(repr(objects_only[0]),
-            '<Model2A: id 1, field1 (CharField)>')
+                         '<Model2A: id 1, field1 (CharField)>')
         self.assertEqual(repr(objects_only[1]),
-            '<Model2B: id 2, field1 (CharField), field2 (CharField), deferred[field2]>')
+                         '<Model2B: id 2, field1 (CharField), field2 (CharField), deferred[field2]>')
         self.assertEqual(repr(objects_only[2]),
-            '<Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField), '
-            'deferred[field2,field3,model2a_ptr_id]>')
+                         '<Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField), '
+                         'deferred[field2,field3,model2a_ptr_id]>')
         self.assertEqual(repr(objects_only[3]),
-            '<Model2D: id 4, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField), '
-            'deferred[field2,field3,field4,model2a_ptr_id,model2b_ptr_id]>')
+                         '<Model2D: id 4, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField), '
+                         'deferred[field2,field3,field4,model2a_ptr_id,model2b_ptr_id]>')
 
     # A bug in Django 1.4 prevents using defer across reverse relations
     # <https://code.djangoproject.com/ticket/14694>. Since polymorphic
@@ -604,15 +604,15 @@ class PolymorphicTests(TestCase):
 
         objects_deferred_field4 = Model2A.objects.defer('Model2D___field4')
         self.assertNotIn('field4', objects_deferred_field4[3].__dict__,
-            'field4 was not deferred (using defer(), traversing inheritance)')
+                         'field4 was not deferred (using defer(), traversing inheritance)')
         self.assertEqual(repr(objects_deferred_field4[0]),
-            '<Model2A: id 1, field1 (CharField)>')
+                         '<Model2A: id 1, field1 (CharField)>')
         self.assertEqual(repr(objects_deferred_field4[1]),
-            '<Model2B: id 2, field1 (CharField), field2 (CharField)>')
+                         '<Model2B: id 2, field1 (CharField), field2 (CharField)>')
         self.assertEqual(repr(objects_deferred_field4[2]),
-            '<Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)>')
+                         '<Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)>')
         self.assertEqual(repr(objects_deferred_field4[3]),
-            '<Model2D: id 4, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField), deferred[field4]>')
+                         '<Model2D: id 4, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField), deferred[field4]>')
 
         objects_only_field4 = Model2A.objects.only(
             'polymorphic_ctype', 'field1',
@@ -620,13 +620,13 @@ class PolymorphicTests(TestCase):
             'Model2C___id', 'Model2C___field3', 'Model2C___model2b_ptr',
             'Model2D___id', 'Model2D___model2c_ptr')
         self.assertEqual(repr(objects_only_field4[0]),
-            '<Model2A: id 1, field1 (CharField)>')
+                         '<Model2A: id 1, field1 (CharField)>')
         self.assertEqual(repr(objects_only_field4[1]),
-            '<Model2B: id 2, field1 (CharField), field2 (CharField)>')
+                         '<Model2B: id 2, field1 (CharField), field2 (CharField)>')
         self.assertEqual(repr(objects_only_field4[2]),
-            '<Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)>')
+                         '<Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)>')
         self.assertEqual(repr(objects_only_field4[3]),
-            '<Model2D: id 4, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField), deferred[field4]>')
+                         '<Model2D: id 4, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField), deferred[field4]>')
 
 
     def test_manual_get_real_instance(self):
