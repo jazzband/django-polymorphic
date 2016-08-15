@@ -1,14 +1,26 @@
 Changelog
 =========
 
-Changes in git
---------------
+Version 1.0b1 (2016-08-10)
+--------------------------
 
-* Added admin inline support for polymorphic models.
-* Added formset support for polymorphic models.
-* Added support for polymorphic queryset limiting effects on proxy models.
-* Added support for multiple databases with ``.using()`` method and ``using=..`` keyword argument.
+* Added Django 1.10 support.
+* Added **admin inline** support for polymorphic models.
+* Added **formset** support for polymorphic models.
+* Added support for polymorphic queryset limiting effects on *proxy models*.
+* Added support for multiple databases with the ``.using()`` method and ``using=..`` keyword argument.
 * Fixed modifying passed ``Q()`` objects in place.
+
+.. note::
+   This version provides a new method for registering the admin models.
+   While the old method is still supported, we recommend to upgrade your code.
+   The new registration style improves the compatibility in the Django admin.
+
+   * Register each ``PolymorphicChildModelAdmin`` with the admin site too.
+   * The ``child_models`` attribute of the ``PolymorphicParentModelAdmin`` should be a flat list of all child models.
+     The ``(model, admin)`` tuple is obsolete.
+
+   Also note that proxy models will now limit the queryset too.
 
 
 Version 0.9.2 (2016-05-04)
