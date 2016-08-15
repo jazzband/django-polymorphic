@@ -22,6 +22,10 @@ class PolymorphicInlineAdminForm(InlineAdminForm):
     def polymorphic_ctype_field(self):
         return AdminField(self.form, 'polymorphic_ctype', False)
 
+    @property
+    def is_empty(self):
+        return '__prefix__' in self.form.prefix
+
 
 class PolymorphicInlineAdminFormSet(InlineAdminFormSet):
     """
