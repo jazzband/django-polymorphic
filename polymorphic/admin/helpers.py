@@ -5,7 +5,6 @@ This makes sure that admin fieldsets/layout settings are exported to the templat
 """
 import json
 
-import django
 from django.contrib.admin.helpers import InlineAdminFormSet, InlineAdminForm, AdminField
 from django.utils.encoding import force_text
 from django.utils.text import capfirst
