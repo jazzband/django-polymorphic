@@ -21,6 +21,7 @@ from django.db import models
 from django.contrib.contenttypes.models import ContentType
 from django.utils import six
 
+from polymorphic.contrib.guardian import get_polymorphic_base_content_type
 from polymorphic.models import PolymorphicModel
 from polymorphic.managers import PolymorphicManager
 from polymorphic.query import PolymorphicQuerySet
@@ -194,6 +195,7 @@ class ModelWithMyManagerNoDefault(ShowFieldTypeAndContent, Model2A):
     objects = PolymorphicManager()
     my_objects = MyManager()
     field4 = models.CharField(max_length=10)
+
 
 class ModelWithMyManagerDefault(ShowFieldTypeAndContent, Model2A):
     my_objects = MyManager()
@@ -1189,6 +1191,24 @@ class PolymorphicTests(TestCase):
         result = Model2B.objects.annotate(val=Concat('field1', 'field2'))
         self.assertEqual(list(result), [])
 
+    def test_contrib_guardian(self):
+        # Regular Django inheritance should return the child model content type.
+        obj = PlainC()
+        ctype = get_polymorphic_base_content_type(obj)
+        self.assertEqual(ctype.name, 'plain c')
+
+        ctype = get_polymorphic_base_content_type(PlainC)
+        self.assertEqual(ctype.name, 'plain c')
+
+        # Polymorphic inheritance should return the parent model content type.
+        obj = Model2D()
+        ctype = get_polymorphic_base_content_type(obj)
+        self.assertEqual(ctype.name, 'model2a')
+
+        ctype = get_polymorphic_base_content_type(Model2D)
+        self.assertEqual(ctype.name, 'model2a')
+
+
 class RegressionTests(TestCase):
 
     def test_for_query_result_incomplete_with_inheritance(self):
@@ -1209,6 +1229,7 @@ class RegressionTests(TestCase):
 
         expected_queryset = [bottom]
         self.assertQuerysetEqual(Bottom.objects.all(), [repr(r) for r in expected_queryset])
+
 
 class MultipleDatabasesTests(TestCase):
     multi_db = True

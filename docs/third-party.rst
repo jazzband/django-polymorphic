@@ -97,7 +97,16 @@ This doesn't work, since it needs to look for revisions of the child model. Usin
 the view of the actual child model is used, similar to the way the regular change and delete views are redirected.
 
 
+django-guardian support
+-----------------------
+
+You can enable the content type of the base model to be used for the object levels permissions by setting the
+django-guardian_ option `GUARDIAN_GET_CONTENT_TYPE` to `polymorphic.contrib.get_polymorphic_base_content_type`. Read
+more about this option in the `django-guardian documentation <https://django-guardian.readthedocs.io/en/latest/configuration.html#guardian-get-content-type>`_.
+
+
 .. _django-reversion: https://github.com/etianen/django-reversion
 .. _django-reversion-compare: https://github.com/jedie/django-reversion-compare
 .. _django-mptt: https://github.com/django-mptt/django-mptt
 .. _django-polymorphic-tree: https://github.com/django-polymorphic/django-polymorphic-tree
+.. _django-guardian: https://github.com/django-guardian/django-guardian
