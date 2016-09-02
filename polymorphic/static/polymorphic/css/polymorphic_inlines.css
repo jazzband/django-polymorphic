@@ -25,3 +25,8 @@
   list-style: none inside none;
   padding: 4px 8px;
 }
+
+.inline-related.empty-form {
+  /* needed for grapelli, which uses grp-empty-form */
+  display: none;
+}
