@@ -42,7 +42,6 @@ setup(
         ],
     },
 
-    install_requires=['setuptools'],
     test_suite='runtests',
 
     classifiers=[
