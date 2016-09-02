@@ -36,11 +36,7 @@ setup(
     maintainer_email='tribaal@gmail.com',
 
     packages=find_packages(),
-    package_data={
-        'polymorphic': [
-            'templates/admin/polymorphic/*.html',
-        ],
-    },
+    include_package_data=True,
 
     test_suite='runtests',
 

@@ -3,4 +3,4 @@ include LICENSE
 include DOCS.rst
 include CHANGES.rst
 recursive-include polymorphic/static *.js *.css
-recursive-include polymorphic/templates *
+recursive-include polymorphic/templates *.html
