@@ -1,8 +1,8 @@
 Changelog
 =========
 
-Version 1.0b1 (2016-08-10)
---------------------------
+Version 1.0 (2016-09-02)
+------------------------
 
 * Added Django 1.10 support.
 * Added **admin inline** support for polymorphic models.
@@ -21,6 +21,14 @@ Version 1.0b1 (2016-08-10)
      The ``(model, admin)`` tuple is obsolete.
 
    Also note that proxy models will now limit the queryset too.
+
+
+Fixed since 1.0b1 (2016-08-10)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Fix formset empty-form display when there are form errors.
+* Fix formset empty-form hiding for Grappelli_.
+* Fixed packing ``admin/polymorphic/edit_inline/stacked.html`` in the wheel format.
 
 
 Version 0.9.2 (2016-05-04)
