@@ -1,5 +1,6 @@
 .polymorphic-add-choice {
   position: relative;
+  clear: left;
 }
 
 .polymorphic-add-choice a:focus {
