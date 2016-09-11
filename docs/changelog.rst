@@ -1,6 +1,12 @@
 Changelog
 =========
 
+Version 1.0.1 (2016-09-11)
+--------------------------
+
+* Fixed compatibility with manager changes in Django 1.10.1
+
+
 Version 1.0 (2016-09-02)
 ------------------------
 
