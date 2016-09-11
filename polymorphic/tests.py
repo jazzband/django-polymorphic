@@ -990,11 +990,16 @@ class PolymorphicTests(TestCase):
         # by choice of MRO, should be MyManager from MROBase1.
         self.assertIs(type(MRODerived.objects), MyManager)
 
-        # check for correct default manager
-        self.assertIs(type(MROBase1._default_manager), MyManager)
+        if django.VERSION < (1, 10, 1):
+            # The change for https://code.djangoproject.com/ticket/27073
+            # in https://github.com/django/django/commit/d4eefc7e2af0d93283ed1c03e0af0a482982b6f0
+            # removes the assignment to _default_manager
 
-        # Django vanilla inheritance does not inherit MyManager as _default_manager here
-        self.assertIs(type(MROBase2._default_manager), MyManager)
+            # check for correct default manager
+            self.assertIs(type(MROBase1._default_manager), MyManager)
+
+            # Django vanilla inheritance does not inherit MyManager as _default_manager here
+            self.assertIs(type(MROBase2._default_manager), MyManager)
 
     def test_queryset_assignment(self):
         # This is just a consistency check for now, testing standard Django behavior.
