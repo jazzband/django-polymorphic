@@ -4,6 +4,7 @@
 """
 from __future__ import absolute_import
 
+import os
 import sys
 import inspect
 
@@ -18,6 +19,8 @@ from .query import PolymorphicQuerySet
 # PolymorphicQuerySet Q objects (and filter()) support these additional key words.
 # These are forbidden as field names (a descriptive exception is raised)
 POLYMORPHIC_SPECIAL_Q_KWORDS = ['instance_of', 'not_instance_of']
+
+DUMPDATA_COMMAND = os.path.join('django', 'core', 'management', 'commands', 'dumpdata.py')
 
 try:
     from django.db.models.manager import AbstractManagerDescriptor  # Django 1.5
@@ -244,7 +247,7 @@ class PolymorphicModelBase(ModelBase):
         def __getattribute__(self, name):
             if name == '_default_manager':
                 frm = inspect.stack()[1]  # frm[1] is caller file name, frm[3] is caller function name
-                if 'django/core/management/commands/dumpdata.py' in frm[1]:
+                if DUMPDATA_COMMAND in frm[1]:
                     return self.base_objects
                 # caller_mod_name = inspect.getmodule(frm[0]).__name__  # does not work with python 2.4
                 # if caller_mod_name == 'django.core.management.commands.dumpdata':
