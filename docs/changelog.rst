@@ -65,6 +65,7 @@ Version 0.9 (2016-02-17)
 * Fix Django 1.9 handling of custom URLs.
   The new change-URL redirect overlapped any custom URLs defined in the child admin.
 * Fix Django 1.9 support in the admin.
+* Fix setting an extra custom manager without overriding the ``_default_manager``.
 * Fix missing ``history_view()`` redirection to the child admin, which is important for django-reversion_ support.
   See the documentation for hints for :ref:`django-reversion-compare support <django-reversion-compare-support>`.
 
