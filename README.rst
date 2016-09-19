@@ -63,6 +63,15 @@ That's what this library is designed for!
 
 For more information, see the `documentation at Read the Docs <https://django-polymorphic.readthedocs.io/>`_.
 
+Installation
+------------
+
+Install using ``pip``\ ...
+
+.. code:: bash
+
+    $ pip install django-polymorphic
+
 License
 =======
 
