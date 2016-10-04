@@ -180,7 +180,7 @@ class BasePolymorphicModelFormSet(BaseModelFormSet):
                 # Extra forms, cycle between all types
                 # TODO: take the 'extra' value of each child formset into account.
                 total_known = len(self.queryset_data)
-                child_models = self.child_forms.keys()
+                child_models = list(self.child_forms.keys())
                 model = child_models[(i - total_known) % len(child_models)]
 
         form_class = self.get_form_class(model)
