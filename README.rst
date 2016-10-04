@@ -1,7 +1,7 @@
 .. image::  https://travis-ci.org/django-polymorphic/django-polymorphic.png?branch=master
     :target: http://travis-ci.org/django-polymorphic/django-polymorphic
-.. image:: https://img.shields.io/pypi/v/django-polymorphic-tree.svg
-    :target: https://pypi.python.org/pypi/django-polymorphic-tree/
+.. image:: https://img.shields.io/pypi/v/django-polymorphic.svg
+    :target: https://pypi.python.org/pypi/django-polymorphic/
 .. image:: https://img.shields.io/codecov/c/github/django-polymorphic/django-polymorphic/master.svg
     :target: https://codecov.io/github/django-polymorphic/django-polymorphic?branch=master
 
@@ -62,6 +62,15 @@ While taking this in mind, there are valid reasons for using subclassed models.
 That's what this library is designed for!
 
 For more information, see the `documentation at Read the Docs <https://django-polymorphic.readthedocs.io/>`_.
+
+Installation
+------------
+
+Install using ``pip``\ ...
+
+.. code:: bash
+
+    $ pip install django-polymorphic
 
 License
 =======
