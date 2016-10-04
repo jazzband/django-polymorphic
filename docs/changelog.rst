@@ -1,6 +1,17 @@
 Changelog
 =========
 
+Changes in git
+--------------
+
+* Added helper function for django-guardian_; add
+  ``GUARDIAN_GET_CONTENT_TYPE = 'polymorphic.contrib.guardian.get_polymorphic_base_content_type'``
+  to the project settings to let guardian handles inherited models properly.
+* Fixed ``polymorphic_modelformset_factory()`` usage.
+* Fixed Python 3 bug for inline formsets.
+* Fixed CSS for Grappelli, so model choice menu properly overlaps.
+
+
 Version 1.0.1 (2016-09-11)
 --------------------------
 
@@ -256,6 +267,7 @@ It supports Django 1.1 up till 1.4 and Python 2.4 up till 2.7.
 For a detailed list of it's changes, see the :doc:`archived changelog <changelog_archive>`.
 
 .. _Grappelli: http://grappelliproject.com/
+.. _django-guardian: https://github.com/django-guardian/django-guardian
 .. _django-parler: https://github.com/django-parler/django-parler
 .. _django-reversion: https://github.com/etianen/django-reversion
 .. _django-reversion-compare: https://github.com/jedie/django-reversion-compare
