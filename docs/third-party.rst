@@ -100,9 +100,15 @@ the view of the actual child model is used, similar to the way the regular chang
 django-guardian support
 -----------------------
 
-You can enable the content type of the base model to be used for the object levels permissions by setting the
-django-guardian_ option `GUARDIAN_GET_CONTENT_TYPE` to `polymorphic.contrib.get_polymorphic_base_content_type`. Read
-more about this option in the `django-guardian documentation <https://django-guardian.readthedocs.io/en/latest/configuration.html#guardian-get-content-type>`_.
+You can enable django-guardian_ to use the base model for object level permissions by adding this option to your
+settings:
+
+.. code-block:: python
+
+    GUARDIAN_GET_CONTENT_TYPE = 'polymorphic.contrib.guardian.get_polymorphic_base_content_type'
+
+This option requires django-guardian_ >= 1.4.6. Details about how this option works are available in the
+`django-guardian documentation <https://django-guardian.readthedocs.io/en/latest/configuration.html#guardian-get-content-type>`_.
 
 
 .. _django-reversion: https://github.com/etianen/django-reversion
