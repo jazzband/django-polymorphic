@@ -248,7 +248,7 @@ class BasePolymorphicModelFormSet(BaseModelFormSet):
 
 
 def polymorphic_modelformset_factory(model, formset_children,
-                                     formset=BasePolymorphicModelFormSet, fk_name=None,
+                                     formset=BasePolymorphicModelFormSet,
                                      # Base field
                                      # TODO: should these fields be removed in favor of creating
                                      # the base form as a formset child too?
@@ -274,7 +274,6 @@ def polymorphic_modelformset_factory(model, formset_children,
         'form': form,
         'formfield_callback': formfield_callback,
         'formset': formset,
-        'fk_name': fk_name,
         'extra': extra,
         'can_delete': can_delete,
         'can_order': can_order,
@@ -307,7 +306,7 @@ class BasePolymorphicInlineFormSet(BaseInlineFormSet, BasePolymorphicModelFormSe
     """
     Polymorphic formset variation for inline formsets
     """
-    
+
     def _construct_form(self, i, **kwargs):
         return super(BasePolymorphicInlineFormSet, self)._construct_form(i, **kwargs)
 
