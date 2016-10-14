@@ -1,8 +1,8 @@
 Changelog
 =========
 
-Changes in git
---------------
+Version 1.0.2 (2016-10-14)
+--------------------------
 
 * Added helper function for django-guardian_; add
   ``GUARDIAN_GET_CONTENT_TYPE = 'polymorphic.contrib.guardian.get_polymorphic_base_content_type'``

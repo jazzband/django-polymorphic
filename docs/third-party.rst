@@ -100,8 +100,10 @@ the view of the actual child model is used, similar to the way the regular chang
 django-guardian support
 -----------------------
 
-You can enable django-guardian_ to use the base model for object level permissions by adding this option to your
-settings:
+.. versionadded:: 1.0.2
+
+You can configure django-guardian_ to use the base model for object level permissions.
+Add this option to your settings:
 
 .. code-block:: python
 
