@@ -10,6 +10,7 @@ Changes in git
 * Fixed ``polymorphic_modelformset_factory()`` usage.
 * Fixed Python 3 bug for inline formsets.
 * Fixed CSS for Grappelli, so model choice menu properly overlaps.
+* Fixed ``ParentAdminNotRegistered`` exception for models that are registered via a proxy model instead of the real base model.
 
 
 Version 1.0.1 (2016-09-11)

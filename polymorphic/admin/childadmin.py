@@ -126,20 +126,17 @@ class PolymorphicChildModelAdmin(admin.ModelAdmin):
         try:
             return self.admin_site._registry[parent_model]
         except KeyError:
-            # Admin is not registered for polymorphic_ctype model, but it may
-            # be registered for a model in the class ancestry between this
-            # model and the root parent one.
+            # Admin is not registered for polymorphic_ctype model, but perhaps it's registered
+            # for a intermediate proxy model, between the parent_model and this model.
             for klass in inspect.getmro(self.model):
-                # Ignore model ancestors that are not also subclasses of the
-                # target ctype model
                 if not issubclass(klass, parent_model):
-                    continue
-                # Fetch admin instance for model class (may return None)
+                    continue  # e.g. found a mixin.
+
+                # Fetch admin instance for model class, see if it's a possible candidate.
                 model_admin = self.admin_site._registry.get(klass)
-                # Ignore admin (or None) that isn't a polymorphic parent admin
-                if not isinstance(model_admin, PolymorphicParentModelAdmin):
-                    continue
-                return model_admin  # Success!
+                if model_admin is not None and isinstance(model_admin, PolymorphicParentModelAdmin):
+                    return model_admin  # Success!
+
             # If we get this far without returning there is no admin available
             raise ParentAdminNotRegistered("No parent admin was registered for a '{0}' model.".format(parent_model))
 
