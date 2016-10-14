@@ -1,12 +1,15 @@
 """
 The child admin displays the change/delete view of the subclass model.
 """
+import inspect
+
 from django.contrib import admin
 from django.core.urlresolvers import resolve
 from django.utils import six
 from django.utils.translation import ugettext_lazy as _
 
 from .helpers import PolymorphicInlineSupportMixin
+from ..admin import PolymorphicParentModelAdmin
 
 
 class ParentAdminNotRegistered(RuntimeError):
@@ -123,6 +126,21 @@ class PolymorphicChildModelAdmin(admin.ModelAdmin):
         try:
             return self.admin_site._registry[parent_model]
         except KeyError:
+            # Admin is not registered for polymorphic_ctype model, but it may
+            # be registered for a model in the class ancestry between this
+            # model and the root parent one.
+            for klass in inspect.getmro(self.model):
+                # Ignore model ancestors that are not also subclasses of the
+                # target ctype model
+                if not issubclass(klass, parent_model):
+                    continue
+                # Fetch admin instance for model class (may return None)
+                model_admin = self.admin_site._registry.get(klass)
+                # Ignore admin (or None) that isn't a polymorphic parent admin
+                if not isinstance(model_admin, PolymorphicParentModelAdmin):
+                    continue
+                return model_admin  # Success!
+            # If we get this far without returning there is no admin available
             raise ParentAdminNotRegistered("No parent admin was registered for a '{0}' model.".format(parent_model))
 
     def response_post_save_add(self, request, obj):
