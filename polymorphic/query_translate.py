@@ -212,12 +212,18 @@ def translate_polymorphic_field_path(queryset_model, field_path):
     # 'modelb__modelc" is returned
     def _create_base_path(baseclass, myclass):
         bases = myclass.__bases__
+
+        def _name():
+            return next(
+                f for f in myclass._meta.get_fields() if f.one_to_one and f.remote_field.parent_link
+            ).related_query_name()
+
         for b in bases:
             if b == baseclass:
-                return myclass.__name__.lower()
+                return _name()
             path = _create_base_path(baseclass, b)
             if path:
-                return path + '__' + myclass.__name__.lower()
+                return path + '__' + _name()
         return ''
 
     basepath = _create_base_path(queryset_model, model)
