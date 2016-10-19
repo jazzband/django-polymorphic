@@ -428,6 +428,14 @@ class DateModel(PolymorphicModel):
     date = models.DateTimeField()
 
 
+class PrefetchRelatedA(PolymorphicModel):
+    pass
+
+
+class PrefetchRelatedB(models.Model):
+    links = models.ManyToManyField(PrefetchRelatedA)
+
+
 class PolymorphicTests(TestCase):
     """
     The test suite
@@ -1324,6 +1332,17 @@ class MultipleDatabasesTests(TestCase):
 
         # Ensure no queries are made using the default database.
         self.assertNumQueries(0, func)
+
+    def test_prefetch_related_behaves_normally_with_polymorphic_model(self):
+        """See #68"""
+        b1 = PrefetchRelatedB.objects.create()
+        b2 = PrefetchRelatedB.objects.create()
+        a = b1.links.create()
+        b2.links.add(a)
+
+        qs = PrefetchRelatedB.objects.prefetch_related('links')
+        for obj in qs:
+            self.assertEqual(len(obj.links.all()), 1)
 
 
 def qrepr(data):
