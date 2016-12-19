@@ -1071,7 +1071,6 @@ class PolymorphicTests(TestCase):
 
     def test_content_types_for_proxy_models(self):
         """Checks if ContentType is capable of returning proxy models."""
-        from django.db.models import Model
         from django.contrib.contenttypes.models import ContentType
 
         ct = ContentType.objects.get_for_model(ProxyChild, for_concrete_model=False)

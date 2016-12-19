@@ -8,13 +8,11 @@ from django.core.urlresolvers import resolve
 from django.utils import six
 from django.utils.translation import ugettext_lazy as _
 
-from .helpers import PolymorphicInlineSupportMixin
 from ..admin import PolymorphicParentModelAdmin
 
 
 class ParentAdminNotRegistered(RuntimeError):
     "The admin site for the model is not registered."
-    pass
 
 
 class PolymorphicChildModelAdmin(admin.ModelAdmin):

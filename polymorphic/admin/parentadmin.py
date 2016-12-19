@@ -34,12 +34,10 @@ if sys.version_info[0] >= 3:
 
 class RegistrationClosed(RuntimeError):
     "The admin model can't be registered anymore at this point."
-    pass
 
 
 class ChildAdminNotRegistered(RuntimeError):
     "The admin site for the model is not registered."
-    pass
 
 
 class PolymorphicParentModelAdmin(admin.ModelAdmin):
