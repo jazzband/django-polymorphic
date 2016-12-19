@@ -136,7 +136,7 @@ class ShowFieldBase(object):
 
             if (self.polymorphic_showfield_max_line_width
                     and xpos + len(p) > self.polymorphic_showfield_max_line_width
-                    and possible_line_break_pos != None):
+                    and possible_line_break_pos is not None):
                 rest = out[possible_line_break_pos:]
                 out = out[:possible_line_break_pos]
                 out += '\n' + indentstr + rest

@@ -225,7 +225,7 @@ class PolymorphicInlineModelAdmin(InlineModelAdmin):
                 # InlineModelAdmin doesn't define its own.
                 exclude.extend(self.form._meta.exclude)
 
-            #can_delete = self.can_delete and self.has_delete_permission(request, obj)
+            # can_delete = self.can_delete and self.has_delete_permission(request, obj)
             defaults = {
                 "form": self.form,
                 "fields": fields,

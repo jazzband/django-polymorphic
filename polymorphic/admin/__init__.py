@@ -41,6 +41,7 @@ __all__ = (
     'PolymorphicInlineAdminFormSet',
     'PolymorphicInlineSupportMixin',
     'PolymorphicInlineModelAdmin',
+    'StackedPolymorphicInline',
     'GenericPolymorphicInlineModelAdmin',
     'GenericStackedPolymorphicInline',
 )

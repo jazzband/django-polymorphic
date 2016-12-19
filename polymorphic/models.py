@@ -187,7 +187,7 @@ class PolymorphicModel(six.with_metaclass(PolymorphicModelBase, models.Model)):
         for name, model in subclasses_and_superclasses_accessors.items():
             orig_accessor = getattr(self.__class__, name, None)
             if type(orig_accessor) in [ReverseOneToOneDescriptor, ForwardManyToOneDescriptor]:
-                #print >>sys.stderr, '---------- replacing', name, orig_accessor, '->', model
+                # print >>sys.stderr, '---------- replacing', name, orig_accessor, '->', model
                 setattr(self.__class__, name, property(create_accessor_function_for_model(model, name)))
 
     def _get_inheritance_relation_fields_and_models(self):

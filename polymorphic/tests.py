@@ -6,17 +6,10 @@ from __future__ import print_function
 import uuid
 import re
 import django
-try:
-    from unittest import skipIf
-except ImportError:
-    # python<2.7
-    from django.utils.unittest import skipIf
 from django.db.models.query import QuerySet
 
 from django.test import TestCase
 from django.db.models import Q, Count
-if django.VERSION >= (1, 8):
-    from django.db.models import Case, When
 from django.db import models
 from django.contrib.contenttypes.models import ContentType
 from django.utils import six
@@ -26,6 +19,16 @@ from polymorphic.models import PolymorphicModel
 from polymorphic.managers import PolymorphicManager
 from polymorphic.query import PolymorphicQuerySet
 from polymorphic.showfields import ShowFieldContent, ShowFieldType, ShowFieldTypeAndContent
+
+try:
+    from unittest import skipIf
+except ImportError:
+    # python<2.7
+    from django.utils.unittest import skipIf
+
+if django.VERSION >= (1, 8):
+    from django.db.models import Case, When
+
 try:
     from django.db.models import UUIDField
 except ImportError:

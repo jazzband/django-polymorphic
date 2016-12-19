@@ -29,7 +29,7 @@ def transmogrify(cls, obj):
     """
     Upcast a class to a different type without asking questions.
     """
-    if not '__init__' in obj.__dict__:
+    if '__init__' not in obj.__dict__:
         # Just assign __class__ to a different value.
         new = obj
         new.__class__ = cls
@@ -317,7 +317,7 @@ class PolymorphicQuerySet(QuerySet):
             ordered_id_list.append(base_object.pk)
 
             # check if id of the result object occurres more than once - this can happen e.g. with base_objects.extra(tables=...)
-            if not base_object.pk in base_result_objects_by_id:
+            if base_object.pk not in base_result_objects_by_id:
                 base_result_objects_by_id[base_object.pk] = base_object
 
                 if base_object.polymorphic_ctype_id == self_model_class_id:

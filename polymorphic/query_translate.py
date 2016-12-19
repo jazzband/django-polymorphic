@@ -6,6 +6,7 @@ from __future__ import absolute_import
 
 import copy
 import django
+from functools import reduce
 from django.db import models
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import Q, FieldDoesNotExist
@@ -24,9 +25,6 @@ else:
     # As of Django 1.8 the base class serves everything. RelatedObject is gone.
     from django.db.models.fields.related import ForeignObjectRel
     REL_FIELD_CLASSES = (RelatedField, ForeignObjectRel)
-
-
-from functools import reduce
 
 
 ###################################################################################
@@ -128,7 +126,7 @@ def _translate_polymorphic_filter_definition(queryset_model, field_path, field_v
         return _create_model_filter_Q(field_val, using=using)
     elif field_path == 'not_instance_of':
         return _create_model_filter_Q(field_val, not_instance_of=True, using=using)
-    elif not '___' in field_path:
+    elif '___' not in field_path:
         return None  # no change
 
     # filter expression contains '___' (i.e. filter for polymorphic field)
