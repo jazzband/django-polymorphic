@@ -167,7 +167,6 @@ class PolymorphicChildModelAdmin(admin.ModelAdmin):
             context.update(extra_context)
         return super(PolymorphicChildModelAdmin, self).history_view(request, object_id, extra_context=context)
 
-
     # ---- Extra: improving the form/fieldset default display ----
 
     def get_fieldsets(self, request, obj=None):

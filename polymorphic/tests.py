@@ -432,6 +432,7 @@ class PolymorphicTests(TestCase):
     """
     The test suite
     """
+
     def test_annotate_aggregate_order(self):
         # create a blog of type BlogA
         # create two blog entries in BlogA
@@ -629,7 +630,6 @@ class PolymorphicTests(TestCase):
                          '<Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)>')
         self.assertEqual(repr(objects_only_field4[3]),
                          '<Model2D: id 4, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField), deferred[field4]>')
-
 
     def test_manual_get_real_instance(self):
         self.create_model2abcd()
@@ -1161,7 +1161,7 @@ class PolymorphicTests(TestCase):
             lambda: Model2A.objects.aggregate(Count('Model2B___field2'))
         )
 
-    @skipIf(django.VERSION < (1,8,), "This test needs Django >=1.8")
+    @skipIf(django.VERSION < (1, 8,), "This test needs Django >=1.8")
     def test_polymorphic__complex_aggregate(self):
         """ test (complex expression on) aggregate (should work for annotate either) """
 
@@ -1180,14 +1180,14 @@ class PolymorphicTests(TestCase):
         # we have to set the defaul alias or django won't except a complex expression
         # on aggregate/annotate
         def ComplexAgg(expression):
-            complexagg = Count(expression)*10
+            complexagg = Count(expression) * 10
             complexagg.default_alias = 'complexagg'
             return complexagg
 
         with self.assertRaisesMessage(AssertionError, 'PolymorphicModel: annotate()/aggregate(): ___ model lookup supported for keyword arguments only'):
             Model2A.objects.aggregate(ComplexAgg('Model2B___field2'))
 
-    @skipIf(django.VERSION < (1,8,), "This test needs Django >=1.8")
+    @skipIf(django.VERSION < (1, 8,), "This test needs Django >=1.8")
     def test_polymorphic__expressions(self):
 
         from django.db.models.functions import Concat
@@ -1239,7 +1239,7 @@ class RegressionTests(TestCase):
 class MultipleDatabasesTests(TestCase):
     multi_db = True
 
-    @skipIf(django.VERSION < (1,5,), "This test needs Django >=1.5")
+    @skipIf(django.VERSION < (1, 5,), "This test needs Django >=1.5")
     def test_save_to_non_default_database(self):
         Model2A.objects.db_manager('secondary').create(field1='A1')
         Model2C(field1='C1', field2='C2', field3='C3').save(using='secondary')

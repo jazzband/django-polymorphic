@@ -110,7 +110,6 @@ def translate_polymorphic_filter_definitions_in_args(queryset_model, args, using
     return [translate_polymorphic_Q_object(queryset_model, q, using=using) for q in q_objects]
 
 
-
 def _translate_polymorphic_filter_definition(queryset_model, field_path, field_val, using=DEFAULT_DB_ALIAS):
     """
     Translate a keyword argument (field_path=field_val), as used for
@@ -271,4 +270,3 @@ def _create_model_filter_Q(modellist, not_instance_of=False, using=DEFAULT_DB_AL
     if not_instance_of:
         q_ored = ~q_ored
     return q_ored
-

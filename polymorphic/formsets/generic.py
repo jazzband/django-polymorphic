@@ -11,6 +11,7 @@ class GenericPolymorphicFormSetChild(PolymorphicFormSetChild):
     """
     Formset child for generic inlines
     """
+
     def __init__(self, *args, **kwargs):
         self.ct_field = kwargs.pop('ct_field', 'content_type')
         self.fk_field = kwargs.pop('fk_field', 'object_id')
