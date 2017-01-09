@@ -432,7 +432,7 @@ class PolymorphicTests(TestCase):
         # when
         Model2A.objects.filter(q_to_reuse).all()
         # then
-        self.assertEquals(q_to_reuse.children, untouched_q_object.children)
+        self.assertEqual(q_to_reuse.children, untouched_q_object.children)
 
         # given
         q_to_reuse = Q(Model2B___field2='something')
@@ -440,7 +440,7 @@ class PolymorphicTests(TestCase):
         # when
         Model2B.objects.filter(q_to_reuse).all()
         # then
-        self.assertEquals(q_to_reuse.children, untouched_q_object.children)
+        self.assertEqual(q_to_reuse.children, untouched_q_object.children)
 
     def test_polymorphic___filter_field(self):
         p = ModelUnderRelParent.objects.create(_private=True, field1='AA')
@@ -638,8 +638,8 @@ class PolymorphicTests(TestCase):
         ProxyChild.objects.create(some_data='Child2')
         ProxyChild.objects.create(some_data='Child3')
 
-        self.assertEquals(5, ProxyBase.objects.count())
-        self.assertEquals(3, ProxyChild.objects.count())
+        self.assertEqual(5, ProxyBase.objects.count())
+        self.assertEqual(3, ProxyChild.objects.count())
 
     def test_proxy_get_real_instance_class(self):
         """
