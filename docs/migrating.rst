@@ -41,10 +41,6 @@ can be included in a single Django migration. For example:
         MyModel.objects.filter(polymorphic_ctype__isnull=True).update(polymorphic_ctype=new_ct)
 
 
-    def backwards_func(apps, schema_editor):
-        pass
-
-
     class Migration(migrations.Migration):
 
         dependencies = [
@@ -58,8 +54,21 @@ can be included in a single Django migration. For example:
                 name='polymorphic_ctype',
                 field=models.ForeignKey(related_name='polymorphic_myapp.mymodel_set+', editable=False, to='contenttypes.ContentType', null=True),
             ),
-            migrations.RunPython(forwards_func, backwards_func),
+            migrations.RunPython(forwards_func, migrations.RunPython.noop),
         ]
 
 It's recommended to let ``makemigrations`` create the migration file,
 and include the ``RunPython`` manually before running the migration.
+
+.. versionadded:: 1.1
+When the model is created elsewhere, you can also use
+the :func:`polymorphic.utils.reset_polymorphic_ctype` function:
+
+.. code-block:: python
+
+    from polymorphic.utils import reset_polymorphic_ctype
+    from myapp.models import Base, Sub1, Sub2
+
+    reset_polymorphic_ctype(Base, Sub1, Sub2)
+
+    reset_polymorphic_ctype(Base, Sub1, Sub2, ignore_existing=True)
