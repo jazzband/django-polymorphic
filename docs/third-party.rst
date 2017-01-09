@@ -2,6 +2,35 @@ Third-party applications support
 ================================
 
 
+django-guardian support
+-----------------------
+
+.. versionadded:: 1.0.2
+
+You can configure django-guardian_ to use the base model for object level permissions.
+Add this option to your settings:
+
+.. code-block:: python
+
+    GUARDIAN_GET_CONTENT_TYPE = 'polymorphic.contrib.guardian.get_polymorphic_base_content_type'
+
+This option requires django-guardian_ >= 1.4.6. Details about how this option works are available in the
+`django-guardian documentation <https://django-guardian.readthedocs.io/en/latest/configuration.html#guardian-get-content-type>`_.
+
+
+django-extra-views
+------------------
+
+.. versionadded:: 1.1
+
+The :mod:`polymorphic.contrib.extra_views` package provides classes to display polymorphic formsets
+using the classes from django-extra-views_. See the documentation of:
+
+* :class:`~polymorphic.contrib.extra_views.PolymorphicFormSetView`
+* :class:`~polymorphic.contrib.extra_views.PolymorphicInlineFormSetView`
+* :class:`~polymorphic.contrib.extra_views.PolymorphicInlineFormSet`
+
+
 django-mptt support
 -------------------
 
@@ -97,24 +126,9 @@ This doesn't work, since it needs to look for revisions of the child model. Usin
 the view of the actual child model is used, similar to the way the regular change and delete views are redirected.
 
 
-django-guardian support
------------------------
-
-.. versionadded:: 1.0.2
-
-You can configure django-guardian_ to use the base model for object level permissions.
-Add this option to your settings:
-
-.. code-block:: python
-
-    GUARDIAN_GET_CONTENT_TYPE = 'polymorphic.contrib.guardian.get_polymorphic_base_content_type'
-
-This option requires django-guardian_ >= 1.4.6. Details about how this option works are available in the
-`django-guardian documentation <https://django-guardian.readthedocs.io/en/latest/configuration.html#guardian-get-content-type>`_.
-
-
-.. _django-reversion: https://github.com/etianen/django-reversion
-.. _django-reversion-compare: https://github.com/jedie/django-reversion-compare
+.. _django-extra-views: https://github.com/AndrewIngram/django-extra-views
+.. _django-guardian: https://github.com/django-guardian/django-guardian
 .. _django-mptt: https://github.com/django-mptt/django-mptt
 .. _django-polymorphic-tree: https://github.com/django-polymorphic/django-polymorphic-tree
-.. _django-guardian: https://github.com/django-guardian/django-guardian
+.. _django-reversion-compare: https://github.com/jedie/django-reversion-compare
+.. _django-reversion: https://github.com/etianen/django-reversion

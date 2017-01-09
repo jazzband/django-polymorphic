@@ -1,8 +1,9 @@
 Welcome to django-polymorphic's documentation!
 ==============================================
 
-Django-polymorphic simplifies using inherited models in Django projects.
-When a query is made at the base model, the inherited model classes are returned.
+Django-polymorphic builds on top of the standard Django model inheritance.
+It makes using inherited models easier. When a query is made at the base model,
+the inherited model classes are returned.
 
 When we store models that inherit from a ``Project`` model...
 
@@ -43,6 +44,7 @@ Features
  * Combining querysets of different models (``qs3 = qs1 | qs2``)
  * Support for custom user-defined managers.
 
+* Formset support.
 * Uses the minimum amount of queries needed to fetch the inherited models.
 * Disabling polymorphic behavior when needed.
 
@@ -56,6 +58,7 @@ Getting started
    quickstart
    admin
    performance
+   third-party
 
 Advanced topics
 ---------------
@@ -67,9 +70,10 @@ Advanced topics
    migrating
    managers
    advanced
-   third-party
    changelog
    contributing
+   api/index
+
 
 Indices and tables
 ==================

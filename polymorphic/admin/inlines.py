@@ -245,4 +245,5 @@ class StackedPolymorphicInline(PolymorphicInlineModelAdmin):
     Stacked inline for django-polymorphic models.
     Since tabular doesn't make much sense with changed fields, just offer this one.
     """
+    #: The default template to use.
     template = 'admin/polymorphic/edit_inline/stacked.html'

@@ -10,6 +10,7 @@ class GenericPolymorphicInlineModelAdmin(PolymorphicInlineModelAdmin, GenericInl
     """
     Base class for variation of inlines based on generic foreign keys.
     """
+    #: The formset class
     formset = BaseGenericPolymorphicInlineFormSet
 
     def get_formset(self, request, obj=None, **kwargs):
@@ -58,4 +59,5 @@ class GenericStackedPolymorphicInline(GenericPolymorphicInlineModelAdmin):
     """
     The stacked layout for generic inlines.
     """
+    #: The default template to use.
     template = 'admin/polymorphic/edit_inline/stacked.html'

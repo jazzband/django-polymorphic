@@ -1,0 +1,3 @@
+# for readthedocs
+# Remaining requirements are picked up from setup.py
+Django==1.5.10

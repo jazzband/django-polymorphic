@@ -13,6 +13,8 @@
 
 import sys
 import os
+import django
+import sphinx_rtd_theme
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -20,6 +22,9 @@ import os
 sys.path.insert(0, os.path.abspath('_ext'))
 sys.path.insert(0, os.path.abspath('..'))
 os.environ['DJANGO_SETTINGS_MODULE'] = 'djangodummy.settings'
+
+if django.VERSION >= (1, 8):
+    django.setup()
 
 # -- General configuration -----------------------------------------------------
 
@@ -31,7 +36,9 @@ os.environ['DJANGO_SETTINGS_MODULE'] = 'djangodummy.settings'
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.graphviz',
-    'sphinx.ext.intersphinx'
+    'sphinx.ext.intersphinx',
+    'djangoext.docstrings',
+    'djangoext.roles',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -98,7 +105,8 @@ pygments_style = 'sphinx'
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-#html_theme = 'alabaster'
+html_theme = 'sphinx_rtd_theme'
+html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -252,5 +260,8 @@ texinfo_documents = [
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {
     #'http://docs.python.org/': None,
-    'https://docs.djangoproject.com/en/dev': 'https://docs.djangoproject.com/en/dev/_objects',
+    'https://docs.djangoproject.com/en/stable': 'https://docs.djangoproject.com/en/stable/_objects',
 }
+
+# autodoc settings
+autodoc_member_order = 'groupwise'

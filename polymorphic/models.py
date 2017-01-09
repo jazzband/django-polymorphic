@@ -1,17 +1,6 @@
 # -*- coding: utf-8 -*-
 """
 Seamless Polymorphic Inheritance for Django Models
-==================================================
-
-Please see README.rst and DOCS.rst for further information.
-
-Or on the Web:
-http://chrisglass.github.com/django_polymorphic/
-http://github.com/chrisglass/django_polymorphic
-
-Copyright:
-This code and affiliated files are (C) by Bert Constantin and individual contributors.
-Please see LICENSE and AUTHORS for more information.
 """
 from __future__ import absolute_import
 
@@ -33,18 +22,8 @@ class PolymorphicModel(six.with_metaclass(PolymorphicModelBase, models.Model)):
     Abstract base class that provides polymorphic behaviour
     for any model directly or indirectly derived from it.
 
-    For usage instructions & examples please see documentation.
-
-    PolymorphicModel declares one field for internal use (polymorphic_ctype)
-    and provides a polymorphic manager as the default manager
-    (and as 'objects').
-
-    PolymorphicModel overrides the save() and __init__ methods.
-
-    If your derived class overrides any of these methods as well, then you need
-    to take care that you correctly call the method of the superclass, like:
-
-        super(YourClass,self).save(*args,**kwargs)
+    PolymorphicModel declares one field for internal use (:attr:`polymorphic_ctype`)
+    and provides a polymorphic manager as the default manager (and as 'objects').
     """
 
     # for PolymorphicModelBase, so it can tell which models are polymorphic and which are not (duck typing)
@@ -57,6 +36,7 @@ class PolymorphicModel(six.with_metaclass(PolymorphicModelBase, models.Model)):
         abstract = True
 
     # avoid ContentType related field accessor clash (an error emitted by model validation)
+    #: The model field that stores the :class:`~django.contrib.contenttypes.models.ContentType` reference to the actual class.
     polymorphic_ctype = models.ForeignKey(ContentType, null=True, editable=False,
                                           related_name='polymorphic_%(app_label)s.%(class)s_set+')
 
@@ -69,24 +49,24 @@ class PolymorphicModel(six.with_metaclass(PolymorphicModelBase, models.Model)):
     base_objects = models.Manager()
 
     @classmethod
-    def translate_polymorphic_Q_object(self_class, q):
-        return translate_polymorphic_Q_object(self_class, q)
+    def translate_polymorphic_Q_object(cls, q):
+        return translate_polymorphic_Q_object(cls, q)
 
     def pre_save_polymorphic(self, using=DEFAULT_DB_ALIAS):
-        """Normally not needed.
-        This function may be called manually in special use-cases. When the object
-        is saved for the first time, we store its real class in polymorphic_ctype.
-        When the object later is retrieved by PolymorphicQuerySet, it uses this
-        field to figure out the real class of this object
-        (used by PolymorphicQuerySet._get_real_instances)
         """
+        Make sure the ``polymorphic_ctype`` value is correctly set on this model.
+        """
+        # This function may be called manually in special use-cases. When the object
+        # is saved for the first time, we store its real class in polymorphic_ctype.
+        # When the object later is retrieved by PolymorphicQuerySet, it uses this
+        # field to figure out the real class of this object
+        # (used by PolymorphicQuerySet._get_real_instances)
         if not self.polymorphic_ctype_id:
             self.polymorphic_ctype = ContentType.objects.db_manager(using).get_for_model(self, for_concrete_model=False)
     pre_save_polymorphic.alters_data = True
 
     def save(self, *args, **kwargs):
-        """Overridden model save function which supports the polymorphism
-        functionality (through pre_save_polymorphic)."""
+        """Calls :meth:`pre_save_polymorphic` and saves the model."""
         using = kwargs.get('using', self._state.db or DEFAULT_DB_ALIAS)
         self.pre_save_polymorphic(using=using)
         return super(PolymorphicModel, self).save(*args, **kwargs)
@@ -94,7 +74,8 @@ class PolymorphicModel(six.with_metaclass(PolymorphicModelBase, models.Model)):
 
     def get_real_instance_class(self):
         """
-        Normally not needed.
+        Return the actual model type of the object.
+
         If a non-polymorphic manager (like base_objects) has been used to
         retrieve objects, then the real class/type of these objects may be
         determined using this method.
@@ -121,10 +102,10 @@ class PolymorphicModel(six.with_metaclass(PolymorphicModelBase, models.Model)):
         return model
 
     def get_real_concrete_instance_class_id(self):
-        model_class = self.get_real_instance_class()
-        if model_class is None:
+        ct = self.get_real_concrete_instance_class()
+        if ct is None:
             return None
-        return ContentType.objects.db_manager(self._state.db).get_for_model(model_class, for_concrete_model=True).pk
+        return ct.pk
 
     def get_real_concrete_instance_class(self):
         model_class = self.get_real_instance_class()
@@ -133,11 +114,18 @@ class PolymorphicModel(six.with_metaclass(PolymorphicModelBase, models.Model)):
         return ContentType.objects.db_manager(self._state.db).get_for_model(model_class, for_concrete_model=True).model_class()
 
     def get_real_instance(self):
-        """Normally not needed.
+        """
+        Upcast an object to it's actual type.
+
         If a non-polymorphic manager (like base_objects) has been used to
         retrieve objects, then the complete object with it's real class/type
         and all fields may be retrieved with this method.
-        Each method call executes one db query (if necessary)."""
+
+        .. note::
+            Each method call executes one db query (if necessary).
+            Use the :meth:`~polymorphic.managers.PolymorphicQuerySet.get_real_instances`
+            to upcast a complete list in a single efficient query.
+        """
         real_model = self.get_real_instance_class()
         if real_model == self.__class__:
             return self

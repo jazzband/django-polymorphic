@@ -63,7 +63,7 @@ class PolymorphicQuerySet(QuerySet):
     """
 
     def __init__(self, *args, **kwargs):
-        "init our queryset object member variables"
+        # init our queryset object member variables
         self.polymorphic_disabled = False
         # A parallel structure to django.db.models.query.Query.deferred_loading,
         # which we maintain with the untranslated field names passed to
@@ -74,7 +74,7 @@ class PolymorphicQuerySet(QuerySet):
         super(PolymorphicQuerySet, self).__init__(*args, **kwargs)
 
     def _clone(self, *args, **kwargs):
-        "Django's _clone only copies its own variables, so we need to copy ours here"
+        # Django's _clone only copies its own variables, so we need to copy ours here
         new = super(PolymorphicQuerySet, self)._clone(*args, **kwargs)
         new.polymorphic_disabled = self.polymorphic_disabled
         new.polymorphic_deferred_loading = (
@@ -101,17 +101,17 @@ class PolymorphicQuerySet(QuerySet):
         return qs
 
     def instance_of(self, *args):
-        """Filter the queryset to only include the classes in args (and their subclasses).
-        Implementation in _translate_polymorphic_filter_defnition."""
+        """Filter the queryset to only include the classes in args (and their subclasses)."""
+        # Implementation in _translate_polymorphic_filter_defnition.
         return self.filter(instance_of=args)
 
     def not_instance_of(self, *args):
-        """Filter the queryset to exclude the classes in args (and their subclasses).
-        Implementation in _translate_polymorphic_filter_defnition."""
+        """Filter the queryset to exclude the classes in args (and their subclasses)."""
+        # Implementation in _translate_polymorphic_filter_defnition."""
         return self.filter(not_instance_of=args)
 
     def _filter_or_exclude(self, negate, *args, **kwargs):
-        "We override this internal Django functon as it is used for all filter member functions."
+        # We override this internal Django functon as it is used for all filter member functions.
         q_objects = translate_polymorphic_filter_definitions_in_args(self.model, args, using=self.db)  # the Q objects
         additional_args = translate_polymorphic_filter_definitions_in_kwargs(self.model, kwargs, using=self.db)  # filter_field='data'
         return super(PolymorphicQuerySet, self)._filter_or_exclude(negate, *(list(q_objects) + additional_args), **kwargs)
@@ -413,10 +413,10 @@ class PolymorphicQuerySet(QuerySet):
         By overriding it, we modify the objects that this queryset returns
         when it is evaluated (or its get method or other object-returning methods are called).
 
-        Here we do the same as:
+        Here we do the same as::
 
-            base_result_objects=list(super(PolymorphicQuerySet, self).iterator())
-            real_results=self._get_real_instances(base_result_objects)
+            base_result_objects = list(super(PolymorphicQuerySet, self).iterator())
+            real_results = self._get_real_instances(base_result_objects)
             for o in real_results: yield o
 
         but it requests the objects in chunks from the database,
@@ -464,6 +464,17 @@ class PolymorphicQuerySet(QuerySet):
             return '[ ' + ',\n  '.join(result) + ' ]'
 
     def get_real_instances(self, base_result_objects=None):
+        """
+        Cast a list of objects to their actual classes.
+
+        This does roughly the same as::
+
+            return [ o.get_real_instance() for o in base_result_objects ]
+
+        but more efficiently.
+
+        :rtype: PolymorphicQuerySet
+        """
         "same as _get_real_instances, but make sure that __repr__ for ShowField... creates correct output"
         if not base_result_objects:
             base_result_objects = self

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-""" PolymorphicManager
-    Please see README.rst or DOCS.rst or http://chrisglass.github.com/django_polymorphic/
+"""
+The manager class for use in the models.
 """
 from __future__ import unicode_literals
 import warnings
@@ -12,6 +12,12 @@ try:
     from django.utils.six import python_2_unicode_compatible
 except ImportError:
     from django.utils.encoding import python_2_unicode_compatible  # Django 1.5
+
+
+__all__ = (
+    'PolymorphicManager',
+    'PolymorphicQuerySet',
+)
 
 
 @python_2_unicode_compatible
