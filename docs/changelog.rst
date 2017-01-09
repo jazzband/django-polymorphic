@@ -1,6 +1,14 @@
 Changelog
 =========
 
+Version 1.1 (1.1b1)
+-------------------
+
+* Added class based formset views in ``polymorphic/contrib/extra_views``.
+* Added helper function ``polymorphic.utils.reset_polymorphic_ctype()``.
+  This eases the migration old existing models to polymorphic.
+
+
 Version 1.0.2 (2016-10-14)
 --------------------------
 

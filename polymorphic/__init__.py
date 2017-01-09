@@ -9,7 +9,7 @@ Please see LICENSE and AUTHORS for more information.
 import django
 
 # See PEP 440 (https://www.python.org/dev/peps/pep-0440/)
-__version__ = "1.0.2"
+__version__ = "1.1b1"
 
 
 # Monkey-patch Django < 1.5 to allow ContentTypes for proxy models.
