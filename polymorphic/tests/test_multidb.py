@@ -1,11 +1,12 @@
 from __future__ import print_function
+
 import django
 from django.contrib.contenttypes.models import ContentType
 
 from django.test import TestCase
 from django.db.models import Q
 
-from .models import *
+from polymorphic.tests import *  # all models
 
 try:
     from unittest import skipIf

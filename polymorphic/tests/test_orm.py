@@ -1,16 +1,13 @@
 from __future__ import print_function
-import uuid
 import re
-import django
 
+import django
 from django.test import TestCase
 from django.db.models import Q, Count
-from django.db import models
 from django.utils import six
+from polymorphic.tests import *  # all models
 
 from polymorphic.contrib.guardian import get_polymorphic_base_content_type
-from polymorphic.managers import PolymorphicManager
-from .models import *
 
 try:
     from unittest import skipIf
@@ -273,25 +270,25 @@ class PolymorphicTests(TestCase):
                 repr(model._base_manager.model)
             )
 
-        self.assertEqual(show_base_manager(PlainA), "<class 'django.db.models.manager.Manager'> <class 'polymorphic.tests.models.PlainA'>")
-        self.assertEqual(show_base_manager(PlainB), "<class 'django.db.models.manager.Manager'> <class 'polymorphic.tests.models.PlainB'>")
-        self.assertEqual(show_base_manager(PlainC), "<class 'django.db.models.manager.Manager'> <class 'polymorphic.tests.models.PlainC'>")
+        self.assertEqual(show_base_manager(PlainA), "<class 'django.db.models.manager.Manager'> <class 'polymorphic.tests.PlainA'>")
+        self.assertEqual(show_base_manager(PlainB), "<class 'django.db.models.manager.Manager'> <class 'polymorphic.tests.PlainB'>")
+        self.assertEqual(show_base_manager(PlainC), "<class 'django.db.models.manager.Manager'> <class 'polymorphic.tests.PlainC'>")
 
-        self.assertEqual(show_base_manager(Model2A), "<class 'polymorphic.managers.PolymorphicManager'> <class 'polymorphic.tests.models.Model2A'>")
+        self.assertEqual(show_base_manager(Model2A), "<class 'polymorphic.managers.PolymorphicManager'> <class 'polymorphic.tests.Model2A'>")
         if django.VERSION >= (1, 10):
             # The new inheritance makes all model levels polymorphic
-            self.assertEqual(show_base_manager(Model2B), "<class 'polymorphic.managers.PolymorphicManager'> <class 'polymorphic.tests.models.Model2B'>")
-            self.assertEqual(show_base_manager(Model2C), "<class 'polymorphic.managers.PolymorphicManager'> <class 'polymorphic.tests.models.Model2C'>")
+            self.assertEqual(show_base_manager(Model2B), "<class 'polymorphic.managers.PolymorphicManager'> <class 'polymorphic.tests.Model2B'>")
+            self.assertEqual(show_base_manager(Model2C), "<class 'polymorphic.managers.PolymorphicManager'> <class 'polymorphic.tests.Model2C'>")
         else:
-            self.assertEqual(show_base_manager(Model2B), "<class 'django.db.models.manager.Manager'> <class 'polymorphic.tests.models.Model2B'>")
-            self.assertEqual(show_base_manager(Model2C), "<class 'django.db.models.manager.Manager'> <class 'polymorphic.tests.models.Model2C'>")
+            self.assertEqual(show_base_manager(Model2B), "<class 'django.db.models.manager.Manager'> <class 'polymorphic.tests.Model2B'>")
+            self.assertEqual(show_base_manager(Model2C), "<class 'django.db.models.manager.Manager'> <class 'polymorphic.tests.Model2C'>")
 
-        self.assertEqual(show_base_manager(One2OneRelatingModel), "<class 'polymorphic.managers.PolymorphicManager'> <class 'polymorphic.tests.models.One2OneRelatingModel'>")
+        self.assertEqual(show_base_manager(One2OneRelatingModel), "<class 'polymorphic.managers.PolymorphicManager'> <class 'polymorphic.tests.One2OneRelatingModel'>")
         if django.VERSION >= (1, 10):
             # The new inheritance makes all model levels polymorphic
-            self.assertEqual(show_base_manager(One2OneRelatingModelDerived), "<class 'polymorphic.managers.PolymorphicManager'> <class 'polymorphic.tests.models.One2OneRelatingModelDerived'>")
+            self.assertEqual(show_base_manager(One2OneRelatingModelDerived), "<class 'polymorphic.managers.PolymorphicManager'> <class 'polymorphic.tests.One2OneRelatingModelDerived'>")
         else:
-            self.assertEqual(show_base_manager(One2OneRelatingModelDerived), "<class 'django.db.models.manager.Manager'> <class 'polymorphic.tests.models.One2OneRelatingModelDerived'>")
+            self.assertEqual(show_base_manager(One2OneRelatingModelDerived), "<class 'django.db.models.manager.Manager'> <class 'polymorphic.tests.One2OneRelatingModelDerived'>")
 
     def test_instance_default_manager(self):
         def show_default_manager(instance):
@@ -308,13 +305,13 @@ class PolymorphicTests(TestCase):
         model_2b = Model2B(field2='C1')
         model_2c = Model2C(field3='C1')
 
-        self.assertEqual(show_default_manager(plain_a), "<class 'django.db.models.manager.Manager'> <class 'polymorphic.tests.models.PlainA'>")
-        self.assertEqual(show_default_manager(plain_b), "<class 'django.db.models.manager.Manager'> <class 'polymorphic.tests.models.PlainB'>")
-        self.assertEqual(show_default_manager(plain_c), "<class 'django.db.models.manager.Manager'> <class 'polymorphic.tests.models.PlainC'>")
+        self.assertEqual(show_default_manager(plain_a), "<class 'django.db.models.manager.Manager'> <class 'polymorphic.tests.PlainA'>")
+        self.assertEqual(show_default_manager(plain_b), "<class 'django.db.models.manager.Manager'> <class 'polymorphic.tests.PlainB'>")
+        self.assertEqual(show_default_manager(plain_c), "<class 'django.db.models.manager.Manager'> <class 'polymorphic.tests.PlainC'>")
 
-        self.assertEqual(show_default_manager(model_2a), "<class 'polymorphic.managers.PolymorphicManager'> <class 'polymorphic.tests.models.Model2A'>")
-        self.assertEqual(show_default_manager(model_2b), "<class 'polymorphic.managers.PolymorphicManager'> <class 'polymorphic.tests.models.Model2B'>")
-        self.assertEqual(show_default_manager(model_2c), "<class 'polymorphic.managers.PolymorphicManager'> <class 'polymorphic.tests.models.Model2C'>")
+        self.assertEqual(show_default_manager(model_2a), "<class 'polymorphic.managers.PolymorphicManager'> <class 'polymorphic.tests.Model2A'>")
+        self.assertEqual(show_default_manager(model_2b), "<class 'polymorphic.managers.PolymorphicManager'> <class 'polymorphic.tests.Model2B'>")
+        self.assertEqual(show_default_manager(model_2c), "<class 'polymorphic.managers.PolymorphicManager'> <class 'polymorphic.tests.Model2C'>")
 
     def test_foreignkey_field(self):
         self.create_model2abcd()
