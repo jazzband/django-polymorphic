@@ -102,10 +102,10 @@ class PolymorphicModel(six.with_metaclass(PolymorphicModelBase, models.Model)):
         return model
 
     def get_real_concrete_instance_class_id(self):
-        ct = self.get_real_concrete_instance_class()
-        if ct is None:
+        model_class = self.get_real_instance_class()
+        if model_class is None:
             return None
-        return ct.pk
+        return ContentType.objects.db_manager(self._state.db).get_for_model(model_class, for_concrete_model=True).pk
 
     def get_real_concrete_instance_class(self):
         model_class = self.get_real_instance_class()
