@@ -1,7 +1,7 @@
 Changelog
 =========
 
-Version 1.1 (1.1b1)
+Version 1.1 (1.1b2)
 -------------------
 
 * Added class based formset views in ``polymorphic/contrib/extra_views``.
