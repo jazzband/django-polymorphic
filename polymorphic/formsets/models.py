@@ -1,4 +1,3 @@
-from collections import OrderedDict
 
 import django
 from django import forms
@@ -7,6 +6,11 @@ from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.forms.models import ModelForm, BaseModelFormSet, BaseInlineFormSet, modelform_factory, modelformset_factory, inlineformset_factory
 from django.utils.functional import cached_property
 from .utils import add_media
+
+try:
+    from collections import OrderedDict
+except ImportError:
+    from django.utils.datastructures import SortedDict as OrderedDict  # Python 2.6
 
 
 class PolymorphicFormSetChild(object):
