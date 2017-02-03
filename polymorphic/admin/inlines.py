@@ -6,13 +6,17 @@ Each row in the inline can correspond with a different subclass.
 from functools import partial
 
 from django.contrib.admin.options import InlineModelAdmin
-from django.contrib.admin.utils import flatten_fieldsets
 from django.core.exceptions import ImproperlyConfigured
 from django.forms import Media
 
 from polymorphic.formsets import polymorphic_child_forms_factory, BasePolymorphicInlineFormSet, PolymorphicFormSetChild
 from polymorphic.formsets.utils import add_media
 from .helpers import PolymorphicInlineSupportMixin
+
+try:
+    from django.contrib.admin.utils import flatten_fieldsets  # Django 1.7+
+except ImportError:
+    from django.contrib.admin.util import flatten_fieldsets
 
 
 class PolymorphicInlineModelAdmin(InlineModelAdmin):

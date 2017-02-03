@@ -1,10 +1,14 @@
 import django
-from django.contrib.contenttypes.forms import BaseGenericInlineFormSet, generic_inlineformset_factory
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.forms.models import ModelForm
 
 from .models import BasePolymorphicModelFormSet, polymorphic_child_forms_factory, PolymorphicFormSetChild
+
+try:
+    from django.contrib.contenttypes.forms import BaseGenericInlineFormSet, generic_inlineformset_factory  # Django 1.7+
+except ImportError:
+    from django.contrib.contenttypes.generic import BaseGenericInlineFormSet, generic_inlineformset_factory
 
 
 class GenericPolymorphicFormSetChild(PolymorphicFormSetChild):
