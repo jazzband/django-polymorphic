@@ -1,12 +1,14 @@
 Changelog
 =========
 
-Version 1.1 (1.1b2)
--------------------
+Version 1.1 (2017-01-27)
+------------------------
 
 * Added class based formset views in ``polymorphic/contrib/extra_views``.
 * Added helper function ``polymorphic.utils.reset_polymorphic_ctype()``.
   This eases the migration old existing models to polymorphic.
+* Fixed Python 2.6 issue.
+* Fixed Django 1.6 support.
 
 
 Version 1.0.2 (2016-10-14)
