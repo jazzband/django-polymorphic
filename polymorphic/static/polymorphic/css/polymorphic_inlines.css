@@ -15,6 +15,7 @@
   border-radius: 4px;
   padding: 2px;
   background-color: #fff;
+  z-index: 1000;
 }
 
 .polymorphic-type-menu ul {
