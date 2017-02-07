@@ -359,7 +359,7 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
 
         extra_qs = ''
         if request.META['QUERY_STRING']:
-            extra_qs = '&' + request.META['QUERY_STRING']
+            extra_qs = "&%s" % request.META['QUERY_STRING']
 
         choices = self.get_child_type_choices(request, 'add')
         if len(choices) == 1:
