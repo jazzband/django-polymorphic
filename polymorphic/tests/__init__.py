@@ -196,6 +196,7 @@ if django.VERSION >= (1, 7):
 
 class MROBase1(ShowFieldType, PolymorphicModel):
     objects = MyManager()
+    base_1_id = models.AutoField(primary_key=True)
     field1 = models.CharField(max_length=10)  # needed as MyManager uses it
 
 
@@ -204,6 +205,7 @@ class MROBase2(MROBase1):
 
 
 class MROBase3(models.Model):
+    base_3_id = models.AutoField(primary_key=True)
     objects = PolymorphicManager()
 
 
