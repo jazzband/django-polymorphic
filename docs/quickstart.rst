@@ -19,7 +19,7 @@ Making Your Models Polymorphic
 
 Use ``PolymorphicModel`` instead of Django's ``models.Model``, like so::
 
-    from polymorphic.models import PolymorphicModel
+    from polymorphic import PolymorphicModel
 
     class Project(PolymorphicModel):
         topic = models.CharField(max_length=30)
