@@ -9,3 +9,7 @@ STATIC_URL = '/static/'
 
 # Avoid error for missing the secret key
 SECRET_KEY = 'docs'
+
+INSTALLED_APPS = [
+    'django.contrib.contenttypes',
+]
