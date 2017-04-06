@@ -4,7 +4,7 @@ Based on http://djangosnippets.org/snippets/2533/
 """
 import django
 from django.utils.html import strip_tags
-from django.utils.encoding import force_unicode
+from django.utils.encoding import force_text
 import inspect
 
 
@@ -20,8 +20,8 @@ def improve_model_docstring(app, what, name, obj, options, lines):
             model_fields = obj._meta._fields()
 
         for field in model_fields:
-            help_text = strip_tags(force_unicode(field.help_text))
-            verbose_name = force_unicode(field.verbose_name).capitalize()
+            help_text = strip_tags(force_text(field.help_text))
+            verbose_name = force_text(field.verbose_name).capitalize()
 
             # Add parameter
             if help_text:
