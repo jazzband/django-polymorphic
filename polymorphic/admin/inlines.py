@@ -223,6 +223,7 @@ class PolymorphicInlineModelAdmin(InlineModelAdmin):
                 exclude = list(self.exclude)
 
             exclude.extend(self.get_readonly_fields(request, obj))
+            exclude.append('polymorphic_ctype')  # Django 1.10 blocks it, as it's a readonly field.
 
             if self.exclude is None and hasattr(self.form, '_meta') and self.form._meta.exclude:
                 # Take the custom ModelForm's Meta.exclude into account only if the
