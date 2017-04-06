@@ -360,7 +360,11 @@ class PolymorphicTests(TestCase):
         # no pretty printing
         ModelShow1_plain.objects.create(field1='abc')
         ModelShow2_plain.objects.create(field1='abc', field2='def')
-        self.assertEqual(qrepr(ModelShow1_plain.objects.all()), '<QuerySet [<ModelShow1_plain: ModelShow1_plain object>, <ModelShow2_plain: ModelShow2_plain object>]>')
+        # repr classnames are not hardcoded in Django 1.11+
+        if django.VERSION >= (1, 11):
+            self.assertEqual(qrepr(ModelShow1_plain.objects.all()), '<PolymorphicQuerySet [<ModelShow1_plain: ModelShow1_plain object>, <ModelShow2_plain: ModelShow2_plain object>]>')
+        else:
+            self.assertEqual(qrepr(ModelShow1_plain.objects.all()), '<QuerySet [<ModelShow1_plain: ModelShow1_plain object>, <ModelShow2_plain: ModelShow2_plain object>]>')
 
     def test_extra_method(self):
         self.create_model2abcd()
