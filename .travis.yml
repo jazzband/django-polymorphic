@@ -90,7 +90,6 @@ matrix:
   - python: "2.6"
     env: DJANGO="https://github.com/django/django/tarball/master"
   allow_failures:
-    - env: DJANGO="Django>=1.11,<1.12"
     - env: DJANGO="https://github.com/django/django/tarball/master"
 
 before_install:
