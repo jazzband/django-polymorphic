@@ -2,6 +2,7 @@
 import os
 import sys
 import django
+import dj_database_url
 
 from django.conf import settings
 from django.core.management import execute_from_command_line
@@ -56,14 +57,8 @@ if not settings.configured:
     settings.configure(
         DEBUG=False,
         DATABASES={
-            'default': {
-                'ENGINE': 'django.db.backends.sqlite3',
-                'NAME': ':memory:'
-            },
-            'secondary': {
-                'ENGINE': 'django.db.backends.sqlite3',
-                'NAME': ':memory:'
-            }
+            'default': dj_database_url.config(env='PRIMARY_DATABASE'),
+            'secondary': dj_database_url.config(env='SECONDARY_DATABASE'),
         },
         TEST_RUNNER = 'django.test.runner.DiscoverRunner' if django.VERSION >= (1, 7) else 'django.test.simple.DjangoTestSuiteRunner',
         INSTALLED_APPS = (
