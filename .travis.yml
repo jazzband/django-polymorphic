@@ -21,6 +21,7 @@ env:
   - TOX_ENV="djangodev"
 
 matrix:
+  fast_finish: true
   exclude:
     - python: "3.6"
       env: TOX_ENV="django14"
