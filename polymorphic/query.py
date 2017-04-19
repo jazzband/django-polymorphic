@@ -8,7 +8,7 @@ import copy
 from collections import defaultdict
 
 import django
-from django.db.models.query import QuerySet, Q
+from django.db.models.query import ModelIterable, QuerySet, Q
 from django.contrib.contenttypes.models import ContentType
 from django.utils import six
 
@@ -16,13 +16,59 @@ from .query_translate import translate_polymorphic_filter_definitions_in_kwargs,
 from .query_translate import translate_polymorphic_field_path, translate_polymorphic_Q_object
 
 # chunk-size: maximum number of objects requested per db-request
-# by the polymorphic queryset.iterator() implementation; we use the same chunk size as Django
+# by the PolymorphicModelIterable; we use the same chunk size as Django
 try:
     from django.db.models.query import CHUNK_SIZE               # this is 100 for Django 1.1/1.2
 except ImportError:
     # CHUNK_SIZE was removed in Django 1.6
     CHUNK_SIZE = 100
 Polymorphic_QuerySet_objects_per_request = CHUNK_SIZE
+
+
+class PolymorphicModelIterable(ModelIterable):
+    """
+    ModelIterable for PolymorphicModel
+
+    Yields real instances if qs.polymorphic_disabled is False,
+    otherwise acts like a regular ModelIterable.
+    """
+
+    def __iter__(self):
+        base_iter = super(PolymorphicModelIterable, self).__iter__()
+        if self.queryset.polymorphic_disabled:
+            return base_iter
+        return self._polymorhic_iterator(base_iter)
+
+    def _polymorhic_iterator(self, base_iter):
+        """
+        Here we do the same as::
+
+            base_result_objects = list(super(PolymorphicModelIterable, self).__iter__())
+            real_results = self.queryset._get_real_instances(base_result_objects)
+            for o in real_results: yield o
+
+        but it requests the objects in chunks from the database,
+        with Polymorphic_QuerySet_objects_per_request per chunk
+        """
+        while True:
+            base_result_objects = []
+            reached_end = False
+
+            for i in range(Polymorphic_QuerySet_objects_per_request):
+                try:
+                    o = next(base_iter)
+                    base_result_objects.append(o)
+                except StopIteration:
+                    reached_end = True
+                    break
+
+            real_results = self.queryset._get_real_instances(base_result_objects)
+
+            for o in real_results:
+                yield o
+
+            if reached_end:
+                return
 
 
 def transmogrify(cls, obj):
@@ -63,6 +109,8 @@ class PolymorphicQuerySet(QuerySet):
     """
 
     def __init__(self, *args, **kwargs):
+        super(PolymorphicQuerySet, self).__init__(*args, **kwargs)
+        self._iterable_class = PolymorphicModelIterable
         # init our queryset object member variables
         self.polymorphic_disabled = False
         # A parallel structure to django.db.models.query.Query.deferred_loading,
@@ -71,7 +119,6 @@ class PolymorphicQuerySet(QuerySet):
         # retrieving the real instance (so that the deferred fields apply
         # to that queryset as well).
         self.polymorphic_deferred_loading = (set([]), True)
-        super(PolymorphicQuerySet, self).__init__(*args, **kwargs)
 
     def _clone(self, *args, **kwargs):
         # Django's _clone only copies its own variables, so we need to copy ours here
@@ -406,49 +453,6 @@ class PolymorphicQuerySet(QuerySet):
                 real_object.polymorphic_extra_select_names = extra_select_names
 
         return resultlist
-
-    def iterator(self):
-        """
-        This function is used by Django for all object retrieval.
-        By overriding it, we modify the objects that this queryset returns
-        when it is evaluated (or its get method or other object-returning methods are called).
-
-        Here we do the same as::
-
-            base_result_objects = list(super(PolymorphicQuerySet, self).iterator())
-            real_results = self._get_real_instances(base_result_objects)
-            for o in real_results: yield o
-
-        but it requests the objects in chunks from the database,
-        with Polymorphic_QuerySet_objects_per_request per chunk
-        """
-        base_iter = super(PolymorphicQuerySet, self).iterator()
-
-        # disabled => work just like a normal queryset
-        if self.polymorphic_disabled:
-            for o in base_iter:
-                yield o
-            return
-
-        while True:
-            base_result_objects = []
-            reached_end = False
-
-            for i in range(Polymorphic_QuerySet_objects_per_request):
-                try:
-                    o = next(base_iter)
-                    base_result_objects.append(o)
-                except StopIteration:
-                    reached_end = True
-                    break
-
-            real_results = self._get_real_instances(base_result_objects)
-
-            for o in real_results:
-                yield o
-
-            if reached_end:
-                return
 
     def __repr__(self, *args, **kwargs):
         if self.model.polymorphic_query_multiline_output:
