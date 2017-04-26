@@ -35,18 +35,20 @@ def _polymorhic_iterator(queryset, base_iter):
     but it requests the objects in chunks from the database,
     with Polymorphic_QuerySet_objects_per_request per chunk
     """
-    # Make sure the base iterator is read in chunks instead of
-    # reading it completely, in case our caller read only a few objects.
-    for i in range(Polymorphic_QuerySet_objects_per_request):
+    while True:
         base_result_objects = []
         reached_end = False
 
-        try:
-            o = next(base_iter)
-            base_result_objects.append(o)
-        except StopIteration:
-            reached_end = True
-            break
+        # Make sure the base iterator is read in chunks instead of
+        # reading it completely, in case our caller read only a few objects.
+        for i in range(Polymorphic_QuerySet_objects_per_request):
+
+            try:
+                o = next(base_iter)
+                base_result_objects.append(o)
+            except StopIteration:
+                reached_end = True
+                break
 
         real_results = queryset._get_real_instances(base_result_objects)
 
