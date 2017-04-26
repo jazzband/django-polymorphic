@@ -5,6 +5,7 @@
 *.egg-info/
 *.egg/
 .coverage
+coverage.xml
 .project
 .idea/
 .pydevproject
