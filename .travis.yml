@@ -92,7 +92,6 @@ matrix:
       env: TOXENV="djangodev"
 
   allow_failures:
-    - env: TOXENV="django111"
     - env: TOXENV="djangodev"
 
 before_install:
