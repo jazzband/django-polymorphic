@@ -1,4 +1,4 @@
-.. image::  https://travis-ci.org/django-polymorphic/django-polymorphic.png?branch=master
+.. image::  https://travis-ci.org/django-polymorphic/django-polymorphic.svg?branch=master
     :target: http://travis-ci.org/django-polymorphic/django-polymorphic
 .. image:: https://img.shields.io/pypi/v/django-polymorphic.svg
     :target: https://pypi.python.org/pypi/django-polymorphic/
