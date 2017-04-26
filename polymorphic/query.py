@@ -16,7 +16,7 @@ from .query_translate import translate_polymorphic_filter_definitions_in_kwargs,
 from .query_translate import translate_polymorphic_field_path, translate_polymorphic_Q_object
 
 # chunk-size: maximum number of objects requested per db-request
-# by the polymorphic queryset.iterator() implementation; we use the same chunk size as Django
+# by the PolymorphicModelIterable; we use the same chunk size as Django
 try:
     from django.db.models.query import CHUNK_SIZE               # this is 100 for Django 1.1/1.2
 except ImportError:
@@ -25,23 +25,56 @@ except ImportError:
 Polymorphic_QuerySet_objects_per_request = CHUNK_SIZE
 
 
+def _polymorhic_iterator(queryset, base_iter):
+    """
+    Here we do the same as::
+
+        real_results = queryset._get_real_instances(list(base_iter))
+        for o in real_results: yield o
+
+    but it requests the objects in chunks from the database,
+    with Polymorphic_QuerySet_objects_per_request per chunk
+    """
+    while True:
+        base_result_objects = []
+        reached_end = False
+
+        # Make sure the base iterator is read in chunks instead of
+        # reading it completely, in case our caller read only a few objects.
+        for i in range(Polymorphic_QuerySet_objects_per_request):
+            try:
+                o = next(base_iter)
+                base_result_objects.append(o)
+            except StopIteration:
+                reached_end = True
+                break
+
+            real_results = queryset._get_real_instances(base_result_objects)
+
+            for o in real_results:
+                yield o
+
+            if reached_end:
+                return
+
+
 if django.VERSION >= (1, 9):
     # We ignore this on django < 1.9, as ModelIterable didn't yet exist.
     from django.db.models.query import ModelIterable
 
-
     class PolymorphicModelIterable(ModelIterable):
+        """
+        ModelIterable for PolymorphicModel
+
+        Yields real instances if qs.polymorphic_disabled is False,
+        otherwise acts like a regular ModelIterable.
+        """
+
         def __iter__(self):
             base_iter = super(PolymorphicModelIterable, self).__iter__()
-
             if self.queryset.polymorphic_disabled:
-                for o in base_iter:
-                    yield o
-                return
-
-            real_instances = self.queryset._get_real_instances(base_iter)
-            for obj in real_instances:
-                yield obj
+                return base_iter
+            return _polymorhic_iterator(self.queryset, base_iter)
 
 
 def transmogrify(cls, obj):
@@ -82,7 +115,11 @@ class PolymorphicQuerySet(QuerySet):
     """
 
     def __init__(self, *args, **kwargs):
-        # init our queryset object member variables
+        super(PolymorphicQuerySet, self).__init__(*args, **kwargs)
+        if django.VERSION >= (1, 9):
+            # On django < 1.9 we override the iterator() method instead
+            self._iterable_class = PolymorphicModelIterable
+
         self.polymorphic_disabled = False
         # A parallel structure to django.db.models.query.Query.deferred_loading,
         # which we maintain with the untranslated field names passed to
@@ -90,10 +127,6 @@ class PolymorphicQuerySet(QuerySet):
         # retrieving the real instance (so that the deferred fields apply
         # to that queryset as well).
         self.polymorphic_deferred_loading = (set([]), True)
-        super(PolymorphicQuerySet, self).__init__(*args, **kwargs)
-        if django.VERSION >= (1, 9):
-            # On django < 1.9 we override the iterator() method instead
-            self._iterable_class = PolymorphicModelIterable
 
     def _clone(self, *args, **kwargs):
         # Django's _clone only copies its own variables, so we need to copy ours here
@@ -433,7 +466,7 @@ class PolymorphicQuerySet(QuerySet):
         # On django 1.9+, we can define self._iterator_class instead of iterator()
         def iterator(self):
             """
-            This function is used by Django for all object retrieval.
+            This function is used by Django 1.8 and earlier for all object retrieval.
             By overriding it, we modify the objects that this queryset returns
             when it is evaluated (or its get method or other object-returning methods are called).
 
@@ -454,25 +487,8 @@ class PolymorphicQuerySet(QuerySet):
                     yield o
                 return
 
-            while True:
-                base_result_objects = []
-                reached_end = False
-
-                for i in range(Polymorphic_QuerySet_objects_per_request):
-                    try:
-                        o = next(base_iter)
-                        base_result_objects.append(o)
-                    except StopIteration:
-                        reached_end = True
-                        break
-
-                real_results = self._get_real_instances(base_result_objects)
-
-                for o in real_results:
-                    yield o
-
-                if reached_end:
-                    return
+            for o in _polymorhic_iterator(self, base_iter):
+                yield o
 
     def __repr__(self, *args, **kwargs):
         if self.model.polymorphic_query_multiline_output:
