@@ -360,11 +360,7 @@ class PolymorphicTests(TestCase):
         # no pretty printing
         ModelShow1_plain.objects.create(field1='abc')
         ModelShow2_plain.objects.create(field1='abc', field2='def')
-        # repr classnames are not hardcoded in Django 1.11+
-        if django.VERSION >= (1, 11):
-            self.assertEqual(qrepr(ModelShow1_plain.objects.all()), '<PolymorphicQuerySet [<ModelShow1_plain: ModelShow1_plain object>, <ModelShow2_plain: ModelShow2_plain object>]>')
-        else:
-            self.assertEqual(qrepr(ModelShow1_plain.objects.all()), '<QuerySet [<ModelShow1_plain: ModelShow1_plain object>, <ModelShow2_plain: ModelShow2_plain object>]>')
+        self.assertEqual(qrepr(ModelShow1_plain.objects.all()), '<PolymorphicQuerySet [<ModelShow1_plain: ModelShow1_plain object>, <ModelShow2_plain: ModelShow2_plain object>]>')
 
     def test_extra_method(self):
         self.create_model2abcd()
@@ -813,9 +809,13 @@ def qrepr(data):
     Ensure consistent repr() output for the QuerySet object.
     """
     if isinstance(data, QuerySet):
-        if django.VERSION >= (1, 10):
+        if django.VERSION >= (1, 11):
             return repr(data)
+        elif django.VERSION >= (1, 10):
+            # Django 1.11 still shows "<QuerySet [", not taking the actual type into account.
+            return '<{} {}'.format(data.__class__.__name__, repr(data)[10:])
         else:
-            return '<QuerySet %r>' % data
+            # Simulate Django 1.11 behavior for older Django versions.
+            return '<{} {}>'.format(data.__class__.__name__, repr(data))
 
     return repr(data)
