@@ -813,9 +813,9 @@ def qrepr(data):
             return repr(data)
         elif django.VERSION >= (1, 10):
             # Django 1.11 still shows "<QuerySet [", not taking the actual type into account.
-            return '<{} {}'.format(data.__class__.__name__, repr(data)[10:])
+            return '<{0} {1}'.format(data.__class__.__name__, repr(data)[10:])
         else:
             # Simulate Django 1.11 behavior for older Django versions.
-            return '<{} {}>'.format(data.__class__.__name__, repr(data))
+            return '<{0} {1}>'.format(data.__class__.__name__, repr(data))
 
     return repr(data)
