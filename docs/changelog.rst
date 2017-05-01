@@ -1,6 +1,16 @@
 Changelog
 =========
 
+Version 1.2 (2017-05-01)
+------------------------
+
+* Django 1.11 support.
+* Fixed ``PolymorphicInlineModelAdmin`` to explictly exclude ``polymorphic_ctype``.
+* Fixed Python 3 TypeError in the admin when preserving the query string.
+* Fixed Python 3 issue due to ``force_unicode()`` usage instead of ``force_text()``.
+* Fixed ``z-index`` attribute for admin menu appearance.
+
+
 Version 1.1 (2017-02-03)
 ------------------------
 
