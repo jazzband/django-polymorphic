@@ -25,7 +25,7 @@ except ImportError:
 Polymorphic_QuerySet_objects_per_request = CHUNK_SIZE
 
 
-def _polymorhic_iterator(queryset, base_iter):
+def _polymorphic_iterator(queryset, base_iter):
     """
     Here we do the same as::
 
@@ -75,7 +75,7 @@ if django.VERSION >= (1, 9):
             base_iter = super(PolymorphicModelIterable, self).__iter__()
             if self.queryset.polymorphic_disabled:
                 return base_iter
-            return _polymorhic_iterator(self.queryset, base_iter)
+            return _polymorphic_iterator(self.queryset, base_iter)
 
 
 def transmogrify(cls, obj):
@@ -488,7 +488,7 @@ class PolymorphicQuerySet(QuerySet):
                     yield o
                 return
 
-            for o in _polymorhic_iterator(self, base_iter):
+            for o in _polymorphic_iterator(self, base_iter):
                 yield o
 
     def __repr__(self, *args, **kwargs):
