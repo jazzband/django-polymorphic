@@ -60,7 +60,7 @@ if not settings.configured:
             'default': dj_database_url.config(env='PRIMARY_DATABASE'),
             'secondary': dj_database_url.config(env='SECONDARY_DATABASE'),
         },
-        TEST_RUNNER = 'django.test.runner.DiscoverRunner' if django.VERSION >= (1, 7) else 'django.test.simple.DjangoTestSuiteRunner',
+        TEST_RUNNER = 'django.test.runner.DiscoverRunner' if django.VERSION >= (1, 6) else 'discover_runner.DiscoverRunner',
         INSTALLED_APPS = (
             'django.contrib.auth',
             'django.contrib.contenttypes',
