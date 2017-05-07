@@ -2,7 +2,7 @@ from django.contrib.admin import AdminSite
 from django.test import TestCase
 
 from polymorphic.admin import PolymorphicParentModelAdmin, PolymorphicChildModelAdmin, PolymorphicChildModelFilter
-from polymorphic.tests import Model2A, Model2B, Model2C, Model2D
+from polymorphic.tests.models import Model2A, Model2B, Model2C, Model2D
 
 
 class MultipleDatabasesTests(TestCase):

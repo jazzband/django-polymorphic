@@ -4,11 +4,17 @@ from __future__ import unicode_literals
 from django.db import migrations, models
 import polymorphic.showfields
 
+try:
+    from django.db.models import UUIDField
+except ImportError:
+    # django<1.8
+    from polymorphic.tools_for_tests import UUIDField
+
 
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('contenttypes', '0002_remove_content_type_name'),
+        ('contenttypes', '0001_initial'),
     ]
 
     operations = [
@@ -55,7 +61,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='UUIDModelA',
             fields=[
-                ('uuid_primary_key', models.UUIDField(serialize=False, primary_key=True)),
+                ('uuid_primary_key', UUIDField(serialize=False, primary_key=True)),
                 ('field1', models.CharField(max_length=10)),
             ],
             options={

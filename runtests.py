@@ -68,6 +68,7 @@ if not settings.configured:
             'django.contrib.sites',
             'django.contrib.admin',
             'polymorphic',
+            'polymorphic.tests',
         ),
         MIDDLEWARE_CLASSES = (),
         SITE_ID = 3,
