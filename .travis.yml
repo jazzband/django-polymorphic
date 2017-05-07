@@ -78,6 +78,9 @@ matrix:
     - python: "3.2"
       env: TOXENV="djangodev"
 
+    - python: "2.7"
+      env: TOXENV="djangodev"
+
     - python: "2.6"
       env: TOXENV="django17"
     - python: "2.6"
