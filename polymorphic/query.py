@@ -174,7 +174,7 @@ class PolymorphicQuerySet(QuerySet):
 
     def order_by(self, *args, **kwargs):
         """translate the field paths in the args, then call vanilla order_by."""
-        new_args = [translate_polymorphic_field_path(self.model, a) for a in args]
+        new_args = [translate_polymorphic_field_path(self.model, a) if hasattr(a, 'partition') else a for a in args]
         return super(PolymorphicQuerySet, self).order_by(*new_args, **kwargs)
 
     def defer(self, *fields):
