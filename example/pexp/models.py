@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import django
 from django.db import models
 
 from polymorphic.models import PolymorphicModel
@@ -20,15 +19,9 @@ class ResearchProject(Project):
     supervisor = models.CharField(max_length=30)
 
 
-if django.VERSION < (1, 8):
-    from polymorphic.tools_for_tests import UUIDField
-else:
-    from django.db.models import UUIDField
-
-
 class UUIDModelA(ShowFieldTypeAndContent, PolymorphicModel):
     """UUID as primary key example"""
-    uuid_primary_key = UUIDField(primary_key=True)
+    uuid_primary_key = models.UUIDField(primary_key=True)
     field1 = models.CharField(max_length=10)
 
 

@@ -3,30 +3,25 @@
 This module is a scratchpad for general development, testing & debugging
 """
 
+import time
+import sys
+
 from django.core.management.base import NoArgsCommand
 from django.db import connection
 from pprint import pprint
-import sys
 from pexp.models import *
+
 
 num_objects = 1000
 
 
-def reset_queries():
-    if django.VERSION < (1, 8):
-        connection.queries = []
-    else:
-        connection.queries_log.clear()
-
-
 def show_queries():
-    print
-    print 'QUERIES:', len(connection.queries)
+    print()
+    print("QUERIES:", len(connection.queries))
     pprint(connection.queries)
-    print
-    reset_queries()
+    print()
+    connection.queries_log.clear()
 
-import time
 
 ###################################################################################
 # benchmark wrappers
@@ -35,8 +30,8 @@ import time
 def print_timing(func, message='', iterations=1):
     def wrapper(*arg):
         results = []
-        reset_queries()
-        for i in xrange(iterations):
+        connection.queries_log.clear()
+        for i in range(iterations):
             t1 = time.time()
             x = func(*arg)
             t2 = time.time()
@@ -45,11 +40,11 @@ def print_timing(func, message='', iterations=1):
         for r in results:
             res_sum += r
         median = res_sum / len(results)
-        print '%s%-19s: %.0f ms, %i queries' % (
+        print("%s%-19s: %.0f ms, %i queries" % (
             message, func.func_name,
             median,
             len(connection.queries) / len(results)
-        )
+        ))
         sys.stdout.flush()
     return wrapper
 

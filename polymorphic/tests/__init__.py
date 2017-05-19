@@ -1,21 +1,15 @@
 # -*- coding: utf-8 -*-
 
-import django
 import uuid
+
+from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.db.models.query import QuerySet
-from django.contrib.contenttypes.models import ContentType
 
 from polymorphic.managers import PolymorphicManager
 from polymorphic.models import PolymorphicModel
 from polymorphic.query import PolymorphicQuerySet
 from polymorphic.showfields import ShowFieldContent, ShowFieldType, ShowFieldTypeAndContent
-
-try:
-    from django.db.models import UUIDField
-except ImportError:
-    # django<1.8
-    from polymorphic.tools_for_tests import UUIDField
 
 
 class PlainA(models.Model):
@@ -167,9 +161,6 @@ class MyManager(PolymorphicManager):
     def my_queryset_foo(self):
         return self.all().my_queryset_foo()
 
-    # Django <= 1.5 compatibility
-    get_query_set = get_queryset
-
 
 class ModelWithMyManager(ShowFieldTypeAndContent, Model2A):
     objects = MyManager()
@@ -188,10 +179,9 @@ class ModelWithMyManagerDefault(ShowFieldTypeAndContent, Model2A):
     field4 = models.CharField(max_length=10)
 
 
-if django.VERSION >= (1, 7):
-    class ModelWithMyManager2(ShowFieldTypeAndContent, Model2A):
-        objects = MyManagerQuerySet.as_manager()
-        field4 = models.CharField(max_length=10)
+class ModelWithMyManager2(ShowFieldTypeAndContent, Model2A):
+    objects = MyManagerQuerySet.as_manager()
+    field4 = models.CharField(max_length=10)
 
 
 class MROBase1(ShowFieldType, PolymorphicModel):
@@ -235,9 +225,6 @@ class PlainMyManager(models.Manager):
 
     def get_queryset(self):
         return PlainMyManagerQuerySet(self.model, using=self._db)
-
-    # Django <= 1.5 compatibility
-    get_query_set = get_queryset
 
 
 class PlainParentModelWithManager(models.Model):
@@ -319,7 +306,7 @@ class Bottom(Middle):
 
 
 class UUIDProject(ShowFieldTypeAndContent, PolymorphicModel):
-    uuid_primary_key = UUIDField(primary_key=True, default=uuid.uuid1)
+    uuid_primary_key = models.UUIDField(primary_key=True, default=uuid.uuid1)
     topic = models.CharField(max_length=30)
 
 
@@ -332,7 +319,7 @@ class UUIDResearchProject(UUIDProject):
 
 
 class UUIDPlainA(models.Model):
-    uuid_primary_key = UUIDField(primary_key=True, default=uuid.uuid1)
+    uuid_primary_key = models.UUIDField(primary_key=True, default=uuid.uuid1)
     field1 = models.CharField(max_length=10)
 
 

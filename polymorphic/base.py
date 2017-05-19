@@ -132,6 +132,17 @@ class PolymorphicModelBase(ModelBase):
                     if type(manager) == models.manager.ManagerDescriptor:
                         manager = manager.manager
 
+                    # As of Django 1.5, the abstract models don't get any managers, only a
+                    # AbstractManagerDescriptor as substitute.
+                    if type(manager) == AbstractManagerDescriptor and base.__name__ == 'PolymorphicModel':
+                        model = manager.model
+                        if key == 'objects':
+                            manager = PolymorphicManager()
+                            manager.model = model
+                        elif key == 'base_objects':
+                            manager = models.Manager()
+                            manager.model = model
+
                     if AbstractManagerDescriptor is not None:
                         # Django 1.4 unconditionally assigned managers to a model. As of Django 1.5 however,
                         # the abstract models don't get any managers, only a AbstractManagerDescriptor as substitute.

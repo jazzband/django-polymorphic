@@ -4,14 +4,9 @@ The manager class for use in the models.
 """
 from __future__ import unicode_literals
 import warnings
-import django
 from django.db import models
+from django.utils.six import python_2_unicode_compatible
 from polymorphic.query import PolymorphicQuerySet
-
-try:
-    from django.utils.six import python_2_unicode_compatible
-except ImportError:
-    from django.utils.encoding import python_2_unicode_compatible  # Django 1.5
 
 
 __all__ = (
@@ -32,6 +27,12 @@ class PolymorphicManager(models.Manager):
     use_for_related_fields = True
     queryset_class = PolymorphicQuerySet
 
+    @classmethod
+    def from_queryset(cls, queryset_class, class_name=None):
+        manager = super(PolymorphicManager, cls).from_queryset(queryset_class, class_name=class_name)
+        manager.queryset_class = queryset_class  # also set our version, Django uses _queryset_class
+        return manager
+
     def __init__(self, queryset_class=None, *args, **kwrags):
         # Up till polymorphic 0.4, the queryset class could be specified as parameter to __init__.
         # However, this doesn't work for related managers which instantiate a new version of this class.
@@ -44,17 +45,10 @@ class PolymorphicManager(models.Manager):
         super(PolymorphicManager, self).__init__(*args, **kwrags)
 
     def get_queryset(self):
-        if django.VERSION >= (1, 7):
-            qs = self.queryset_class(self.model, using=self._db, hints=self._hints)
-        else:
-            qs = self.queryset_class(self.model, using=self._db)
+        qs = self.queryset_class(self.model, using=self._db, hints=self._hints)
         if self.model._meta.proxy:
             qs = qs.instance_of(self.model)
         return qs
-
-    # For Django 1.5
-    if django.VERSION < (1, 7):
-        get_query_set = get_queryset
 
     def __str__(self):
         return '%s (PolymorphicManager) using %s' % (self.__class__.__name__, self.queryset_class.__name__)
@@ -71,10 +65,3 @@ class PolymorphicManager(models.Manager):
 
     def get_real_instances(self, base_result_objects=None):
         return self.all().get_real_instances(base_result_objects=base_result_objects)
-
-    if django.VERSION >= (1, 7):
-        @classmethod
-        def from_queryset(cls, queryset_class, class_name=None):
-            manager = super(PolymorphicManager, cls).from_queryset(queryset_class, class_name=class_name)
-            manager.queryset_class = queryset_class  # also set our version, Django uses _queryset_class
-            return manager

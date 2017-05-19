@@ -1,4 +1,3 @@
-import django
 import os
 
 DEBUG = True
@@ -67,7 +66,6 @@ INSTALLED_APPS = (
     'django.contrib.admin',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
-    #'django.contrib.sites',
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
@@ -76,8 +74,7 @@ INSTALLED_APPS = (
     'orders',
 )
 
-if django.VERSION >= (1, 7):
-    TEST_RUNNER = 'django.test.runner.DiscoverRunner'  # silence system checks
+TEST_RUNNER = 'django.test.runner.DiscoverRunner'  # silence system checks
 
 # Logging configuration
 LOGGING = {
