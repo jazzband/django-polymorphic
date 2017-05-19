@@ -260,20 +260,11 @@ class PolymorphicTests(TestCase):
         self.assertEqual(show_base_manager(PlainC), "<class 'django.db.models.manager.Manager'> <class 'polymorphic.tests.PlainC'>")
 
         self.assertEqual(show_base_manager(Model2A), "<class 'polymorphic.managers.PolymorphicManager'> <class 'polymorphic.tests.Model2A'>")
-        if django.VERSION >= (1, 10):
-            # The new inheritance makes all model levels polymorphic
-            self.assertEqual(show_base_manager(Model2B), "<class 'polymorphic.managers.PolymorphicManager'> <class 'polymorphic.tests.Model2B'>")
-            self.assertEqual(show_base_manager(Model2C), "<class 'polymorphic.managers.PolymorphicManager'> <class 'polymorphic.tests.Model2C'>")
-        else:
-            self.assertEqual(show_base_manager(Model2B), "<class 'django.db.models.manager.Manager'> <class 'polymorphic.tests.Model2B'>")
-            self.assertEqual(show_base_manager(Model2C), "<class 'django.db.models.manager.Manager'> <class 'polymorphic.tests.Model2C'>")
+        self.assertEqual(show_base_manager(Model2B), "<class 'polymorphic.managers.PolymorphicManager'> <class 'polymorphic.tests.Model2B'>")
+        self.assertEqual(show_base_manager(Model2C), "<class 'polymorphic.managers.PolymorphicManager'> <class 'polymorphic.tests.Model2C'>")
 
         self.assertEqual(show_base_manager(One2OneRelatingModel), "<class 'polymorphic.managers.PolymorphicManager'> <class 'polymorphic.tests.One2OneRelatingModel'>")
-        if django.VERSION >= (1, 10):
-            # The new inheritance makes all model levels polymorphic
-            self.assertEqual(show_base_manager(One2OneRelatingModelDerived), "<class 'polymorphic.managers.PolymorphicManager'> <class 'polymorphic.tests.One2OneRelatingModelDerived'>")
-        else:
-            self.assertEqual(show_base_manager(One2OneRelatingModelDerived), "<class 'django.db.models.manager.Manager'> <class 'polymorphic.tests.One2OneRelatingModelDerived'>")
+        self.assertEqual(show_base_manager(One2OneRelatingModelDerived), "<class 'polymorphic.managers.PolymorphicManager'> <class 'polymorphic.tests.One2OneRelatingModelDerived'>")
 
     def test_instance_default_manager(self):
         def show_default_manager(instance):
@@ -566,17 +557,6 @@ class PolymorphicTests(TestCase):
         # by choice of MRO, should be MyManager from MROBase1.
         self.assertIs(type(MRODerived.objects), MyManager)
 
-        if django.VERSION < (1, 10, 1):
-            # The change for https://code.djangoproject.com/ticket/27073
-            # in https://github.com/django/django/commit/d4eefc7e2af0d93283ed1c03e0af0a482982b6f0
-            # removes the assignment to _default_manager
-
-            # check for correct default manager
-            self.assertIs(type(MROBase1._default_manager), MyManager)
-
-            # Django vanilla inheritance does not inherit MyManager as _default_manager here
-            self.assertIs(type(MROBase2._default_manager), MyManager)
-
     def test_queryset_assignment(self):
         # This is just a consistency check for now, testing standard Django behavior.
         parent = PlainParentModelWithManager.objects.create()
@@ -783,13 +763,10 @@ def qrepr(data):
     Ensure consistent repr() output for the QuerySet object.
     """
     if isinstance(data, QuerySet):
-        if django.VERSION >= (1, 11):
-            return repr(data)
-        elif django.VERSION >= (1, 10):
-            # Django 1.11 still shows "<QuerySet [", not taking the actual type into account.
+        if django.VERSION < (1, 11):
+            # Django 1.10 still shows "<QuerySet [", not taking the actual type into account.
             return '<{0} {1}'.format(data.__class__.__name__, repr(data)[10:])
         else:
-            # Simulate Django 1.11 behavior for older Django versions.
-            return '<{0} {1}>'.format(data.__class__.__name__, repr(data))
+            return repr(data)
 
     return repr(data)

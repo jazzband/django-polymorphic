@@ -4,11 +4,10 @@ PolymorphicModel Meta Class
 """
 from __future__ import absolute_import
 
+import inspect
 import os
 import sys
-import inspect
 
-import django
 from django.db import models
 from django.db.models.base import ModelBase
 from django.db.models.manager import ManagerDescriptor
@@ -21,11 +20,6 @@ from .query import PolymorphicQuerySet
 POLYMORPHIC_SPECIAL_Q_KWORDS = ['instance_of', 'not_instance_of']
 
 DUMPDATA_COMMAND = os.path.join('django', 'core', 'management', 'commands', 'dumpdata.py')
-
-try:
-    from django.db.models.manager import AbstractManagerDescriptor  # Django 1.5
-except ImportError:
-    AbstractManagerDescriptor = None
 
 
 ###################################################################################
@@ -60,11 +54,6 @@ class PolymorphicModelBase(ModelBase):
 
         # Workaround compatibility issue with six.with_metaclass() and custom Django model metaclasses:
         if not attrs and model_name == 'NewBase':
-            if django.VERSION < (1, 5):
-                # Let Django fully ignore the class which is inserted in between.
-                # Django 1.5 fixed this, see https://code.djangoproject.com/ticket/19688
-                attrs['__module__'] = 'django.utils.six'
-                attrs['Meta'] = type('Meta', (), {'abstract': True})
             return super(PolymorphicModelBase, self).__new__(self, model_name, bases, attrs)
 
         # create new model
@@ -73,33 +62,9 @@ class PolymorphicModelBase(ModelBase):
         # check if the model fields are all allowed
         self.validate_model_fields(new_class)
 
-        # create list of all managers to be inherited from the base classes
-        if django.VERSION < (1, 10):
-            inherited_managers = new_class.get_inherited_managers(attrs)
-
-            # add the managers to the new model
-            for source_name, mgr_name, manager in inherited_managers:
-                # print '** add inherited manager from model %s, manager %s, %s' % (source_name, mgr_name, manager.__class__.__name__)
-                new_manager = manager._copy_to_model(new_class)
-                if mgr_name == '_default_manager':
-                    new_class._default_manager = new_manager
-                else:
-                    new_class.add_to_class(mgr_name, new_manager)
-
-            # get first user defined manager; if there is one, make it the _default_manager
-            # this value is used by the related objects, restoring access to custom queryset methods on related objects.
-            user_manager = self.get_first_user_defined_manager(new_class)
-            if user_manager:
-                # print '## add default manager', type(def_mgr)
-                new_class._default_manager = user_manager._copy_to_model(new_class)
-                new_class._default_manager._inherited = False   # the default mgr was defined by the user, not inherited
-
-        # validate resulting default manager (only on non-abstract and non-swapped models)
+        # validate resulting default manager
         if not new_class._meta.abstract and not new_class._meta.swapped:
-            if django.VERSION >= (1, 10):
-                self.validate_model_manager(new_class.objects, model_name, 'objects')
-            else:
-                self.validate_model_manager(new_class._default_manager, model_name, '_default_manager')
+            self.validate_model_manager(new_class.objects, model_name, "objects")
 
         # for __init__ function of this class (monkeypatching inheritance accessors)
         new_class.polymorphic_super_sub_accessors_replaced = False
@@ -112,73 +77,6 @@ class PolymorphicModelBase(ModelBase):
                 break
 
         return new_class
-
-    if django.VERSION < (1, 10):
-        def get_inherited_managers(self, attrs):
-            """
-            Return list of all managers to be inherited/propagated from the base classes;
-            use correct mro, only use managers with _inherited==False (they are of no use),
-            skip managers that are overwritten by the user with same-named class attributes (in attrs)
-            """
-            # print "** ", self.__name__
-            add_managers = []
-            add_managers_keys = set()
-            for base in self.__mro__[1:]:
-                if not issubclass(base, models.Model):
-                    continue
-                if not getattr(base, 'polymorphic_model_marker', None):
-                    continue  # leave managers of non-polym. models alone
-
-                for key, manager in base.__dict__.items():
-                    if type(manager) == models.manager.ManagerDescriptor:
-                        manager = manager.manager
-
-                    # As of Django 1.5, the abstract models don't get any managers, only a
-                    # AbstractManagerDescriptor as substitute.
-                    if type(manager) == AbstractManagerDescriptor and base.__name__ == 'PolymorphicModel':
-                        model = manager.model
-                        if key == 'objects':
-                            manager = PolymorphicManager()
-                            manager.model = model
-                        elif key == 'base_objects':
-                            manager = models.Manager()
-                            manager.model = model
-
-                    if AbstractManagerDescriptor is not None:
-                        # Django 1.4 unconditionally assigned managers to a model. As of Django 1.5 however,
-                        # the abstract models don't get any managers, only a AbstractManagerDescriptor as substitute.
-                        # Pretend that the manager is still there, so all code works like it used to.
-                        if type(manager) == AbstractManagerDescriptor and base.__name__ == 'PolymorphicModel':
-                            model = manager.model
-                            if key == 'objects':
-                                manager = PolymorphicManager()
-                                manager.model = model
-                            elif key == 'base_objects':
-                                manager = models.Manager()
-                                manager.model = model
-
-                    if not isinstance(manager, models.Manager):
-                        continue
-                    if key == '_base_manager':
-                        continue       # let Django handle _base_manager
-                    if key in attrs:
-                        continue
-                    if key in add_managers_keys:
-                        continue       # manager with that name already added, skip
-                    if manager._inherited:
-                        continue             # inherited managers (on the bases) have no significance, they are just copies
-                    # print '## {0} {1}'.format(self.__name__, key)
-
-                    if isinstance(manager, PolymorphicManager):  # validate any inherited polymorphic managers
-                        self.validate_model_manager(manager, self.__name__, key)
-                    add_managers.append((base.__name__, key, manager))
-                    add_managers_keys.add(key)
-
-            # The ordering in the base.__dict__ may randomly change depending on which method is added.
-            # Make sure base_objects is on top, and 'objects' and '_default_manager' follow afterwards.
-            # This makes sure that the _base_manager is also assigned properly.
-            add_managers = sorted(add_managers, key=lambda item: (item[1].startswith('_'), item[1]))
-            return add_managers
 
         @classmethod
         def get_first_user_defined_manager(mcs, new_class):

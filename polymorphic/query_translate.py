@@ -5,8 +5,8 @@ PolymorphicQuerySet support functions
 from __future__ import absolute_import
 
 import copy
-import django
 from functools import reduce
+
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.db.models.fields.related import ForeignObjectRel, RelatedField
@@ -86,13 +86,7 @@ def translate_polymorphic_filter_definitions_in_args(queryset_model, args, using
 
     Returns: modified Q objects
     """
-    if django.VERSION >= (1, 10):
-        q_objects = [copy.deepcopy(q) for q in args]
-    elif django.VERSION >= (1, 8):
-        q_objects = [q.clone() for q in args]
-    else:
-        q_objects = args  # NOTE: edits existing objects in place.
-    return [translate_polymorphic_Q_object(queryset_model, q, using=using) for q in q_objects]
+    return [translate_polymorphic_Q_object(queryset_model, copy.deepcopy(q), using=using) for q in args]
 
 
 def _translate_polymorphic_filter_definition(queryset_model, field_path, field_val, using=DEFAULT_DB_ALIAS):

@@ -4,7 +4,6 @@ The parent admin displays the list view of the base model.
 import sys
 import warnings
 
-import django
 from django.conf.urls import url
 from django.contrib import admin
 from django.contrib.admin.helpers import AdminErrorList, AdminForm
@@ -270,31 +269,10 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
         if not self._compat_mode:
             return urls
 
-        info = _get_opt(self.model)
-
-        # Patch the change view URL so it's not a big catch-all; allowing all
-        # custom URLs to be added to the end. This is done by adding '/$' to the
-        # end of the regex.  The url needs to be recreated, patching url.regex
-        # is not an option Django 1.4's LocaleRegexProvider changed it.
-        if django.VERSION < (1, 9):
-            # On Django 1.9, the change view URL has been changed from
-            # /<app>/<model>/<pk>/ to /<app>/<model>/<pk>/change/, which is
-            # why we can skip this workaround for Django >= 1.9.
-            new_change_url = url(
-                r'^{0}/$'.format(self.pk_regex),
-                self.admin_site.admin_view(self.change_view),
-                name='{0}_{1}_change'.format(*info)
-            )
-
-            redirect_urls = []
-            for i, oldurl in enumerate(urls):
-                if oldurl.name == new_change_url.name:
-                    urls[i] = new_change_url
-        else:
-            # For Django 1.9, the redirect at the end acts as catch all.
-            # The custom urls need to be inserted before that.
-            redirect_urls = [pat for pat in urls if not pat.name]  # redirect URL has no name.
-            urls = [pat for pat in urls if pat.name]
+        # The redirect at the end acts as catch all.
+        # The custom urls need to be inserted before that.
+        redirect_urls = [pat for pat in urls if not pat.name]  # redirect URL has no name.
+        urls = [pat for pat in urls if pat.name]
 
         # Define the catch-all for custom views
         custom_urls = [
@@ -421,7 +399,3 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
             "admin/%s/change_list.html" % base_app_label,
             "admin/change_list.html"
         ]
-
-
-def _get_opt(model):
-    return model._meta.app_label, model._meta.model_name
