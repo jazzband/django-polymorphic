@@ -23,8 +23,6 @@ class PolymorphicManager(models.Manager):
     Usually not explicitly needed, except if a custom manager or
     a custom queryset class is to be used.
     """
-    # Tell Django that related fields also need to use this manager:
-    use_for_related_fields = True
     queryset_class = PolymorphicQuerySet
 
     @classmethod
