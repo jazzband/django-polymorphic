@@ -1,13 +1,10 @@
 # -*- coding: utf-8 -*-
-import django
 import re
+
 from django.db import models
 from django.utils import six
+from django.utils.six import python_2_unicode_compatible
 
-try:
-    from django.utils.six import python_2_unicode_compatible
-except ImportError:
-    from django.utils.encoding import python_2_unicode_compatible  # Django 1.5
 
 RE_DEFERRED = re.compile('_Deferred_.*')
 
@@ -156,11 +153,6 @@ class ShowFieldBase(object):
                 possible_line_break_pos = len(out)
 
         return '<' + out + '>'
-
-    if django.VERSION < (1, 8):
-        def get_deferred_fields(self):
-            from django.db.models.query_utils import DeferredAttribute
-            return set(attr for attr, value in self.__class__.__dict__.items() if isinstance(value, DeferredAttribute))
 
 
 class ShowFieldType(ShowFieldBase):

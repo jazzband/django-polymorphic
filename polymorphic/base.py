@@ -4,9 +4,9 @@
 """
 from __future__ import absolute_import
 
+import inspect
 import os
 import sys
-import inspect
 
 import django
 from django.db import models
@@ -21,11 +21,6 @@ from .query import PolymorphicQuerySet
 POLYMORPHIC_SPECIAL_Q_KWORDS = ['instance_of', 'not_instance_of']
 
 DUMPDATA_COMMAND = os.path.join('django', 'core', 'management', 'commands', 'dumpdata.py')
-
-try:
-    from django.db.models.manager import AbstractManagerDescriptor  # Django 1.5
-except ImportError:
-    AbstractManagerDescriptor = None
 
 
 ###################################################################################
@@ -60,11 +55,6 @@ class PolymorphicModelBase(ModelBase):
 
         # Workaround compatibility issue with six.with_metaclass() and custom Django model metaclasses:
         if not attrs and model_name == 'NewBase':
-            if django.VERSION < (1, 5):
-                # Let Django fully ignore the class which is inserted in between.
-                # Django 1.5 fixed this, see https://code.djangoproject.com/ticket/19688
-                attrs['__module__'] = 'django.utils.six'
-                attrs['Meta'] = type('Meta', (), {'abstract': True})
             return super(PolymorphicModelBase, self).__new__(self, model_name, bases, attrs)
 
         # create new model
@@ -131,19 +121,6 @@ class PolymorphicModelBase(ModelBase):
                 for key, manager in base.__dict__.items():
                     if type(manager) == models.manager.ManagerDescriptor:
                         manager = manager.manager
-
-                    if AbstractManagerDescriptor is not None:
-                        # Django 1.4 unconditionally assigned managers to a model. As of Django 1.5 however,
-                        # the abstract models don't get any managers, only a AbstractManagerDescriptor as substitute.
-                        # Pretend that the manager is still there, so all code works like it used to.
-                        if type(manager) == AbstractManagerDescriptor and base.__name__ == 'PolymorphicModel':
-                            model = manager.model
-                            if key == 'objects':
-                                manager = PolymorphicManager()
-                                manager.model = model
-                            elif key == 'base_objects':
-                                manager = models.Manager()
-                                manager.model = model
 
                     if not isinstance(manager, models.Manager):
                         continue

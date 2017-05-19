@@ -1,25 +1,15 @@
 from __future__ import print_function
 
-import django
 from django.contrib.contenttypes.models import ContentType
-
-from django.test import TestCase
 from django.db.models import Q
+from django.test import TestCase
 
 from polymorphic.tests import *  # all models
-
-try:
-    from unittest import skipIf
-except ImportError:
-    # python<2.7
-    from django.utils.unittest import skipIf
-
 
 
 class MultipleDatabasesTests(TestCase):
     multi_db = True
 
-    @skipIf(django.VERSION < (1, 5,), "This test needs Django >=1.5")
     def test_save_to_non_default_database(self):
         Model2A.objects.db_manager('secondary').create(field1='A1')
         Model2C(field1='C1', field2='C2', field3='C3').save(using='secondary')

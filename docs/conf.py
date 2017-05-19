@@ -23,8 +23,7 @@ sys.path.insert(0, os.path.abspath('_ext'))
 sys.path.insert(0, os.path.abspath('..'))
 os.environ['DJANGO_SETTINGS_MODULE'] = 'djangodummy.settings'
 
-if django.VERSION >= (1, 8):
-    django.setup()
+django.setup()
 
 # -- General configuration -----------------------------------------------------
 

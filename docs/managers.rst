@@ -32,8 +32,6 @@ Django as automatic manager for several purposes, including accessing
 related objects. It must not filter objects and it's safest to use
 the plain ``PolymorphicManager`` here.
 
-    Note that get_query_set is deprecated in Django 1.8 and creates warnings in Django 1.7.
-
 Manager Inheritance
 -------------------
 
@@ -68,8 +66,6 @@ ArtProject inherited the managers ``objects`` and ``objects_ordered`` from Proje
 regarding their start time and ``ArtProject.objects_ordered.most_recent()``
 will return the ten most recent art projects.
 .
-
-    Note that get_query_set is deprecated in Django 1.8 and creates warnings in Django 1.7.
 
 Using a Custom Queryset Class
 -----------------------------
