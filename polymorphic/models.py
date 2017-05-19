@@ -32,9 +32,6 @@ class PolymorphicModel(six.with_metaclass(PolymorphicModelBase, models.Model)):
     # for PolymorphicQuery, True => an overloaded __repr__ with nicer multi-line output is used by PolymorphicQuery
     polymorphic_query_multiline_output = False
 
-    class Meta:
-        abstract = True
-
     # avoid ContentType related field accessor clash (an error emitted by model validation)
     #: The model field that stores the :class:`~django.contrib.contenttypes.models.ContentType` reference to the actual class.
     polymorphic_ctype = models.ForeignKey(
@@ -49,6 +46,10 @@ class PolymorphicModel(six.with_metaclass(PolymorphicModelBase, models.Model)):
     # They are pretended to be there by the metaclass in PolymorphicModelBase.get_inherited_managers()
     objects = PolymorphicManager()
     base_objects = models.Manager()
+
+    class Meta:
+        abstract = True
+        base_manager_name = "objects"
 
     @classmethod
     def translate_polymorphic_Q_object(cls, q):
