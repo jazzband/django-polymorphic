@@ -10,9 +10,9 @@ from django.contrib.admin.helpers import AdminErrorList, AdminForm
 from django.contrib.admin.templatetags.admin_urls import add_preserved_filters
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import PermissionDenied
-from django.core.urlresolvers import RegexURLResolver
 from django.http import Http404, HttpResponseRedirect
 from django.template.response import TemplateResponse
+from django.urls import RegexURLResolver
 from django.utils.encoding import force_text
 from django.utils.http import urlencode
 from django.utils.safestring import mark_safe
