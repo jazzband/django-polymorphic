@@ -7,9 +7,8 @@ from __future__ import absolute_import
 import copy
 from collections import defaultdict
 
-import django
 from django.contrib.contenttypes.models import ContentType
-from django.db.models.query import Q, QuerySet
+from django.db.models.query import ModelIterable, Q, QuerySet
 from django.utils import six
 
 from .query_translate import translate_polymorphic_filter_definitions_in_kwargs, translate_polymorphic_filter_definitions_in_args
@@ -54,23 +53,19 @@ def _polymorphic_iterator(queryset, base_iter):
             return
 
 
-if django.VERSION >= (1, 9):
-    # We ignore this on django < 1.9, as ModelIterable didn't yet exist.
-    from django.db.models.query import ModelIterable
+class PolymorphicModelIterable(ModelIterable):
+    """
+    ModelIterable for PolymorphicModel
 
-    class PolymorphicModelIterable(ModelIterable):
-        """
-        ModelIterable for PolymorphicModel
+    Yields real instances if qs.polymorphic_disabled is False,
+    otherwise acts like a regular ModelIterable.
+    """
 
-        Yields real instances if qs.polymorphic_disabled is False,
-        otherwise acts like a regular ModelIterable.
-        """
-
-        def __iter__(self):
-            base_iter = super(PolymorphicModelIterable, self).__iter__()
-            if self.queryset.polymorphic_disabled:
-                return base_iter
-            return _polymorphic_iterator(self.queryset, base_iter)
+    def __iter__(self):
+        base_iter = super(PolymorphicModelIterable, self).__iter__()
+        if self.queryset.polymorphic_disabled:
+            return base_iter
+        return _polymorphic_iterator(self.queryset, base_iter)
 
 
 def transmogrify(cls, obj):
@@ -104,9 +99,7 @@ class PolymorphicQuerySet(QuerySet):
 
     def __init__(self, *args, **kwargs):
         super(PolymorphicQuerySet, self).__init__(*args, **kwargs)
-        if django.VERSION >= (1, 9):
-            # On django < 1.9 we override the iterator() method instead
-            self._iterable_class = PolymorphicModelIterable
+        self._iterable_class = PolymorphicModelIterable
 
         self.polymorphic_disabled = False
         # A parallel structure to django.db.models.query.Query.deferred_loading,
@@ -282,16 +275,13 @@ class PolymorphicQuerySet(QuerySet):
         qs = self.non_polymorphic()
         return super(PolymorphicQuerySet, qs).aggregate(*args, **kwargs)
 
-    if django.VERSION >= (1, 9):
-        # On Django < 1.9, 'qs.values(...)' returned a new special ValuesQuerySet
-        # object, which our polymorphic modifications didn't apply to.
-        # Starting with Django 1.9, the copy returned by 'qs.values(...)' has the
-        # same class as 'qs', so our polymorphic modifications would apply.
-        # We want to leave values queries untouched, so we set 'polymorphic_disabled'.
-        def _values(self, *args, **kwargs):
-            clone = super(PolymorphicQuerySet, self)._values(*args, **kwargs)
-            clone.polymorphic_disabled = True
-            return clone
+    # Starting with Django 1.9, the copy returned by 'qs.values(...)' has the
+    # same class as 'qs', so our polymorphic modifications would apply.
+    # We want to leave values queries untouched, so we set 'polymorphic_disabled'.
+    def _values(self, *args, **kwargs):
+        clone = super(PolymorphicQuerySet, self)._values(*args, **kwargs)
+        clone.polymorphic_disabled = True
+        return clone
 
     # Since django_polymorphic 'V1.0 beta2', extra() always returns polymorphic results.
     # The resulting objects are required to have a unique primary key within the result set
@@ -444,34 +434,6 @@ class PolymorphicQuerySet(QuerySet):
                 real_object.polymorphic_extra_select_names = extra_select_names
 
         return resultlist
-
-    if django.VERSION < (1, 9):
-        # On django 1.9+, we can define self._iterator_class instead of iterator()
-        def iterator(self):
-            """
-            This function is used by Django 1.8 and earlier for all object retrieval.
-            By overriding it, we modify the objects that this queryset returns
-            when it is evaluated (or its get method or other object-returning methods are called).
-
-            Here we do the same as::
-
-                base_result_objects = list(super(PolymorphicQuerySet, self).iterator())
-                real_results = self._get_real_instances(base_result_objects)
-                for o in real_results: yield o
-
-            but it requests the objects in chunks from the database,
-            with Polymorphic_QuerySet_objects_per_request per chunk
-            """
-            base_iter = super(PolymorphicQuerySet, self).iterator()
-
-            # disabled => work just like a normal queryset
-            if self.polymorphic_disabled:
-                for o in base_iter:
-                    yield o
-                return
-
-            for o in _polymorphic_iterator(self, base_iter):
-                yield o
 
     def __repr__(self, *args, **kwargs):
         if self.model.polymorphic_query_multiline_output:

@@ -1,4 +1,3 @@
-import django
 from django.contrib.contenttypes.forms import BaseGenericInlineFormSet, generic_inlineformset_factory
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
@@ -32,12 +31,8 @@ class GenericPolymorphicFormSetChild(PolymorphicFormSetChild):
         opts = self.model._meta
         ct_field = opts.get_field(self.ct_field)
 
-        if django.VERSION >= (1, 9):
-            if not isinstance(ct_field, models.ForeignKey) or ct_field.remote_field.model != ContentType:
-                raise Exception("fk_name '%s' is not a ForeignKey to ContentType" % ct_field)
-        else:
-            if not isinstance(ct_field, models.ForeignKey) or ct_field.rel.to != ContentType:
-                raise Exception("fk_name '%s' is not a ForeignKey to ContentType" % ct_field)
+        if not isinstance(ct_field, models.ForeignKey) or ct_field.remote_field.model != ContentType:
+            raise Exception("fk_name '%s' is not a ForeignKey to ContentType" % ct_field)
 
         fk_field = opts.get_field(self.fk_field)  # let the exception propagate
         exclude.extend([ct_field.name, fk_field.name])

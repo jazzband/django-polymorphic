@@ -1,6 +1,5 @@
 from collections import OrderedDict
 
-import django
 from django import forms
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ImproperlyConfigured, ValidationError
@@ -226,10 +225,7 @@ class BasePolymorphicModelFormSet(BaseModelFormSet):
         """
         forms = []
         for model, form_class in self.child_forms.items():
-            if django.VERSION >= (1, 9):
-                kwargs = self.get_form_kwargs(None)  # New Django 1.9 method
-            else:
-                kwargs = {}
+            kwargs = self.get_form_kwargs(None)
 
             form = form_class(
                 auto_id=self.auto_id,
