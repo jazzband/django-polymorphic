@@ -218,7 +218,7 @@ class PolymorphicModel(six.with_metaclass(PolymorphicModelBase, models.Model)):
                 if super_cls in sub_cls._meta.parents:  # super_cls may not be in sub_cls._meta.parents if super_cls is a proxy model
                     field_to_super = sub_cls._meta.parents[super_cls]  # get the field that links sub_cls to super_cls
                     if field_to_super is not None:    # if filed_to_super is not a link to a proxy model
-                        super_to_sub_related_field = field_to_super.rel
+                        super_to_sub_related_field = field_to_super.remote_field
                         if super_to_sub_related_field.related_name is None:
                             # if related name is None the related field is the name of the subclass
                             to_subclass_fieldname = sub_cls.__name__.lower()
