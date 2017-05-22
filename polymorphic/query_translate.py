@@ -11,6 +11,7 @@ from django.db import models
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import Q, FieldDoesNotExist
 from django.db.utils import DEFAULT_DB_ALIAS
+from django.utils import six
 
 from django.db.models.fields.related import RelatedField
 if django.VERSION < (1, 6):
@@ -145,6 +146,9 @@ def translate_polymorphic_field_path(queryset_model, field_path):
     into modela__modelb__modelc__field3.
     Returns: translated path (unchanged, if no translation needed)
     """
+    if not isinstance(field_path, six.string_types):
+        raise ValueError("Expected field name as string: {0}".format(field_path))
+
     classname, sep, pure_field_path = field_path.partition('___')
     if not sep:
         return field_path

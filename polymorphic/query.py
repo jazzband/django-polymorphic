@@ -172,10 +172,14 @@ class PolymorphicQuerySet(QuerySet):
         additional_args = translate_polymorphic_filter_definitions_in_kwargs(self.model, kwargs, using=self.db)  # filter_field='data'
         return super(PolymorphicQuerySet, self)._filter_or_exclude(negate, *(list(q_objects) + additional_args), **kwargs)
 
-    def order_by(self, *args, **kwargs):
+    def order_by(self, *field_names):
         """translate the field paths in the args, then call vanilla order_by."""
-        new_args = [translate_polymorphic_field_path(self.model, a) for a in args]
-        return super(PolymorphicQuerySet, self).order_by(*new_args, **kwargs)
+        field_names = [
+            translate_polymorphic_field_path(self.model, a)
+            if isinstance(a, six.string_types) else a  # allow expressions to pass unchanged
+            for a in field_names
+        ]
+        return super(PolymorphicQuerySet, self).order_by(*field_names)
 
     def defer(self, *fields):
         """
