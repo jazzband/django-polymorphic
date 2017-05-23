@@ -3,7 +3,7 @@ Quickstart
 
 Install the project using::
 
-    pip install django-polymorphic
+    pip install django_polymorphic
 
 Update the settings file::
 
