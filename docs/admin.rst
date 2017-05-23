@@ -90,7 +90,10 @@ The models are taken from :ref:`advanced-features`.
     class ModelAParentAdmin(PolymorphicParentModelAdmin):
         """ The parent model admin """
         base_model = ModelA
-        child_models = (ModelB, ModelC)
+        child_models = (
+            (ModelB, ModelBAdmin), 
+            (ModelC, ModelCAdmin),
+        )
         list_filter = (PolymorphicChildModelFilter,)  # This is optional.
 
 
