@@ -22,6 +22,7 @@ Contributors
 * Hugo Osvaldo Barrera
 * Jacob Rief
 * Jedediah Smith (proxy models support)
+* Jerome Leclanche
 * John Furr
 * Jonas Obrist
 * Julian Wachholz
