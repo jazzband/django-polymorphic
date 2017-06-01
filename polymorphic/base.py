@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-""" PolymorphicModel Meta Class
-    Please see README.rst or DOCS.rst or http://chrisglass.github.com/django_polymorphic/
+"""
+PolymorphicModel Meta Class
 """
 from __future__ import absolute_import
 
