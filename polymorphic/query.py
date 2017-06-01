@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-""" QuerySet for PolymorphicModel
-    Please see README.rst or DOCS.rst or http://chrisglass.github.com/django_polymorphic/
+"""
+QuerySet for PolymorphicModel
 """
 from __future__ import absolute_import
 

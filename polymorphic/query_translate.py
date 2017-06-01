@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-""" PolymorphicQuerySet support functions
-    Please see README.rst or DOCS.rst or http://chrisglass.github.com/django_polymorphic/
+"""
+PolymorphicQuerySet support functions
 """
 from __future__ import absolute_import
 
