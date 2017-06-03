@@ -169,9 +169,3 @@ class ShowFieldTypeAndContent(ShowFieldBase):
     """ model mixin, like ShowFieldContent, but also show field types """
     polymorphic_showfield_type = True
     polymorphic_showfield_content = True
-
-
-# compatibility with old class names
-ShowFieldTypes = ShowFieldType
-ShowFields = ShowFieldContent
-ShowFieldsAndTypes = ShowFieldTypeAndContent
