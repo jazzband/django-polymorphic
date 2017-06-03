@@ -3,7 +3,7 @@
 The manager class for use in the models.
 """
 from __future__ import unicode_literals
-import warnings
+
 from django.db import models
 from django.utils.six import python_2_unicode_compatible
 from polymorphic.query import PolymorphicQuerySet
@@ -30,17 +30,6 @@ class PolymorphicManager(models.Manager):
         manager = super(PolymorphicManager, cls).from_queryset(queryset_class, class_name=class_name)
         manager.queryset_class = queryset_class  # also set our version, Django uses _queryset_class
         return manager
-
-    def __init__(self, queryset_class=None, *args, **kwrags):
-        # Up till polymorphic 0.4, the queryset class could be specified as parameter to __init__.
-        # However, this doesn't work for related managers which instantiate a new version of this class.
-        # Hence, for custom managers the new default is using the 'queryset_class' attribute at class level instead.
-        if queryset_class:
-            warnings.warn("Using PolymorphicManager(queryset_class=..) is deprecated; override the queryset_class attribute instead", DeprecationWarning)
-            # For backwards compatibility, still allow the parameter:
-            self.queryset_class = queryset_class
-
-        super(PolymorphicManager, self).__init__(*args, **kwrags)
 
     def get_queryset(self):
         qs = self.queryset_class(self.model, using=self._db, hints=self._hints)
