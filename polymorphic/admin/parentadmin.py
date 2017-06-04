@@ -61,7 +61,7 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
     #: The regular expression to filter the primary key in the URL.
     #: This accepts only numbers as defensive measure against catch-all URLs.
     #: If your primary key consists of string values, update this regular expression.
-    pk_regex = '(\d+|__fk__)'
+    pk_regex = r"(\d+|__fk__)"
 
     def __init__(self, model, admin_site, *args, **kwargs):
         super(PolymorphicParentModelAdmin, self).__init__(model, admin_site, *args, **kwargs)
