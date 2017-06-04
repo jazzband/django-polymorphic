@@ -173,9 +173,9 @@ class PolymorphicModel(six.with_metaclass(PolymorphicModelBase, models.Model)):
                 ReverseSingleRelatedObjectDescriptor as ForwardManyToOneDescriptor,
             )
         for name, model in subclasses_and_superclasses_accessors.items():
+            # Here be dragons.
             orig_accessor = getattr(self.__class__, name, None)
-            if type(orig_accessor) in [ReverseOneToOneDescriptor, ForwardManyToOneDescriptor]:
-                # print >>sys.stderr, '---------- replacing', name, orig_accessor, '->', model
+            if issubclass(type(orig_accessor), (ReverseOneToOneDescriptor, ForwardManyToOneDescriptor)):
                 setattr(self.__class__, name, property(create_accessor_function_for_model(model, name)))
 
     def _get_inheritance_relation_fields_and_models(self):
