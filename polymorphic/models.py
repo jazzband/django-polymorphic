@@ -4,9 +4,9 @@ Seamless Polymorphic Inheritance for Django Models
 """
 from __future__ import absolute_import
 
+from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.db.utils import DEFAULT_DB_ALIAS
-from django.contrib.contenttypes.models import ContentType
 from django.utils import six
 
 from .base import PolymorphicModelBase
@@ -32,13 +32,12 @@ class PolymorphicModel(six.with_metaclass(PolymorphicModelBase, models.Model)):
     # for PolymorphicQuery, True => an overloaded __repr__ with nicer multi-line output is used by PolymorphicQuery
     polymorphic_query_multiline_output = False
 
-    class Meta:
-        abstract = True
-
     # avoid ContentType related field accessor clash (an error emitted by model validation)
     #: The model field that stores the :class:`~django.contrib.contenttypes.models.ContentType` reference to the actual class.
-    polymorphic_ctype = models.ForeignKey(ContentType, null=True, editable=False,
-                                          related_name='polymorphic_%(app_label)s.%(class)s_set+')
+    polymorphic_ctype = models.ForeignKey(
+        ContentType, null=True, editable=False, on_delete=models.CASCADE,
+        related_name='polymorphic_%(app_label)s.%(class)s_set+'
+    )
 
     # some applications want to know the name of the fields that are added to its models
     polymorphic_internal_model_fields = ['polymorphic_ctype']
@@ -47,6 +46,10 @@ class PolymorphicModel(six.with_metaclass(PolymorphicModelBase, models.Model)):
     # They are pretended to be there by the metaclass in PolymorphicModelBase.get_inherited_managers()
     objects = PolymorphicManager()
     base_objects = models.Manager()
+
+    class Meta:
+        abstract = True
+        base_manager_name = "objects"
 
     @classmethod
     def translate_polymorphic_Q_object(cls, q):
@@ -85,11 +88,7 @@ class PolymorphicModel(six.with_metaclass(PolymorphicModelBase, models.Model)):
         # so we use the following version, which uses the ContentType manager cache.
         # Note that model_class() can return None for stale content types;
         # when the content type record still exists but no longer refers to an existing model.
-        try:
-            model = ContentType.objects.db_manager(self._state.db).get_for_id(self.polymorphic_ctype_id).model_class()
-        except AttributeError:
-            # Django <1.6 workaround
-            return None
+        model = ContentType.objects.db_manager(self._state.db).get_for_id(self.polymorphic_ctype_id).model_class()
 
         # Protect against bad imports (dumpdata without --natural) or other
         # issues missing with the ContentType models.
@@ -204,7 +203,7 @@ class PolymorphicModel(six.with_metaclass(PolymorphicModelBase, models.Model)):
                 if super_cls in sub_cls._meta.parents:  # super_cls may not be in sub_cls._meta.parents if super_cls is a proxy model
                     field_to_super = sub_cls._meta.parents[super_cls]  # get the field that links sub_cls to super_cls
                     if field_to_super is not None:    # if filed_to_super is not a link to a proxy model
-                        super_to_sub_related_field = field_to_super.rel
+                        super_to_sub_related_field = field_to_super.remote_field
                         if super_to_sub_related_field.related_name is None:
                             # if related name is None the related field is the name of the subclass
                             to_subclass_fieldname = sub_cls.__name__.lower()

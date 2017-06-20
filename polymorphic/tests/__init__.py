@@ -1,21 +1,15 @@
 # -*- coding: utf-8 -*-
 
-import django
 import uuid
+
+from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.db.models.query import QuerySet
-from django.contrib.contenttypes.models import ContentType
 
 from polymorphic.managers import PolymorphicManager
 from polymorphic.models import PolymorphicModel
 from polymorphic.query import PolymorphicQuerySet
 from polymorphic.showfields import ShowFieldContent, ShowFieldType, ShowFieldTypeAndContent
-
-try:
-    from django.db.models import UUIDField
-except ImportError:
-    # django<1.8
-    from polymorphic.tools_for_tests import UUIDField
 
 
 class PlainA(models.Model):
@@ -113,7 +107,7 @@ class Enhance_Inherit(Enhance_Base, Enhance_Plain):
 
 class RelationBase(ShowFieldTypeAndContent, PolymorphicModel):
     field_base = models.CharField(max_length=10)
-    fk = models.ForeignKey('self', null=True, related_name='relationbase_set')
+    fk = models.ForeignKey('self', on_delete=models.CASCADE, null=True, related_name='relationbase_set')
     m2m = models.ManyToManyField('self')
 
 
@@ -134,7 +128,7 @@ class RelatingModel(models.Model):
 
 
 class One2OneRelatingModel(PolymorphicModel):
-    one2one = models.OneToOneField(Model2A)
+    one2one = models.OneToOneField(Model2A, on_delete=models.CASCADE)
     field1 = models.CharField(max_length=10)
 
 
@@ -148,7 +142,7 @@ class ModelUnderRelParent(PolymorphicModel):
 
 
 class ModelUnderRelChild(PolymorphicModel):
-    parent = models.ForeignKey(ModelUnderRelParent, related_name='children')
+    parent = models.ForeignKey(ModelUnderRelParent, on_delete=models.CASCADE, related_name='children')
     _private2 = models.CharField(max_length=10)
 
 
@@ -166,9 +160,6 @@ class MyManager(PolymorphicManager):
 
     def my_queryset_foo(self):
         return self.all().my_queryset_foo()
-
-    # Django <= 1.5 compatibility
-    get_query_set = get_queryset
 
 
 class ModelWithMyManager(ShowFieldTypeAndContent, Model2A):
@@ -188,10 +179,9 @@ class ModelWithMyManagerDefault(ShowFieldTypeAndContent, Model2A):
     field4 = models.CharField(max_length=10)
 
 
-if django.VERSION >= (1, 7):
-    class ModelWithMyManager2(ShowFieldTypeAndContent, Model2A):
-        objects = MyManagerQuerySet.as_manager()
-        field4 = models.CharField(max_length=10)
+class ModelWithMyManager2(ShowFieldTypeAndContent, Model2A):
+    objects = MyManagerQuerySet.as_manager()
+    field4 = models.CharField(max_length=10)
 
 
 class MROBase1(ShowFieldType, PolymorphicModel):
@@ -218,7 +208,7 @@ class ParentModelWithManager(PolymorphicModel):
 
 class ChildModelWithManager(PolymorphicModel):
     # Also test whether foreign keys receive the manager:
-    fk = models.ForeignKey(ParentModelWithManager, related_name='childmodel_set')
+    fk = models.ForeignKey(ParentModelWithManager, on_delete=models.CASCADE, related_name='childmodel_set')
     objects = MyManager()
 
 
@@ -236,16 +226,13 @@ class PlainMyManager(models.Manager):
     def get_queryset(self):
         return PlainMyManagerQuerySet(self.model, using=self._db)
 
-    # Django <= 1.5 compatibility
-    get_query_set = get_queryset
-
 
 class PlainParentModelWithManager(models.Model):
     pass
 
 
 class PlainChildModelWithManager(models.Model):
-    fk = models.ForeignKey(PlainParentModelWithManager, related_name='childmodel_set')
+    fk = models.ForeignKey(PlainParentModelWithManager, on_delete=models.CASCADE, related_name='childmodel_set')
     objects = PlainMyManager()
 
 
@@ -277,12 +264,12 @@ class BlogB(BlogBase):
 
 
 class BlogEntry(ShowFieldTypeAndContent, PolymorphicModel):
-    blog = models.ForeignKey(BlogA)
+    blog = models.ForeignKey(BlogA, on_delete=models.CASCADE)
     text = models.CharField(max_length=10)
 
 
 class BlogEntry_limit_choices_to(ShowFieldTypeAndContent, PolymorphicModel):
-    blog = models.ForeignKey(BlogBase)
+    blog = models.ForeignKey(BlogBase, on_delete=models.CASCADE)
     text = models.CharField(max_length=10)
 
 
@@ -319,7 +306,7 @@ class Bottom(Middle):
 
 
 class UUIDProject(ShowFieldTypeAndContent, PolymorphicModel):
-    uuid_primary_key = UUIDField(primary_key=True, default=uuid.uuid1)
+    uuid_primary_key = models.UUIDField(primary_key=True, default=uuid.uuid1)
     topic = models.CharField(max_length=30)
 
 
@@ -332,7 +319,7 @@ class UUIDResearchProject(UUIDProject):
 
 
 class UUIDPlainA(models.Model):
-    uuid_primary_key = UUIDField(primary_key=True, default=uuid.uuid1)
+    uuid_primary_key = models.UUIDField(primary_key=True, default=uuid.uuid1)
     field1 = models.CharField(max_length=10)
 
 
@@ -388,13 +375,15 @@ class ProxyModelB(ProxyModelBase):
 # with related field 'ContentType.relatednameclash_set'." (reported by Andrew Ingram)
 # fixed with related_name
 class RelatedNameClash(ShowFieldType, PolymorphicModel):
-    ctype = models.ForeignKey(ContentType, null=True, editable=False)
+    ctype = models.ForeignKey(ContentType, on_delete=models.CASCADE, null=True, editable=False)
 
 # class with a parent_link to superclass, and a related_name back to subclass
 
 
 class TestParentLinkAndRelatedName(ModelShow1_plain):
-    superclass = models.OneToOneField(ModelShow1_plain, parent_link=True, related_name='related_name_subclass')
+    superclass = models.OneToOneField(
+        ModelShow1_plain, on_delete=models.CASCADE, parent_link=True, related_name='related_name_subclass'
+    )
 
 
 class CustomPkBase(ShowFieldTypeAndContent, PolymorphicModel):

@@ -1,28 +1,22 @@
 # -*- coding: utf-8 -*-
-""" QuerySet for PolymorphicModel
-    Please see README.rst or DOCS.rst or http://chrisglass.github.com/django_polymorphic/
+"""
+QuerySet for PolymorphicModel
 """
 from __future__ import absolute_import
 
 import copy
 from collections import defaultdict
 
-import django
-from django.db.models.query import QuerySet, Q
 from django.contrib.contenttypes.models import ContentType
+from django.db.models.query import ModelIterable, Q, QuerySet
 from django.utils import six
 
 from .query_translate import translate_polymorphic_filter_definitions_in_kwargs, translate_polymorphic_filter_definitions_in_args
 from .query_translate import translate_polymorphic_field_path, translate_polymorphic_Q_object
 
 # chunk-size: maximum number of objects requested per db-request
-# by the PolymorphicModelIterable; we use the same chunk size as Django
-try:
-    from django.db.models.query import CHUNK_SIZE               # this is 100 for Django 1.1/1.2
-except ImportError:
-    # CHUNK_SIZE was removed in Django 1.6
-    CHUNK_SIZE = 100
-Polymorphic_QuerySet_objects_per_request = CHUNK_SIZE
+# by the polymorphic queryset.iterator() implementation
+Polymorphic_QuerySet_objects_per_request = 100
 
 
 def _polymorphic_iterator(queryset, base_iter):
@@ -59,23 +53,19 @@ def _polymorphic_iterator(queryset, base_iter):
             return
 
 
-if django.VERSION >= (1, 9):
-    # We ignore this on django < 1.9, as ModelIterable didn't yet exist.
-    from django.db.models.query import ModelIterable
+class PolymorphicModelIterable(ModelIterable):
+    """
+    ModelIterable for PolymorphicModel
 
-    class PolymorphicModelIterable(ModelIterable):
-        """
-        ModelIterable for PolymorphicModel
+    Yields real instances if qs.polymorphic_disabled is False,
+    otherwise acts like a regular ModelIterable.
+    """
 
-        Yields real instances if qs.polymorphic_disabled is False,
-        otherwise acts like a regular ModelIterable.
-        """
-
-        def __iter__(self):
-            base_iter = super(PolymorphicModelIterable, self).__iter__()
-            if self.queryset.polymorphic_disabled:
-                return base_iter
-            return _polymorphic_iterator(self.queryset, base_iter)
+    def __iter__(self):
+        base_iter = super(PolymorphicModelIterable, self).__iter__()
+        if self.queryset.polymorphic_disabled:
+            return base_iter
+        return _polymorphic_iterator(self.queryset, base_iter)
 
 
 def transmogrify(cls, obj):
@@ -97,14 +87,6 @@ def transmogrify(cls, obj):
 ###################################################################################
 # PolymorphicQuerySet
 
-def _query_annotations(query):
-    try:
-        return query.annotations
-    except AttributeError:
-        # Django < 1.8
-        return query.aggregates
-
-
 class PolymorphicQuerySet(QuerySet):
     """
     QuerySet for PolymorphicModel
@@ -117,9 +99,7 @@ class PolymorphicQuerySet(QuerySet):
 
     def __init__(self, *args, **kwargs):
         super(PolymorphicQuerySet, self).__init__(*args, **kwargs)
-        if django.VERSION >= (1, 9):
-            # On django < 1.9 we override the iterator() method instead
-            self._iterable_class = PolymorphicModelIterable
+        self._iterable_class = PolymorphicModelIterable
 
         self.polymorphic_disabled = False
         # A parallel structure to django.db.models.query.Query.deferred_loading,
@@ -138,15 +118,13 @@ class PolymorphicQuerySet(QuerySet):
             self.polymorphic_deferred_loading[1])
         return new
 
-    if django.VERSION >= (1, 7):
-        def as_manager(cls):
-            # Make sure the Django 1.7 way of creating managers works.
-            from .managers import PolymorphicManager
-            manager = PolymorphicManager.from_queryset(cls)()
-            manager._built_with_as_manager = True
-            return manager
-        as_manager.queryset_only = True
-        as_manager = classmethod(as_manager)
+    def as_manager(cls):
+        from .managers import PolymorphicManager
+        manager = PolymorphicManager.from_queryset(cls)()
+        manager._built_with_as_manager = True
+        return manager
+    as_manager.queryset_only = True
+    as_manager = classmethod(as_manager)
 
     def non_polymorphic(self):
         """switch off polymorphic behaviour for this query.
@@ -244,47 +222,40 @@ class PolymorphicQuerySet(QuerySet):
         Modifies kwargs if needed (these are Aggregate objects, we translate the lookup member variable)"""
         ___lookup_assert_msg = 'PolymorphicModel: annotate()/aggregate(): ___ model lookup supported for keyword arguments only'
 
-        if django.VERSION < (1, 8):
-            def patch_lookup(a):
-                a.lookup = translate_polymorphic_field_path(self.model, a.lookup)
+        def patch_lookup(a):
+            # The field on which the aggregate operates is
+            # stored inside a complex query expression.
+            if isinstance(a, Q):
+                translate_polymorphic_Q_object(self.model, a)
+            elif hasattr(a, 'get_source_expressions'):
+                for source_expression in a.get_source_expressions():
+                    if source_expression is not None:
+                        patch_lookup(source_expression)
+            else:
+                a.name = translate_polymorphic_field_path(self.model, a.name)
 
-            def test___lookup(a):
-                assert '___' not in a.lookup, ___lookup_assert_msg
-        else:
-            def patch_lookup(a):
-                # With Django > 1.8, the field on which the aggregate operates is
-                # stored inside a complex query expression.
-                if isinstance(a, Q):
-                    translate_polymorphic_Q_object(self.model, a)
-                elif hasattr(a, 'get_source_expressions'):
-                    for source_expression in a.get_source_expressions():
-                        if source_expression is not None:
-                            patch_lookup(source_expression)
-                else:
-                    a.name = translate_polymorphic_field_path(self.model, a.name)
+        def test___lookup(a):
+            """ *args might be complex expressions too in django 1.8 so
+            the testing for a '___' is rather complex on this one """
+            if isinstance(a, Q):
+                def tree_node_test___lookup(my_model, node):
+                    " process all children of this Q node "
+                    for i in range(len(node.children)):
+                        child = node.children[i]
 
-            def test___lookup(a):
-                """ *args might be complex expressions too in django 1.8 so
-                the testing for a '___' is rather complex on this one """
-                if isinstance(a, Q):
-                    def tree_node_test___lookup(my_model, node):
-                        " process all children of this Q node "
-                        for i in range(len(node.children)):
-                            child = node.children[i]
+                        if type(child) == tuple:
+                            # this Q object child is a tuple => a kwarg like Q( instance_of=ModelB )
+                            assert '___' not in child[0], ___lookup_assert_msg
+                        else:
+                            # this Q object child is another Q object, recursively process this as well
+                            tree_node_test___lookup(my_model, child)
 
-                            if type(child) == tuple:
-                                # this Q object child is a tuple => a kwarg like Q( instance_of=ModelB )
-                                assert '___' not in child[0], ___lookup_assert_msg
-                            else:
-                                # this Q object child is another Q object, recursively process this as well
-                                tree_node_test___lookup(my_model, child)
-
-                    tree_node_test___lookup(self.model, a)
-                elif hasattr(a, 'get_source_expressions'):
-                    for source_expression in a.get_source_expressions():
-                        test___lookup(source_expression)
-                else:
-                    assert '___' not in a.name, ___lookup_assert_msg
+                tree_node_test___lookup(self.model, a)
+            elif hasattr(a, 'get_source_expressions'):
+                for source_expression in a.get_source_expressions():
+                    test___lookup(source_expression)
+            else:
+                assert '___' not in a.name, ___lookup_assert_msg
 
         for a in args:
             test___lookup(a)
@@ -304,16 +275,13 @@ class PolymorphicQuerySet(QuerySet):
         qs = self.non_polymorphic()
         return super(PolymorphicQuerySet, qs).aggregate(*args, **kwargs)
 
-    if django.VERSION >= (1, 9):
-        # On Django < 1.9, 'qs.values(...)' returned a new special ValuesQuerySet
-        # object, which our polymorphic modifications didn't apply to.
-        # Starting with Django 1.9, the copy returned by 'qs.values(...)' has the
-        # same class as 'qs', so our polymorphic modifications would apply.
-        # We want to leave values queries untouched, so we set 'polymorphic_disabled'.
-        def _values(self, *args, **kwargs):
-            clone = super(PolymorphicQuerySet, self)._values(*args, **kwargs)
-            clone.polymorphic_disabled = True
-            return clone
+    # Starting with Django 1.9, the copy returned by 'qs.values(...)' has the
+    # same class as 'qs', so our polymorphic modifications would apply.
+    # We want to leave values queries untouched, so we set 'polymorphic_disabled'.
+    def _values(self, *args, **kwargs):
+        clone = super(PolymorphicQuerySet, self)._values(*args, **kwargs)
+        clone.polymorphic_disabled = True
+        return clone
 
     # Since django_polymorphic 'V1.0 beta2', extra() always returns polymorphic results.
     # The resulting objects are required to have a unique primary key within the result set
@@ -438,8 +406,8 @@ class PolymorphicQuerySet(QuerySet):
                 if real_class != real_concrete_class:
                     real_object = transmogrify(real_class, real_object)
 
-                if _query_annotations(self.query):
-                    for anno_field_name in six.iterkeys(_query_annotations(self.query)):
+                if self.query.annotations:
+                    for anno_field_name in six.iterkeys(self.query.annotations):
                         attr = getattr(base_result_objects_by_id[o_pk], anno_field_name)
                         setattr(real_object, anno_field_name, attr)
 
@@ -454,8 +422,8 @@ class PolymorphicQuerySet(QuerySet):
         resultlist = [results[ordered_id] for ordered_id in ordered_id_list if ordered_id in results]
 
         # set polymorphic_annotate_names in all objects (currently just used for debugging/printing)
-        if _query_annotations(self.query):
-            annotate_names = list(six.iterkeys(_query_annotations(self.query)))  # get annotate field list
+        if self.query.annotations:
+            annotate_names = list(six.iterkeys(self.query.annotations))  # get annotate field list
             for real_object in resultlist:
                 real_object.polymorphic_annotate_names = annotate_names
 
@@ -466,34 +434,6 @@ class PolymorphicQuerySet(QuerySet):
                 real_object.polymorphic_extra_select_names = extra_select_names
 
         return resultlist
-
-    if django.VERSION < (1, 9):
-        # On django 1.9+, we can define self._iterator_class instead of iterator()
-        def iterator(self):
-            """
-            This function is used by Django 1.8 and earlier for all object retrieval.
-            By overriding it, we modify the objects that this queryset returns
-            when it is evaluated (or its get method or other object-returning methods are called).
-
-            Here we do the same as::
-
-                base_result_objects = list(super(PolymorphicQuerySet, self).iterator())
-                real_results = self._get_real_instances(base_result_objects)
-                for o in real_results: yield o
-
-            but it requests the objects in chunks from the database,
-            with Polymorphic_QuerySet_objects_per_request per chunk
-            """
-            base_iter = super(PolymorphicQuerySet, self).iterator()
-
-            # disabled => work just like a normal queryset
-            if self.polymorphic_disabled:
-                for o in base_iter:
-                    yield o
-                return
-
-            for o in _polymorphic_iterator(self, base_iter):
-                yield o
 
     def __repr__(self, *args, **kwargs):
         if self.model.polymorphic_query_multiline_output:

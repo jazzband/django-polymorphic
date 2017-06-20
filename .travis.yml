@@ -1,111 +1,55 @@
+# https://travis-ci.org/django-polymorphic/django-polymorphic
 sudo: false
 language: python
-cache: pip
-python:
-  - "2.6"
-  - "2.7"
-  - "3.2"
-  - "3.3"
-  - "3.4"
-  - "3.5"
-  - "3.6"
+
+python: "3.6"
+
 env:
-  - TOXENV="django14"
-  - TOXENV="django15"
-  - TOXENV="django16"
-  - TOXENV="django17"
-  - TOXENV="django18"
-  - TOXENV="django19"
-  - TOXENV="django110"
-  - TOXENV="django111"
-  - TOXENV="djangodev"
+  - TOXENV=py27-django110
+  - TOXENV=py27-django111
+  - TOXENV=py34-django110
+  - TOXENV=py34-django111
+  - TOXENV=py35-django110
+  - TOXENV=py35-django111
+  - TOXENV=py35-djangomaster
+  - TOXENV=py36-django111
+  - TOXENV=py36-djangomaster
 
 matrix:
   fast_finish: true
+  include:
+    - python: "3.5"
+      env: TOXENV=py35-django110
+    - python: "3.5"
+      env: TOXENV=py35-django111
+    - python: "3.5"
+      env: TOXENV=py35-djangomaster
   exclude:
     - python: "3.6"
-      env: TOXENV="django14"
+      env: TOXENV=py35-django110
     - python: "3.6"
-      env: TOXENV="django15"
+      env: TOXENV=py35-django111
     - python: "3.6"
-      env: TOXENV="django16"
-    - python: "3.6"
-      env: TOXENV="django17"
-    - python: "3.6"
-      env: TOXENV="django18"
-    - python: "3.6"
-      env: TOXENV="django19"
-    - python: "3.6"
-      env: TOXENV="django110"
-
-    - python: "3.5"
-      env: TOXENV="django14"
-    - python: "3.5"
-      env: TOXENV="django15"
-    - python: "3.5"
-      env: TOXENV="django16"
-    - python: "3.5"
-      env: TOXENV="django17"
-
-    - python: "3.4"
-      env: TOXENV="django14"
-    - python: "3.4"
-      env: TOXENV="django19"
-    - python: "3.4"
-      env: TOXENV="django110"
-    - python: "3.4"
-      env: TOXENV="django111"
-
-    - python: "3.3"
-      env: TOXENV="django14"
-    - python: "3.3"
-      env: TOXENV="django19"
-    - python: "3.3"
-      env: TOXENV="django110"
-    - python: "3.3"
-      env: TOXENV="django111"
-    - python: "3.3"
-      env: TOXENV="djangodev"
-
-    - python: "3.2"
-      env: TOXENV="django14"
-    - python: "3.2"
-      env: TOXENV="django19"
-    - python: "3.2"
-      env: TOXENV="django110"
-    - python: "3.2"
-      env: TOXENV="django111"
-    - python: "3.2"
-      env: TOXENV="djangodev"
-
-    - python: "2.7"
-      env: TOXENV="djangodev"
-
-    - python: "2.6"
-      env: TOXENV="django17"
-    - python: "2.6"
-      env: TOXENV="django18"
-    - python: "2.6"
-      env: TOXENV="django19"
-    - python: "2.6"
-      env: TOXENV="django110"
-    - python: "2.6"
-      env: TOXENV="django111"
-    - python: "2.6"
-      env: TOXENV="djangodev"
-
+      env: TOXENV=py35-djangomaster
   allow_failures:
-    - env: TOXENV="djangodev"
+    - env: TOXENV=py35-djangomaster
+    - env: TOXENV=py36-djangomaster
 
-before_install:
-- pip install codecov coverage==3.6 tox
+cache:
+  directories:
+    - $HOME/.cache/pip
+    - $TRAVIS_BUILD_DIR/.tox
+
+install:
+  - pip install --upgrade pip wheel setuptools
+  - pip install codecov coverage tox
 
 script:
   - tox
 
 after_success:
-- coverage xml -i
-- codecov
+  - coverage xml -i
+  - codecov
 
 branches:
   only:

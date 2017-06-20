@@ -1,22 +1,11 @@
-from __future__ import print_function
 import re
 
 import django
+from django.db.models import Case, Count, Q, When
 from django.test import TestCase
-from django.db.models import Q, Count
 from django.utils import six
-from polymorphic.tests import *  # all models
-
 from polymorphic.contrib.guardian import get_polymorphic_base_content_type
-
-try:
-    from unittest import skipIf
-except ImportError:
-    # python<2.7
-    from django.utils.unittest import skipIf
-
-if django.VERSION >= (1, 8):
-    from django.db.models import Case, When
+from polymorphic.tests import *  # all models
 
 
 class PolymorphicTests(TestCase):
@@ -188,11 +177,6 @@ class PolymorphicTests(TestCase):
                          '<Model2D: id 4, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField), '
                          'deferred[field2,field3,field4,model2a_ptr_id,model2b_ptr_id]>')
 
-    # A bug in Django 1.4 prevents using defer across reverse relations
-    # <https://code.djangoproject.com/ticket/14694>. Since polymorphic
-    # uses reverse relations to traverse down model inheritance, deferring
-    # fields in child models will not work in Django 1.4.
-    @skipIf(django.VERSION < (1, 5), "Django 1.4 does not support defer on related fields")
     def test_defer_related_fields(self):
         self.create_model2abcd()
 
@@ -275,20 +259,11 @@ class PolymorphicTests(TestCase):
         self.assertEqual(show_base_manager(PlainC), "<class 'django.db.models.manager.Manager'> <class 'polymorphic.tests.PlainC'>")
 
         self.assertEqual(show_base_manager(Model2A), "<class 'polymorphic.managers.PolymorphicManager'> <class 'polymorphic.tests.Model2A'>")
-        if django.VERSION >= (1, 10):
-            # The new inheritance makes all model levels polymorphic
-            self.assertEqual(show_base_manager(Model2B), "<class 'polymorphic.managers.PolymorphicManager'> <class 'polymorphic.tests.Model2B'>")
-            self.assertEqual(show_base_manager(Model2C), "<class 'polymorphic.managers.PolymorphicManager'> <class 'polymorphic.tests.Model2C'>")
-        else:
-            self.assertEqual(show_base_manager(Model2B), "<class 'django.db.models.manager.Manager'> <class 'polymorphic.tests.Model2B'>")
-            self.assertEqual(show_base_manager(Model2C), "<class 'django.db.models.manager.Manager'> <class 'polymorphic.tests.Model2C'>")
+        self.assertEqual(show_base_manager(Model2B), "<class 'polymorphic.managers.PolymorphicManager'> <class 'polymorphic.tests.Model2B'>")
+        self.assertEqual(show_base_manager(Model2C), "<class 'polymorphic.managers.PolymorphicManager'> <class 'polymorphic.tests.Model2C'>")
 
         self.assertEqual(show_base_manager(One2OneRelatingModel), "<class 'polymorphic.managers.PolymorphicManager'> <class 'polymorphic.tests.One2OneRelatingModel'>")
-        if django.VERSION >= (1, 10):
-            # The new inheritance makes all model levels polymorphic
-            self.assertEqual(show_base_manager(One2OneRelatingModelDerived), "<class 'polymorphic.managers.PolymorphicManager'> <class 'polymorphic.tests.One2OneRelatingModelDerived'>")
-        else:
-            self.assertEqual(show_base_manager(One2OneRelatingModelDerived), "<class 'django.db.models.manager.Manager'> <class 'polymorphic.tests.One2OneRelatingModelDerived'>")
+        self.assertEqual(show_base_manager(One2OneRelatingModelDerived), "<class 'polymorphic.managers.PolymorphicManager'> <class 'polymorphic.tests.One2OneRelatingModelDerived'>")
 
     def test_instance_default_manager(self):
         def show_default_manager(instance):
@@ -424,7 +399,6 @@ class PolymorphicTests(TestCase):
         self.assertEqual(repr(objects[0]), '<Model2B: id 2, field1 (CharField), field2 (CharField)>')
         self.assertEqual(repr(objects[1]), '<Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)>')
 
-    @skipIf(django.VERSION < (1, 6), "Django 1.4 and 1.5 don't support q.clone()")
     def test_query_filter_exclude_is_immutable(self):
         # given
         q_to_reuse = Q(Model2B___field2='something')
@@ -564,7 +538,6 @@ class PolymorphicTests(TestCase):
         self.assertIs(type(ModelWithMyManagerDefault._default_manager), MyManager)
         self.assertIs(type(ModelWithMyManagerDefault.base_objects), models.Manager)
 
-    @skipIf(django.VERSION < (1, 7), "This test needs Django 1.7+")
     def test_user_defined_queryset_as_manager(self):
         self.create_model2abcd()
         ModelWithMyManager2.objects.create(field1='D1a', field4='D4a')
@@ -582,17 +555,6 @@ class PolymorphicTests(TestCase):
     def test_manager_inheritance(self):
         # by choice of MRO, should be MyManager from MROBase1.
         self.assertIs(type(MRODerived.objects), MyManager)
-
-        if django.VERSION < (1, 10, 1):
-            # The change for https://code.djangoproject.com/ticket/27073
-            # in https://github.com/django/django/commit/d4eefc7e2af0d93283ed1c03e0af0a482982b6f0
-            # removes the assignment to _default_manager
-
-            # check for correct default manager
-            self.assertIs(type(MROBase1._default_manager), MyManager)
-
-            # Django vanilla inheritance does not inherit MyManager as _default_manager here
-            self.assertIs(type(MROBase2._default_manager), MyManager)
 
     def test_queryset_assignment(self):
         # This is just a consistency check for now, testing standard Django behavior.
@@ -751,7 +713,6 @@ class PolymorphicTests(TestCase):
             lambda: Model2A.objects.aggregate(Count('Model2B___field2'))
         )
 
-    @skipIf(django.VERSION < (1, 8,), "This test needs Django >=1.8")
     def test_polymorphic__complex_aggregate(self):
         """ test (complex expression on) aggregate (should work for annotate either) """
 
@@ -777,7 +738,6 @@ class PolymorphicTests(TestCase):
         with self.assertRaisesMessage(AssertionError, 'PolymorphicModel: annotate()/aggregate(): ___ model lookup supported for keyword arguments only'):
             Model2A.objects.aggregate(ComplexAgg('Model2B___field2'))
 
-    @skipIf(django.VERSION < (1, 8,), "This test needs Django >=1.8")
     def test_polymorphic__expressions(self):
 
         from django.db.models.functions import Concat
@@ -809,13 +769,10 @@ def qrepr(data):
     Ensure consistent repr() output for the QuerySet object.
     """
     if isinstance(data, QuerySet):
-        if django.VERSION >= (1, 11):
-            return repr(data)
-        elif django.VERSION >= (1, 10):
-            # Django 1.11 still shows "<QuerySet [", not taking the actual type into account.
+        if django.VERSION < (1, 11):
+            # Django 1.10 still shows "<QuerySet [", not taking the actual type into account.
             return '<{0} {1}'.format(data.__class__.__name__, repr(data)[10:])
         else:
-            # Simulate Django 1.11 behavior for older Django versions.
-            return '<{0} {1}>'.format(data.__class__.__name__, repr(data))
+            return repr(data)
 
     return repr(data)

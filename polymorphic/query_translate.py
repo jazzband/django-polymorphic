@@ -1,31 +1,17 @@
 # -*- coding: utf-8 -*-
-""" PolymorphicQuerySet support functions
-    Please see README.rst or DOCS.rst or http://chrisglass.github.com/django_polymorphic/
+"""
+PolymorphicQuerySet support functions
 """
 from __future__ import absolute_import
 
 import copy
-import django
 from functools import reduce
-from django.db import models
+
 from django.contrib.contenttypes.models import ContentType
-from django.db.models import Q, FieldDoesNotExist
+from django.db import models
+from django.db.models.fields.related import ForeignObjectRel, RelatedField
 from django.db.utils import DEFAULT_DB_ALIAS
 from django.utils import six
-
-from django.db.models.fields.related import RelatedField
-if django.VERSION < (1, 6):
-    # There was no common base class in Django 1.5, mention all variants here.
-    from django.db.models.fields.related import RelatedObject, ManyToOneRel, ManyToManyRel
-    REL_FIELD_CLASSES = (RelatedField, RelatedObject, ManyToOneRel, ManyToManyRel)  # Leaving GenericRel out.
-elif django.VERSION < (1, 8):
-    # As of Django 1.6 there is a ForeignObjectRel.
-    from django.db.models.fields.related import ForeignObjectRel, RelatedObject
-    REL_FIELD_CLASSES = (RelatedField, ForeignObjectRel, RelatedObject)
-else:
-    # As of Django 1.8 the base class serves everything. RelatedObject is gone.
-    from django.db.models.fields.related import ForeignObjectRel
-    REL_FIELD_CLASSES = (RelatedField, ForeignObjectRel)
 
 
 ###################################################################################
@@ -100,13 +86,7 @@ def translate_polymorphic_filter_definitions_in_args(queryset_model, args, using
 
     Returns: modified Q objects
     """
-    if django.VERSION >= (1, 10):
-        q_objects = [copy.deepcopy(q) for q in args]
-    elif django.VERSION >= (1, 6):
-        q_objects = [q.clone() for q in args]
-    else:
-        q_objects = args  # NOTE: edits existing objects in place.
-    return [translate_polymorphic_Q_object(queryset_model, q, using=using) for q in q_objects]
+    return [translate_polymorphic_Q_object(queryset_model, copy.deepcopy(q), using=using) for q in args]
 
 
 def _translate_polymorphic_filter_definition(queryset_model, field_path, field_val, using=DEFAULT_DB_ALIAS):
@@ -175,17 +155,14 @@ def translate_polymorphic_field_path(queryset_model, field_path):
         # Test whether it's actually a regular relation__ _fieldname (the field starting with an _)
         # so no tripple ClassName___field was intended.
         try:
-            if django.VERSION >= (1, 8):
-                # This also retreives M2M relations now (including reverse foreign key relations)
-                field = queryset_model._meta.get_field(classname)
-            else:
-                field = queryset_model._meta.get_field_by_name(classname)[0]
+            # This also retreives M2M relations now (including reverse foreign key relations)
+            field = queryset_model._meta.get_field(classname)
 
-            if isinstance(field, REL_FIELD_CLASSES):
+            if isinstance(field, (RelatedField, ForeignObjectRel)):
                 # Can also test whether the field exists in the related object to avoid ambiguity between
                 # class names and field names, but that never happens when your class names are in CamelCase.
                 return field_path  # No exception raised, field does exist.
-        except FieldDoesNotExist:
+        except models.FieldDoesNotExist:
             pass
 
         # function to collect all sub-models, this should be optimized (cached)
@@ -261,7 +238,7 @@ def _create_model_filter_Q(modellist, not_instance_of=False, using=DEFAULT_DB_AL
             assert False, 'PolymorphicModel: instance_of expects a list of (polymorphic) models or a single (polymorphic) model'
 
     def q_class_with_subclasses(model):
-        q = Q(polymorphic_ctype=ContentType.objects.db_manager(using).get_for_model(model, for_concrete_model=False))
+        q = models.Q(polymorphic_ctype=ContentType.objects.db_manager(using).get_for_model(model, for_concrete_model=False))
         for subclass in model.__subclasses__():
             q = q | q_class_with_subclasses(subclass)
         return q
