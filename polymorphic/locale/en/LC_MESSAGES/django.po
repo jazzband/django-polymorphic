@@ -26,10 +26,10 @@ msgid "Content type"
 msgstr ""
 
 # This is already translated in Django
-#: admin.py:333
-#, python-format
-#msgid "Add %s"
-#msgstr ""
+# #: admin.py:333
+# #, python-format
+# msgid "Add %s"
+# msgstr ""
 
 #: admin.py:403
 msgid "Contents"
