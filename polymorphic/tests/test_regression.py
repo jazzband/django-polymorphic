@@ -1,5 +1,5 @@
 from django.test import TestCase
-from . import Top, Middle, Bottom
+from .models import Top, Middle, Bottom
 
 
 class RegressionTests(TestCase):

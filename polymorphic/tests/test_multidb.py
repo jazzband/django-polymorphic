@@ -6,7 +6,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.test import TestCase
 from django.db.models import Q
 
-from polymorphic.tests import *  # all models
+from polymorphic.tests.models import *  # all models
 
 try:
     from unittest import skipIf
