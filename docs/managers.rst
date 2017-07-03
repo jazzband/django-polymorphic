@@ -67,7 +67,6 @@ ArtProject inherited the managers ``objects`` and ``objects_ordered`` from Proje
 ``ArtProject.objects_ordered.all()`` will return all art projects ordered
 regarding their start time and ``ArtProject.objects_ordered.most_recent()``
 will return the ten most recent art projects.
-.
 
     Note that get_query_set is deprecated in Django 1.8 and creates warnings in Django 1.7.
 
@@ -84,9 +83,9 @@ instead of Django's QuerySet as the base class::
         from polymorphic.query import PolymorphicQuerySet
 
         class MyQuerySet(PolymorphicQuerySet):
-            def my_queryset_method(...):
+            def my_queryset_method(self):
                 ...
 
         class MyModel(PolymorphicModel):
-            my_objects=PolymorphicManager(MyQuerySet)
+            my_objects = PolymorphicManager.from_queryset(MyQuerySet)
             ...
