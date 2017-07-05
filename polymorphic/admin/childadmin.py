@@ -169,7 +169,7 @@ class PolymorphicChildModelAdmin(admin.ModelAdmin):
 
     def get_fieldsets(self, request, obj=None):
         # If subclass declares fieldsets, this is respected
-        if (hasattr(self, 'declared_fieldset') and self.declared_fieldsets) \
+        if (hasattr(self, 'declared_fieldsets') and self.declared_fieldsets) \
            or not self.base_fieldsets:
             return super(PolymorphicChildModelAdmin, self).get_fieldsets(request, obj)
 
