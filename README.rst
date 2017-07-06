@@ -46,12 +46,11 @@ Features
 * Full admin integration.
 * ORM integration:
 
- * support for ForeignKey, ManyToManyField, OneToOneField descriptors.
- * Filtering/ordering of inherited models (``ArtProject___artist``).
- * Filtering model types: ``instance_of(...)`` and ``not_instance_of(...)``
- * Combining querysets of different models (``qs3 = qs1 | qs2``)
- * Support for custom user-defined managers.
-
+  * support for ForeignKey, ManyToManyField, OneToOneField descriptors.
+  * Filtering/ordering of inherited models (``ArtProject___artist``).
+  * Filtering model types: ``instance_of(...)`` and ``not_instance_of(...)``
+  * Combining querysets of different models (``qs3 = qs1 | qs2``)
+  * Support for custom user-defined managers.
 * Uses the minumum amount of queries needed to fetch the inherited models.
 * Disabling polymorphic behavior when needed.
 
