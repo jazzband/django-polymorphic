@@ -1,6 +1,7 @@
 """
 The parent admin displays the list view of the base model.
 """
+import sys
 import warnings
 
 import django
@@ -19,6 +20,10 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
 
 from .forms import PolymorphicModelChoiceForm
+
+
+if sys.version_info[0] >= 3:
+    long = int
 
 
 class RegistrationClosed(RuntimeError):
@@ -315,9 +320,9 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
             try:
                 pos = path.find('/')
                 if pos == -1:
-                    object_id = int(path)
+                    object_id = long(path)
                 else:
-                    object_id = int(path[0:pos])
+                    object_id = long(path[0:pos])
             except ValueError:
                 raise Http404("No ct_id parameter, unable to find admin subclass for path '{0}'.".format(path))
 
