@@ -1,6 +1,16 @@
 Changelog
 =========
 
+Changes in git
+--------------
+
+* Allow expressions to pass unchanged in ``.order_by()``
+* Fixed Django 1.11 accessor checks (to support subclasses of ``ForwardManyToOneDescriptor``, like ``ForwardOneToOneDescriptor``)
+* Fixed polib syntax error messages in translations.
+* Dropped Django 1.4, 1.5, 1.6, 1.7, 1.9 and Python 2.6 support.
+  Only official Django releases (1.8, 1.10, 1.11) are supported now.
+
+
 Version 1.2 (2017-05-01)
 ------------------------
 
