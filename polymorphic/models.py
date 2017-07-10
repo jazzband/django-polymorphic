@@ -4,9 +4,9 @@ Seamless Polymorphic Inheritance for Django Models
 """
 from __future__ import absolute_import
 
+from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.db.utils import DEFAULT_DB_ALIAS
-from django.contrib.contenttypes.models import ContentType
 from django.utils import six
 
 from .base import PolymorphicModelBase
@@ -37,8 +37,10 @@ class PolymorphicModel(six.with_metaclass(PolymorphicModelBase, models.Model)):
 
     # avoid ContentType related field accessor clash (an error emitted by model validation)
     #: The model field that stores the :class:`~django.contrib.contenttypes.models.ContentType` reference to the actual class.
-    polymorphic_ctype = models.ForeignKey(ContentType, null=True, editable=False,
-                                          related_name='polymorphic_%(app_label)s.%(class)s_set+')
+    polymorphic_ctype = models.ForeignKey(
+        ContentType, null=True, editable=False, on_delete=models.CASCADE,
+        related_name='polymorphic_%(app_label)s.%(class)s_set+'
+    )
 
     # some applications want to know the name of the fields that are added to its models
     polymorphic_internal_model_fields = ['polymorphic_ctype']
@@ -85,11 +87,7 @@ class PolymorphicModel(six.with_metaclass(PolymorphicModelBase, models.Model)):
         # so we use the following version, which uses the ContentType manager cache.
         # Note that model_class() can return None for stale content types;
         # when the content type record still exists but no longer refers to an existing model.
-        try:
-            model = ContentType.objects.db_manager(self._state.db).get_for_id(self.polymorphic_ctype_id).model_class()
-        except AttributeError:
-            # Django <1.6 workaround
-            return None
+        model = ContentType.objects.db_manager(self._state.db).get_for_id(self.polymorphic_ctype_id).model_class()
 
         # Protect against bad imports (dumpdata without --natural) or other
         # issues missing with the ContentType models.

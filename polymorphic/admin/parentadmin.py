@@ -1,35 +1,24 @@
 """
 The parent admin displays the list view of the base model.
 """
-import sys
 import warnings
 
 import django
 from django.conf.urls import url
 from django.contrib import admin
 from django.contrib.admin.helpers import AdminErrorList, AdminForm
+from django.contrib.admin.templatetags.admin_urls import add_preserved_filters
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import RegexURLResolver
 from django.http import Http404, HttpResponseRedirect
-from django.shortcuts import render_to_response
-from django.template.context import RequestContext
+from django.template.response import TemplateResponse
 from django.utils.encoding import force_text
 from django.utils.http import urlencode
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
 
 from .forms import PolymorphicModelChoiceForm
-
-try:
-    # Django 1.6 implements this
-    from django.contrib.admin.templatetags.admin_urls import add_preserved_filters
-except ImportError:
-    def add_preserved_filters(context, form_url):
-        return form_url
-
-if sys.version_info[0] >= 3:
-    long = int
 
 
 class RegistrationClosed(RuntimeError):
@@ -72,7 +61,7 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
     #: The regular expression to filter the primary key in the URL.
     #: This accepts only numbers as defensive measure against catch-all URLs.
     #: If your primary key consists of string values, update this regular expression.
-    pk_regex = '(\d+|__fk__)'
+    pk_regex = r"(\d+|__fk__)"
 
     def __init__(self, model, admin_site, *args, **kwargs):
         super(PolymorphicParentModelAdmin, self).__init__(model, admin_site, *args, **kwargs)
@@ -210,13 +199,6 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
             qs = qs.non_polymorphic()
         return qs
 
-    # For Django 1.5:
-    def queryset(self, request):
-        qs = super(PolymorphicParentModelAdmin, self).queryset(request)
-        if not self.polymorphic_list:
-            qs = qs.non_polymorphic()
-        return qs
-
     def add_view(self, request, form_url='', extra_context=None):
         """Redirect the add view to the real admin."""
         ct_id = int(request.GET.get('ct_id', 0))
@@ -238,17 +220,16 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
         real_admin = self._get_real_admin(object_id)
         return real_admin.change_view(request, object_id, *args, **kwargs)
 
-    if django.VERSION >= (1, 7):
-        def changeform_view(self, request, object_id=None, *args, **kwargs):
-            # The `changeform_view` is available as of Django 1.7, combining the add_view and change_view.
-            # As it's directly called by django-reversion, this method is also overwritten to make sure it
-            # also redirects to the child admin.
-            if object_id:
-                real_admin = self._get_real_admin(object_id)
-                return real_admin.changeform_view(request, object_id, *args, **kwargs)
-            else:
-                # Add view. As it should already be handled via `add_view`, this means something custom is done here!
-                return super(PolymorphicParentModelAdmin, self).changeform_view(request, object_id, *args, **kwargs)
+    def changeform_view(self, request, object_id=None, *args, **kwargs):
+        # The `changeform_view` is available as of Django 1.7, combining the add_view and change_view.
+        # As it's directly called by django-reversion, this method is also overwritten to make sure it
+        # also redirects to the child admin.
+        if object_id:
+            real_admin = self._get_real_admin(object_id)
+            return real_admin.changeform_view(request, object_id, *args, **kwargs)
+        else:
+            # Add view. As it should already be handled via `add_view`, this means something custom is done here!
+            return super(PolymorphicParentModelAdmin, self).changeform_view(request, object_id, *args, **kwargs)
 
     def history_view(self, request, object_id, extra_context=None):
         """Redirect the history view to the real admin."""
@@ -334,9 +315,9 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
             try:
                 pos = path.find('/')
                 if pos == -1:
-                    object_id = long(path)
+                    object_id = int(path)
                 else:
-                    object_id = long(path[0:pos])
+                    object_id = int(path[0:pos])
             except ValueError:
                 raise Http404("No ct_id parameter, unable to find admin subclass for path '{0}'.".format(path))
 
@@ -407,8 +388,6 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
             'add': True,
             'save_on_top': self.save_on_top,
         })
-        if hasattr(self.admin_site, 'root_path'):
-            context['root_path'] = self.admin_site.root_path  # Django < 1.4
 
         templates = self.add_type_template or [
             "admin/%s/%s/add_type_form.html" % (app_label, opts.object_name.lower()),
@@ -417,13 +396,8 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
             "admin/add_type_form.html"
         ]
 
-        if django.VERSION >= (1, 8):
-            from django.template.response import TemplateResponse
-            request.current_app = self.admin_site.name
-            return TemplateResponse(request, templates, context)
-        else:
-            context_instance = RequestContext(request, current_app=self.admin_site.name)
-            return render_to_response(templates, context, context_instance=context_instance)
+        request.current_app = self.admin_site.name
+        return TemplateResponse(request, templates, context)
 
     @property
     def change_list_template(self):
@@ -445,7 +419,4 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
 
 
 def _get_opt(model):
-    try:
-        return model._meta.app_label, model._meta.model_name  # Django 1.7 format
-    except AttributeError:
-        return model._meta.app_label, model._meta.module_name
+    return model._meta.app_label, model._meta.model_name

@@ -1,13 +1,9 @@
+from django.contrib.contenttypes.admin import GenericInlineModelAdmin
 from django.contrib.contenttypes.models import ContentType
 from django.utils.functional import cached_property
 
 from polymorphic.formsets import polymorphic_child_forms_factory, BaseGenericPolymorphicInlineFormSet, GenericPolymorphicFormSetChild
 from .inlines import PolymorphicInlineModelAdmin
-
-try:
-    from django.contrib.contenttypes.admin import GenericInlineModelAdmin  # Django 1.7+
-except ImportError:
-    from django.contrib.contenttypes.generic import GenericInlineModelAdmin
 
 
 class GenericPolymorphicInlineModelAdmin(PolymorphicInlineModelAdmin, GenericInlineModelAdmin):

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-""" PolymorphicModel Meta Class
-    Please see README.rst or DOCS.rst or http://chrisglass.github.com/django_polymorphic/
+"""
+PolymorphicModel Meta Class
 """
 from __future__ import absolute_import
 
@@ -131,6 +131,17 @@ class PolymorphicModelBase(ModelBase):
                 for key, manager in base.__dict__.items():
                     if type(manager) == models.manager.ManagerDescriptor:
                         manager = manager.manager
+
+                    # As of Django 1.5, the abstract models don't get any managers, only a
+                    # AbstractManagerDescriptor as substitute.
+                    if type(manager) == AbstractManagerDescriptor and base.__name__ == 'PolymorphicModel':
+                        model = manager.model
+                        if key == 'objects':
+                            manager = PolymorphicManager()
+                            manager.model = model
+                        elif key == 'base_objects':
+                            manager = models.Manager()
+                            manager.model = model
 
                     if AbstractManagerDescriptor is not None:
                         # Django 1.4 unconditionally assigned managers to a model. As of Django 1.5 however,

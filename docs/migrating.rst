@@ -61,6 +61,7 @@ It's recommended to let ``makemigrations`` create the migration file,
 and include the ``RunPython`` manually before running the migration.
 
 .. versionadded:: 1.1
+
 When the model is created elsewhere, you can also use
 the :func:`polymorphic.utils.reset_polymorphic_ctype` function:
 
