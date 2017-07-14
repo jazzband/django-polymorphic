@@ -2,6 +2,7 @@
 import sys
 from os.path import abspath, dirname
 
+import dj_database_url
 import django
 from django.conf import settings
 from django.core.management import execute_from_command_line
@@ -18,14 +19,14 @@ if not settings.configured:
     settings.configure(
         DEBUG=False,
         DATABASES={
-            'default': {
-                'ENGINE': 'django.db.backends.sqlite3',
-                'NAME': ':memory:'
-            },
-            'secondary': {
-                'ENGINE': 'django.db.backends.sqlite3',
-                'NAME': ':memory:'
-            }
+            'default': dj_database_url.config(
+                env='PRIMARY_DATABASE',
+                default='sqlite://:memory:',
+            ),
+            'secondary': dj_database_url.config(
+                env='SECONDARY_DATABASE',
+                default='sqlite://:memory:',
+            ),
         },
         TEST_RUNNER="django.test.runner.DiscoverRunner",
         INSTALLED_APPS=(

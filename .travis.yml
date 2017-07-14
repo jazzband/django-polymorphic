@@ -14,6 +14,12 @@ env:
   - TOXENV=py35-djangomaster
   - TOXENV=py36-django111
   - TOXENV=py36-djangomaster
+  # XXX: Use a matrix to build these?
+  - TOXENV=py36-django111-postgres DB=postgres
+  - TOXENV=py36-djangomaster-postgres DB=postgres
+
+services:
+  - postgres
 
 matrix:
   fast_finish: true
@@ -39,6 +45,10 @@ cache:
   directories:
     - $HOME/.cache/pip
     - $TRAVIS_BUILD_DIR/.tox
+
+before_install:
+- psql -c 'CREATE DATABASE default;' -U postgres || true
+- psql -c 'CREATE DATABASE secondary;' -U postgres || true
 
 install:
   - pip install --upgrade pip wheel setuptools
