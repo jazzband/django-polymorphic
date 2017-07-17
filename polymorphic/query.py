@@ -363,7 +363,11 @@ class PolymorphicQuerySet(QuerySet):
                     results[base_object.pk] = base_object
 
                 else:
-                    real_concrete_class = base_object.get_real_instance_class()
+                    try:
+                        real_concrete_class = base_object.get_real_instance_class()
+                    except:
+                        base_object.save()
+                        real_concrete_class = base_object.get_real_instance_class()
                     real_concrete_class_id = base_object.get_real_concrete_instance_class_id()
 
                     if real_concrete_class_id is None:
