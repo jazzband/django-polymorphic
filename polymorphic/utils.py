@@ -1,3 +1,5 @@
+import sys
+
 from django.contrib.contenttypes.models import ContentType
 from django.db import DEFAULT_DB_ALIAS
 
@@ -13,6 +15,8 @@ def reset_polymorphic_ctype(*models, **filters):
     """
     using = filters.pop('using', DEFAULT_DB_ALIAS)
     ignore_existing = filters.pop('ignore_existing', False)
+
+    models = sort_by_subclass(*models)
     if ignore_existing:
         # When excluding models, make sure we don't ignore the models we
         # just assigned the an content type to. hence, start with child first.
@@ -27,3 +31,31 @@ def reset_polymorphic_ctype(*models, **filters):
         if filters:
             qs = qs.filter(**filters)
         qs.update(polymorphic_ctype=new_ct)
+
+
+def _compare_mro(cls1, cls2):
+    if cls1 is cls2:
+        return 0
+
+    try:
+        index1 = cls1.mro().index(cls2)
+    except ValueError:
+        return -1  # cls2 not inherited by 1
+
+    try:
+        index2 = cls2.mro().index(cls1)
+    except ValueError:
+        return 1  # cls1 not inherited by 2
+
+    return (index1 > index2) - (index1 < index2)  # python 3 compatible cmp.
+
+
+def sort_by_subclass(*classes):
+    """
+    Sort a series of models by their inheritance order.
+    """
+    if sys.version_info[0] == 2:
+        return sorted(classes, cmp=_compare_mro)
+    else:
+        from functools import cmp_to_key
+        return sorted(classes, key=cmp_to_key(_compare_mro))
