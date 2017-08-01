@@ -5,6 +5,7 @@ from django.db.models import Case, Count, Q, When
 from django.test import TestCase
 from django.utils import six
 from polymorphic.contrib.guardian import get_polymorphic_base_content_type
+from polymorphic.models import PolymorphicTypeUndefined
 from polymorphic.tests import *  # all models
 
 
@@ -782,6 +783,16 @@ class PolymorphicTests(TestCase):
 
         ctype = get_polymorphic_base_content_type(Model2D)
         self.assertEqual(ctype.name, 'model2a')
+
+    def test_null_polymorphic_id(self):
+        """Test that a proper error message is displayed when the database lacks the ``polymorphic_ctype_id``"""
+        Model2A.objects.create(field1='A1')
+        Model2B.objects.create(field1='A1', field2='B2')
+        Model2B.objects.create(field1='A1', field2='B2')
+        Model2A.objects.all().update(polymorphic_ctype_id=None)
+
+        with self.assertRaises(PolymorphicTypeUndefined):
+            list(Model2A.objects.all())
 
 
 def qrepr(data):
