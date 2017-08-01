@@ -29,7 +29,7 @@ class UtilsTests(TestCase):
             list(Model2A.objects.all())
 
         reset_polymorphic_ctype(Model2D, Model2B, Model2D, Model2A, Model2C)
-        self.assertEqual(repr(list(Model2A.objects.all())), (
+        self.assertEqual(repr(list(Model2A.objects.order_by('pk'))), (
             '[<Model2A: id 1, field1 (CharField)>,'
             ' <Model2D: id 2, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField)>,'
             ' <Model2B: id 3, field1 (CharField), field2 (CharField)>,'
