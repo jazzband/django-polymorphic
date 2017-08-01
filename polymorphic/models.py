@@ -17,6 +17,10 @@ from .query_translate import translate_polymorphic_Q_object
 # PolymorphicModel
 
 
+class PolymorphicTypeUndefined(LookupError):
+    pass
+
+
 class PolymorphicModel(six.with_metaclass(PolymorphicModelBase, models.Model)):
     """
     Abstract base class that provides polymorphic behaviour
@@ -82,6 +86,13 @@ class PolymorphicModel(six.with_metaclass(PolymorphicModelBase, models.Model)):
         retrieve objects, then the real class/type of these objects may be
         determined using this method.
         """
+        if self.polymorphic_ctype_id is None:
+            raise PolymorphicTypeUndefined((
+                "The model {}#{} does not have a `polymorphic_ctype_id` value defined.\n"
+                "If you created models outside polymorphic, e.g. through an import or migration, "
+                "make sure the `polymorphic_ctype_id` field points to the ContentType ID of the model subclass."
+            ).format(self.__class__.__name__, self.pk))
+
         # the following line would be the easiest way to do this, but it produces sql queries
         # return self.polymorphic_ctype.model_class()
         # so we use the following version, which uses the ContentType manager cache.
