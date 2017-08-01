@@ -414,12 +414,3 @@ class SwappableModel(AbstractModel):
 
 class SwappedModel(AbstractModel):
     pass
-
-
-
-# Import tests
-from .test_admin import *
-from .test_orm import *
-from .test_multidb import *
-from .test_regression import *
-

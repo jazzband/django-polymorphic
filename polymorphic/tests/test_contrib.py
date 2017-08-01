@@ -1,3 +1,5 @@
+from unittest import TestCase
+
 from polymorphic.contrib.guardian import get_polymorphic_base_content_type
 from polymorphic.tests import *  # all models
 
