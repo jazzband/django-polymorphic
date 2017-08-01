@@ -94,11 +94,12 @@ class PolymorphicModelBase(ModelBase):
                 new_class._default_manager = user_manager._copy_to_model(new_class)
                 new_class._default_manager._inherited = False   # the default mgr was defined by the user, not inherited
 
-        # validate resulting default manager
-        if django.VERSION >= (1, 10) and not new_class._meta.abstract:
-            self.validate_model_manager(new_class.objects, model_name, 'objects')
-        else:
-            self.validate_model_manager(new_class._default_manager, model_name, '_default_manager')
+        # validate resulting default manager (only on non-abstract and non-swapped models)
+        if not new_class._meta.abstract and not new_class._meta.swapped:
+            if django.VERSION >= (1, 10):
+                self.validate_model_manager(new_class.objects, model_name, 'objects')
+            else:
+                self.validate_model_manager(new_class._default_manager, model_name, '_default_manager')
 
         # for __init__ function of this class (monkeypatching inheritance accessors)
         new_class.polymorphic_super_sub_accessors_replaced = False
