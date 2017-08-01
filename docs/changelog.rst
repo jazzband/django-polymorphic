@@ -1,6 +1,18 @@
 Changelog
 =========
 
+Changes in git
+--------------
+
+* Added ``PolymorphicTypeUndefined`` exception for incomplete imported models.
+  When a data migration or import creates an polymorphic model,
+  the ``polymorphic_ctype_id`` field should be filled in manually too.
+  The ``polymorphic.utils.reset_polymorphic_ctype`` function can be used for that.
+* Added ``PolymorphicTypeInvalid`` exception when database was incorrectly imported.
+* Fixed detection and handling of ``declared_fieldsets`` in the admin.
+* Fixed manager errors for swappable models.
+
+
 Version 1.3 (2017-08-01)
 ------------------------
 
