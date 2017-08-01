@@ -21,6 +21,10 @@ class PolymorphicTypeUndefined(LookupError):
     pass
 
 
+class PolymorphicTypeInvalid(RuntimeError):
+    pass
+
+
 class PolymorphicModel(six.with_metaclass(PolymorphicModelBase, models.Model)):
     """
     Abstract base class that provides polymorphic behaviour
@@ -105,7 +109,7 @@ class PolymorphicModel(six.with_metaclass(PolymorphicModelBase, models.Model)):
         if model is not None \
                 and not issubclass(model, self.__class__) \
                 and not issubclass(model, self.__class__._meta.proxy_for_model):
-            raise RuntimeError("ContentType {0} for {1} #{2} does not point to a subclass!".format(
+            raise PolymorphicTypeInvalid("ContentType {0} for {1} #{2} does not point to a subclass!".format(
                 self.polymorphic_ctype_id, model, self.pk,
             ))
         return model
