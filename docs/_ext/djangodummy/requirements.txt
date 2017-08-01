@@ -1,0 +1,4 @@
+# for readthedocs
+# Remaining requirements are picked up from setup.py
+Django==1.11
+django-extra-views==0.9.0
