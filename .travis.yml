@@ -7,7 +7,6 @@ python:
   - "3.5"
   - "3.6"
 env:
-  - TOXENV="django18"
   - TOXENV="django110"
   - TOXENV="django111"
   - TOXENV="djangodev"
@@ -15,8 +14,6 @@ env:
 matrix:
   fast_finish: true
   exclude:
-    - python: "3.6"
-      env: TOXENV="django18"
     - python: "3.6"
       env: TOXENV="django110"
 
