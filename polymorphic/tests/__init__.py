@@ -82,6 +82,7 @@ class ModelShow2_plain(ModelShow1_plain):
 
 class Base(ShowFieldType, PolymorphicModel):
     field_b = models.CharField(max_length=10)
+    polymorphic_showfield_deferred = True
 
 
 class ModelX(Base):
