@@ -178,6 +178,23 @@ class PolymorphicTests(TestCase):
                          '<Model2D: id 4, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField), '
                          'deferred[field2,field3,field4,model2a_ptr_id,model2b_ptr_id]>')
 
+        ModelX.objects.create(field_b="A1", field_x="A2")
+        ModelY.objects.create(field_b="B1", field_y="B2")
+
+        objects_deferred = Base.objects.defer('ModelY___field_y')
+        self.assertEqual(repr(objects_deferred[0]),
+                         '<ModelX: id 1, field_b (CharField), field_x (CharField)>')
+        self.assertEqual(repr(objects_deferred[1]),
+                         '<ModelY: id 2, field_b (CharField), field_y (CharField), deferred[field_y]>')
+
+        objects_only = Base.objects.only(
+            'polymorphic_ctype', 'ModelY___field_y', 'ModelX___field_x',
+        )
+        self.assertEqual(repr(objects_only[0]),
+                         '<ModelX: id 1, field_b (CharField), field_x (CharField), deferred[field_b]>')
+        self.assertEqual(repr(objects_only[1]),
+                         '<ModelY: id 2, field_b (CharField), field_y (CharField), deferred[field_b]>')
+
     def test_defer_related_fields(self):
         self.create_model2abcd()
 
