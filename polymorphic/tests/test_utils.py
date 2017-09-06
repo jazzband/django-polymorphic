@@ -1,12 +1,11 @@
-from unittest import TestCase
+from django.test import TransactionTestCase
 
 from polymorphic.models import PolymorphicTypeUndefined
 from polymorphic.tests import Model2A, Model2B, Model2C, Model2D
-from polymorphic.tests.test_orm import qrepr
-from polymorphic.utils import sort_by_subclass, reset_polymorphic_ctype
+from polymorphic.utils import reset_polymorphic_ctype, sort_by_subclass
 
 
-class UtilsTests(TestCase):
+class UtilsTests(TransactionTestCase):
 
     def test_sort_by_subclass(self):
         self.assertEqual(
@@ -29,12 +28,13 @@ class UtilsTests(TestCase):
 
         reset_polymorphic_ctype(Model2D, Model2B, Model2D, Model2A, Model2C)
 
-        field_reprs = [
-            "<Model2A: id 1, field1 (CharField)>",
-            "<Model2D: id 2, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField)>",
-            "<Model2B: id 3, field1 (CharField), field2 (CharField)>",
-            "<Model2B: id 4, field1 (CharField), field2 (CharField)>",
-        ]
-
-        for f, f_repr in zip(Model2A.objects.order_by("pk"), field_reprs):
-            self.assertEqual(qrepr(f), f_repr)
+        self.assertQuerysetEqual(
+            Model2A.objects.order_by("pk"),
+            [
+                Model2A,
+                Model2D,
+                Model2B,
+                Model2B,
+            ],
+            transform=lambda o: o.__class__,
+        )
