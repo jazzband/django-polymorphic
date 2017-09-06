@@ -1,7 +1,7 @@
 from django.test import TransactionTestCase
 
 from polymorphic.models import PolymorphicTypeUndefined
-from polymorphic.tests import Model2A, Model2B, Model2C, Model2D
+from polymorphic.tests.models import Model2A, Model2B, Model2C, Model2D
 from polymorphic.utils import reset_polymorphic_ctype, sort_by_subclass
 
 

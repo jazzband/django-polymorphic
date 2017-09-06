@@ -4,7 +4,19 @@ from django.contrib.contenttypes.models import ContentType
 from django.db.models import Q
 from django.test import TestCase
 
-from polymorphic.tests import *  # all models
+from polymorphic.tests.models import (
+    Base,
+    BlogA,
+    BlogEntry,
+    Model2A,
+    Model2B,
+    Model2C,
+    Model2D,
+    ModelX,
+    ModelY,
+    One2OneRelatingModel,
+    RelatingModel,
+)
 
 
 class MultipleDatabasesTests(TestCase):
@@ -16,15 +28,17 @@ class MultipleDatabasesTests(TestCase):
         Model2B.objects.create(field1='B1', field2='B2')
         Model2D(field1='D1', field2='D2', field3='D3', field4='D4').save()
 
-        default_objects = list(Model2A.objects.order_by('id'))
-        self.assertEqual(len(default_objects), 2)
-        self.assertEqual(repr(default_objects[0]), '<Model2B: id 1, field1 (CharField), field2 (CharField)>')
-        self.assertEqual(repr(default_objects[1]), '<Model2D: id 2, field1 (CharField), field2 (CharField), field3 (CharField), field4 (CharField)>')
+        self.assertQuerysetEqual(
+            Model2A.objects.order_by('id'),
+            [Model2B, Model2D],
+            transform=lambda o: o.__class__,
+        )
 
-        secondary_objects = list(Model2A.objects.db_manager('secondary').order_by('id'))
-        self.assertEqual(len(secondary_objects), 2)
-        self.assertEqual(repr(secondary_objects[0]), '<Model2A: id 1, field1 (CharField)>')
-        self.assertEqual(repr(secondary_objects[1]), '<Model2C: id 2, field1 (CharField), field2 (CharField), field3 (CharField)>')
+        self.assertQuerysetEqual(
+            Model2A.objects.db_manager('secondary').order_by('id'),
+            [Model2A, Model2C],
+            transform=lambda o: o.__class__,
+        )
 
     def test_instance_of_filter_on_non_default_database(self):
         Base.objects.db_manager('secondary').create(field_b='B1')
@@ -32,23 +46,33 @@ class MultipleDatabasesTests(TestCase):
         ModelY.objects.db_manager('secondary').create(field_b='Y', field_y='Y')
 
         objects = Base.objects.db_manager('secondary').filter(instance_of=Base)
-        self.assertEqual(len(objects), 3)
-        self.assertEqual(repr(objects[0]), '<Base: id 1, field_b (CharField)>')
-        self.assertEqual(repr(objects[1]), '<ModelX: id 2, field_b (CharField), field_x (CharField)>')
-        self.assertEqual(repr(objects[2]), '<ModelY: id 3, field_b (CharField), field_y (CharField)>')
+        self.assertQuerysetEqual(
+            objects,
+            [Base, ModelX, ModelY],
+            transform=lambda o: o.__class__,
+            ordered=False,
+        )
 
-        objects = Base.objects.db_manager('secondary').filter(instance_of=ModelX)
-        self.assertEqual(len(objects), 1)
-        self.assertEqual(repr(objects[0]), '<ModelX: id 2, field_b (CharField), field_x (CharField)>')
+        self.assertQuerysetEqual(
+            Base.objects.db_manager('secondary').filter(instance_of=ModelX),
+            [ModelX],
+            transform=lambda o: o.__class__,
+        )
 
-        objects = Base.objects.db_manager('secondary').filter(instance_of=ModelY)
-        self.assertEqual(len(objects), 1)
-        self.assertEqual(repr(objects[0]), '<ModelY: id 3, field_b (CharField), field_y (CharField)>')
+        self.assertQuerysetEqual(
+            Base.objects.db_manager('secondary').filter(instance_of=ModelY),
+            [ModelY],
+            transform=lambda o: o.__class__,
+        )
 
-        objects = Base.objects.db_manager('secondary').filter(Q(instance_of=ModelX) | Q(instance_of=ModelY))
-        self.assertEqual(len(objects), 2)
-        self.assertEqual(repr(objects[0]), '<ModelX: id 2, field_b (CharField), field_x (CharField)>')
-        self.assertEqual(repr(objects[1]), '<ModelY: id 3, field_b (CharField), field_y (CharField)>')
+        self.assertQuerysetEqual(
+            Base.objects.db_manager('secondary').filter(
+                Q(instance_of=ModelX) | Q(instance_of=ModelY)
+            ),
+            [ModelX, ModelY],
+            transform=lambda o: o.__class__,
+            ordered=False,
+        )
 
     def test_forward_many_to_one_descriptor_on_non_default_database(self):
         def func():

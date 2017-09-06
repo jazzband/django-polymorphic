@@ -195,7 +195,7 @@ class MROBase2(MROBase1):
 
 class MROBase3(models.Model):
     base_3_id = models.AutoField(primary_key=True)   # make sure 'id' field doesn't clash, detected by Django 1.11
-    objects = PolymorphicManager()
+    objects = models.Manager()
 
 
 class MRODerived(MROBase2, MROBase3):
