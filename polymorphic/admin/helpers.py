@@ -91,7 +91,7 @@ class PolymorphicInlineSupportMixin(object):
     :class:`~django.contrib.admin.helpers.InlineAdminFormSet` for the polymorphic formsets.
     """
 
-    def get_inline_formsets(self, request, formsets, inline_instances, obj=None):
+    def get_inline_formsets(self, request, formsets, inline_instances, obj=None, *args, **kwargs):
         """
         Overwritten version to produce the proper admin wrapping for the
         polymorphic inline formset. This fixes the media and form appearance
