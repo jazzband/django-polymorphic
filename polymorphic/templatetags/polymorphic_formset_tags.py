@@ -48,7 +48,7 @@ def as_script_options(formset):
             'verbose_name': capfirst(verbose_name),
         },
         'showAddButton': getattr(formset, 'show_add_button', True),
-        'deleteText': ugettext('Verwijder'),
+        'deleteText': ugettext('Delete'),
     }
 
     if isinstance(formset, BasePolymorphicModelFormSet):
