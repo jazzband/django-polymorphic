@@ -421,7 +421,7 @@ class InlineParent(models.Model):
 
 
 class InlineModelA(PolymorphicModel):
-    parent = models.ForeignKey(InlineParent, related_name='inline_children')
+    parent = models.ForeignKey(InlineParent, related_name='inline_children', on_delete=models.CASCADE)
     field1 = models.CharField(max_length=10)
 
 
