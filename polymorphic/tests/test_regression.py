@@ -1,5 +1,5 @@
 from django.test import TestCase
-from . import Top, Middle, Bottom
+from polymorphic.tests.models import Bottom, Middle, Top
 
 
 class RegressionTests(TestCase):
