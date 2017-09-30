@@ -1,7 +1,6 @@
 import os
 
 DEBUG = True
-TEMPLATE_DEBUG = DEBUG
 
 ADMINS = (
     # ('Your Name', 'your_email@example.com'),
@@ -42,11 +41,6 @@ STATICFILES_FINDERS = (
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
 )
 
-TEMPLATE_LOADERS = (
-    'django.template.loaders.filesystem.Loader',
-    'django.template.loaders.app_directories.Loader',
-)
-
 MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -55,11 +49,29 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.messages.middleware.MessageMiddleware',
 )
 
+TEMPLATES=[{
+    "BACKEND": "django.template.backends.django.DjangoTemplates",
+    "DIRS": (),
+    "OPTIONS": {
+        "loaders": (
+            "django.template.loaders.filesystem.Loader",
+            "django.template.loaders.app_directories.Loader",
+        ),
+        "context_processors": (
+            "django.template.context_processors.debug",
+            "django.template.context_processors.i18n",
+            "django.template.context_processors.media",
+            "django.template.context_processors.request",
+            "django.template.context_processors.static",
+            "django.contrib.messages.context_processors.messages",
+            "django.contrib.auth.context_processors.auth",
+        ),
+    },
+}]
+
 ROOT_URLCONF = 'example.urls'
 
 WSGI_APPLICATION = 'example.wsgi.application'
-
-TEMPLATE_DIRS = ()
 
 INSTALLED_APPS = (
     'django.contrib.auth',
