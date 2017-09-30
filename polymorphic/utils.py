@@ -2,6 +2,9 @@ import sys
 
 from django.contrib.contenttypes.models import ContentType
 from django.db import DEFAULT_DB_ALIAS
+from polymorphic.models import PolymorphicModel
+
+from polymorphic.base import PolymorphicModelBase
 
 
 def reset_polymorphic_ctype(*models, **filters):
@@ -59,3 +62,15 @@ def sort_by_subclass(*classes):
     else:
         from functools import cmp_to_key
         return sorted(classes, key=cmp_to_key(_compare_mro))
+
+
+def get_base_polymorphic_model(ChildModel, allow_abstract=False):
+    """
+    First the first concrete model in the inheritance chain that inherited from the PolymorphicModel.
+    """
+    for Model in reversed(ChildModel.mro()):
+        if isinstance(Model, PolymorphicModelBase) and \
+                Model is not PolymorphicModel and \
+                (allow_abstract or not Model._meta.abstract):
+            return Model
+    return None
