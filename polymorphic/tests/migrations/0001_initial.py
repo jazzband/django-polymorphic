@@ -1048,7 +1048,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='inlinemodela',
             name='parent',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='tests.InlineParent'),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='tests.InlineParent', related_name='inline_children'),
         ),
         migrations.AddField(
             model_name='inlinemodela',

@@ -49,7 +49,7 @@ class AdminTestCase(TestCase):
         # Make sure the URLs are reachable by reverse()
         clear_url_caches()
         set_urlconf(tuple([
-            url('^', include(self.admin_site.urls))
+            url('^tmp-admin/', include(self.admin_site.urls))
         ]))
 
     def get_admin_instance(self, model):
@@ -124,6 +124,9 @@ class AdminTestCase(TestCase):
         """
         Make a direct "add" call to the admin page, circumvening login checks.
         """
+        if not extra:
+            extra = {'data': {'post': 'yes'}}
+
         admin_instance = self.get_admin_instance(model)
         request = self.create_admin_request('post', self.get_delete_url(model, object_id), **extra)
         response = admin_instance.delete_view(request, str(object_id))
@@ -156,26 +159,6 @@ class AdminTestCase(TestCase):
         request.user = self.admin_user
         MessageMiddleware().process_request(request)
         return request
-
-    def _get_management_form_data(self, admin_instance, request):
-        """
-        Return the formdata that the management forms need.
-        """
-        inline_instances = admin_instance.get_inline_instances(request)
-        forms = []
-        for inline_instance in inline_instances:
-            FormSet = inline_instance.get_formset(request)
-            formset = FormSet(instance=admin_instance.model())
-            forms.append(formset.management_form)
-
-        # In a primitive way, get the form fields.
-        # This is not exactly the same as a POST, since that runs through clean()
-        formdata = {}
-        for form in forms:
-            for boundfield in form:
-                formdata[boundfield.html_name] = boundfield.value()
-
-        return formdata
 
     def assertFormSuccess(self, request_url, response):
         """

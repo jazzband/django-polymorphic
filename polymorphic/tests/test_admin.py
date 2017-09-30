@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.contrib.contenttypes.models import ContentType
 from django.utils.html import escape
 
 from polymorphic.admin import PolymorphicChildModelAdmin, PolymorphicChildModelFilter, PolymorphicInlineSupportMixin, \
@@ -37,6 +38,21 @@ class PolymorphicAdminTests(AdminTestCase):
         # See that the child object was returned
         response = self.admin_get_change(Model2A, d_obj.pk)
         self.assertContains(response, 'field4')
+        self.admin_post_change(Model2A, d_obj.pk, {
+            'field1': 'A2',
+            'field2': 'B2',
+            'field3': 'C2',
+            'field4': 'D2'
+        })
+
+        d_obj.refresh_from_db()
+        self.assertEqual(d_obj.field1, 'A2')
+        self.assertEqual(d_obj.field2, 'B2')
+        self.assertEqual(d_obj.field3, 'C2')
+        self.assertEqual(d_obj.field4, 'D2')
+
+        self.admin_post_delete(Model2A, d_obj.pk)
+        self.assertRaises(Model2A.DoesNotExist, lambda: d_obj.refresh_from_db())
 
     def test_admin_inlines(self):
         """
@@ -59,10 +75,31 @@ class PolymorphicAdminTests(AdminTestCase):
         class InlineParentAdmin(PolymorphicInlineSupportMixin, admin.ModelAdmin):
             inlines = (Inline,)
 
-        obj = InlineParent.objects.create(title='FOO')
-        response = self.admin_get_change(InlineParent, obj.pk)
+        parent = InlineParent.objects.create(title='FOO')
+        self.assertEqual(parent.inline_children.count(), 0)
+        response = self.admin_get_change(InlineParent, parent.pk)
 
         # Make sure the fieldset has the right data exposed in data-inline-formset
         self.assertContains(response, 'childTypes')
         self.assertContains(response, escape('"type": "inlinemodela"'))
         self.assertContains(response, escape('"type": "inlinemodelb"'))
+
+        self.admin_post_change(InlineParent, parent.pk, {
+            'title': 'FOO2',
+            'inline_children-INITIAL_FORMS': 0,
+            'inline_children-TOTAL_FORMS': 1,
+            'inline_children-MIN_NUM_FORMS': 0,
+            'inline_children-MAX_NUM_FORMS': 1000,
+            'inline_children-0-parent': parent.pk,
+            'inline_children-0-polymorphic_ctype': ContentType.objects.get_for_model(InlineModelB).pk,
+            'inline_children-0-field1': 'A2',
+            'inline_children-0-field2': 'B2',
+        })
+
+        parent.refresh_from_db()
+        self.assertEqual(parent.title, 'FOO2')
+        self.assertEqual(parent.inline_children.count(), 1)
+        child = parent.inline_children.all()[0]
+        self.assertEqual(child.__class__, InlineModelB)
+        self.assertEqual(child.field1, 'A2')
+        self.assertEqual(child.field2, 'B2')
