@@ -69,7 +69,7 @@ The admin :ref:`admin example <admin-example>` becomes:
 
 
     class ModelAChildAdmin(PolymorphicChildModelAdmin, VersionAdmin):
-        base_model = ModelA
+        base_model = ModelA  # optional, explicitly set here.
         base_form = ...
         base_fieldsets = (
             ...
@@ -83,7 +83,7 @@ The admin :ref:`admin example <admin-example>` becomes:
 
 
     class ModelAParentAdmin(VersionAdmin, PolymorphicParentModelAdmin):
-        base_model = ModelA
+        base_model = ModelA  # optional, explicitly set here.
         child_models = (
             (ModelB, ModelBAdmin),
             (ModelC, ModelCAdmin),

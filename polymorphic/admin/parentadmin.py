@@ -18,6 +18,7 @@ from django.utils.http import urlencode
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
 
+from polymorphic.utils import get_base_polymorphic_model
 from .forms import PolymorphicModelChoiceForm
 
 
@@ -36,9 +37,8 @@ class ChildAdminNotRegistered(RuntimeError):
 class PolymorphicParentModelAdmin(admin.ModelAdmin):
     """
     A admin interface that can displays different change/delete pages, depending on the polymorphic model.
-    To use this class, two variables need to be defined:
+    To use this class, one attribute need to be defined:
 
-    * :attr:`base_model` should
     * :attr:`child_models` should be a list of (Model, Admin) tuples
 
     Alternatively, the following methods can be implemented:
@@ -50,7 +50,7 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
     The derived models should *not* register the ModelAdmin, but instead it should be returned by :func:`get_child_models`.
     """
 
-    #: The base model that the class uses
+    #: The base model that the class uses (auto-detected if not set explicitly)
     base_model = None
 
     #: The child models that should be displayed
@@ -70,6 +70,9 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
     def __init__(self, model, admin_site, *args, **kwargs):
         super(PolymorphicParentModelAdmin, self).__init__(model, admin_site, *args, **kwargs)
         self._is_setup = False
+
+        if self.base_model is None:
+            self.base_model = get_base_polymorphic_model(model)
 
     def _lazy_setup(self):
         if self._is_setup:
