@@ -27,10 +27,23 @@ class PolymorphicChildModelAdmin(admin.ModelAdmin):
     * It allows to set ``base_form`` so the derived class will automatically include other fields in the form.
     * It allows to set ``base_fieldsets`` so the derived class will automatically display any extra fields.
     """
+
+    #: The base model that the class uses (auto-detected if not set explicitly)
     base_model = None
+
+    #: By setting ``base_form`` instead of ``form``, any subclass fields are automatically added to the form.
+    #: This is useful when your model admin class is inherited by others.
     base_form = None
+
+    #: By setting ``base_fieldsets`` instead of ``fieldsets``,
+    #: any subclass fields can be automatically added.
+    #: This is useful when your model admin class is inherited by others.
     base_fieldsets = None
-    extra_fieldset_title = _("Contents")  # Default title for extra fieldset
+
+    #: Default title for extra fieldset
+    extra_fieldset_title = _("Contents")
+
+    #: Whether the child admin model should be visible in the admin index page.
     show_in_index = False
 
     def __init__(self, model, admin_site, *args, **kwargs):
