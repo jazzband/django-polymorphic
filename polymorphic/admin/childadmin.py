@@ -8,6 +8,7 @@ from django.core.urlresolvers import resolve
 from django.utils import six
 from django.utils.translation import ugettext_lazy as _
 
+from polymorphic.utils import get_base_polymorphic_model
 from ..admin import PolymorphicParentModelAdmin
 
 
@@ -25,14 +26,18 @@ class PolymorphicChildModelAdmin(admin.ModelAdmin):
     * It adds the base model to the template lookup paths.
     * It allows to set ``base_form`` so the derived class will automatically include other fields in the form.
     * It allows to set ``base_fieldsets`` so the derived class will automatically display any extra fields.
-
-    The ``base_model`` attribute must be set.
     """
     base_model = None
     base_form = None
     base_fieldsets = None
     extra_fieldset_title = _("Contents")  # Default title for extra fieldset
     show_in_index = False
+
+    def __init__(self, model, admin_site, *args, **kwargs):
+        super(PolymorphicChildModelAdmin, self).__init__(model, admin_site, *args, **kwargs)
+
+        if self.base_model is None:
+            self.base_model = get_base_polymorphic_model(model)
 
     def get_form(self, request, obj=None, **kwargs):
         # The django admin validation requires the form to have a 'class Meta: model = ..'
