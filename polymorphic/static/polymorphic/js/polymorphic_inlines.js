@@ -52,6 +52,10 @@
             var menuButton;
             var addButtons;
 
+            if(options.childTypes == null) {
+              throw Error("The polymorphic fieldset options.childTypes is not defined!");
+            }
+
             // For Polymorphic inlines, the add button opens a menu.
             var menu = '<div class="polymorphic-type-menu" style="display: none;"><ul>';
             for (var i = 0; i < options.childTypes.length; i++) {

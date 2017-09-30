@@ -3,7 +3,12 @@ Rendering utils for admin forms;
 
 This makes sure that admin fieldsets/layout settings are exported to the template.
 """
+import json
+
 from django.contrib.admin.helpers import InlineAdminFormSet, InlineAdminForm, AdminField
+from django.utils.encoding import force_text
+from django.utils.text import capfirst
+from django.utils.translation import ugettext
 
 from polymorphic.formsets import BasePolymorphicModelFormSet
 
@@ -76,6 +81,29 @@ class PolymorphicInlineAdminFormSet(InlineAdminFormSet):
         fields = self.prepopulated_fields.copy()
         fields.update(child_inline.get_prepopulated_fields(self.request, self.obj))
         return fields
+
+    def inline_formset_data(self):
+        """
+        A JavaScript data structure for the JavaScript code
+        This overrides the default Django version to add the ``childTypes`` data.
+        """
+        verbose_name = self.opts.verbose_name
+        return json.dumps({
+            'name': '#%s' % self.formset.prefix,
+            'options': {
+                'prefix': self.formset.prefix,
+                'addText': ugettext('Add another %(verbose_name)s') % {
+                    'verbose_name': capfirst(verbose_name),
+                },
+                'childTypes': [
+                    {
+                        'type': model._meta.model_name,
+                        'name': force_text(model._meta.verbose_name)
+                    } for model in self.formset.child_forms.keys()
+                ],
+                'deleteText': ugettext('Remove'),
+            }
+        })
 
 
 class PolymorphicInlineSupportMixin(object):
