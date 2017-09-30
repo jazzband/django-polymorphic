@@ -4,13 +4,17 @@ Changelog
 Changes in git
 --------------
 
+* **BACKWARDS INCOMPATIBILITY:** Dropped Django 1.8 support.
 * Added ``PolymorphicTypeUndefined`` exception for incomplete imported models.
   When a data migration or import creates an polymorphic model,
   the ``polymorphic_ctype_id`` field should be filled in manually too.
   The ``polymorphic.utils.reset_polymorphic_ctype`` function can be used for that.
 * Added ``PolymorphicTypeInvalid`` exception when database was incorrectly imported.
+* Added ``polymorphic.utils.get_base_polymorphic_model()`` to find the base model for types.
+* Using ``base_model`` on the polymorphic admins is no longer required, as this can be autodetected.
 * Fixed detection and handling of ``declared_fieldsets`` in the admin.
 * Fixed manager errors for swappable models.
+* Fixed deleteText of ``|as_script_options`` template filter.
 * Improved ``polymorphic.utils.reset_polymorphic_ctype()`` to accept models in random ordering.
 
 
