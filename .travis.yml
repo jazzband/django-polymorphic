@@ -40,7 +40,7 @@ matrix:
   allow_failures:
     - env: TOXENV=py35-djangomaster
     - env: TOXENV=py36-djangomaster
-    - env: TOXENV=py36-djangomaster-postgres
+    - env: TOXENV=py36-djangomaster-postgres DB=postgres
 
 cache:
   directories:
