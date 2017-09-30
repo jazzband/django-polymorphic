@@ -31,11 +31,28 @@ class PolymorphicAdminTests(AdminTestCase):
                 }),
             )
 
-        # Now test which results are returned
-        d_obj = Model2D.objects.create(field1='A', field2='B', field3='C', field4='D')
+        # -- add page
+        ct_id = ContentType.objects.get_for_model(Model2D).pk
+        self.admin_get_add(Model2A)  # shows type page
+        self.admin_get_add(Model2A, qs='?ct_id={}'.format(ct_id))  # shows type page
+
+        self.admin_get_add(Model2A)  # shows type page
+        self.admin_post_add(Model2A, {
+            'field1': 'A',
+            'field2': 'B',
+            'field3': 'C',
+            'field4': 'D'
+        }, qs='?ct_id={}'.format(ct_id))
+
+        d_obj = Model2A.objects.all()[0]
+        self.assertEqual(d_obj.__class__, Model2D)
+        self.assertEqual(d_obj.field1, 'A')
+        self.assertEqual(d_obj.field2, 'B')
+
+        # -- list page
         self.admin_get_changelist(Model2A)  # asserts 200
 
-        # See that the child object was returned
+        # -- edit
         response = self.admin_get_change(Model2A, d_obj.pk)
         self.assertContains(response, 'field4')
         self.admin_post_change(Model2A, d_obj.pk, {
@@ -51,6 +68,11 @@ class PolymorphicAdminTests(AdminTestCase):
         self.assertEqual(d_obj.field3, 'C2')
         self.assertEqual(d_obj.field4, 'D2')
 
+        # -- history
+        self.admin_get_history(Model2A, d_obj.pk)
+
+        # -- delete
+        self.admin_get_delete(Model2A, d_obj.pk)
         self.admin_post_delete(Model2A, d_obj.pk)
         self.assertRaises(Model2A.DoesNotExist, lambda: d_obj.refresh_from_db())
 
@@ -77,6 +99,8 @@ class PolymorphicAdminTests(AdminTestCase):
 
         parent = InlineParent.objects.create(title='FOO')
         self.assertEqual(parent.inline_children.count(), 0)
+
+        # -- get edit page
         response = self.admin_get_change(InlineParent, parent.pk)
 
         # Make sure the fieldset has the right data exposed in data-inline-formset
@@ -84,6 +108,7 @@ class PolymorphicAdminTests(AdminTestCase):
         self.assertContains(response, escape('"type": "inlinemodela"'))
         self.assertContains(response, escape('"type": "inlinemodelb"'))
 
+        # -- post edit page
         self.admin_post_change(InlineParent, parent.pk, {
             'title': 'FOO2',
             'inline_children-INITIAL_FORMS': 0,

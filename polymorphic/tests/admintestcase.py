@@ -76,16 +76,30 @@ class AdminTestCase(TestCase):
         admin_instance = self.get_admin_instance(model)
         return reverse(admin_urlname(admin_instance.opts, 'change'), args=(object_id,))
 
+    def get_history_url(self, model, object_id):
+        admin_instance = self.get_admin_instance(model)
+        return reverse(admin_urlname(admin_instance.opts, 'history'), args=(object_id,))
+
     def get_delete_url(self, model, object_id):
         admin_instance = self.get_admin_instance(model)
         return reverse(admin_urlname(admin_instance.opts, 'delete'), args=(object_id,))
 
-    def admin_post_add(self, model, formdata):
+    def admin_get_add(self, model, qs=''):
         """
         Make a direct "add" call to the admin page, circumvening login checks.
         """
         admin_instance = self.get_admin_instance(model)
-        request = self.create_admin_request('post', self.get_add_url(model), data=formdata)
+        request = self.create_admin_request('get', self.get_add_url(model) + qs)
+        response = admin_instance.add_view(request)
+        self.assertEqual(response.status_code, 200)
+        return response
+
+    def admin_post_add(self, model, formdata, qs=''):
+        """
+        Make a direct "add" call to the admin page, circumvening login checks.
+        """
+        admin_instance = self.get_admin_instance(model)
+        request = self.create_admin_request('post', self.get_add_url(model) + qs, data=formdata)
         response = admin_instance.add_view(request)
         self.assertFormSuccess(request.path, response)
         return response
@@ -118,6 +132,26 @@ class AdminTestCase(TestCase):
         request = self.create_admin_request('post', self.get_change_url(model, object_id), data=formdata, **extra)
         response = admin_instance.change_view(request, str(object_id))
         self.assertFormSuccess(request.path, response)
+        return response
+
+    def admin_get_history(self, model, object_id, query=None, **extra):
+        """
+        Perform a GET request on the admin page
+        """
+        admin_instance = self.get_admin_instance(model)
+        request = self.create_admin_request('get', self.get_history_url(model, object_id), data=query, **extra)
+        response = admin_instance.history_view(request, str(object_id))
+        self.assertEqual(response.status_code, 200)
+        return response
+
+    def admin_get_delete(self, model, object_id, query=None, **extra):
+        """
+        Perform a GET request on the admin delete page
+        """
+        admin_instance = self.get_admin_instance(model)
+        request = self.create_admin_request('get', self.get_delete_url(model, object_id), data=query, **extra)
+        response = admin_instance.delete_view(request, str(object_id))
+        self.assertEqual(response.status_code, 200)
         return response
 
     def admin_post_delete(self, model, object_id, **extra):
