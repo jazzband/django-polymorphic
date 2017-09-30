@@ -61,6 +61,7 @@ if not settings.configured:
             },
         ],
         POLYMORPHIC_TEST_SWAPPABLE='polymorphic.swappedmodel',
+        ROOT_URLCONF=None,
     )
 
 

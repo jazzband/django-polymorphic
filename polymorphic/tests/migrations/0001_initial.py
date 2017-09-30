@@ -1005,4 +1005,54 @@ class Migration(migrations.Migration):
             },
             bases=('tests.model2c',),
         ),
+        migrations.CreateModel(
+            name='InlineModelBase',
+            fields=[
+                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+            ],
+            options={
+                'abstract': False,
+                'base_manager_name': 'objects',
+            },
+        ),
+        migrations.CreateModel(
+            name='InlineParent',
+            fields=[
+                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('title', models.CharField(max_length=10)),
+            ],
+        ),
+        migrations.CreateModel(
+            name='InlineModelA',
+            fields=[
+                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('field1', models.CharField(max_length=10)),
+            ],
+            options={
+                'abstract': False,
+                'base_manager_name': 'objects',
+            },
+        ),
+        migrations.CreateModel(
+            name='InlineModelB',
+            fields=[
+                ('inlinemodela_ptr', models.OneToOneField(auto_created=True, on_delete=django.db.models.deletion.CASCADE, parent_link=True, primary_key=True, serialize=False, to='tests.InlineModelA')),
+                ('field2', models.CharField(max_length=10)),
+            ],
+            options={
+                'abstract': False,
+                'base_manager_name': 'objects',
+            },
+            bases=('tests.inlinemodela',),
+        ),
+        migrations.AddField(
+            model_name='inlinemodela',
+            name='parent',
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='tests.InlineParent'),
+        ),
+        migrations.AddField(
+            model_name='inlinemodela',
+            name='polymorphic_ctype',
+            field=models.ForeignKey(editable=False, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='polymorphic_tests.inlinemodela_set+', to='contenttypes.ContentType'),
+        ),
     ]

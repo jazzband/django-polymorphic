@@ -414,3 +414,16 @@ class SwappableModel(AbstractModel):
 
 class SwappedModel(AbstractModel):
     pass
+
+
+class InlineParent(models.Model):
+    title = models.CharField(max_length=10)
+
+
+class InlineModelA(PolymorphicModel):
+    parent = models.ForeignKey(InlineParent)
+    field1 = models.CharField(max_length=10)
+
+
+class InlineModelB(InlineModelA):
+    field2 = models.CharField(max_length=10)
