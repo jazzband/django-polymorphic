@@ -25,5 +25,7 @@ msgstr ""
 msgid "Content type"
 msgstr ""
 
+
+#: admin.py:403
 msgid "Contents"
 msgstr ""
