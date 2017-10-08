@@ -15,7 +15,6 @@ class UnsupportedChildType(LookupError):
     pass
 
 
-
 class PolymorphicFormSetChild(object):
     """
     Metadata to define the inline of a polymorphic child.
@@ -47,7 +46,7 @@ class PolymorphicFormSetChild(object):
         Expose the ContentType that the child relates to.
         This can be used for the ``polymorphic_ctype`` field.
         """
-        return ContentType.objects.get_for_model(self.model)
+        return ContentType.objects.get_for_model(self.model, for_concrete_model=False)
 
     def get_form(self, **kwargs):
         """
@@ -162,7 +161,7 @@ class BasePolymorphicModelFormSet(BaseModelFormSet):
         if self.is_bound:
             if 'instance' in defaults:
                 # Object is already bound to a model, won't change the content type
-                model = defaults['instance'].get_real_concrete_instance_class()  # respect proxy models
+                model = defaults['instance'].get_real_instance_class()  # allow proxy models
             else:
                 # Extra or empty form, use the provided type.
                 # Note this completely tru
@@ -178,7 +177,7 @@ class BasePolymorphicModelFormSet(BaseModelFormSet):
                     raise UnsupportedChildType("Child model type {0} is not part of the formset".format(model))
         else:
             if 'instance' in defaults:
-                model = defaults['instance'].get_real_concrete_instance_class()  # respect proxy models
+                model = defaults['instance'].get_real_instance_class()  # allow proxy models
             elif 'polymorphic_ctype' in defaults.get('initial', {}):
                 model = defaults['initial']['polymorphic_ctype'].model_class()
             elif i < len(self.queryset_data):
@@ -197,7 +196,7 @@ class BasePolymorphicModelFormSet(BaseModelFormSet):
 
     def add_fields(self, form, index):
         """Add a hidden field for the content type."""
-        ct = ContentType.objects.get_for_model(form._meta.model)
+        ct = ContentType.objects.get_for_model(form._meta.model, for_concrete_model=False)
         choices = [(ct.pk, ct)]  # Single choice, existing forms can't change the value.
         form.fields['polymorphic_ctype'] = forms.ChoiceField(choices=choices, initial=ct.pk, required=False, widget=forms.HiddenInput)
         super(BasePolymorphicModelFormSet, self).add_fields(form, index)

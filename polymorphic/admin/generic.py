@@ -42,7 +42,7 @@ class GenericPolymorphicInlineModelAdmin(PolymorphicInlineModelAdmin, GenericInl
             Expose the ContentType that the child relates to.
             This can be used for the ``polymorphic_ctype`` field.
             """
-            return ContentType.objects.get_for_model(self.model)
+            return ContentType.objects.get_for_model(self.model, for_concrete_model=False)
 
         def get_formset_child(self, request, obj=None, **kwargs):
             # Similar to GenericInlineModelAdmin.get_formset(),

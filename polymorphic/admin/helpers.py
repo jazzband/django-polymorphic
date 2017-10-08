@@ -42,7 +42,7 @@ class PolymorphicInlineAdminFormSet(InlineAdminFormSet):
         """
         for form, original in zip(self.formset.initial_forms, self.formset.get_queryset()):
             # Output the form
-            model = original.get_real_concrete_instance_class()
+            model = original.get_real_instance_class()
             child_inline = self.opts.get_child_inline_instance(model)
             view_on_site_url = self.opts.get_view_on_site_url(original)
 
