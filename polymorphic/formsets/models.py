@@ -11,7 +11,7 @@ from .utils import add_media
 class PolymorphicFormSetChild(object):
     """
     Metadata to define the inline of a polymorphic child.
-    Provide this information in the :func:`polymorphic_inlineformset_factory` construction.
+    Provide this information in the :func:'polymorphic_inlineformset_factory' construction.
     """
 
     def __init__(self, model, form=ModelForm, fields=None, exclude=None,
@@ -37,7 +37,7 @@ class PolymorphicFormSetChild(object):
     def content_type(self):
         """
         Expose the ContentType that the child relates to.
-        This can be used for the ``polymorphic_ctype`` field.
+        This can be used for the ''polymorphic_ctype'' field.
         """
         return ContentType.objects.get_for_model(self.model)
 
@@ -48,8 +48,8 @@ class PolymorphicFormSetChild(object):
         # Do what modelformset_factory() / inlineformset_factory() does to the 'form' argument;
         # Construct the form with the given ModelFormOptions values
 
-        # Fields can be overwritten. To support the global `polymorphic_child_forms_factory` kwargs,
-        # that doesn't completely replace all `exclude` settings defined per child type,
+        # Fields can be overwritten. To support the global 'polymorphic_child_forms_factory' kwargs,
+        # that doesn't completely replace all 'exclude' settings defined per child type,
         # we allow to define things like 'extra_...' fields that are amended to the current child settings.
 
         exclude = list(self.exclude)
@@ -78,7 +78,7 @@ def polymorphic_child_forms_factory(formset_children, **kwargs):
     """
     Construct the forms for the formset children.
     This is mostly used internally, and rarely needs to be used by external projects.
-    When using the factory methods (:func:`polymorphic_inlineformset_factory`),
+    When using the factory methods (:func:'polymorphic_inlineformset_factory'),
     this feature is called already for you.
     """
     child_forms = OrderedDict()
@@ -97,8 +97,8 @@ class BasePolymorphicModelFormSet(BaseModelFormSet):
     as all variations need ot be exposed somewhere.
 
     When switching existing formsets to the polymorphic formset,
-    note that the ID field will no longer be named ``model_ptr``,
-    but just appear as ``id``.
+    note that the ID field will no longer be named ''model_ptr'',
+    but just appear as ''id''.
     """
 
     # Assigned by the factory
@@ -257,10 +257,10 @@ def polymorphic_modelformset_factory(model, formset_children,
     """
     Construct the class for an polymorphic model formset.
 
-    All arguments are identical to :func:`~django.forms.models.modelformset_factory`,
-    with the exception of the ``formset_children`` argument.
+    All arguments are identical to :func:'~django.forms.models.modelformset_factory',
+    with the exception of the ''formset_children'' argument.
 
-    :param formset_children: A list of all child :class:`PolymorphicFormSetChild` objects
+    :param formset_children: A list of all child :class:'PolymorphicFormSetChild' objects
                              that tell the inline how to render the child model types.
     :type formset_children: Iterable[PolymorphicFormSetChild]
     :rtype: type
@@ -321,10 +321,10 @@ def polymorphic_inlineformset_factory(parent_model, model, formset_children,
     """
     Construct the class for an inline polymorphic formset.
 
-    All arguments are identical to :func:`~django.forms.models.inlineformset_factory`,
-    with the exception of the ``formset_children`` argument.
+    All arguments are identical to :func:'~django.forms.models.inlineformset_factory',
+    with the exception of the ''formset_children'' argument.
 
-    :param formset_children: A list of all child :class:`PolymorphicFormSetChild` objects
+    :param formset_children: A list of all child :class:'PolymorphicFormSetChild' objects
                              that tell the inline how to render the child model types.
     :type formset_children: Iterable[PolymorphicFormSetChild]
     :rtype: type
