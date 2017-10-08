@@ -26,7 +26,7 @@ def reset_polymorphic_ctype(*models, **filters):
         models = reversed(models)
 
     for new_model in models:
-        new_ct = ContentType.objects.db_manager(using).get_for_model(new_model)
+        new_ct = ContentType.objects.db_manager(using).get_for_model(new_model, for_concrete_model=False)
 
         qs = new_model.objects.db_manager(using)
         if ignore_existing:
