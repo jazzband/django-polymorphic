@@ -10,7 +10,8 @@ from django.contrib.admin.utils import flatten_fieldsets
 from django.core.exceptions import ImproperlyConfigured
 from django.forms import Media
 
-from polymorphic.formsets import polymorphic_child_forms_factory, BasePolymorphicInlineFormSet, PolymorphicFormSetChild
+from polymorphic.formsets import polymorphic_child_forms_factory, BasePolymorphicInlineFormSet, \
+    PolymorphicFormSetChild, UnsupportedChildType
 from polymorphic.formsets.utils import add_media
 from .helpers import PolymorphicInlineSupportMixin
 
@@ -89,7 +90,7 @@ class PolymorphicInlineModelAdmin(InlineModelAdmin):
         try:
             return self._child_inlines_lookup[model]
         except KeyError:
-            raise ValueError("Model '{0}' not found in child_inlines".format(model.__name__))
+            raise UnsupportedChildType("Model '{0}' not found in child_inlines".format(model.__name__))
 
     def get_formset(self, request, obj=None, **kwargs):
         """
