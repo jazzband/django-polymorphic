@@ -2,14 +2,13 @@
 The parent admin displays the list view of the base model.
 """
 import sys
-import warnings
 
-from django.conf.urls import url
 from django.contrib import admin
 from django.contrib.admin.helpers import AdminErrorList, AdminForm
 from django.contrib.admin.templatetags.admin_urls import add_preserved_filters
 from django.contrib.contenttypes.models import ContentType
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import PermissionDenied, ImproperlyConfigured
+from django.db import models
 from django.http import Http404, HttpResponseRedirect
 from django.template.response import TemplateResponse
 from django.urls import RegexURLResolver
@@ -39,11 +38,11 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
     A admin interface that can displays different change/delete pages, depending on the polymorphic model.
     To use this class, one attribute need to be defined:
 
-    * :attr:`child_models` should be a list of (Model, Admin) tuples
+    * :attr:`child_models` should be a list models.
 
     Alternatively, the following methods can be implemented:
 
-    * :func:`get_child_models` should return a list of (Model, ModelAdmin) tuples
+    * :func:`get_child_models` should return a list of models.
     * optionally, :func:`get_child_type_choices` can be overwritten to refine the choices for the add dialog.
 
     This class needs to be inherited by the model admin base class that is registered in the site.
@@ -79,6 +78,17 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
             return
 
         self._child_models = self.get_child_models()
+
+        # Make absolutely sure that the child models don't use the old 0.9 format,
+        # as of polymorphic 1.4 this deprecated configuration is no longer supported.
+        # Instead, register the child models in the admin too.
+        if self._child_models and not issubclass(self._child_models[0], models.Model):
+            raise ImproperlyConfigured(
+                "Since django-polymorphic 1.4, the `child_models` attribute "
+                "and `get_child_models()` method should be a list of models only.\n"
+                "The model-admin class should be registered in the regular Django admin."
+            )
+
         self._child_admin_site = self.admin_site
         self._is_setup = True
 
