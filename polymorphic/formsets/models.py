@@ -6,7 +6,14 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.forms.models import ModelForm, BaseModelFormSet, BaseInlineFormSet, modelform_factory, modelformset_factory, inlineformset_factory
 from django.utils.functional import cached_property
+
+from polymorphic.models import PolymorphicModel
 from .utils import add_media
+
+
+class UnsupportedChildType(LookupError):
+    pass
+
 
 
 class PolymorphicFormSetChild(object):
@@ -168,7 +175,7 @@ class BasePolymorphicModelFormSet(BaseModelFormSet):
                 model = ContentType.objects.get_for_id(ct_id).model_class()
                 if model not in self.child_forms:
                     # Perform basic validation, as we skip the ChoiceField here.
-                    raise ValidationError("Child model type {0} is not part of the formset".format(model))
+                    raise UnsupportedChildType("Child model type {0} is not part of the formset".format(model))
         else:
             if 'instance' in defaults:
                 model = defaults['instance'].get_real_concrete_instance_class()  # respect proxy models
@@ -201,7 +208,18 @@ class BasePolymorphicModelFormSet(BaseModelFormSet):
         """
         if not self.child_forms:
             raise ImproperlyConfigured("No 'child_forms' defined in {0}".format(self.__class__.__name__))
-        return self.child_forms[model]
+        if not issubclass(model, PolymorphicModel):
+            raise TypeError("Expect polymorphic model type, not {0}".format(model))
+
+        try:
+            return self.child_forms[model]
+        except KeyError:
+            # This may happen when the query returns objects of a type that was not handled by the formset.
+            raise UnsupportedChildType(
+                "The '{0}' found a '{1}' model in the queryset, "
+                "but no form class is registered to display it.".format(
+                    self.__class__.__name__, model.__name__
+                ))
 
     def is_multipart(self):
         """
