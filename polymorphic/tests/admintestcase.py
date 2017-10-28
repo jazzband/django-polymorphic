@@ -49,7 +49,7 @@ class AdminTestCase(TestCase):
         # Make sure the URLs are reachable by reverse()
         clear_url_caches()
         set_urlconf(tuple([
-            url('^tmp-admin/', include(self.admin_site.urls))
+            url('^tmp-admin/', self.admin_site.urls)
         ]))
 
     def get_admin_instance(self, model):
