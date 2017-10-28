@@ -4,7 +4,7 @@ Changelog
 Changes in git
 --------------
 
-* **BACKWARDS INCOMPATIBILITY:** Dropped Django 1.8 support.
+* **BACKWARDS INCOMPATIBILITY:** Dropped Django 1.8 and 1.10 support.
 * **BACKWARDS INCOMPATIBILITY:** Removed old deprecated code from 1.0, thus:
 
  * Import managers from ``polymorphic.managers`` (plural), not ``polymorphic.manager``.
