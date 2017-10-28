@@ -7,12 +7,16 @@ python: "3.6"
 env:
   - TOXENV=py27-django111
   - TOXENV=py34-django111
+  - TOXENV=py34-django200
   - TOXENV=py35-django111
+  - TOXENV=py35-django200
   - TOXENV=py35-djangomaster
   - TOXENV=py36-django111
+  - TOXENV=py36-django200
   - TOXENV=py36-djangomaster
   # XXX: Use a matrix to build these?
   - TOXENV=py36-django111-postgres DB=postgres
+  - TOXENV=py36-django200-postgres DB=postgres
   - TOXENV=py36-djangomaster-postgres DB=postgres
 
 services:
@@ -21,13 +25,21 @@ services:
 matrix:
   fast_finish: true
   include:
+    - python: "2.7"
+      env: TOXENV=py27-django111
     - python: "3.5"
       env: TOXENV=py35-django111
+    - python: "3.5"
+      env: TOXENV=py35-django200
     - python: "3.5"
       env: TOXENV=py35-djangomaster
   exclude:
     - python: "3.6"
+      env: TOXENV=py27-django111
+    - python: "3.6"
       env: TOXENV=py35-django111
+    - python: "3.6"
+      env: TOXENV=py35-django200
     - python: "3.6"
       env: TOXENV=py35-djangomaster
   allow_failures:
