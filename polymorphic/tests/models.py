@@ -237,21 +237,6 @@ class PlainChildModelWithManager(models.Model):
     objects = PlainMyManager()
 
 
-class MgrInheritA(models.Model):
-    mgrA = models.Manager()
-    mgrA2 = models.Manager()
-    field1 = models.CharField(max_length=10)
-
-
-class MgrInheritB(MgrInheritA):
-    mgrB = models.Manager()
-    field2 = models.CharField(max_length=10)
-
-
-class MgrInheritC(ShowFieldTypeAndContent, MgrInheritB):
-    pass
-
-
 class BlogBase(ShowFieldTypeAndContent, PolymorphicModel):
     name = models.CharField(max_length=10)
 
