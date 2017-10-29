@@ -11,6 +11,7 @@ Changes in git
  * Register child models to the admin as well using ``@admin.register()`` or ``admin.site.register()``,
    as this is no longer done automatically.
 
+* Django 2.0 support.
 * Added ``PolymorphicTypeUndefined`` exception for incomplete imported models.
   When a data migration or import creates an polymorphic model,
   the ``polymorphic_ctype_id`` field should be filled in manually too.
