@@ -18,10 +18,10 @@ Changes in git
 * Added ``PolymorphicTypeInvalid`` exception when database was incorrectly imported.
 * Added ``polymorphic.utils.get_base_polymorphic_model()`` to find the base model for types.
 * Using ``base_model`` on the polymorphic admins is no longer required, as this can be autodetected.
-* Fixed detection and handling of ``declared_fieldsets`` in the admin.
 * Fixed manager errors for swappable models.
 * Fixed deleteText of ``|as_script_options`` template filter.
 * Improved ``polymorphic.utils.reset_polymorphic_ctype()`` to accept models in random ordering.
+* Fix fieldsets handling in the admin (``declared_fieldsets`` is removed since Django 1.9)
 
 
 Version 1.3 (2017-08-01)
