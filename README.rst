@@ -60,8 +60,8 @@ Django to perform an ``INNER JOIN`` to fetch the model fields from the database.
 While taking this in mind, there are valid reasons for using subclassed models.
 That's what this library is designed for!
 
-The current release of *django-polymorphic* supports Django 1.8, 1.10, 1.11 and Python 2.7 and 3.4+ is supported.
-For older Django versions, install *django-polymorphic==1.2*.
+The current release of *django-polymorphic* supports Django 1.11, 2.0 and Python 2.7 and 3.4+ is supported.
+For older Django versions, install *django-polymorphic==1.3*.
 
 For more information, see the `documentation at Read the Docs <https://django-polymorphic.readthedocs.io/>`_.
 
