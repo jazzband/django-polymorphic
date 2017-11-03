@@ -6,6 +6,7 @@ from __future__ import absolute_import
 
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
+from django.db.models.fields.related import ReverseOneToOneDescriptor, ForwardManyToOneDescriptor
 from django.db.utils import DEFAULT_DB_ALIAS
 from django.utils import six
 
@@ -178,14 +179,6 @@ class PolymorphicModel(six.with_metaclass(PolymorphicModelBase, models.Model)):
 
         subclasses_and_superclasses_accessors = self._get_inheritance_relation_fields_and_models()
 
-        try:
-            from django.db.models.fields.related import ReverseOneToOneDescriptor, ForwardManyToOneDescriptor
-        except ImportError:
-            # django < 1.9
-            from django.db.models.fields.related import (
-                SingleRelatedObjectDescriptor as ReverseOneToOneDescriptor,
-                ReverseSingleRelatedObjectDescriptor as ForwardManyToOneDescriptor,
-            )
         for name, model in subclasses_and_superclasses_accessors.items():
             # Here be dragons.
             orig_accessor = getattr(self.__class__, name, None)
