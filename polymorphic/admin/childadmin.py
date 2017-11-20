@@ -183,7 +183,7 @@ class PolymorphicChildModelAdmin(admin.ModelAdmin):
 
     def get_fieldsets(self, request, obj=None):
         # If subclass declares fieldsets or fields, this is respected
-        if hasattr(self, 'fieldsets') or hasattr(self, 'fields') or not self.base_fieldsets:
+        if self.fieldsets or self.fields or not self.base_fieldsets:
             return super(PolymorphicChildModelAdmin, self).get_fieldsets(request, obj)
 
         # Have a reasonable default fieldsets,
