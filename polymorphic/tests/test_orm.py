@@ -566,6 +566,18 @@ class PolymorphicTests(TransactionTestCase):
             ordered=False,
         )
 
+    def test_polymorphic_applabel___filter(self):
+        self.create_model2abcd()
+
+        assert Model2B._meta.app_label == 'tests'
+        objects = Model2A.objects.filter(Q(tests__Model2B___field2='B2') | Q(tests__Model2C___field3='C3'))
+        self.assertQuerysetEqual(
+            objects,
+            [Model2B, Model2C],
+            transform=lambda o: o.__class__,
+            ordered=False,
+        )
+
     def test_query_filter_exclude_is_immutable(self):
         # given
         q_to_reuse = Q(Model2B___field2='something')

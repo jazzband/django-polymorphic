@@ -20,6 +20,7 @@ Changes in git
 * Using ``base_model`` on the polymorphic admins is no longer required, as this can be autodetected.
 * Fixed manager errors for swappable models.
 * Fixed deleteText of ``|as_script_options`` template filter.
+* Fixed ``.filter(applabel__ModelName___field=...)`` lookups.
 * Improved ``polymorphic.utils.reset_polymorphic_ctype()`` to accept models in random ordering.
 * Fix fieldsets handling in the admin (``declared_fieldsets`` is removed since Django 1.9)
 
