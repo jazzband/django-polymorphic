@@ -7,6 +7,8 @@ from __future__ import absolute_import
 import copy
 import django
 from functools import reduce
+
+from django.apps import apps
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.db.models.fields.related import ForeignObjectRel, RelatedField
@@ -148,7 +150,7 @@ def translate_polymorphic_field_path(queryset_model, field_path):
     if '__' in classname:
         # the user has app label prepended to class name via __ => use Django's get_model function
         appname, sep, classname = classname.partition('__')
-        model = models.get_model(appname, classname)
+        model = apps.get_model(appname, classname)
         assert model, 'PolymorphicModel: model %s (in app %s) not found!' % (model.__name__, appname)
         if not issubclass(model, queryset_model):
             e = 'PolymorphicModel: queryset filter error: "' + model.__name__ + '" is not derived from "' + queryset_model.__name__ + '"'

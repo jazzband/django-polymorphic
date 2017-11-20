@@ -427,6 +427,18 @@ class PolymorphicTests(TestCase):
         self.assertEqual(repr(objects[0]), '<Model2B: id 2, field1 (CharField), field2 (CharField)>')
         self.assertEqual(repr(objects[1]), '<Model2C: id 3, field1 (CharField), field2 (CharField), field3 (CharField)>')
 
+    def test_polymorphic_applabel___filter(self):
+        self.create_model2abcd()
+
+        self.assertEqual(Model2B._meta.app_label, 'polymorphic')
+        objects = Model2A.objects.filter(Q(polymorphic__Model2B___field2='B2') | Q(polymorphic__Model2C___field3='C3'))
+        self.assertQuerysetEqual(
+            objects,
+            [Model2B, Model2C],
+            transform=lambda o: o.__class__,
+            ordered=False,
+        )
+
     def test_query_filter_exclude_is_immutable(self):
         # given
         q_to_reuse = Q(Model2B___field2='something')
