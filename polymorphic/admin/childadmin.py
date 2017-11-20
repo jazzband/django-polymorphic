@@ -63,8 +63,8 @@ class PolymorphicChildModelAdmin(admin.ModelAdmin):
         kwargs.setdefault('form', self.base_form or self.form)
 
         # prevent infinite recursion when this is called from get_subclass_fields
-        if not hasattr(self, 'fieldsets') and not hasattr(self, 'fields'):
-            kwargs.setdefault('fields', None)
+        if not self.fieldsets and not self.fields:
+            kwargs.setdefault('fields', '__all__')
 
         return super(PolymorphicChildModelAdmin, self).get_form(request, obj, **kwargs)
 
