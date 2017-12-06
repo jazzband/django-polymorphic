@@ -38,7 +38,7 @@ if not settings.configured:
             'polymorphic',
             'polymorphic.tests',
         ),
-        MIDDLEWARE_CLASSES=(),
+        MIDDLEWARE=(),
         SITE_ID=3,
         TEMPLATES=[{
                 "BACKEND": "django.template.backends.django.DjangoTemplates",
