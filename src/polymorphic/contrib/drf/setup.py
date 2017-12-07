@@ -1,9 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Note: To use the 'upload' functionality of this file, you must:
-#   $ pip install twine
-
 import io
 import os
 import sys
@@ -90,7 +87,6 @@ setup(
         'Programming Language :: Python :: Implementation :: CPython',
         'Programming Language :: Python :: Implementation :: PyPy'
     ],
-    # $ setup.py publish support.
     cmdclass={
         'upload': UploadCommand,
     },
