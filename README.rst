@@ -8,13 +8,13 @@ Polymorphic serializers for Django REST Framework.
 Overview
 --------
 
-`django-rest-polymorphic` allows you to easily define serializers for your inherited models that you have created using django-polymorphic.
+``django-rest-polymorphic`` allows you to easily define serializers for your inherited models that you have created using ``django-polymorphic``.
 
 
 Installation
 ------------
 
-Install using `pip`:
+Install using ``pip``:
 
 .. code-block:: bash
 
@@ -44,7 +44,7 @@ Define your polymorphic models:
     class ResearchProject(Project):
         supervisor = models.CharField(max_length=30)
 
-Define serializers for each polymorphic model the way you did it when you used django-rest-framework:
+Define serializers for each polymorphic model the way you did it when you used ``django-rest-framework``:
 
 .. code-block:: python
 
