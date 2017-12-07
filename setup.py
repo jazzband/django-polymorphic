@@ -11,36 +11,16 @@ from shutil import rmtree
 
 from setuptools import setup, Command
 
-
-# Package meta-data.
-NAME = 'django-rest-polymorphic'
-PACKAGE = 'rest_polymorphic'
-DESCRIPTION = 'Polymorphic serializers for Django REST Framework. '
-URL = 'https://github.com/apirobot/django-rest-polymorphic'
-EMAIL = 'denis.orehovsky@gmail.com'
-AUTHOR = 'Denis Orehovsky'
-
-REQUIRED = [
-    'django', 'djangorestframework', 'django-polymorphic'
-]
-
 here = os.path.abspath(os.path.dirname(__file__))
 
+# Long description
 with io.open(os.path.join(here, 'README.rst'), encoding='utf-8') as f:
-    long_description = '\n' + f.read()
+    readme = '\n' + f.read()
 
 about = {}
-with open(os.path.join(here, PACKAGE, '__version__.py')) as f:
+# Get meta-data from __version__.py
+with open(os.path.join(here, 'rest_polymorphic', '__version__.py')) as f:
     exec(f.read(), about)
-
-
-def get_packages(package):
-    """
-    Return root package and all sub-packages.
-    """
-    return [dirpath
-            for dirpath, dirnames, filenames in os.walk(package)
-            if os.path.exists(os.path.join(dirpath, '__init__.py'))]
 
 
 class UploadCommand(Command):
@@ -79,17 +59,22 @@ class UploadCommand(Command):
 
 
 setup(
-    name=NAME,
+    name=about['__title__'],
     version=about['__version__'],
-    description=DESCRIPTION,
-    long_description=long_description,
-    author=AUTHOR,
-    author_email=EMAIL,
-    url=URL,
-    packages=get_packages(PACKAGE),
-    install_requires=REQUIRED,
-    include_package_data=True,
-    license='MIT',
+    description=about['__description__'],
+    long_description=readme,
+    author=about['__author__'],
+    author_email=about['__author_email__'],
+    url=about['__url__'],
+    license=about['__license__'],
+    packages=[
+        'rest_polymorphic',
+    ],
+    install_requires=[
+        'django',
+        'djangorestframework',
+        'django-polymorphic',
+    ],
     classifiers=[
         # Trove classifiers
         # Full list: https://pypi.python.org/pypi?%3Aaction=list_classifiers
