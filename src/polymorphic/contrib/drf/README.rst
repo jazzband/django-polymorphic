@@ -2,13 +2,22 @@
 Django REST Polymorphic
 =======================
 
+.. image:: https://travis-ci.org/apirobot/django-rest-polymorphic.svg?branch=master
+    :target: https://travis-ci.org/apirobot/django-rest-polymorphic
+
+.. image:: https://codecov.io/gh/apirobot/django-rest-polymorphic/branch/master/graph/badge.svg
+    :target: https://codecov.io/gh/apirobot/django-rest-polymorphic
+
+.. image:: https://badge.fury.io/py/django-rest-polymorphic.svg
+    :target: https://badge.fury.io/py/django-rest-polymorphic
+
 Polymorphic serializers for Django REST Framework.
 
 
 Overview
 --------
 
-``django-rest-polymorphic`` allows you to easily define serializers for your inherited models that you have created using ``django-polymorphic``.
+``django-rest-polymorphic`` allows you to easily define serializers for your inherited models that you have created using ``django-polymorphic`` library.
 
 
 Installation
