@@ -1,7 +1,3 @@
-=======================
-Django REST Polymorphic
-=======================
-
 .. image:: https://travis-ci.org/apirobot/django-rest-polymorphic.svg?branch=master
     :target: https://travis-ci.org/apirobot/django-rest-polymorphic
 
@@ -10,6 +6,11 @@ Django REST Polymorphic
 
 .. image:: https://badge.fury.io/py/django-rest-polymorphic.svg
     :target: https://badge.fury.io/py/django-rest-polymorphic
+
+
+=======================
+Django REST Polymorphic
+=======================
 
 Polymorphic serializers for Django REST Framework.
 
