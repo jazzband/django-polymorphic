@@ -140,33 +140,6 @@ Test it:
 
 .. code-block:: bash
 
-    $ http GET "http://localhost:8000/projects/"
-
-.. code-block:: http
-
-    HTTP/1.0 200 OK
-    Content-Length: 227
-    Content-Type: application/json
-
-    [
-        {
-            "resourcetype": "Project",
-            "topic": "John's gathering"
-        },
-        {
-            "artist": "T. Turner",
-            "resourcetype": "ArtProject",
-            "topic": "Sculpting with Tim"
-        },
-        {
-            "resourcetype": "ResearchProject",
-            "supervisor": "Dr. Winter",
-            "topic": "Swallow Aerodynamics"
-        }
-    ]
-
-.. code-block:: bash
-
     $ http POST "http://localhost:8000/projects/" resourcetype="ArtProject" topic="Guernica" artist="Picasso"
 
 .. code-block:: http
