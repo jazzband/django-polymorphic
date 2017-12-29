@@ -1055,4 +1055,82 @@ class Migration(migrations.Migration):
             name='polymorphic_ctype',
             field=models.ForeignKey(editable=False, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='polymorphic_tests.inlinemodela_set+', to='contenttypes.ContentType'),
         ),
+        migrations.CreateModel(
+            name='ArtProject',
+            fields=[
+                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('topic', models.CharField(max_length=30)),
+                ('artist', models.CharField(max_length=30)),
+                ('polymorphic_ctype',
+                 models.ForeignKey(editable=False, null=True, on_delete=django.db.models.deletion.CASCADE,
+                                   related_name='polymorphic_tests.artproject_set+', to='contenttypes.ContentType')),
+            ],
+            options={
+                'abstract': False,
+            },
+        ),
+        migrations.CreateModel(
+            name='Duck',
+            fields=[
+                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('name', models.CharField(max_length=30)),
+                ('weight', models.IntegerField()),
+                ('polymorphic_ctype',
+                 models.ForeignKey(editable=False, null=True, on_delete=django.db.models.deletion.CASCADE,
+                                   related_name='polymorphic_tests.duck_set+', to='contenttypes.ContentType')),
+            ],
+            options={
+                'abstract': False,
+            },
+        ),
+        migrations.CreateModel(
+            name='MultiTableBase',
+            fields=[
+                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('field1', models.CharField(max_length=10)),
+            ],
+            options={
+                'abstract': False,
+            },
+        ),
+        migrations.CreateModel(
+            name='MultiTableDerived',
+            fields=[
+                ('multitablebase_ptr',
+                 models.OneToOneField(auto_created=True, on_delete=django.db.models.deletion.CASCADE, parent_link=True,
+                                      primary_key=True, serialize=False, to='tests.MultiTableBase')),
+                ('field2', models.CharField(max_length=10)),
+            ],
+            options={
+                'abstract': False,
+            },
+            bases=('tests.multitablebase',),
+        ),
+        migrations.AddField(
+            model_name='multitablebase',
+            name='polymorphic_ctype',
+            field=models.ForeignKey(editable=False, null=True, on_delete=django.db.models.deletion.CASCADE,
+                                    related_name='polymorphic_tests.multitablebase_set+',
+                                    to='contenttypes.ContentType'),
+        ),
+        migrations.CreateModel(
+            name='ReadheadDuck',
+            fields=[
+            ],
+            options={
+                'proxy': True,
+                'indexes': [],
+            },
+            bases=('tests.duck',),
+        ),
+        migrations.CreateModel(
+            name='RubberDuck',
+            fields=[
+            ],
+            options={
+                'proxy': True,
+                'indexes': [],
+            },
+            bases=('tests.duck',),
+        ),
     ]
