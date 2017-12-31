@@ -68,7 +68,7 @@ from polymorphic.tests.models import (
     ProxyModelB,
     ProxyModelBase,
     QuerySet,
-    ReadheadDuck,
+    RedheadDuck,
     RelationA,
     RelationB,
     RelationBC,
@@ -969,19 +969,19 @@ class PolymorphicTests(TransactionTestCase):
         )
 
     def test_bulk_create_proxy_inheritance(self):
-        ReadheadDuck.objects.bulk_create([
-            ReadheadDuck(name='readheadduck1', weight=1),
-            Duck(name='duck1', weight=1),
-            RubberDuck(name='rubberduck1', weight=1),
+        RedheadDuck.objects.bulk_create([
+            RedheadDuck(name='redheadduck1'),
+            Duck(name='duck1'),
+            RubberDuck(name='rubberduck1'),
         ])
         RubberDuck.objects.bulk_create([
-            ReadheadDuck(name='readheadduck2', weight=1),
-            RubberDuck(name='rubberduck2', weight=1),
-            Duck(name='duck2', weight=1),
+            RedheadDuck(name='redheadduck2'),
+            RubberDuck(name='rubberduck2'),
+            Duck(name='duck2'),
         ])
         self.assertEqual(
-            sorted(ReadheadDuck.objects.values_list('name', flat=True)),
-            ['readheadduck1', 'readheadduck2'],
+            sorted(RedheadDuck.objects.values_list('name', flat=True)),
+            ['redheadduck1', 'redheadduck2'],
         )
         self.assertEqual(
             sorted(RubberDuck.objects.values_list('name', flat=True)),
@@ -989,12 +989,11 @@ class PolymorphicTests(TransactionTestCase):
         )
         self.assertEqual(
             sorted(Duck.objects.values_list('name', flat=True)),
-            ['duck1', 'duck2', 'readheadduck1', 'readheadduck2', 'rubberduck1', 'rubberduck2'],
+            ['duck1', 'duck2', 'redheadduck1', 'redheadduck2', 'rubberduck1', 'rubberduck2'],
         )
 
     def test_bulk_create_unsupported_multi_table_inheritance(self):
-        expected_message = 'Can\'t bulk create a multi-table inherited model'
-        with self.assertRaisesMessage(ValueError, expected_message):
+        with self.assertRaises(ValueError):
             MultiTableDerived.objects.bulk_create([
                 MultiTableDerived(field1='field1', field2='field2')
             ])

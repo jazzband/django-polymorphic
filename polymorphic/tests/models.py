@@ -443,10 +443,9 @@ class ArtProject(AbstractProject):
 
 class Duck(PolymorphicModel):
     name = models.CharField(max_length=30)
-    weight = models.IntegerField()
 
 
-class ReadheadDuck(Duck):
+class RedheadDuck(Duck):
 
     class Meta:
         proxy = True
