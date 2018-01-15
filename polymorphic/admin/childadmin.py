@@ -62,6 +62,10 @@ class PolymorphicChildModelAdmin(admin.ModelAdmin):
         # If the derived class sets the model explicitly, respect that setting.
         kwargs.setdefault('form', self.base_form or self.form)
 
+        # prevent infinite recursion when this is called from get_subclass_fields
+        if not self.fieldsets and not self.fields:
+            kwargs.setdefault('fields', '__all__')
+
         return super(PolymorphicChildModelAdmin, self).get_form(request, obj, **kwargs)
 
     def get_model_perms(self, request):
@@ -181,7 +185,12 @@ class PolymorphicChildModelAdmin(admin.ModelAdmin):
 
     # ---- Extra: improving the form/fieldset default display ----
 
+    def get_base_fieldsets(self, request, obj=None):
+        return self.base_fieldsets
+
     def get_fieldsets(self, request, obj=None):
+        base_fieldsets = self.get_base_fieldsets(request, obj)
+
         # If subclass declares fieldsets or fields, this is respected
         if self.fieldsets or self.fields or not self.base_fieldsets:
             return super(PolymorphicChildModelAdmin, self).get_fieldsets(request, obj)
@@ -192,11 +201,11 @@ class PolymorphicChildModelAdmin(admin.ModelAdmin):
 
         if other_fields:
             return (
-                self.base_fieldsets[0],
+                base_fieldsets[0],
                 (self.extra_fieldset_title, {'fields': other_fields}),
-            ) + self.base_fieldsets[1:]
+            ) + base_fieldsets[1:]
         else:
-            return self.base_fieldsets
+            return base_fieldsets
 
     def get_subclass_fields(self, request, obj=None):
         # Find out how many fields would really be on the form,
@@ -210,7 +219,7 @@ class PolymorphicChildModelAdmin(admin.ModelAdmin):
         subclass_fields = list(six.iterkeys(form.base_fields)) + list(self.get_readonly_fields(request, obj))
 
         # Find which fields are not part of the common fields.
-        for fieldset in self.base_fieldsets:
+        for fieldset in self.get_base_fieldsets(request, obj):
             for field in fieldset[1]['fields']:
                 try:
                     subclass_fields.remove(field)
