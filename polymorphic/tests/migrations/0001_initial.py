@@ -1118,7 +1118,6 @@ class Migration(migrations.Migration):
             ],
             options={
                 'proxy': True,
-                'indexes': [],
             },
             bases=('tests.duck',),
         ),
@@ -1128,7 +1127,6 @@ class Migration(migrations.Migration):
             ],
             options={
                 'proxy': True,
-                'indexes': [],
             },
             bases=('tests.duck',),
         ),
