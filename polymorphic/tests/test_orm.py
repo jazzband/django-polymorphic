@@ -10,6 +10,7 @@ from django.utils import six
 from polymorphic.managers import PolymorphicManager
 from polymorphic.models import PolymorphicTypeUndefined
 from polymorphic.tests.models import (
+    ArtProject,
     Base,
     BlogA,
     BlogB,
@@ -19,6 +20,7 @@ from polymorphic.tests.models import (
     ChildModelWithManager,
     CustomPkBase,
     CustomPkInherit,
+    Duck,
     Enhance_Base,
     Enhance_Inherit,
     InitTestModelSubclass,
@@ -45,6 +47,7 @@ from polymorphic.tests.models import (
     ModelWithMyManagerNoDefault,
     ModelX,
     ModelY,
+    MultiTableDerived,
     MyManager,
     MyManagerQuerySet,
     NonProxyChild,
@@ -65,10 +68,12 @@ from polymorphic.tests.models import (
     ProxyModelB,
     ProxyModelBase,
     QuerySet,
+    RedheadDuck,
     RelationA,
     RelationB,
     RelationBC,
     RelationBase,
+    RubberDuck,
     TestParentLinkAndRelatedName,
     UUIDArtProject,
     UUIDPlainA,
@@ -952,6 +957,46 @@ class PolymorphicTests(TransactionTestCase):
 
         with self.assertRaises(PolymorphicTypeUndefined):
             list(Model2A.objects.all())
+
+    def test_bulk_create_abstract_inheritance(self):
+        ArtProject.objects.bulk_create([
+            ArtProject(topic='Painting with Tim', artist='T. Turner'),
+            ArtProject(topic='Sculpture with Tim', artist='T. Turner'),
+        ])
+        self.assertEqual(
+            sorted(ArtProject.objects.values_list('topic', 'artist')),
+            [('Painting with Tim', 'T. Turner'), ('Sculpture with Tim', 'T. Turner')]
+        )
+
+    def test_bulk_create_proxy_inheritance(self):
+        RedheadDuck.objects.bulk_create([
+            RedheadDuck(name='redheadduck1'),
+            Duck(name='duck1'),
+            RubberDuck(name='rubberduck1'),
+        ])
+        RubberDuck.objects.bulk_create([
+            RedheadDuck(name='redheadduck2'),
+            RubberDuck(name='rubberduck2'),
+            Duck(name='duck2'),
+        ])
+        self.assertEqual(
+            sorted(RedheadDuck.objects.values_list('name', flat=True)),
+            ['redheadduck1', 'redheadduck2'],
+        )
+        self.assertEqual(
+            sorted(RubberDuck.objects.values_list('name', flat=True)),
+            ['rubberduck1', 'rubberduck2'],
+        )
+        self.assertEqual(
+            sorted(Duck.objects.values_list('name', flat=True)),
+            ['duck1', 'duck2', 'redheadduck1', 'redheadduck2', 'rubberduck1', 'rubberduck2'],
+        )
+
+    def test_bulk_create_unsupported_multi_table_inheritance(self):
+        with self.assertRaises(ValueError):
+            MultiTableDerived.objects.bulk_create([
+                MultiTableDerived(field1='field1', field2='field2')
+            ])
 
 
 def qrepr(data):

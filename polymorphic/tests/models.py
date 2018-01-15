@@ -428,3 +428,38 @@ class InlineModelA(PolymorphicModel):
 
 class InlineModelB(InlineModelA):
     field2 = models.CharField(max_length=10)
+
+
+class AbstractProject(PolymorphicModel):
+    topic = models.CharField(max_length=30)
+
+    class Meta:
+        abstract = True
+
+
+class ArtProject(AbstractProject):
+    artist = models.CharField(max_length=30)
+
+
+class Duck(PolymorphicModel):
+    name = models.CharField(max_length=30)
+
+
+class RedheadDuck(Duck):
+
+    class Meta:
+        proxy = True
+
+
+class RubberDuck(Duck):
+
+    class Meta:
+        proxy = True
+
+
+class MultiTableBase(PolymorphicModel):
+    field1 = models.CharField(max_length=10)
+
+
+class MultiTableDerived(MultiTableBase):
+    field2 = models.CharField(max_length=10)
