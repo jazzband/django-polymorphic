@@ -11,7 +11,9 @@ def add_media(dest, media):
     Only required for Django < 2.0
     """
     if django.VERSION >= (2, 0):
-        dest += media
+        combined = dest + media
+        dest._css = combined._css
+        dest._js = combined._js
     else:
         dest.add_css(media._css)
         dest.add_js(media._js)
