@@ -4,13 +4,14 @@ Changelog
 Changes in git
 --------------
 
-* **BACKWARDS INCOMPATIBILITY:** Dropped Django 1.8 support.
+* **BACKWARDS INCOMPATIBILITY:** Dropped Django 1.8 and 1.10 support.
 * **BACKWARDS INCOMPATIBILITY:** Removed old deprecated code from 1.0, thus:
 
  * Import managers from ``polymorphic.managers`` (plural), not ``polymorphic.manager``.
  * Register child models to the admin as well using ``@admin.register()`` or ``admin.site.register()``,
    as this is no longer done automatically.
 
+* Django 2.0 support.
 * Added ``PolymorphicTypeUndefined`` exception for incomplete imported models.
   When a data migration or import creates an polymorphic model,
   the ``polymorphic_ctype_id`` field should be filled in manually too.
