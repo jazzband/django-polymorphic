@@ -1,8 +1,8 @@
 Changelog
 =========
 
-Changes in git
---------------
+Changes in 2.0 (2018-01-22)
+---------------------------
 
 * **BACKWARDS INCOMPATIBILITY:** Dropped Django 1.8 and 1.10 support.
 * **BACKWARDS INCOMPATIBILITY:** Removed old deprecated code from 1.0, thus:
@@ -11,7 +11,7 @@ Changes in git
  * Register child models to the admin as well using ``@admin.register()`` or ``admin.site.register()``,
    as this is no longer done automatically.
 
-* Django 2.0 support.
+* Added Django 2.0 support.
 * Added ``PolymorphicTypeUndefined`` exception for incomplete imported models.
   When a data migration or import creates an polymorphic model,
   the ``polymorphic_ctype_id`` field should be filled in manually too.
@@ -20,7 +20,7 @@ Changes in git
 * Added ``polymorphic.utils.get_base_polymorphic_model()`` to find the base model for types.
 * Using ``base_model`` on the polymorphic admins is no longer required, as this can be autodetected.
 * Fixed manager errors for swappable models.
-* Fixed deleteText of ``|as_script_options`` template filter.
+* Fixed ``deleteText`` of ``|as_script_options`` template filter.
 * Fixed ``.filter(applabel__ModelName___field=...)`` lookups.
 * Improved ``polymorphic.utils.reset_polymorphic_ctype()`` to accept models in random ordering.
 * Fix fieldsets handling in the admin (``declared_fieldsets`` is removed since Django 1.9)
