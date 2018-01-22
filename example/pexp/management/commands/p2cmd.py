@@ -7,7 +7,7 @@ import sys
 import time
 from pprint import pprint
 from random import Random
-from django.core.management.base import NoArgsCommand
+from django.core.management import BaseCommand
 from django.db import connection
 
 from pexp.models import *
@@ -46,7 +46,7 @@ def print_timing(func, message='', iterations=1):
     return wrapper
 
 
-class Command(NoArgsCommand):
+class Command(BaseCommand):
     help = ""
 
     def handle_noargs(self, **options):

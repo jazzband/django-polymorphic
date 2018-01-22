@@ -6,7 +6,7 @@ This module is a scratchpad for general development, testing & debugging
 import time
 import sys
 
-from django.core.management.base import NoArgsCommand
+from django.core.management import BaseCommand
 from django.db import connection
 from pprint import pprint
 from pexp.models import *
@@ -60,7 +60,7 @@ def run_vanilla_any_poly(func, iterations=1):
 # benchmarks
 
 def bench_create(model):
-    for i in xrange(num_objects):
+    for i in range(num_objects):
         model.objects.create(field1='abc' + str(i), field2='abcd' + str(i), field3='abcde' + str(i))
     # print 'count:',model.objects.count()
 
@@ -71,7 +71,7 @@ def bench_load1(model):
 
 
 def bench_load1_short(model):
-    for i in xrange(num_objects / 100):
+    for i in range(num_objects / 100):
         for o in model.objects.all()[:100]:
             pass
 
@@ -84,7 +84,7 @@ def bench_load2(model):
 
 
 def bench_load2_short(model):
-    for i in xrange(num_objects / 100):
+    for i in range(num_objects / 100):
         for o in model.objects.all()[:100]:
             f1 = o.field1
             f2 = o.field2
@@ -98,7 +98,7 @@ def bench_delete(model):
 # Command
 
 
-class Command(NoArgsCommand):
+class Command(BaseCommand):
     help = ""
 
     def handle_noargs(self, **options):
@@ -112,5 +112,3 @@ class Command(NoArgsCommand):
         ]
         for f, iterations in func_list:
             run_vanilla_any_poly(f, iterations=iterations)
-
-        print
