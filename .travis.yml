@@ -7,7 +7,6 @@ python:
   - "3.6"
 
 env:
-  - DJANGO=1.10
   - DJANGO=1.11
   - DJANGO=master
 

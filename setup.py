@@ -78,7 +78,6 @@ setup(
         'License :: OSI Approved :: MIT License',
         'Intended Audience :: Developers',
         'Framework :: Django',
-        'Framework :: Django :: 1.10',
         'Framework :: Django :: 1.11',
         'Programming Language :: Python',
         'Programming Language :: Python :: 3.4',
