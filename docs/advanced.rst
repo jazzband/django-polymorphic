@@ -92,6 +92,20 @@ A ManyToManyField example::
       <ModelB: id 2, field1 (CharField), field2 (CharField)>,
       <ModelC: id 3, field1 (CharField), field2 (CharField), field3 (CharField)> ]
 
+Copying Polymorphic objects
+---------------------------
+
+When creating a copy of a polymorphic object, both the
+``.id`` and the ``.pk`` of the object need to be set
+to ``None`` before saving so that both the base table
+and the derived table will be updated to the new object::
+
+    >>> o = ModelB.objects.first()
+    >>> o.field1 = 'new val' # leave field2 unchanged
+    >>> o.pk = None
+    >>> o.id = None
+    >>> o.save()
+
 
 Using Third Party Models (without modifying them)
 -------------------------------------------------
