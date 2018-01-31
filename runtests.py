@@ -8,6 +8,7 @@ import django
 from django.conf import settings
 from django.core.management import execute_from_command_line
 
+
 # python -Wd, or run via coverage:
 warnings.simplefilter('always', DeprecationWarning)
 
@@ -44,24 +45,24 @@ if not settings.configured:
         MIDDLEWARE_CLASSES=(),
         SITE_ID=3,
         TEMPLATES=[{
-                "BACKEND": "django.template.backends.django.DjangoTemplates",
-                "DIRS": (),
-                "OPTIONS": {
-                    "loaders": (
-                        "django.template.loaders.filesystem.Loader",
-                        "django.template.loaders.app_directories.Loader",
-                    ),
-                    "context_processors": (
-                        "django.template.context_processors.debug",
-                        "django.template.context_processors.i18n",
-                        "django.template.context_processors.media",
-                        "django.template.context_processors.request",
-                        "django.template.context_processors.static",
-                        "django.contrib.messages.context_processors.messages",
-                        "django.contrib.auth.context_processors.auth",
-                    ),
-                },
+            "BACKEND": "django.template.backends.django.DjangoTemplates",
+            "DIRS": (),
+            "OPTIONS": {
+                "loaders": (
+                    "django.template.loaders.filesystem.Loader",
+                    "django.template.loaders.app_directories.Loader",
+                ),
+                "context_processors": (
+                    "django.template.context_processors.debug",
+                    "django.template.context_processors.i18n",
+                    "django.template.context_processors.media",
+                    "django.template.context_processors.request",
+                    "django.template.context_processors.static",
+                    "django.contrib.messages.context_processors.messages",
+                    "django.contrib.auth.context_processors.auth",
+                ),
             },
+        },
         ],
         POLYMORPHIC_TEST_SWAPPABLE='polymorphic.swappedmodel',
         ROOT_URLCONF=None,
