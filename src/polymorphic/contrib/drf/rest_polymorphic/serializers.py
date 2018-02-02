@@ -1,4 +1,5 @@
 from collections import Mapping
+from pprint import pprint
 
 from django.core.exceptions import ImproperlyConfigured
 from django.db import models
@@ -23,10 +24,10 @@ class PolymorphicSerializer(serializers.Serializer):
                     cls=cls.__name__
                 )
             )
-        return super().__new__(cls, *args, **kwargs)
+        return super(PolymorphicSerializer, cls).__new__(cls, *args, **kwargs)
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        super(PolymorphicSerializer, self).__init__(*args, **kwargs)
 
         model_serializer_mapping = self.model_serializer_mapping
         self.model_serializer_mapping = {}
