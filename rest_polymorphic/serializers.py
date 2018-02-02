@@ -1,5 +1,4 @@
 from collections import Mapping
-from pprint import pprint
 
 from django.core.exceptions import ImproperlyConfigured
 from django.db import models
