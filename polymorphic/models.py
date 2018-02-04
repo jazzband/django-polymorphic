@@ -54,7 +54,6 @@ class PolymorphicModel(six.with_metaclass(PolymorphicModelBase, models.Model)):
     # Note that Django 1.5 removes these managers because the model is abstract.
     # They are pretended to be there by the metaclass in PolymorphicModelBase.get_inherited_managers()
     objects = PolymorphicManager()
-    base_objects = models.Manager()
 
     class Meta:
         abstract = True

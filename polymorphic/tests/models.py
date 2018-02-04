@@ -191,7 +191,9 @@ class MROBase1(ShowFieldType, PolymorphicModel):
 
 
 class MROBase2(MROBase1):
-    pass  # Django vanilla inheritance does not inherit MyManager as _default_manager here
+    class Meta:
+        # Django 1.x inheritance does not inherit MyManager as _default_manager here
+        manager_inheritance_from_future = True
 
 
 class MROBase3(models.Model):
@@ -200,7 +202,8 @@ class MROBase3(models.Model):
 
 
 class MRODerived(MROBase2, MROBase3):
-    pass
+    class Meta:
+        manager_inheritance_from_future = True
 
 
 class ParentModelWithManager(PolymorphicModel):

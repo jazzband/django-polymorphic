@@ -7,7 +7,10 @@ from __future__ import absolute_import
 import inspect
 import os
 import sys
+import warnings
 
+import django
+from django.core.exceptions import ImproperlyConfigured
 from django.db import models
 from django.db.models.base import ModelBase
 from django.db.models.manager import ManagerDescriptor
@@ -134,33 +137,56 @@ class PolymorphicModelBase(ModelBase):
         and its querysets from PolymorphicQuerySet - throw AssertionError if not"""
 
         if not issubclass(type(manager), PolymorphicManager):
-            e = 'PolymorphicModel: "' + model_name + '.' + manager_name + '" manager is of type "' + type(manager).__name__
-            e += '", but must be a subclass of PolymorphicManager'
-            raise AssertionError(e)
+            if django.VERSION < (2, 0):
+                extra = "\nConsider using Meta.manager_inheritance_from_future = True for Django 1.x projects"
+            else:
+                extra = ''
+            e = ('PolymorphicModel: "{0}.{1}" manager is of type "{2}", but must be a subclass of'
+                 ' PolymorphicManager.{extra}'.format(
+                model_name, manager_name, type(manager).__name__, extra=extra))
+            raise ImproperlyConfigured(e)
         if not getattr(manager, 'queryset_class', None) or not issubclass(manager.queryset_class, PolymorphicQuerySet):
-            e = 'PolymorphicModel: "' + model_name + '.' + manager_name + '" (PolymorphicManager) has been instantiated with a queryset class which is'
-            e += ' not a subclass of PolymorphicQuerySet (which is required)'
-            raise AssertionError(e)
+            e = ('PolymorphicModel: "{0}.{1}" (PolymorphicManager) has been instantiated with a queryset class '
+                 'which is not a subclass of PolymorphicQuerySet (which is required)'.format(model_name, manager_name))
+            raise ImproperlyConfigured(e)
         return manager
 
-    # hack: a small patch to Django would be a better solution.
-    # Django's management command 'dumpdata' relies on non-polymorphic
-    # behaviour of the _default_manager. Therefore, we catch any access to _default_manager
-    # here and return the non-polymorphic default manager instead if we are called from 'dumpdata.py'
-    # Otherwise, the base objects will be upcasted to polymorphic models, and be outputted as such.
-    # (non-polymorphic default manager is 'base_objects' for polymorphic models).
-    # This way we don't need to patch django.core.management.commands.dumpdata
-    # for all supported Django versions.
-    if len(sys.argv) > 1 and sys.argv[1] == 'dumpdata':
-        # manage.py dumpdata is running
+    @property
+    def base_objects(self):
+        warnings.warn(
+            "Using PolymorphicModel.base_objects is deprecated.\n"
+            "Use {0}.objects.non_polymorphic() instead.".format(self.__class__.__name__),
+            DeprecationWarning)
 
-        def __getattribute__(self, name):
-            if name == '_default_manager':
-                frm = inspect.stack()[1]  # frm[1] is caller file name, frm[3] is caller function name
-                if DUMPDATA_COMMAND in frm[1]:
-                    return self.base_objects
-                # caller_mod_name = inspect.getmodule(frm[0]).__name__  # does not work with python 2.4
-                # if caller_mod_name == 'django.core.management.commands.dumpdata':
+        # Create a manager so the API works as expected. Just don't register it
+        # anymore in the Model Meta, so it doesn't substitute our polymorphic
+        # manager as default manager for the third level of inheritance when
+        # that third level doesn't define a manager at all.
+        manager = models.Manager()
+        manager.name = 'base_objects'
+        manager.model = self
+        return manager
 
-            return super(PolymorphicModelBase, self).__getattribute__(name)
-    # TODO: investigate Django how this can be avoided
+    @property
+    def _default_manager(self):
+        if len(sys.argv) > 1 and sys.argv[1] == 'dumpdata':
+            # TODO: investigate Django how this can be avoided
+            # hack: a small patch to Django would be a better solution.
+            # Django's management command 'dumpdata' relies on non-polymorphic
+            # behaviour of the _default_manager. Therefore, we catch any access to _default_manager
+            # here and return the non-polymorphic default manager instead if we are called from 'dumpdata.py'
+            # Otherwise, the base objects will be upcasted to polymorphic models, and be outputted as such.
+            # (non-polymorphic default manager is 'base_objects' for polymorphic models).
+            # This way we don't need to patch django.core.management.commands.dumpdata
+            # for all supported Django versions.
+            frm = inspect.stack()[1]  # frm[1] is caller file name, frm[3] is caller function name
+            if DUMPDATA_COMMAND in frm[1]:
+                return self.base_objects
+
+        manager = super(PolymorphicModelBase, self)._default_manager
+        if not isinstance(manager, PolymorphicManager):
+            warnings.warn("{0}._default_manager is not a PolymorphicManager".format(
+                self.__class__.__name__
+            ), RuntimeWarning)
+
+        return manager

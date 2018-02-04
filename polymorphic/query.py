@@ -379,7 +379,7 @@ class PolymorphicQuerySet(QuerySet):
         # Then we copy the extra() select fields from the base objects to the real objects.
         # TODO: defer(), only(): support for these would be around here
         for real_concrete_class, idlist in idlist_per_model.items():
-            real_objects = real_concrete_class.base_objects.db_manager(self.db).filter(**{
+            real_objects = real_concrete_class.objects.non_polymorphic().using(self.db).filter(**{
                 ('%s__in' % pk_name): idlist,
             })
             real_objects.query.select_related = self.query.select_related  # copy select related configuration to new qs
