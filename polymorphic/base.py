@@ -25,6 +25,10 @@ POLYMORPHIC_SPECIAL_Q_KWORDS = ['instance_of', 'not_instance_of']
 DUMPDATA_COMMAND = os.path.join('django', 'core', 'management', 'commands', 'dumpdata.py')
 
 
+class ManagerInheritanceWarning(RuntimeWarning):
+    pass
+
+
 ###################################################################################
 # PolymorphicModel meta class
 
@@ -142,13 +146,16 @@ class PolymorphicModelBase(ModelBase):
             else:
                 extra = ''
             e = ('PolymorphicModel: "{0}.{1}" manager is of type "{2}", but must be a subclass of'
-                 ' PolymorphicManager.{extra}'.format(
+                 ' PolymorphicManager.{extra} to support retrieving subclasses'.format(
                 model_name, manager_name, type(manager).__name__, extra=extra))
-            raise ImproperlyConfigured(e)
+            warnings.warn(e, ManagerInheritanceWarning, stacklevel=3)
+            return manager
+
         if not getattr(manager, 'queryset_class', None) or not issubclass(manager.queryset_class, PolymorphicQuerySet):
-            e = ('PolymorphicModel: "{0}.{1}" (PolymorphicManager) has been instantiated with a queryset class '
-                 'which is not a subclass of PolymorphicQuerySet (which is required)'.format(model_name, manager_name))
-            raise ImproperlyConfigured(e)
+            e = ('PolymorphicModel: "{0}.{1}" has been instantiated with a queryset class '
+                 'which is not a subclass of PolymorphicQuerySet (which is required)'.format(
+                model_name, manager_name))
+            warnings.warn(e, ManagerInheritanceWarning, stacklevel=3)
         return manager
 
     @property
@@ -187,6 +194,6 @@ class PolymorphicModelBase(ModelBase):
         if not isinstance(manager, PolymorphicManager):
             warnings.warn("{0}._default_manager is not a PolymorphicManager".format(
                 self.__class__.__name__
-            ), RuntimeWarning)
+            ), ManagerInheritanceWarning)
 
         return manager
