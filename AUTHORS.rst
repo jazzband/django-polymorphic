@@ -3,33 +3,67 @@ Main authors (commit rights to the main repository)
 
 * Chris Glass
 * Diederik van der Boor
+* Charlie Denton
+* Jerome Leclanche
 
 
 Contributors
 =============
 
 * Abel Daniel
+* Adam Chainz
 * Adam Wentz
 * Andrew Ingram (contributed setup.py)
+* Al Johri
+* Alex Alvarez
+* Andrew Dodd
+* Angel Velasquez
+* Austin Matsick
 * Ben Konrath
+* Bert Constantin
 * Bertrand Bordage
 * Chad Shryock
 * Charles Leifer (python 2.4 compatibility)
+* Chris Barna
+* Chris Brantley
+* Christopher Glass
 * David Sanders
+* Éric Araujo
 * Evan Borgstrom
+* Frankie Dintino
 * Gavin Wahl
 * Germán M. Bravo
+* Gonzalo Bustos
+* Gregory Avery-Weir
 * Hugo Osvaldo Barrera
 * Jacob Rief
+* James Murty
 * Jedediah Smith (proxy models support)
-* Jerome Leclanche
 * John Furr
+* Jonas Haag
 * Jonas Obrist
 * Julian Wachholz
+* Kamil Bar
+* Kelsey Gilmore-Innis
 * Kevin Armenat
+* Krzysztof Gromadzki
+* Krzysztof Nazarewski
+* Luis Zárate
 * Marius Lueck
 * Martin Brochhaus
+* Martin Maillard
+* Michael Fladischer
+* Nick Ward
+* Oleg Myltsyn
+* Omer Strumpf
+* Paweł Adamczak
+* Petr Dlouhý
+* Sander van Leeuwen
+* Sobolev Nikita
+* Tadas Dailyda
+* Tai Lee
 * Tomas Peterka
+* Tony Narlock
 * Vail Gold
 
 
