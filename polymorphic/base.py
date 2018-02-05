@@ -163,8 +163,11 @@ class PolymorphicModelBase(ModelBase):
         warnings.warn(
             "Using PolymorphicModel.base_objects is deprecated.\n"
             "Use {0}.objects.non_polymorphic() instead.".format(self.__class__.__name__),
-            DeprecationWarning)
+            DeprecationWarning, stacklevel=2)
+        return self._base_objects
 
+    @property
+    def _base_objects(self):
         # Create a manager so the API works as expected. Just don't register it
         # anymore in the Model Meta, so it doesn't substitute our polymorphic
         # manager as default manager for the third level of inheritance when
@@ -188,7 +191,7 @@ class PolymorphicModelBase(ModelBase):
             # for all supported Django versions.
             frm = inspect.stack()[1]  # frm[1] is caller file name, frm[3] is caller function name
             if DUMPDATA_COMMAND in frm[1]:
-                return self.base_objects
+                return self._base_objects
 
         manager = super(PolymorphicModelBase, self)._default_manager
         if not isinstance(manager, PolymorphicManager):
