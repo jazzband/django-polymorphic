@@ -21,6 +21,8 @@ env:
 
 services:
   - postgres
+addons:
+  postgresql: "9.6"
 
 matrix:
   fast_finish: true
