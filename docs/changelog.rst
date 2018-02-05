@@ -1,16 +1,24 @@
 Changelog
 =========
 
+Changes in 2.0.2 (2018-02-05)
+-----------------------------
+
+* Fixed manager inheritance behavior for Django 1.11, by automatically enabling ``Meta.manager_inheritance_from_future`` if it's not defined.
+  This restores the manager inheritance behavior that *django-polymorphic 1.3* provided for Django 1.x projects.
+* Fixed internal ``base_objects`` usage.
+
+
 Changes in 2.0.1 (2018-02-05)
 -----------------------------
 
 * Fixed manager inheritance detection for Django 1.11.
 
-  It's recommended to use ``Meta.manager_inheritance_from_future`` so Django 1.x code also inherits
+  It's recommended to use ``Meta.manager_inheritance_from_future`` so Django 1.x code also inherit
   the ``PolymorphicManager`` in all subclasses. Django 2.0 already does this by default.
-  This restores the manager inheritance behavior that *django-polymorphic 1.3* enforced for Django 1.x projects.
 
 * Deprecated the ``base_objects`` manager. Use ``objects.non_polymorphic()`` instead.
+* Optimized detection for dumpdata behavior, avoiding the performance hit of ``__getattribute__()``.
 * Fixed test management commands
 
 
