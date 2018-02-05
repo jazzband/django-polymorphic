@@ -191,9 +191,8 @@ class MROBase1(ShowFieldType, PolymorphicModel):
 
 
 class MROBase2(MROBase1):
-    class Meta:
-        # Django 1.x inheritance does not inherit MyManager as _default_manager here
-        manager_inheritance_from_future = True
+    pass
+    # No manager_inheritance_from_future or Meta set. test that polymorphic restores that.
 
 
 class MROBase3(models.Model):
