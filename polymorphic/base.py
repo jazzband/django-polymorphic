@@ -63,6 +63,15 @@ class PolymorphicModelBase(ModelBase):
         if not attrs and model_name == 'NewBase':
             return super(PolymorphicModelBase, self).__new__(self, model_name, bases, attrs)
 
+        # Make sure that manager_inheritance_from_future is set, since django-polymorphic 1.x already
+        # simulated that behavior on the polymorphic manager to all subclasses behave like polymorphics
+        if django.VERSION < (2, 0):
+            if 'Meta' in attrs:
+                if not hasattr(attrs['Meta'], 'manager_inheritance_from_future'):
+                    attrs['Meta'].manager_inheritance_from_future = True
+            else:
+                attrs['Meta'] = type('Meta', (object,), {'manager_inheritance_from_future': True})
+
         # create new model
         new_class = self.call_superclass_new_method(model_name, bases, attrs)
 
