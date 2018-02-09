@@ -1,4 +1,5 @@
 from collections import Mapping
+from six import string_types
 
 from django.core.exceptions import ImproperlyConfigured
 from django.db import models
@@ -17,16 +18,16 @@ class PolymorphicSerializer(serializers.Serializer):
                     cls=cls.__name__
                 )
             )
-        if not isinstance(cls.resource_type_field_name, str):
+        if not isinstance(cls.resource_type_field_name, string_types):
             raise ImproperlyConfigured(
                 '`{cls}.resource_type_field_name` must be a string'.format(
                     cls=cls.__name__
                 )
             )
-        return super().__new__(cls, *args, **kwargs)
+        return super(PolymorphicSerializer, cls).__new__(cls, *args, **kwargs)
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        super(PolymorphicSerializer, self).__init__(*args, **kwargs)
 
         model_serializer_mapping = self.model_serializer_mapping
         self.model_serializer_mapping = {}
