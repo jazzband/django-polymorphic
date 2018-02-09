@@ -71,6 +71,7 @@ setup(
         'django',
         'djangorestframework',
         'django-polymorphic',
+        'six',
     ],
     classifiers=[
         # Trove classifiers
