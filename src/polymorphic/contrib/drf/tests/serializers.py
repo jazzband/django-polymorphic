@@ -9,21 +9,21 @@ class BlogBaseSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = BlogBase
-        fields = ('name', )
+        fields = ('name', 'slug')
 
 
 class BlogOneSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = BlogOne
-        fields = ('name', 'info', )
+        fields = ('name', 'slug', 'info')
 
 
 class BlogTwoSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = BlogTwo
-        fields = ('name', )
+        fields = ('name', 'slug')
 
 
 class BlogPolymorphicSerializer(PolymorphicSerializer):
