@@ -44,16 +44,18 @@ class TestPolymorphicSerializer:
             assert inner_serializer.context == context
 
     def test_serialize(self):
-        instance = BlogBase.objects.create(name='blog')
+        instance = BlogBase.objects.create(name='blog', slug='blog')
         serializer = BlogPolymorphicSerializer(instance)
         assert serializer.data == {
             'name': 'blog',
+            'slug': 'blog',
             'resourcetype': 'BlogBase',
         }
 
     def test_deserialize(self):
         data = {
             'name': 'blog',
+            'slug': 'blog',
             'resourcetype': 'BlogBase',
         }
         serializers = BlogPolymorphicSerializer(data=data)
@@ -72,15 +74,18 @@ class TestPolymorphicSerializer:
         data = [
             {
                 'name': 'a',
+                'slug': 'a',
                 'resourcetype': 'BlogBase'
             },
             {
                 'name': 'b',
+                'slug': 'b',
                 'info': 'info',
                 'resourcetype': 'BlogOne'
             },
             {
                 'name': 'c',
+                'slug': 'c',
                 'resourcetype': 'BlogTwo'
             },
         ]
@@ -98,9 +103,10 @@ class TestPolymorphicSerializer:
         assert serializer.data == data
 
     def test_update(self):
-        instance = BlogBase.objects.create(name='blog')
+        instance = BlogBase.objects.create(name='blog', slug='blog')
         data = {
             'name': 'new-blog',
+            'slug': 'blog',
             'resourcetype': 'BlogBase'
         }
 
@@ -109,3 +115,20 @@ class TestPolymorphicSerializer:
 
         serializer.save()
         assert instance.name == 'new-blog'
+        assert instance.slug == 'blog'
+
+    def test_partial_update(self):
+        instance = BlogBase.objects.create(name='blog', slug='blog')
+        data = {
+            'name': 'new-blog',
+            'resourcetype': 'BlogBase'
+        }
+
+        serializer = BlogPolymorphicSerializer(
+            instance, data=data, partial=True
+        )
+        assert serializer.is_valid()
+
+        serializer.save()
+        assert instance.name == 'new-blog'
+        assert instance.slug == 'blog'
