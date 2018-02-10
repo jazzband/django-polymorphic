@@ -5,6 +5,7 @@ from polymorphic.models import PolymorphicModel
 
 class BlogBase(PolymorphicModel):
     name = models.CharField(max_length=10)
+    slug = models.SlugField(max_length=255, unique=True)
 
 
 class BlogOne(BlogBase):
