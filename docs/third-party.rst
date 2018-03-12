@@ -18,6 +18,63 @@ This option requires django-guardian_ >= 1.4.6. Details about how this option wo
 `django-guardian documentation <https://django-guardian.readthedocs.io/en/latest/configuration.html#guardian-get-content-type>`_.
 
 
+django-rest-framework support
+-----------------------------
+
+The django-rest-polymorphic_ package provides polymorphic serializers that help you integrate your polymorphic models with `django-rest-framework`.
+
+
+Example
+~~~~~~~
+
+Define serializers:
+
+.. code-block:: python
+
+    from rest_framework import serializers
+    from rest_polymorphic.serializers import PolymorphicSerializer
+    from .models import Project, ArtProject, ResearchProject
+
+
+    class ProjectSerializer(serializers.ModelSerializer):
+        class Meta:
+            model = Project
+            fields = ('topic', )
+
+
+    class ArtProjectSerializer(serializers.ModelSerializer):
+        class Meta:
+            model = ArtProject
+            fields = ('topic', 'artist')
+
+
+    class ResearchProjectSerializer(serializers.ModelSerializer):
+        class Meta:
+            model = ResearchProject
+            fields = ('topic', 'supervisor')
+
+
+    class ProjectPolymorphicSerializer(PolymorphicSerializer):
+        model_serializer_mapping = {
+            Project: ProjectSerializer,
+            ArtProject: ArtProjectSerializer,
+            ResearchProject: ResearchProjectSerializer
+        }
+
+Create viewset with serializer_class equals to your polymorphic serializer:
+
+.. code-block:: python
+
+    from rest_framework import viewsets
+    from .models import Project
+    from .serializers import ProjectPolymorphicSerializer
+
+
+    class ProjectViewSet(viewsets.ModelViewSet):
+        queryset = Project.objects.all()
+        serializer_class = ProjectPolymorphicSerializer
+
+
 django-extra-views
 ------------------
 
@@ -130,5 +187,6 @@ the view of the actual child model is used, similar to the way the regular chang
 .. _django-guardian: https://github.com/django-guardian/django-guardian
 .. _django-mptt: https://github.com/django-mptt/django-mptt
 .. _django-polymorphic-tree: https://github.com/django-polymorphic/django-polymorphic-tree
+.. _django-rest-polymorphic: https://github.com/apirobot/django-rest-polymorphic
 .. _django-reversion-compare: https://github.com/jedie/django-reversion-compare
 .. _django-reversion: https://github.com/etianen/django-reversion
