@@ -83,5 +83,5 @@ instead of Django's QuerySet as the base class::
                 ...
 
         class MyModel(PolymorphicModel):
-            my_objects = PolymorphicManager.from_queryset(MyQuerySet)
+            my_objects = PolymorphicManager.from_queryset(MyQuerySet)()
             ...
