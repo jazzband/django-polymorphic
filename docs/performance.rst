@@ -55,4 +55,4 @@ This is independent of django_polymorphic and affects all uses of
 multi table Model inheritance.
 
 Please also see this `post (and comments) from Jacob Kaplan-Moss
-<http://www.jacobian.org/writing/concrete-inheritance/>`_.
+<http://jacobian.org/writing/concrete-inheritance/>`_.
