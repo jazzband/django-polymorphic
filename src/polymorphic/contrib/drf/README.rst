@@ -69,16 +69,21 @@ Define serializers for each polymorphic model the way you did it when you used `
             fields = ('topic', )
 
 
-    class ArtProjectSerializer(serializers.ModelSerializer):
+    class ArtProjectSerializer(serializers.HyperlinkedModelSerializer):
         class Meta:
             model = ArtProject
-            fields = ('topic', 'artist')
+            fields = ('topic', 'artist', 'url')
+            extra_kwargs = {
+                'url': {'view_name': 'project-detail', 'lookup_field': 'pk'},
+            }
 
 
     class ResearchProjectSerializer(serializers.ModelSerializer):
         class Meta:
             model = ResearchProject
             fields = ('topic', 'supervisor')
+
+Note that if you extend ``HyperlinkedModelSerializer`` instead of ``ModelSerializer`` you need to define ``extra_kwargs`` to direct the URL to the appropriate view for your polymorphic serializer.
 
 Then you have to create a polymorphic serializer that serves as a mapper between models and serializers which you have defined above:
 
@@ -129,7 +134,8 @@ Test it:
         {
             "artist": "T. Turner",
             "resourcetype": "ArtProject",
-            "topic": "Sculpting with Tim"
+            "topic": "Sculpting with Tim",
+            "url": "http://localhost:8000/projects/2/"
         },
         {
             "resourcetype": "ResearchProject",
@@ -151,5 +157,6 @@ Test it:
     {
         "artist": "Picasso",
         "resourcetype": "ArtProject",
-        "topic": "Guernica"
+        "topic": "Guernica",
+        "url": "http://localhost:8000/projects/4/"
     }

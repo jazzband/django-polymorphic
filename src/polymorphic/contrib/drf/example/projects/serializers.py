@@ -14,7 +14,10 @@ class ProjectSerializer(serializers.ModelSerializer):
 class ArtProjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = ArtProject
-        fields = ('topic', 'artist')
+        fields = ('topic', 'artist', 'url')
+        extra_kwargs = {
+            'url': {'view_name': 'project-detail', 'lookup_field': 'pk'},
+        }
 
 
 class ResearchProjectSerializer(serializers.ModelSerializer):
