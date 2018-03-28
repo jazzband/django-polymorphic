@@ -2,7 +2,7 @@ from rest_framework import serializers
 
 from rest_polymorphic.serializers import PolymorphicSerializer
 
-from tests.models import BlogBase, BlogOne, BlogTwo
+from tests.models import BlogBase, BlogOne, BlogTwo, BlogThree
 
 
 class BlogBaseSerializer(serializers.ModelSerializer):
@@ -26,9 +26,17 @@ class BlogTwoSerializer(serializers.ModelSerializer):
         fields = ('name', 'slug')
 
 
+class BlogThreeSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = BlogThree
+        fields = ('name', 'slug', 'info', 'about')
+
+
 class BlogPolymorphicSerializer(PolymorphicSerializer):
     model_serializer_mapping = {
         BlogBase: BlogBaseSerializer,
         BlogOne: BlogOneSerializer,
-        BlogTwo: BlogTwoSerializer
+        BlogTwo: BlogTwoSerializer,
+        BlogThree: BlogThreeSerializer
     }
