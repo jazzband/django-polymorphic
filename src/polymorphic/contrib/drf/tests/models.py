@@ -14,3 +14,11 @@ class BlogOne(BlogBase):
 
 class BlogTwo(BlogBase):
     pass
+
+
+class BlogThree(BlogBase):
+    info = models.CharField(max_length=255)
+    about = models.CharField(max_length=255)
+
+    class Meta:
+        unique_together = (('info', 'about'),)
