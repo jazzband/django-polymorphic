@@ -78,7 +78,7 @@ class PolymorphicSerializer(serializers.Serializer):
         return serializer.update(instance, validated_data)
 
     def is_valid(self, *args, **kwargs):
-        valid = super().is_valid(*args, **kwargs)
+        valid = super(PolymorphicSerializer, self).is_valid(*args, **kwargs)
         try:
             resource_type = self._get_resource_type_from_mapping(self.validated_data)
             serializer = self._get_serializer_from_resource_type(resource_type)
