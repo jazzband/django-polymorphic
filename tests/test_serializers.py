@@ -132,3 +132,24 @@ class TestPolymorphicSerializer:
         serializer.save()
         assert instance.name == 'new-blog'
         assert instance.slug == 'blog'
+
+    def test_object_validators_are_applied(self):
+        data = {
+            'name': 'test-blog',
+            'slug': 'test-blog-slug',
+            'info': 'test-blog-info',
+            'about': 'test-blog-about',
+            'resourcetype': 'BlogThree'
+        }
+        serializer = BlogPolymorphicSerializer(data=data)
+        assert serializer.is_valid()
+        serializer.save()
+
+        data['slug'] = 'test-blog-slug-new'
+        duplicate = BlogPolymorphicSerializer(data=data)
+        
+        assert not duplicate.is_valid()
+        assert 'non_field_errors' in duplicate.errors
+        err = duplicate.errors['non_field_errors']
+
+        assert err == ['The fields info, about must make a unique set.']
