@@ -188,6 +188,7 @@ class PolymorphicTests(TestCase):
                          '<ModelY: id 2, field_b (CharField), field_y (CharField), deferred[field_y]>')
 
         objects_only = Base.objects.only(
+            'pk',  # required for Django 1.8 / 1.9
             'polymorphic_ctype', 'ModelY___field_y', 'ModelX___field_x',
         )
         self.assertEqual(repr(objects_only[0]),
