@@ -43,6 +43,33 @@ Changes in 2.0 (2018-01-22)
 * Fixed manager errors for swappable models.
 * Fixed ``deleteText`` of ``|as_script_options`` template filter.
 * Fixed ``.filter(applabel__ModelName___field=...)`` lookups.
+* Fixed proxy model support in formsets.
+* Fixed error with .defer and child models that use the same parent.
+* Fixed error message when ``polymorphic_ctype_id`` is null.
+* Fixed fieldsets recursion in the admin.
+* Improved ``polymorphic.utils.reset_polymorphic_ctype()`` to accept models in random ordering.
+* Fix fieldsets handling in the admin (``declared_fieldsets`` is removed since Django 1.9)
+
+
+Version 1.3.1 (2018-04-16)
+--------------------------
+
+Backported various fixes from 2.x to support older Django versions:
+
+* Added ``PolymorphicTypeUndefined`` exception for incomplete imported models.
+  When a data migration or import creates an polymorphic model,
+  the ``polymorphic_ctype_id`` field should be filled in manually too.
+  The ``polymorphic.utils.reset_polymorphic_ctype`` function can be used for that.
+* Added ``PolymorphicTypeInvalid`` exception when database was incorrectly imported.
+* Added ``polymorphic.utils.get_base_polymorphic_model()`` to find the base model for types.
+* Using ``base_model`` on the polymorphic admins is no longer required, as this can be autodetected.
+* Fixed manager errors for swappable models.
+* Fixed ``deleteText`` of ``|as_script_options`` template filter.
+* Fixed ``.filter(applabel__ModelName___field=...)`` lookups.
+* Fixed proxy model support in formsets.
+* Fixed error with .defer and child models that use the same parent.
+* Fixed error message when ``polymorphic_ctype_id`` is null.
+* Fixed fieldsets recursion in the admin.
 * Improved ``polymorphic.utils.reset_polymorphic_ctype()`` to accept models in random ordering.
 * Fix fieldsets handling in the admin (``declared_fieldsets`` is removed since Django 1.9)
 
