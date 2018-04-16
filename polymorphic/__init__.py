@@ -8,4 +8,4 @@ Please see LICENSE and AUTHORS for more information.
 """
 
 # See PEP 440 (https://www.python.org/dev/peps/pep-0440/)
-__version__ = "1.3"
+__version__ = "1.3.1"
