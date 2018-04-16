@@ -33,6 +33,9 @@ Changes in 2.0 (2018-01-22)
    as this is no longer done automatically.
 
 * Added Django 2.0 support.
+
+Also backported into 1.3.1:
+
 * Added ``PolymorphicTypeUndefined`` exception for incomplete imported models.
   When a data migration or import creates an polymorphic model,
   the ``polymorphic_ctype_id`` field should be filled in manually too.
