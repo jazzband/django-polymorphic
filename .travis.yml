@@ -7,25 +7,43 @@ matrix:
   include:
     - python: 2.7
       env: TOXENV=py27-django111-drf37
+    - python: 2.7
+      env: TOXENV=py27-django111-drf38
 
     - python: 3.4
       env: TOXENV=py34-django111-drf37
     - python: 3.4
+      env: TOXENV=py34-django111-drf38
+    - python: 3.4
       env: TOXENV=py34-django20-drf37
+    - python: 3.4
+      env: TOXENV=py34-django20-drf38
 
     - python: 3.5
       env: TOXENV=py35-django111-drf37
     - python: 3.5
+      env: TOXENV=py35-django111-drf38
+    - python: 3.5
       env: TOXENV=py35-django20-drf37
     - python: 3.5
+      env: TOXENV=py35-django20-drf38
+    - python: 3.5
       env: TOXENV=py35-djangomaster-drf37
+    - python: 3.5
+      env: TOXENV=py35-djangomaster-drf38
 
     - python: 3.6
       env: TOXENV=py36-django111-drf37
     - python: 3.6
+      env: TOXENV=py36-django111-drf38
+    - python: 3.6
       env: TOXENV=py36-django20-drf37
     - python: 3.6
+      env: TOXENV=py36-django20-drf38
+    - python: 3.6
       env: TOXENV=py36-djangomaster-drf37
+    - python: 3.6
+      env: TOXENV=py36-djangomaster-drf38
 
 install:
   - travis_retry pip install -U tox-travis
