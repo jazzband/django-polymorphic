@@ -160,3 +160,33 @@ Test it:
         "topic": "Guernica",
         "url": "http://localhost:8000/projects/4/"
     }
+
+
+Customize resource type
+-----------------------
+
+As you can see from the example above, in order to specify the type of your polymorphic model, you need to send a request with resource type field. The value of resource type should be the name of the model.
+
+If you want to change the resource type field name from ``resourcetype`` to something else, you should override ``resource_type_field_name`` attribute:
+
+.. code-block:: python
+
+    class ProjectPolymorphicSerializer(PolymorphicSerializer):
+        resource_type_field_name = 'projecttype'
+        ...
+
+If you want to change the behavior of resource type, you should override ``to_resource_type`` method:
+
+.. code-block:: python
+
+    class ProjectPolymorphicSerializer(PolymorphicSerializer):
+        ...
+
+        def to_resource_type(self, model_or_instance):
+            return model_or_instance._meta.object_name.lower()
+
+Now, the request for creating new object will look like this:
+
+.. code-block:: bash
+
+    $ http POST "http://localhost:8000/projects/" projecttype="artproject" topic="Guernica" artist="Picasso"
