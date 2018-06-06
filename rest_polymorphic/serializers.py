@@ -37,6 +37,7 @@ class PolymorphicSerializer(serializers.Serializer):
             resource_type = self.to_resource_type(model)
             if callable(serializer):
                 serializer = serializer(*args, **kwargs)
+                serializer.parent = self
 
             self.resource_type_model_mapping[resource_type] = model
             self.model_serializer_mapping[model] = serializer
