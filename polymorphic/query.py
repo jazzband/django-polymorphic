@@ -323,12 +323,12 @@ class PolymorphicQuerySet(QuerySet):
         Finally we re-sort the resulting objects into the correct order and
         return them as a list.
         """
-        ordered_id_list = []    # list of ids of result-objects in correct order
-        results = {}            # polymorphic dict of result-objects, keyed with their id (no order)
+        resultlist = []            # polymorphic list of result-objects
 
         # dict contains one entry per unique model type occurring in result,
         # in the format idlist_per_model[modelclass]=[list-of-object-ids]
         idlist_per_model = defaultdict(list)
+        indexlist_per_model = defaultdict(list)
 
         # django's automatic ".pk" field does not always work correctly for
         # custom fields in derived objects (unclear yet who to put the blame on).
@@ -340,38 +340,32 @@ class PolymorphicQuerySet(QuerySet):
         pk_name = self.model.polymorphic_primary_key_name
 
         # - sort base_result_object ids into idlist_per_model lists, depending on their real class;
-        # - also record the correct result order in "ordered_id_list"
         # - store objects that already have the correct class into "results"
-        base_result_objects_by_id = {}
         content_type_manager = ContentType.objects.db_manager(self.db)
         self_model_class_id = content_type_manager.get_for_model(self.model, for_concrete_model=False).pk
         self_concrete_model_class_id = content_type_manager.get_for_model(self.model, for_concrete_model=True).pk
 
-        for base_object in base_result_objects:
-            ordered_id_list.append(base_object.pk)
+        for i, base_object in enumerate(base_result_objects):
 
-            # check if id of the result object occurres more than once - this can happen e.g. with base_objects.extra(tables=...)
-            if base_object.pk not in base_result_objects_by_id:
-                base_result_objects_by_id[base_object.pk] = base_object
+            if base_object.polymorphic_ctype_id == self_model_class_id:
+                # Real class is exactly the same as base class, go straight to results
+                resultlist.append(base_object)
+            else:
+                real_concrete_class = base_object.get_real_instance_class()
+                real_concrete_class_id = base_object.get_real_concrete_instance_class_id()
 
-                if base_object.polymorphic_ctype_id == self_model_class_id:
-                    # Real class is exactly the same as base class, go straight to results
-                    results[base_object.pk] = base_object
-
+                if real_concrete_class_id is None:
+                    # Dealing with a stale content type
+                    continue
+                elif real_concrete_class_id == self_concrete_model_class_id:
+                    # Real and base classes share the same concrete ancestor,
+                    # upcast it and put it in the results
+                    resultlist.append(transmogrify(real_concrete_class, base_object))
                 else:
-                    real_concrete_class = base_object.get_real_instance_class()
-                    real_concrete_class_id = base_object.get_real_concrete_instance_class_id()
-
-                    if real_concrete_class_id is None:
-                        # Dealing with a stale content type
-                        continue
-                    elif real_concrete_class_id == self_concrete_model_class_id:
-                        # Real and base classes share the same concrete ancestor,
-                        # upcast it and put it in the results
-                        results[base_object.pk] = transmogrify(real_concrete_class, base_object)
-                    else:
-                        real_concrete_class = content_type_manager.get_for_id(real_concrete_class_id).model_class()
-                        idlist_per_model[real_concrete_class].append(getattr(base_object, pk_name))
+                    real_concrete_class = content_type_manager.get_for_id(real_concrete_class_id).model_class()
+                    idlist_per_model[real_concrete_class].append(getattr(base_object, pk_name))
+                    indexlist_per_model[real_concrete_class].append((i, len(resultlist)))
+                    resultlist.append(None)
 
         # For each model in "idlist_per_model" request its objects (the real model)
         # from the db and store them in results[].
@@ -379,6 +373,7 @@ class PolymorphicQuerySet(QuerySet):
         # Then we copy the extra() select fields from the base objects to the real objects.
         # TODO: defer(), only(): support for these would be around here
         for real_concrete_class, idlist in idlist_per_model.items():
+            indices = indexlist_per_model[real_concrete_class]
             real_objects = real_concrete_class._base_objects.db_manager(self.db).filter(**{
                 ('%s__in' % pk_name): idlist,
             })
@@ -411,8 +406,15 @@ class PolymorphicQuerySet(QuerySet):
                 deferred_loading_fields.append(translated_field_name)
             real_objects.query.deferred_loading = (set(deferred_loading_fields), self.query.deferred_loading[1])
 
-            for real_object in real_objects:
-                o_pk = getattr(real_object, pk_name)
+            real_objects_dict = {
+                getattr(real_object, pk_name): real_object
+                for real_object in real_objects
+            }
+
+            for i, j in indices:
+                base_object = base_result_objects[i]
+                o_pk = getattr(base_object, pk_name)
+                real_object = copy.copy(real_objects_dict[o_pk])
                 real_class = real_object.get_real_instance_class()
 
                 # If the real class is a proxy, upcast it
@@ -421,18 +423,17 @@ class PolymorphicQuerySet(QuerySet):
 
                 if self.query.annotations:
                     for anno_field_name in six.iterkeys(self.query.annotations):
-                        attr = getattr(base_result_objects_by_id[o_pk], anno_field_name)
+                        attr = getattr(base_object, anno_field_name)
                         setattr(real_object, anno_field_name, attr)
 
                 if self.query.extra_select:
                     for select_field_name in six.iterkeys(self.query.extra_select):
-                        attr = getattr(base_result_objects_by_id[o_pk], select_field_name)
+                        attr = getattr(base_object, select_field_name)
                         setattr(real_object, select_field_name, attr)
 
-                results[o_pk] = real_object
+                resultlist[j] = real_object
 
-        # re-create correct order and return result list
-        resultlist = [results[ordered_id] for ordered_id in ordered_id_list if ordered_id in results]
+        resultlist = [i for i in resultlist if i]
 
         # set polymorphic_annotate_names in all objects (currently just used for debugging/printing)
         if self.query.annotations:
