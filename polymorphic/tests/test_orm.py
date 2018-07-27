@@ -429,16 +429,16 @@ class PolymorphicTests(TransactionTestCase):
     def test_foreignkey_field(self):
         self.create_model2abcd()
 
-        object2a = Model2A.base_objects.get(field1='C1')
+        object2a = Model2A.objects.get(field1='C1')
         self.assertEqual(object2a.model2b.__class__, Model2B)
 
-        object2b = Model2B.base_objects.get(field1='C1')
+        object2b = Model2B.objects.get(field1='C1')
         self.assertEqual(object2b.model2c.__class__, Model2C)
 
     def test_onetoone_field(self):
         self.create_model2abcd()
 
-        a = Model2A.base_objects.get(field1='C1')
+        a = Model2A.objects.get(field1='C1')
         b = One2OneRelatingModelDerived.objects.create(one2one=a, field1='f1', field2='f2')
 
         # this result is basically wrong, probably due to Django cacheing (we used base_objects), but should not be a problem
@@ -702,7 +702,7 @@ class PolymorphicTests(TransactionTestCase):
 
         self.assertIs(type(ModelWithMyManager.objects), MyManager)
         self.assertIs(type(ModelWithMyManager._default_manager), MyManager)
-        self.assertIs(type(ModelWithMyManager.base_objects), models.Manager)
+        self.assertIs(type(ModelWithMyManager.objects), models.Manager)
 
     def test_user_defined_manager_as_secondary(self):
         self.create_model2abcd()
@@ -722,7 +722,7 @@ class PolymorphicTests(TransactionTestCase):
         self.assertIs(type(ModelWithMyManagerNoDefault.my_objects), MyManager)
         self.assertIs(type(ModelWithMyManagerNoDefault.objects), PolymorphicManager)
         self.assertIs(type(ModelWithMyManagerNoDefault._default_manager), PolymorphicManager)
-        self.assertIs(type(ModelWithMyManagerNoDefault.base_objects), models.Manager)
+        self.assertIs(type(ModelWithMyManagerNoDefault.objects), models.Manager)
 
     def test_user_objects_manager_as_secondary(self):
         self.create_model2abcd()
@@ -732,7 +732,7 @@ class PolymorphicTests(TransactionTestCase):
         self.assertIs(type(ModelWithMyManagerDefault.my_objects), MyManager)
         self.assertIs(type(ModelWithMyManagerDefault.objects), PolymorphicManager)
         self.assertIs(type(ModelWithMyManagerDefault._default_manager), MyManager)
-        self.assertIs(type(ModelWithMyManagerDefault.base_objects), models.Manager)
+        self.assertIs(type(ModelWithMyManagerDefault.objects), models.Manager)
 
     def test_user_defined_queryset_as_manager(self):
         self.create_model2abcd()
@@ -752,7 +752,7 @@ class PolymorphicTests(TransactionTestCase):
 
         self.assertEqual(type(ModelWithMyManager2.objects).__name__, 'PolymorphicManagerFromMyManagerQuerySet')
         self.assertEqual(type(ModelWithMyManager2._default_manager).__name__, 'PolymorphicManagerFromMyManagerQuerySet')
-        self.assertIs(type(ModelWithMyManager2.base_objects), models.Manager)
+        self.assertIs(type(ModelWithMyManager2.objects), models.Manager)
 
     def test_manager_inheritance(self):
         # by choice of MRO, should be MyManager from MROBase1.
