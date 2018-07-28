@@ -1,8 +1,12 @@
 from django.test import TransactionTestCase
 
 from polymorphic.models import PolymorphicTypeUndefined, PolymorphicModel
-from polymorphic.tests.models import Model2A, Model2B, Model2C, Model2D, Enhance_Inherit, Enhance_Base
-from polymorphic.utils import reset_polymorphic_ctype, sort_by_subclass, get_base_polymorphic_model
+from polymorphic.tests.models import (
+    Model2A, Model2B, Model2C, Model2D,
+    Enhance_Inherit, Enhance_Base)
+from polymorphic.utils import (
+    reset_polymorphic_ctype,
+    sort_by_subclass, get_base_polymorphic_model)
 
 
 class UtilsTests(TransactionTestCase):
@@ -18,7 +22,8 @@ class UtilsTests(TransactionTestCase):
         Test the the polymorphic_ctype_id can be restored.
         """
         Model2A.objects.create(field1='A1')
-        Model2D.objects.create(field1='A1', field2='B2', field3='C3', field4='D4')
+        Model2D.objects.create(field1='A1', field2='B2',
+                               field3='C3', field4='D4')
         Model2B.objects.create(field1='A1', field2='B2')
         Model2B.objects.create(field1='A1', field2='B2')
         Model2A.objects.all().update(polymorphic_ctype_id=None)
@@ -50,7 +55,8 @@ class UtilsTests(TransactionTestCase):
         self.assertIs(get_base_polymorphic_model(Model2A), Model2A)
 
         # Properly handles multiple inheritance
-        self.assertIs(get_base_polymorphic_model(Enhance_Inherit), Enhance_Base)
+        self.assertIs(get_base_polymorphic_model(
+            Enhance_Inherit), Enhance_Base)
 
         # Ignores PolymorphicModel itself.
         self.assertIs(get_base_polymorphic_model(PolymorphicModel), None)
