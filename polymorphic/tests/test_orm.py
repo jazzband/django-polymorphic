@@ -583,17 +583,21 @@ class PolymorphicTests(TransactionTestCase):
             )
             self.assertEqual(repr(
                 objects[1]),
-            '<ModelExtraB: id 2, field1 (CharField) "B1", field2 (CharField) "B2" - Extra: topic (str) "extra2">')
+                '<ModelExtraB: id 2, field1 (CharField) "B1", field2 (CharField) "B2" - Extra: topic (str) "extra2">')
             self.assertEqual(repr(
                 objects[2]),
-            '<ModelExtraC: id 3, field1 (CharField) "C1", field2 (CharField) "C2", field3 (CharField) "C3" - Extra: topic (str) "extra3">')
+                '<ModelExtraC: id 3, field1 (CharField) "C1", field2 (CharField) "C2", field3 (CharField) "C3" - Extra: topic (str) "extra3">')
         else:
             self.assertEqual(repr(
-                objects[0]), '<ModelExtraA: id 1, field1 (CharField) "A1" - Extra: topic (unicode) "extra1">')
+                objects[0]),
+                '<ModelExtraA: id 1, field1 (CharField) "A1" - Extra: topic (unicode) "extra1">'
+            )
             self.assertEqual(repr(
-                objects[1]), '<ModelExtraB: id 2, field1 (CharField) "B1", field2 (CharField) "B2" - Extra: topic (unicode) "extra2">')
+                objects[1]),
+                '<ModelExtraB: id 2, field1 (CharField) "B1", field2 (CharField) "B2" - Extra: topic (unicode) "extra2">')
             self.assertEqual(repr(
-                objects[2]), '<ModelExtraC: id 3, field1 (CharField) "C1", field2 (CharField) "C2", field3 (CharField) "C3" - Extra: topic (unicode) "extra3">')
+                objects[2]),
+                '<ModelExtraC: id 3, field1 (CharField) "C1", field2 (CharField) "C2", field3 (CharField) "C3" - Extra: topic (unicode) "extra3">')
         self.assertEqual(len(objects), 3)
 
     def test_instance_of_filter(self):
@@ -677,7 +681,8 @@ class PolymorphicTests(TransactionTestCase):
         p = ModelUnderRelParent.objects.create(_private=True, field1='AA')
         ModelUnderRelChild.objects.create(parent=p, _private2=True)
 
-        # The "___" filter should also parse to "parent" -> "_private" as fallback.
+        # The "___" filter should also parse to
+        # "parent" -> "_private" as fallback.
         objects = ModelUnderRelChild.objects.filter(parent___private=True)
         self.assertEqual(len(objects), 1)
 
@@ -733,11 +738,11 @@ class PolymorphicTests(TransactionTestCase):
         self.assertEqual(len(qs), 2)
         self.assertEqual(repr(
             qs[0]),
-        '<Enhance_Base: base_id (AutoField/pk) 1, field_b (CharField) "b-base">'
+            '<Enhance_Base: base_id (AutoField/pk) 1, field_b (CharField) "b-base">'
         )
         self.assertEqual(repr(
             qs[1]),
-        '<Enhance_Inherit: base_id (AutoField/pk) 2, field_b (CharField) "b-inherit", id 1, field_p (CharField) "p", field_i (CharField) "i">')
+            '<Enhance_Inherit: base_id (AutoField/pk) 2, field_b (CharField) "b-inherit", id 1, field_p (CharField) "p", field_i (CharField) "i">')
 
     def test_relation_base(self):
         # ForeignKey, ManyToManyField
@@ -748,50 +753,51 @@ class PolymorphicTests(TransactionTestCase):
             field_base='C1', field_b='C2', field_c='C3', fk=oa)
         oa.m2m.add(oa)
         oa.m2m.add(ob)
+        oa.m2m.add(oc)
 
         objects = RelationBase.objects.all()
         self.assertEqual(repr(
             objects[0]),
-        '<RelationBase: id 1, field_base (CharField) "base", fk (ForeignKey) None, m2m (ManyToManyField) 0>')
+            '<RelationBase: id 1, field_base (CharField) "base", fk (ForeignKey) None, m2m (ManyToManyField) 0>')
         self.assertEqual(repr(
             objects[1]),
-        '<RelationA: id 2, field_base (CharField) "A1", fk (ForeignKey) RelationBase, field_a (CharField) "A2", m2m (ManyToManyField) 2>'
-        )        
+            '<RelationA: id 2, field_base (CharField) "A1", fk (ForeignKey) RelationBase, field_a (CharField) "A2", m2m (ManyToManyField) 2>'
+        )
         self.assertEqual(repr(
             objects[2]),
-        '<RelationB: id 3, field_base (CharField) "B1", fk (ForeignKey) RelationA, field_b (CharField) "B2", m2m (ManyToManyField) 1>')
+            '<RelationB: id 3, field_base (CharField) "B1", fk (ForeignKey) RelationA, field_b (CharField) "B2", m2m (ManyToManyField) 1>')
         self.assertEqual(repr(
             objects[3]),
-        '<RelationBC: id 4, field_base (CharField) "C1", fk (ForeignKey) RelationA, field_b (CharField) "C2", field_c (CharField) "C3", m2m (ManyToManyField) 0>')
+            '<RelationBC: id 4, field_base (CharField) "C1", fk (ForeignKey) RelationA, field_b (CharField) "C2", field_c (CharField) "C3", m2m (ManyToManyField) 0>')
         self.assertEqual(len(objects), 4)
 
         oa = RelationBase.objects.get(id=2)
         self.assertEqual(repr(
             oa.fk),
-        '<RelationBase: id 1, field_base (CharField) "base", fk (ForeignKey) None, m2m (ManyToManyField) 0>')
+            '<RelationBase: id 1, field_base (CharField) "base", fk (ForeignKey) None, m2m (ManyToManyField) 0>')
 
         objects = oa.relationbase_set.all()
         self.assertEqual(repr(
             objects[0]),
-        '<RelationB: id 3, field_base (CharField) "B1", fk (ForeignKey) RelationA, field_b (CharField) "B2", m2m (ManyToManyField) 1>')
+            '<RelationB: id 3, field_base (CharField) "B1", fk (ForeignKey) RelationA, field_b (CharField) "B2", m2m (ManyToManyField) 1>')
         self.assertEqual(repr(
             objects[1]),
-        '<RelationBC: id 4, field_base (CharField) "C1", fk (ForeignKey) RelationA, field_b (CharField) "C2", field_c (CharField) "C3", m2m (ManyToManyField) 0>')
+            '<RelationBC: id 4, field_base (CharField) "C1", fk (ForeignKey) RelationA, field_b (CharField) "C2", field_c (CharField) "C3", m2m (ManyToManyField) 0>')
         self.assertEqual(len(objects), 2)
 
         ob = RelationBase.objects.get(id=3)
         self.assertEqual(repr(
             ob.fk),
-        '<RelationA: id 2, field_base (CharField) "A1", fk (ForeignKey) RelationBase, field_a (CharField) "A2", m2m (ManyToManyField) 2>')
+            '<RelationA: id 2, field_base (CharField) "A1", fk (ForeignKey) RelationBase, field_a (CharField) "A2", m2m (ManyToManyField) 2>')
 
         oa = RelationA.objects.get()
         objects = oa.m2m.all()
         self.assertEqual(repr(
             objects[0]),
-        '<RelationA: id 2, field_base (CharField) "A1", fk (ForeignKey) RelationBase, field_a (CharField) "A2", m2m (ManyToManyField) 2>')
+            '<RelationA: id 2, field_base (CharField) "A1", fk (ForeignKey) RelationBase, field_a (CharField) "A2", m2m (ManyToManyField) 2>')
         self.assertEqual(repr(
             objects[1]),
-        '<RelationB: id 3, field_base (CharField) "B1", fk (ForeignKey) RelationA, field_b (CharField) "B2", m2m (ManyToManyField) 1>')
+            '<RelationB: id 3, field_base (CharField) "B1", fk (ForeignKey) RelationA, field_b (CharField) "B2", m2m (ManyToManyField) 1>')
         self.assertEqual(len(objects), 2)
 
     def test_user_defined_manager(self):
@@ -885,7 +891,8 @@ class PolymorphicTests(TransactionTestCase):
         self.assertIs(type(MRODerived.objects), MyManager)
 
     def test_queryset_assignment(self):
-        # This is just a consistency check for now, testing standard Django behavior.
+        # This is just a consistency check for now,
+        # testing standard Django behavior.
         parent = PlainParentModelWithManager.objects.create()
         child = PlainChildModelWithManager.objects.create(fk=parent)
         self.assertIs(
@@ -896,9 +903,12 @@ class PolymorphicTests(TransactionTestCase):
         self.assertIs(type(PlainChildModelWithManager.objects.all()),
                       PlainMyManagerQuerySet)
 
-        # A related set is created using the model's _default_manager, so does gain extra methods.
-        self.assertIs(type(parent.childmodel_set.my_queryset_foo()),
-                      PlainMyManagerQuerySet)
+        # A related set is created using the model's _default_manager,
+        # so does gain extra methods.
+        self.assertIs(
+            type(parent.childmodel_set.my_queryset_foo()),
+            PlainMyManagerQuerySet
+        )
 
         # For polymorphic models, the same should happen.
         parent = ParentModelWithManager.objects.create()
@@ -908,11 +918,16 @@ class PolymorphicTests(TransactionTestCase):
         self.assertIs(type(ChildModelWithManager._default_manager), MyManager)
         self.assertIs(type(ChildModelWithManager.objects), MyManager)
         self.assertIs(
-            type(ChildModelWithManager.objects.my_queryset_foo()), MyManagerQuerySet)
+            type(ChildModelWithManager.objects.my_queryset_foo()),
+            MyManagerQuerySet
+        )
 
-        # A related set is created using the model's _default_manager, so does gain extra methods.
+        # A related set is created using the model's _default_manager,
+        # so does gain extra methods.
         self.assertIs(
-            type(parent.childmodel_set.my_queryset_foo()), MyManagerQuerySet)
+            type(parent.childmodel_set.my_queryset_foo()),
+            MyManagerQuerySet
+        )
 
     def test_proxy_models(self):
         # prepare some data
@@ -940,9 +955,10 @@ class PolymorphicTests(TransactionTestCase):
 
     def test_proxy_get_real_instance_class(self):
         """
-        The call to ``get_real_instance()`` also checks whether the returned model is of the correct type.
-        This unit test guards that this check is working properly. For instance,
-        proxy child models need to be handled separately.
+        The call to ``get_real_instance()`` also checks whether the
+        returned model is of the correct type. This unit test guards
+        that this check is working properly. For instance, proxy
+        child models need to be handled separately.
         """
         name = "Item1"
         nonproxychild = NonProxyChild.objects.create(name=name)
@@ -967,10 +983,13 @@ class PolymorphicTests(TransactionTestCase):
 
     def test_proxy_model_inheritance(self):
         """
-        Polymorphic abilities should also work when the base model is a proxy object.
+        Polymorphic abilities should also work when the base model is a
+        proxy object.
+
+        The managers should point to the proper objects.
+
+        Otherwise, the whole excersise is pointless.
         """
-        # The managers should point to the proper objects.
-        # otherwise, the whole excersise is pointless.
         self.assertEqual(ProxiedBase.objects.model, ProxiedBase)
         self.assertEqual(ProxyModelBase.objects.model, ProxyModelBase)
         self.assertEqual(ProxyModelA.objects.model, ProxyModelA)
@@ -984,18 +1003,26 @@ class PolymorphicTests(TransactionTestCase):
         object1 = ProxyModelBase.objects.get(name='object1')
         object2 = ProxyModelBase.objects.get(name='object2')
         self.assertEqual(repr(
-            object1), '<ProxyModelA: id 1, name (CharField) "object1", field1 (CharField) "">')
+            object1),
+            '<ProxyModelA: id 1, name (CharField) "object1", field1 (CharField) "">'
+        )
         self.assertEqual(repr(
-            object2), '<ProxyModelB: id 2, name (CharField) "object2", field2 (CharField) "bb">')
+            object2),
+            '<ProxyModelB: id 2, name (CharField) "object2", field2 (CharField) "bb">'
+        )
         self.assertIsInstance(object1, ProxyModelA)
         self.assertIsInstance(object2, ProxyModelB)
 
         # Same for lists
         objects = list(ProxyModelBase.objects.all().order_by('name'))
         self.assertEqual(repr(
-            objects[0]), '<ProxyModelA: id 1, name (CharField) "object1", field1 (CharField) "">')
-        self.assertEqual(repr(
-            objects[1]), '<ProxyModelB: id 2, name (CharField) "object2", field2 (CharField) "bb">')
+            objects[0]),
+            '<ProxyModelA: id 1, name (CharField) "object1", field1 (CharField) "">'
+        )
+        self.assertEqual(
+            repr(objects[1]),
+            '<ProxyModelB: id 2, name (CharField) "object2", field2 (CharField) "bb">'
+        )
         self.assertIsInstance(objects[0], ProxyModelA)
         self.assertIsInstance(objects[1], ProxyModelB)
 
@@ -1006,17 +1033,23 @@ class PolymorphicTests(TransactionTestCase):
         self.assertEqual(len(qs), 2)
         self.assertEqual(
             repr(qs[0]), '<CustomPkBase: id 1, b (CharField) "b">')
-        self.assertEqual(repr(
-            qs[1]), '<CustomPkInherit: id 2, b (CharField) "b", custom_id (AutoField/pk) 1, i (CharField) "i">')
+        self.assertEqual(
+            repr(qs[1]),
+            '<CustomPkInherit: id 2, b (CharField) "b", custom_id (AutoField/pk) 1, i (CharField) "i">'
+        )
 
     def test_fix_getattribute(self):
-        # fixed issue in PolymorphicModel.__getattribute__: field name same as model name
+        # fixed issue in PolymorphicModel.__getattribute__: field name
+        # same as model name
         o = ModelFieldNameTest.objects.create(modelfieldnametest='1')
         self.assertEqual(
-            repr(o), '<ModelFieldNameTest: id 1, modelfieldnametest (CharField)>')
+            repr(o),
+            '<ModelFieldNameTest: id 1, modelfieldnametest (CharField)>'
+        )
 
         # if subclass defined __init__ and accessed class members,
-        # __getattribute__ had a problem: "...has no attribute 'sub_and_superclass_dict'"
+        # __getattribute__ had a problem: "...has no attribute
+        # 'sub_and_superclass_dict'"
         o = InitTestModelSubclass.objects.create()
         self.assertEqual(o.bar, 'XYZ')
 
@@ -1029,7 +1062,8 @@ class PolymorphicTests(TransactionTestCase):
         self.assertIsInstance(p, TestParentLinkAndRelatedName)
         self.assertEqual(p, t)
 
-        # check that the accessors to parent and sublass work correctly and return the right object
+        # check that the accessors to parent and sublass work
+        # correctly and return the right object
         p = ModelShow1_plain.objects.non_polymorphic().get(
             field1="TestParentLinkAndRelatedName")
         # p should be Plain1 and t TestParentLinkAndRelatedName, so not equal
@@ -1041,7 +1075,8 @@ class PolymorphicTests(TransactionTestCase):
         t.delete()
 
     def test_polymorphic__aggregate(self):
-        """ test ModelX___field syntax on aggregate (should work for annotate either) """
+        # test ModelX___field syntax on aggregate
+        # (should work for annotate either)
 
         Model2A.objects.create(field1='A1')
         Model2B.objects.create(field1='A1', field2='B2')
@@ -1059,7 +1094,8 @@ class PolymorphicTests(TransactionTestCase):
         )
 
     def test_polymorphic__complex_aggregate(self):
-        """ test (complex expression on) aggregate (should work for annotate either) """
+        # test (complex expression on) aggregate
+        # (should work for annotate either)
 
         Model2A.objects.create(field1='A1')
         Model2B.objects.create(field1='A1', field2='B2')
@@ -1073,14 +1109,16 @@ class PolymorphicTests(TransactionTestCase):
         self.assertEqual(result, {'cnt_b2': 2, 'cnt_a1': 3})
 
         # aggregate using **args
-        # we have to set the defaul alias or django won't except a complex expression
-        # on aggregate/annotate
+        # we have to set the defaul alias or django won't expect
+        # a complex expression on aggregate/annotate
         def ComplexAgg(expression):
             complexagg = Count(expression) * 10
             complexagg.default_alias = 'complexagg'
             return complexagg
 
-        with self.assertRaisesMessage(AssertionError, 'PolymorphicModel: annotate()/aggregate(): ___ model lookup supported for keyword arguments only'):
+        with self.assertRaisesMessage(
+            AssertionError,
+            'PolymorphicModel: annotate()/aggregate(): ___ model lookup supported for keyword arguments only'):
             Model2A.objects.aggregate(ComplexAgg('Model2B___field2'))
 
     def test_polymorphic__expressions(self):
@@ -1092,7 +1130,8 @@ class PolymorphicTests(TransactionTestCase):
         self.assertEqual(list(result), [])
 
     def test_null_polymorphic_id(self):
-        """Test that a proper error message is displayed when the database lacks the ``polymorphic_ctype_id``"""
+        # Test that a proper error message is displayed when
+        # the database lacks the ``polymorphic_ctype_id``
         Model2A.objects.create(field1='A1')
         Model2B.objects.create(field1='A1', field2='B2')
         Model2B.objects.create(field1='A1', field2='B2')
