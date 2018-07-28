@@ -12,8 +12,11 @@ from django.db.models import FieldDoesNotExist
 from django.db.models.query import ModelIterable, Q, QuerySet
 from django.utils import six
 
-from .query_translate import translate_polymorphic_filter_definitions_in_kwargs, translate_polymorphic_filter_definitions_in_args
-from .query_translate import translate_polymorphic_field_path, translate_polymorphic_Q_object
+from .query_translate import (
+    translate_polymorphic_filter_definitions_in_kwargs,
+    translate_polymorphic_filter_definitions_in_args)
+from .query_translate import (
+    translate_polymorphic_field_path, translate_polymorphic_Q_object)
 
 # chunk-size: maximum number of objects requested per db-request
 # by the polymorphic queryset.iterator() implementation
@@ -59,7 +62,8 @@ class PolymorphicModelIterable(ModelIterable):
                     reached_end = True
                     break
 
-            real_results = self.queryset._get_real_instances(base_result_objects)
+            real_results = self.queryset._get_real_instances(
+                base_result_objects)
 
             for o in real_results:
                 yield o
@@ -84,7 +88,7 @@ def transmogrify(cls, obj):
     return new
 
 
-###################################################################################
+###########################################
 # PolymorphicQuerySet
 
 class PolymorphicQuerySet(QuerySet):
@@ -152,15 +156,18 @@ class PolymorphicQuerySet(QuerySet):
 
     def _filter_or_exclude(self, negate, *args, **kwargs):
         # We override this internal Django functon as it is used for all filter member functions.
-        q_objects = translate_polymorphic_filter_definitions_in_args(self.model, args, using=self.db)  # the Q objects
-        additional_args = translate_polymorphic_filter_definitions_in_kwargs(self.model, kwargs, using=self.db)  # filter_field='data'
+        q_objects = translate_polymorphic_filter_definitions_in_args(
+            self.model, args, using=self.db)  # the Q objects
+        additional_args = translate_polymorphic_filter_definitions_in_kwargs(
+            self.model, kwargs, using=self.db)  # filter_field='data'
         return super(PolymorphicQuerySet, self)._filter_or_exclude(negate, *(list(q_objects) + additional_args), **kwargs)
 
     def order_by(self, *field_names):
         """translate the field paths in the args, then call vanilla order_by."""
         field_names = [
             translate_polymorphic_field_path(self.model, a)
-            if isinstance(a, six.string_types) else a  # allow expressions to pass unchanged
+            # allow expressions to pass unchanged
+            if isinstance(a, six.string_types) else a
             for a in field_names
         ]
         return super(PolymorphicQuerySet, self).order_by(*field_names)
@@ -173,7 +180,8 @@ class PolymorphicQuerySet(QuerySet):
         when we're retrieving the real instance (since we'll need to translate
         them again, as the model will have changed).
         """
-        new_fields = [translate_polymorphic_field_path(self.model, a) for a in fields]
+        new_fields = [translate_polymorphic_field_path(
+            self.model, a) for a in fields]
         clone = super(PolymorphicQuerySet, self).defer(*new_fields)
         clone._polymorphic_add_deferred_loading(fields)
         return clone
@@ -186,7 +194,8 @@ class PolymorphicQuerySet(QuerySet):
         when we're retrieving the real instance (since we'll need to translate
         them again, as the model will have changed).
         """
-        new_fields = [translate_polymorphic_field_path(self.model, a) for a in fields]
+        new_fields = [translate_polymorphic_field_path(
+            self.model, a) for a in fields]
         clone = super(PolymorphicQuerySet, self).only(*new_fields)
         clone._polymorphic_add_immediate_loading(fields)
         return clone
@@ -199,10 +208,12 @@ class PolymorphicQuerySet(QuerySet):
         existing, defer = self.polymorphic_deferred_loading
         if defer:
             # Add to existing deferred names.
-            self.polymorphic_deferred_loading = existing.union(field_names), True
+            self.polymorphic_deferred_loading = existing.union(
+                field_names), True
         else:
             # Remove names from the set of any existing "immediate load" names.
-            self.polymorphic_deferred_loading = existing.difference(field_names), False
+            self.polymorphic_deferred_loading = existing.difference(
+                field_names), False
 
     def _polymorphic_add_immediate_loading(self, field_names):
         """
@@ -218,7 +229,8 @@ class PolymorphicQuerySet(QuerySet):
         if defer:
             # Remove any existing deferred names from the current set before
             # setting the new names.
-            self.polymorphic_deferred_loading = field_names.difference(existing), False
+            self.polymorphic_deferred_loading = field_names.difference(
+                existing), False
         else:
             # Replace any existing "immediate load" field names.
             self.polymorphic_deferred_loading = field_names, False
@@ -269,14 +281,22 @@ class PolymorphicQuerySet(QuerySet):
             patch_lookup(a)
 
     def annotate(self, *args, **kwargs):
-        """translate the polymorphic field paths in the kwargs, then call vanilla annotate.
-        _get_real_instances will do the rest of the job after executing the query."""
+        """
+        translate the polymorphic field paths in the kwargs,
+        then call vanilla annotate.
+        _get_real_instances will do the rest of the
+        job after executing the query.
+        """
         self._process_aggregate_args(args, kwargs)
         return super(PolymorphicQuerySet, self).annotate(*args, **kwargs)
 
     def aggregate(self, *args, **kwargs):
-        """translate the polymorphic field paths in the kwargs, then call vanilla aggregate.
-        We need no polymorphic object retrieval for aggregate => switch it off."""
+        """
+        translate the polymorphic field paths in the kwargs,
+        then call vanilla aggregate.
+        We need no polymorphic object retrieval
+        for aggregate => switch it off.
+        """
         self._process_aggregate_args(args, kwargs)
         qs = self.non_polymorphic()
         return super(PolymorphicQuerySet, qs).aggregate(*args, **kwargs)
@@ -324,7 +344,8 @@ class PolymorphicQuerySet(QuerySet):
         return them as a list.
         """
         ordered_id_list = []    # list of ids of result-objects in correct order
-        results = {}            # polymorphic dict of result-objects, keyed with their id (no order)
+        # polymorphic dict of result-objects, keyed with their id (no order)
+        results = {}
 
         # dict contains one entry per unique model type occurring in result,
         # in the format idlist_per_model[modelclass]=[list-of-object-ids]
@@ -344,8 +365,10 @@ class PolymorphicQuerySet(QuerySet):
         # - store objects that already have the correct class into "results"
         base_result_objects_by_id = {}
         content_type_manager = ContentType.objects.db_manager(self.db)
-        self_model_class_id = content_type_manager.get_for_model(self.model, for_concrete_model=False).pk
-        self_concrete_model_class_id = content_type_manager.get_for_model(self.model, for_concrete_model=True).pk
+        self_model_class_id = content_type_manager.get_for_model(
+            self.model, for_concrete_model=False).pk
+        self_concrete_model_class_id = content_type_manager.get_for_model(
+            self.model, for_concrete_model=True).pk
 
         for base_object in base_result_objects:
             ordered_id_list.append(base_object.pk)
@@ -368,10 +391,13 @@ class PolymorphicQuerySet(QuerySet):
                     elif real_concrete_class_id == self_concrete_model_class_id:
                         # Real and base classes share the same concrete ancestor,
                         # upcast it and put it in the results
-                        results[base_object.pk] = transmogrify(real_concrete_class, base_object)
+                        results[base_object.pk] = transmogrify(
+                            real_concrete_class, base_object)
                     else:
-                        real_concrete_class = content_type_manager.get_for_id(real_concrete_class_id).model_class()
-                        idlist_per_model[real_concrete_class].append(getattr(base_object, pk_name))
+                        real_concrete_class = content_type_manager.get_for_id(
+                            real_concrete_class_id).model_class()
+                        idlist_per_model[real_concrete_class].append(
+                            getattr(base_object, pk_name))
 
         # For each model in "idlist_per_model" request its objects (the real model)
         # from the db and store them in results[].
@@ -382,7 +408,8 @@ class PolymorphicQuerySet(QuerySet):
             real_objects = real_concrete_class._base_objects.db_manager(self.db).filter(**{
                 ('%s__in' % pk_name): idlist,
             })
-            real_objects.query.select_related = self.query.select_related  # copy select related configuration to new qs
+            # copy select related configuration to new qs
+            real_objects.query.select_related = self.query.select_related
 
             # Copy deferred fields configuration to the new queryset
             deferred_loading_fields = []
@@ -402,14 +429,16 @@ class PolymorphicQuerySet(QuerySet):
                         # Check if the field does exist.
                         # Ignore deferred fields that don't exist in this subclass type.
                         try:
-                            real_concrete_class._meta.get_field(translated_field_name)
+                            real_concrete_class._meta.get_field(
+                                translated_field_name)
                         except FieldDoesNotExist:
                             continue
                     else:
                         raise
 
                 deferred_loading_fields.append(translated_field_name)
-            real_objects.query.deferred_loading = (set(deferred_loading_fields), self.query.deferred_loading[1])
+            real_objects.query.deferred_loading = (
+                set(deferred_loading_fields), self.query.deferred_loading[1])
 
             for real_object in real_objects:
                 o_pk = getattr(real_object, pk_name)
@@ -421,28 +450,34 @@ class PolymorphicQuerySet(QuerySet):
 
                 if self.query.annotations:
                     for anno_field_name in six.iterkeys(self.query.annotations):
-                        attr = getattr(base_result_objects_by_id[o_pk], anno_field_name)
+                        attr = getattr(
+                            base_result_objects_by_id[o_pk], anno_field_name)
                         setattr(real_object, anno_field_name, attr)
 
                 if self.query.extra_select:
                     for select_field_name in six.iterkeys(self.query.extra_select):
-                        attr = getattr(base_result_objects_by_id[o_pk], select_field_name)
+                        attr = getattr(
+                            base_result_objects_by_id[o_pk], select_field_name)
                         setattr(real_object, select_field_name, attr)
 
                 results[o_pk] = real_object
 
         # re-create correct order and return result list
-        resultlist = [results[ordered_id] for ordered_id in ordered_id_list if ordered_id in results]
+        resultlist = [
+            results[ordered_id]
+            for ordered_id in ordered_id_list if ordered_id in results]
 
         # set polymorphic_annotate_names in all objects (currently just used for debugging/printing)
         if self.query.annotations:
-            annotate_names = list(six.iterkeys(self.query.annotations))  # get annotate field list
+            # get annotate field list
+            annotate_names = list(six.iterkeys(self.query.annotations))
             for real_object in resultlist:
                 real_object.polymorphic_annotate_names = annotate_names
 
         # set polymorphic_extra_select_names in all objects (currently just used for debugging/printing)
         if self.query.extra_select:
-            extra_select_names = list(six.iterkeys(self.query.extra_select))  # get extra select field list
+            # get extra select field list
+            extra_select_names = list(six.iterkeys(self.query.extra_select))
             for real_object in resultlist:
                 real_object.polymorphic_extra_select_names = extra_select_names
 
