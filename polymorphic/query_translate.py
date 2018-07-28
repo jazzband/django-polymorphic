@@ -15,7 +15,7 @@ from django.db.utils import DEFAULT_DB_ALIAS
 from django.utils import six
 
 
-###################################################################################
+###################################################
 # PolymorphicQuerySet support functions
 
 # These functions implement the additional filter- and Q-object functionality.
@@ -40,7 +40,8 @@ def translate_polymorphic_filter_definitions_in_kwargs(queryset_model, kwargs, u
     additional_args = []
     for field_path, val in kwargs.copy().items():  # Python 3 needs copy
 
-        new_expr = _translate_polymorphic_filter_definition(queryset_model, field_path, val, using=using)
+        new_expr = _translate_polymorphic_filter_definition(
+            queryset_model, field_path, val, using=using)
 
         if type(new_expr) == tuple:
             # replace kwargs element
@@ -63,7 +64,8 @@ def translate_polymorphic_Q_object(queryset_model, potential_q_object, using=DEF
             if type(child) == tuple:
                 # this Q object child is a tuple => a kwarg like Q( instance_of=ModelB )
                 key, val = child
-                new_expr = _translate_polymorphic_filter_definition(my_model, key, val, using=using)
+                new_expr = _translate_polymorphic_filter_definition(
+                    my_model, key, val, using=using)
                 if new_expr:
                     node.children[i] = new_expr
             else:
@@ -87,7 +89,8 @@ def translate_polymorphic_filter_definitions_in_args(queryset_model, args, using
 
     Returns: modified Q objects
     """
-    return [translate_polymorphic_Q_object(queryset_model, copy.deepcopy(q), using=using) for q in args]
+    return [translate_polymorphic_Q_object(
+        queryset_model, copy.deepcopy(q), using=using) for q in args]
 
 
 def _translate_polymorphic_filter_definition(queryset_model, field_path, field_val, using=DEFAULT_DB_ALIAS):
@@ -107,7 +110,10 @@ def _translate_polymorphic_filter_definition(queryset_model, field_path, field_v
     if field_path == 'instance_of':
         return _create_model_filter_Q(field_val, using=using)
     elif field_path == 'not_instance_of':
-        return _create_model_filter_Q(field_val, not_instance_of=True, using=using)
+        return _create_model_filter_Q(
+            field_val, not_instance_of=True,
+            using=using
+        )
     elif '___' not in field_path:
         return None  # no change
 
@@ -128,7 +134,8 @@ def translate_polymorphic_field_path(queryset_model, field_path):
     Returns: translated path (unchanged, if no translation needed)
     """
     if not isinstance(field_path, six.string_types):
-        raise ValueError("Expected field name as string: {0}".format(field_path))
+        raise ValueError(
+            "Expected field name as string: {0}".format(field_path))
 
     classname, sep, pure_field_path = field_path.partition('___')
     if not sep:
@@ -144,9 +151,11 @@ def translate_polymorphic_field_path(queryset_model, field_path):
         # the user has app label prepended to class name via __ => use Django's get_model function
         appname, sep, classname = classname.partition('__')
         model = apps.get_model(appname, classname)
-        assert model, 'PolymorphicModel: model %s (in app %s) not found!' % (model.__name__, appname)
+        assert model, 'PolymorphicModel: model %s (in app %s) not found!' % (
+            model.__name__, appname)
         if not issubclass(model, queryset_model):
-            e = 'PolymorphicModel: queryset filter error: "' + model.__name__ + '" is not derived from "' + queryset_model.__name__ + '"'
+            e = 'PolymorphicModel: queryset filter error: "' + model.__name__ + \
+                '" is not derived from "' + queryset_model.__name__ + '"'
             raise AssertionError(e)
 
     else:
@@ -185,7 +194,8 @@ def translate_polymorphic_field_path(queryset_model, field_path):
         submodels = {}
         add_all_sub_models(queryset_model, submodels)
         model = submodels.get(classname, None)
-        assert model, 'PolymorphicModel: model %s not found (not a subclass of %s)!' % (classname, queryset_model.__name__)
+        assert model, 'PolymorphicModel: model %s not found (not a subclass of %s)!' % (
+            classname, queryset_model.__name__)
 
     # create new field path for expressions, e.g. for baseclass=ModelA, myclass=ModelC
     # 'modelb__modelc" is returned
@@ -239,7 +249,8 @@ def _create_model_filter_Q(modellist, not_instance_of=False, using=DEFAULT_DB_AL
             assert False, 'PolymorphicModel: instance_of expects a list of (polymorphic) models or a single (polymorphic) model'
 
     def q_class_with_subclasses(model):
-        q = models.Q(polymorphic_ctype=ContentType.objects.db_manager(using).get_for_model(model, for_concrete_model=False))
+        q = models.Q(polymorphic_ctype=ContentType.objects.db_manager(
+            using).get_for_model(model, for_concrete_model=False))
         for subclass in model.__subclasses__():
             q = q | q_class_with_subclasses(subclass)
         return q
