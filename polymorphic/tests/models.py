@@ -108,7 +108,8 @@ class Enhance_Inherit(Enhance_Base, Enhance_Plain):
 
 class RelationBase(ShowFieldTypeAndContent, PolymorphicModel):
     field_base = models.CharField(max_length=10)
-    fk = models.ForeignKey('self', on_delete=models.CASCADE, null=True, related_name='relationbase_set')
+    fk = models.ForeignKey('self', on_delete=models.CASCADE,
+                           null=True, related_name='relationbase_set')
     m2m = models.ManyToManyField('self')
 
 
@@ -143,14 +144,16 @@ class ModelUnderRelParent(PolymorphicModel):
 
 
 class ModelUnderRelChild(PolymorphicModel):
-    parent = models.ForeignKey(ModelUnderRelParent, on_delete=models.CASCADE, related_name='children')
+    parent = models.ForeignKey(
+        ModelUnderRelParent, on_delete=models.CASCADE, related_name='children')
     _private2 = models.CharField(max_length=10)
 
 
 class MyManagerQuerySet(PolymorphicQuerySet):
 
     def my_queryset_foo(self):
-        return self.all()  # Just a method to prove the existance of the custom queryset.
+        # Just a method to prove the existance of the custom queryset.
+        return self.all()
 
 
 class MyManager(PolymorphicManager):
@@ -192,11 +195,13 @@ class MROBase1(ShowFieldType, PolymorphicModel):
 
 class MROBase2(MROBase1):
     pass
-    # No manager_inheritance_from_future or Meta set. test that polymorphic restores that.
+    # No manager_inheritance_from_future or Meta set.
+    # test that polymorphic restores that.
 
 
 class MROBase3(models.Model):
-    base_3_id = models.AutoField(primary_key=True)   # make sure 'id' field doesn't clash, detected by Django 1.11
+    # make sure 'id' field doesn't clash, detected by Django 1.11
+    base_3_id = models.AutoField(primary_key=True)
     objects = models.Manager()
 
 
@@ -211,14 +216,19 @@ class ParentModelWithManager(PolymorphicModel):
 
 class ChildModelWithManager(PolymorphicModel):
     # Also test whether foreign keys receive the manager:
-    fk = models.ForeignKey(ParentModelWithManager, on_delete=models.CASCADE, related_name='childmodel_set')
+    fk = models.ForeignKey(
+        ParentModelWithManager,
+        on_delete=models.CASCADE,
+        related_name='childmodel_set'
+    )
     objects = MyManager()
 
 
 class PlainMyManagerQuerySet(QuerySet):
 
     def my_queryset_foo(self):
-        return self.all()  # Just a method to prove the existance of the custom queryset.
+        # Just a method to prove the existance of the custom queryset.
+        return self.all()
 
 
 class PlainMyManager(models.Manager):
@@ -235,7 +245,11 @@ class PlainParentModelWithManager(models.Model):
 
 
 class PlainChildModelWithManager(models.Model):
-    fk = models.ForeignKey(PlainParentModelWithManager, on_delete=models.CASCADE, related_name='childmodel_set')
+    fk = models.ForeignKey(
+        PlainParentModelWithManager,
+        on_delete=models.CASCADE,
+        related_name='childmodel_set'
+    )
     objects = PlainMyManager()
 
 
@@ -359,18 +373,23 @@ class ProxyModelB(ProxyModelBase):
 # class TestBadFieldModel(ShowFieldType, PolymorphicModel):
 #    instance_of = models.CharField(max_length=10)
 
-# validation error: "polymorphic.relatednameclash: Accessor for field 'polymorphic_ctype' clashes
-# with related field 'ContentType.relatednameclash_set'." (reported by Andrew Ingram)
+# validation error: "polymorphic.relatednameclash: Accessor for field
+# 'polymorphic_ctype' clashes
+# with related field 'ContentType.relatednameclash_set'."
 # fixed with related_name
 class RelatedNameClash(ShowFieldType, PolymorphicModel):
-    ctype = models.ForeignKey(ContentType, on_delete=models.CASCADE, null=True, editable=False)
+    ctype = models.ForeignKey(
+        ContentType, on_delete=models.CASCADE, null=True, editable=False)
 
 # class with a parent_link to superclass, and a related_name back to subclass
 
 
 class TestParentLinkAndRelatedName(ModelShow1_plain):
     superclass = models.OneToOneField(
-        ModelShow1_plain, on_delete=models.CASCADE, parent_link=True, related_name='related_name_subclass'
+        ModelShow1_plain,
+        on_delete=models.CASCADE,
+        parent_link=True,
+        related_name='related_name_subclass',
     )
 
 
@@ -409,7 +428,8 @@ class InlineParent(models.Model):
 
 
 class InlineModelA(PolymorphicModel):
-    parent = models.ForeignKey(InlineParent, related_name='inline_children', on_delete=models.CASCADE)
+    parent = models.ForeignKey(
+        InlineParent, related_name='inline_children', on_delete=models.CASCADE)
     field1 = models.CharField(max_length=10)
 
 
