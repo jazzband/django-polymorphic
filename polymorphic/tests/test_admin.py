@@ -2,8 +2,8 @@ from django.contrib import admin
 from django.contrib.contenttypes.models import ContentType
 from django.utils.html import escape
 
-from polymorphic.admin import PolymorphicChildModelAdmin, PolymorphicChildModelFilter, PolymorphicInlineSupportMixin, \
-    PolymorphicParentModelAdmin, StackedPolymorphicInline
+from polymorphic.admin import PolymorphicChildModelAdmin, PolymorphicChildModelFilter, \
+ PolymorphicInlineSupportMixin, PolymorphicParentModelAdmin, StackedPolymorphicInline
 from polymorphic.tests.admintestcase import AdminTestCase
 from polymorphic.tests.models import InlineModelA, InlineModelB, InlineParent, Model2A, Model2B, Model2C, Model2D
 
@@ -34,7 +34,8 @@ class PolymorphicAdminTests(AdminTestCase):
         # -- add page
         ct_id = ContentType.objects.get_for_model(Model2D).pk
         self.admin_get_add(Model2A)  # shows type page
-        self.admin_get_add(Model2A, qs='?ct_id={}'.format(ct_id))  # shows type page
+        # shows type page
+        self.admin_get_add(Model2A, qs='?ct_id={}'.format(ct_id))
 
         self.admin_get_add(Model2A)  # shows type page
         self.admin_post_add(Model2A, {
@@ -74,7 +75,8 @@ class PolymorphicAdminTests(AdminTestCase):
         # -- delete
         self.admin_get_delete(Model2A, d_obj.pk)
         self.admin_post_delete(Model2A, d_obj.pk)
-        self.assertRaises(Model2A.DoesNotExist, lambda: d_obj.refresh_from_db())
+        self.assertRaises(Model2A.DoesNotExist,
+                          lambda: d_obj.refresh_from_db())
 
     def test_admin_inlines(self):
         """
