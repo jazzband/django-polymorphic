@@ -1,10 +1,9 @@
 import re
 import uuid
 
-import django
 from django.db import models
 from django.db.models import Case, Count, Q, When
-from django.test import TestCase, TransactionTestCase
+from django.test import TransactionTestCase
 from django.utils import six
 
 from polymorphic.managers import PolymorphicManager
@@ -67,7 +66,6 @@ from polymorphic.tests.models import (
     ProxyModelA,
     ProxyModelB,
     ProxyModelBase,
-    QuerySet,
     RedheadDuck,
     RelationA,
     RelationB,
@@ -165,16 +163,20 @@ class PolymorphicTests(TransactionTestCase):
         blog_a = BlogA.objects.create(name='aa', info='aa')
         blog_b = BlogB.objects.create(name='bb')
         # create two blog entries
-        entry1 = BlogEntry_limit_choices_to.objects.create(blog=blog_b, text='bla2')
-        entry2 = BlogEntry_limit_choices_to.objects.create(blog=blog_b, text='bla2')
+        entry1 = BlogEntry_limit_choices_to.objects.create(
+            blog=blog_b, text='bla2')
+        entry2 = BlogEntry_limit_choices_to.objects.create(
+            blog=blog_b, text='bla2')
 
     def test_primary_key_custom_field_problem(self):
         """
         object retrieval problem occuring with some custom primary key fields (UUIDField as test case)
         """
         UUIDProject.objects.create(topic="John's gathering")
-        UUIDArtProject.objects.create(topic="Sculpting with Tim", artist="T. Turner")
-        UUIDResearchProject.objects.create(topic="Swallow Aerodynamics", supervisor="Dr. Winter")
+        UUIDArtProject.objects.create(
+            topic="Sculpting with Tim", artist="T. Turner")
+        UUIDResearchProject.objects.create(
+            topic="Swallow Aerodynamics", supervisor="Dr. Winter")
 
         qs = UUIDProject.objects.all()
         ol = list(qs)
@@ -186,9 +188,16 @@ class PolymorphicTests(TransactionTestCase):
         self.assertIsInstance(a.pk, uuid.UUID)
 
         res = re.sub(' "(.*?)..", topic', ', topic', repr(qs))
-        res_exp = """[ <UUIDProject: uuid_primary_key (UUIDField/pk), topic (CharField) "John's gathering">,
-  <UUIDArtProject: uuid_primary_key (UUIDField/pk), topic (CharField) "Sculpting with Tim", artist (CharField) "T. Turner">,
-  <UUIDResearchProject: uuid_primary_key (UUIDField/pk), topic (CharField) "Swallow Aerodynamics", supervisor (CharField) "Dr. Winter"> ]"""
+        res_exp = """[
+        <UUIDProject: uuid_primary_key (UUIDField/pk),
+        topic (CharField) "John's gathering">,
+        <UUIDArtProject: uuid_primary_key (UUIDField/pk),
+        topic (CharField) "Sculpting with Tim",
+        artist (CharField) "T. Turner">,
+        <UUIDResearchProject: uuid_primary_key (UUIDField/pk),
+        topic (CharField) "Swallow Aerodynamics",
+        supervisor (CharField) "Dr. Winter">
+    ]"""
         self.assertEqual(res, res_exp)
 
         a = UUIDPlainA.objects.create(field1='A1')
@@ -207,7 +216,8 @@ class PolymorphicTests(TransactionTestCase):
         a = Model2A.objects.create(field1='A1')
         b = Model2B.objects.create(field1='B1', field2='B2')
         c = Model2C.objects.create(field1='C1', field2='C2', field3='C3')
-        d = Model2D.objects.create(field1='D1', field2='D2', field3='D3', field4='D4')
+        d = Model2D.objects.create(
+            field1='D1', field2='D2', field3='D3', field4='D4')
 
         return a, b, c, d
 
@@ -227,59 +237,97 @@ class PolymorphicTests(TransactionTestCase):
 
         objects_deferred = Model2A.objects.defer('field1')
 
-        self.assertNotIn('field1', objects_deferred[0].__dict__, 'field1 was not deferred (using defer())')
-        self.assertRegex(repr(objects_deferred[0]),
-                         '<Model2A: id \d+, field1 \(CharField\), deferred\[field1\]>')
-        self.assertRegex(repr(objects_deferred[1]),
-                         '<Model2B: id \d+, field1 \(CharField\), field2 \(CharField\), deferred\[field1\]>')
-        self.assertRegex(repr(objects_deferred[2]),
-                         '<Model2C: id \d+, field1 \(CharField\), field2 \(CharField\), field3 \(CharField\), deferred\[field1\]>')
-        self.assertRegex(repr(objects_deferred[3]),
-                         '<Model2D: id \d+, field1 \(CharField\), field2 \(CharField\), field3 \(CharField\), field4 \(CharField\), deferred\[field1\]>')
+        self.assertNotIn(
+            'field1',
+            objects_deferred[0].__dict__,
+            'field1 was not deferred (using defer())'
+        )
+        self.assertRegex(
+            repr(objects_deferred[0]),
+            '<Model2A: id \d+, field1 \(CharField\), deferred\[field1\]>'
+        )
+        self.assertRegex(
+            repr(objects_deferred[1]),
+            '<Model2B: id \d+, field1 \(CharField\), field2 \(CharField\), deferred\[field1\]>'
+        )
+        self.assertRegex(
+            repr(objects_deferred[2]),
+            '<Model2C: id \d+, field1 \(CharField\), field2 \(CharField\), field3 \(CharField\), deferred\[field1\]>'
+        )
+        self.assertRegex(
+            repr(objects_deferred[3]),
+            '<Model2D: id \d+, field1 \(CharField\), field2 \(CharField\), field3 \(CharField\), field4 \(CharField\), deferred\[field1\]>'
+        )
 
-        objects_only = Model2A.objects.only('pk', 'polymorphic_ctype', 'field1')
+        objects_only = Model2A.objects.only(
+            'pk', 'polymorphic_ctype', 'field1')
 
-        self.assertIn('field1', objects_only[0].__dict__,
-                      'qs.only("field1") was used, but field1 was incorrectly deferred')
-        self.assertIn('field1', objects_only[3].__dict__,
-                      'qs.only("field1") was used, but field1 was incorrectly deferred'
-                      ' on a child model')
-        self.assertNotIn('field4', objects_only[3].__dict__,
-                         'field4 was not deferred (using only())')
-        self.assertRegex(repr(objects_only[0]),
-                         '<Model2A: id \d+, field1 \(CharField\)>')
-        self.assertRegex(repr(objects_only[1]),
-                         '<Model2B: id \d+, field1 \(CharField\), field2 \(CharField\), deferred\[field2\]>')
-        self.assertRegex(repr(objects_only[2]),
-                         '<Model2C: id \d+, field1 \(CharField\), field2 \(CharField\), field3 \(CharField\), '
-                         'deferred\[field2,field3,model2a_ptr_id\]>')
-        self.assertRegex(repr(objects_only[3]),
-                         '<Model2D: id \d+, field1 \(CharField\), field2 \(CharField\), field3 \(CharField\), field4 \(CharField\), '
-                         'deferred\[field2,field3,field4,model2a_ptr_id,model2b_ptr_id\]>')
+        self.assertIn(
+            'field1', objects_only[0].__dict__,
+            'qs.only("field1") was used, but field1 was incorrectly deferred'
+        )
+        self.assertIn(
+            'field1', objects_only[3].__dict__,
+            'qs.only("field1") was used, but field1 was incorrectly deferred'
+            ' on a child model'
+        )
+        self.assertNotIn(
+            'field4', objects_only[3].__dict__,
+            'field4 was not deferred (using only())'
+        )
+        self.assertRegex(
+            repr(objects_only[0]),
+            '<Model2A: id \d+, field1 \(CharField\)>'
+        )
+        self.assertRegex(
+            repr(objects_only[1]),
+            '<Model2B: id \d+, field1 \(CharField\), field2 \(CharField\), deferred\[field2\]>'
+        )
+        self.assertRegex(
+            repr(objects_only[2]),
+            '<Model2C: id \d+, field1 \(CharField\), field2 \(CharField\), field3 \(CharField\), '
+            'deferred\[field2,field3,model2a_ptr_id\]>'
+        )
+        self.assertRegex(
+            repr(objects_only[3]),
+            '<Model2D: id \d+, field1 \(CharField\), field2 \(CharField\), field3 \(CharField\), field4 \(CharField\), '
+            'deferred\[field2,field3,field4,model2a_ptr_id,model2b_ptr_id\]>'
+        )
 
         ModelX.objects.create(field_b="A1", field_x="A2")
         ModelY.objects.create(field_b="B1", field_y="B2")
 
         objects_deferred = Base.objects.defer('ModelY___field_y')
-        self.assertRegex(repr(objects_deferred[0]),
-                         '<ModelX: id \d+, field_b \(CharField\), field_x \(CharField\)>')
-        self.assertRegex(repr(objects_deferred[1]),
-                         '<ModelY: id \d+, field_b \(CharField\), field_y \(CharField\), deferred\[field_y\]>')
+        self.assertRegex(
+            repr(objects_deferred[0]),
+            '<ModelX: id \d+, field_b \(CharField\), field_x \(CharField\)>'
+        )
+        self.assertRegex(
+            repr(objects_deferred[1]),
+            '<ModelY: id \d+, field_b \(CharField\), field_y \(CharField\), deferred\[field_y\]>'
+        )
 
         objects_only = Base.objects.only(
             'polymorphic_ctype', 'ModelY___field_y', 'ModelX___field_x',
         )
-        self.assertRegex(repr(objects_only[0]),
-                         '<ModelX: id \d+, field_b \(CharField\), field_x \(CharField\), deferred\[field_b\]>')
-        self.assertRegex(repr(objects_only[1]),
-                         '<ModelY: id \d+, field_b \(CharField\), field_y \(CharField\), deferred\[field_b\]>')
+        self.assertRegex(
+            repr(objects_only[0]),
+            '<ModelX: id \d+, field_b \(CharField\), field_x \(CharField\), deferred\[field_b\]>'
+        )
+        self.assertRegex(
+            repr(objects_only[1]),
+            '<ModelY: id \d+, field_b \(CharField\), field_y \(CharField\), deferred\[field_b\]>'
+        )
 
     def test_defer_related_fields(self):
         self.create_model2abcd()
 
         objects_deferred_field4 = Model2A.objects.defer('Model2D___field4')
-        self.assertNotIn('field4', objects_deferred_field4[3].__dict__,
-                         'field4 was not deferred (using defer(), traversing inheritance)')
+        self.assertNotIn(
+            'field4',
+            objects_deferred_field4[3].__dict__,
+            'field4 was not deferred (using defer(), traversing inheritance)'
+        )
         self.assertEqual(objects_deferred_field4[0].__class__, Model2A)
         self.assertEqual(objects_deferred_field4[1].__class__, Model2B)
         self.assertEqual(objects_deferred_field4[2].__class__, Model2C)
@@ -439,7 +487,8 @@ class PolymorphicTests(TransactionTestCase):
         self.create_model2abcd()
 
         a = Model2A.objects.get(field1='C1')
-        b = One2OneRelatingModelDerived.objects.create(one2one=a, field1='f1', field2='f2')
+        b = One2OneRelatingModelDerived.objects.create(
+            one2one=a, field1='f1', field2='f2')
 
         # this result is basically wrong, probably due to Django cacheing (we used base_objects), but should not be a problem
         self.assertEqual(b.one2one.__class__, Model2A)
@@ -457,22 +506,30 @@ class PolymorphicTests(TransactionTestCase):
         o = ModelShow1.objects.create(field1='abc')
         o.m2m.add(o)
         o.save()
-        self.assertEqual(repr(ModelShow1.objects.all()), '[ <ModelShow1: id 1, field1 (CharField), m2m (ManyToManyField)> ]')
+        self.assertEqual(
+            repr(ModelShow1.objects.all()),
+            '[ <ModelShow1: id 1, field1 (CharField), m2m (ManyToManyField)> ]'
+        )
 
         # Model 2
         o = ModelShow2.objects.create(field1='abc')
         o.m2m.add(o)
         o.save()
-        self.assertEqual(repr(ModelShow2.objects.all()), '[ <ModelShow2: id 1, field1 "abc", m2m 1> ]')
+        self.assertEqual(repr(ModelShow2.objects.all()),
+                         '[ <ModelShow2: id 1, field1 "abc", m2m 1> ]')
 
         # Model 3
         o = ModelShow3.objects.create(field1='abc')
         o.m2m.add(o)
         o.save()
-        self.assertEqual(repr(ModelShow3.objects.all()), '[ <ModelShow3: id 1, field1 (CharField) "abc", m2m (ManyToManyField) 1> ]')
-        self.assertEqual(repr(ModelShow1.objects.all().annotate(Count('m2m'))), '[ <ModelShow1: id 1, field1 (CharField), m2m (ManyToManyField) - Ann: m2m__count (int)> ]')
-        self.assertEqual(repr(ModelShow2.objects.all().annotate(Count('m2m'))), '[ <ModelShow2: id 1, field1 "abc", m2m 1 - Ann: m2m__count 1> ]')
-        self.assertEqual(repr(ModelShow3.objects.all().annotate(Count('m2m'))), '[ <ModelShow3: id 1, field1 (CharField) "abc", m2m (ManyToManyField) 1 - Ann: m2m__count (int) 1> ]')
+        self.assertEqual(repr(ModelShow3.objects.all(
+        )), '[ <ModelShow3: id 1, field1 (CharField) "abc", m2m (ManyToManyField) 1> ]')
+        self.assertEqual(repr(ModelShow1.objects.all().annotate(Count(
+            'm2m'))), '[ <ModelShow1: id 1, field1 (CharField), m2m (ManyToManyField) - Ann: m2m__count (int)> ]')
+        self.assertEqual(repr(ModelShow2.objects.all().annotate(Count(
+            'm2m'))), '[ <ModelShow2: id 1, field1 "abc", m2m 1 - Ann: m2m__count 1> ]')
+        self.assertEqual(repr(ModelShow3.objects.all().annotate(Count(
+            'm2m'))), '[ <ModelShow3: id 1, field1 (CharField) "abc", m2m (ManyToManyField) 1 - Ann: m2m__count (int) 1> ]')
 
         # no pretty printing
         ModelShow1_plain.objects.create(field1='abc')
@@ -497,7 +554,11 @@ class PolymorphicTests(TransactionTestCase):
             ordered=False,
         )
 
-        objects = Model2A.objects.extra(select={"select_test": "field1 = 'A1'"}, where=["field1 = 'A1' OR field1 = 'B1'"], order_by=['-id'])
+        objects = Model2A.objects.extra(
+            select={"select_test": "field1 = 'A1'"},
+            where=["field1 = 'A1' OR field1 = 'B1'"],
+            order_by=['-id']
+        )
         self.assertQuerysetEqual(
             objects,
             [Model2B, Model2A],
@@ -516,13 +577,23 @@ class PolymorphicTests(TransactionTestCase):
             where=["tests_modelextraa.id = tests_modelextraexternal.id"],
         )
         if six.PY3:
-            self.assertEqual(repr(objects[0]), '<ModelExtraA: id 1, field1 (CharField) "A1" - Extra: topic (str) "extra1">')
-            self.assertEqual(repr(objects[1]), '<ModelExtraB: id 2, field1 (CharField) "B1", field2 (CharField) "B2" - Extra: topic (str) "extra2">')
-            self.assertEqual(repr(objects[2]), '<ModelExtraC: id 3, field1 (CharField) "C1", field2 (CharField) "C2", field3 (CharField) "C3" - Extra: topic (str) "extra3">')
+            self.assertEqual(
+                repr(objects[0]),
+                '<ModelExtraA: id 1, field1 (CharField) "A1" - Extra: topic (str) "extra1">'
+            )
+            self.assertEqual(repr(
+                objects[1]),
+            '<ModelExtraB: id 2, field1 (CharField) "B1", field2 (CharField) "B2" - Extra: topic (str) "extra2">')
+            self.assertEqual(repr(
+                objects[2]),
+            '<ModelExtraC: id 3, field1 (CharField) "C1", field2 (CharField) "C2", field3 (CharField) "C3" - Extra: topic (str) "extra3">')
         else:
-            self.assertEqual(repr(objects[0]), '<ModelExtraA: id 1, field1 (CharField) "A1" - Extra: topic (unicode) "extra1">')
-            self.assertEqual(repr(objects[1]), '<ModelExtraB: id 2, field1 (CharField) "B1", field2 (CharField) "B2" - Extra: topic (unicode) "extra2">')
-            self.assertEqual(repr(objects[2]), '<ModelExtraC: id 3, field1 (CharField) "C1", field2 (CharField) "C2", field3 (CharField) "C3" - Extra: topic (unicode) "extra3">')
+            self.assertEqual(repr(
+                objects[0]), '<ModelExtraA: id 1, field1 (CharField) "A1" - Extra: topic (unicode) "extra1">')
+            self.assertEqual(repr(
+                objects[1]), '<ModelExtraB: id 2, field1 (CharField) "B1", field2 (CharField) "B2" - Extra: topic (unicode) "extra2">')
+            self.assertEqual(repr(
+                objects[2]), '<ModelExtraC: id 3, field1 (CharField) "C1", field2 (CharField) "C2", field3 (CharField) "C3" - Extra: topic (unicode) "extra3">')
         self.assertEqual(len(objects), 3)
 
     def test_instance_of_filter(self):
@@ -563,7 +634,8 @@ class PolymorphicTests(TransactionTestCase):
     def test_polymorphic___filter(self):
         self.create_model2abcd()
 
-        objects = Model2A.objects.filter(Q(Model2B___field2='B2') | Q(Model2C___field3='C3'))
+        objects = Model2A.objects.filter(
+            Q(Model2B___field2='B2') | Q(Model2C___field3='C3'))
         self.assertQuerysetEqual(
             objects,
             [Model2B, Model2C],
@@ -575,7 +647,8 @@ class PolymorphicTests(TransactionTestCase):
         self.create_model2abcd()
 
         assert Model2B._meta.app_label == 'tests'
-        objects = Model2A.objects.filter(Q(tests__Model2B___field2='B2') | Q(tests__Model2C___field3='C3'))
+        objects = Model2A.objects.filter(
+            Q(tests__Model2B___field2='B2') | Q(tests__Model2C___field3='C3'))
         self.assertQuerysetEqual(
             objects,
             [Model2B, Model2C],
@@ -636,53 +709,89 @@ class PolymorphicTests(TransactionTestCase):
         ModelX.objects.create(field_x='x')
         ModelY.objects.create(field_y='y')
 
-        qs = Base.objects.instance_of(ModelX) | Base.objects.instance_of(ModelY)
-        self.assertEqual(repr(qs[0]), '<ModelX: id 1, field_b (CharField), field_x (CharField)>')
-        self.assertEqual(repr(qs[1]), '<ModelY: id 2, field_b (CharField), field_y (CharField)>')
+        qs = Base.objects.instance_of(
+            ModelX) | Base.objects.instance_of(ModelY)
+        self.assertEqual(
+            repr(qs[0]),
+            '<ModelX: id 1, field_b (CharField), field_x (CharField)>'
+        )
+        self.assertEqual(
+            repr(qs[1]),
+            '<ModelY: id 2, field_b (CharField), field_y (CharField)>'
+        )
         self.assertEqual(len(qs), 2)
 
     def test_multiple_inheritance(self):
-        # multiple inheritance, subclassing third party models (mix PolymorphicModel with models.Model)
+        # multiple inheritance, subclassing third party models
+        # (mix PolymorphicModel with models.Model)
 
         Enhance_Base.objects.create(field_b='b-base')
-        Enhance_Inherit.objects.create(field_b='b-inherit', field_p='p', field_i='i')
+        Enhance_Inherit.objects.create(
+            field_b='b-inherit', field_p='p', field_i='i')
 
         qs = Enhance_Base.objects.all()
         self.assertEqual(len(qs), 2)
-        self.assertEqual(repr(qs[0]), '<Enhance_Base: base_id (AutoField/pk) 1, field_b (CharField) "b-base">')
-        self.assertEqual(repr(qs[1]), '<Enhance_Inherit: base_id (AutoField/pk) 2, field_b (CharField) "b-inherit", id 1, field_p (CharField) "p", field_i (CharField) "i">')
+        self.assertEqual(repr(
+            qs[0]),
+        '<Enhance_Base: base_id (AutoField/pk) 1, field_b (CharField) "b-base">'
+        )
+        self.assertEqual(repr(
+            qs[1]),
+        '<Enhance_Inherit: base_id (AutoField/pk) 2, field_b (CharField) "b-inherit", id 1, field_p (CharField) "p", field_i (CharField) "i">')
 
     def test_relation_base(self):
         # ForeignKey, ManyToManyField
         obase = RelationBase.objects.create(field_base='base')
         oa = RelationA.objects.create(field_base='A1', field_a='A2', fk=obase)
         ob = RelationB.objects.create(field_base='B1', field_b='B2', fk=oa)
-        oc = RelationBC.objects.create(field_base='C1', field_b='C2', field_c='C3', fk=oa)
+        oc = RelationBC.objects.create(
+            field_base='C1', field_b='C2', field_c='C3', fk=oa)
         oa.m2m.add(oa)
         oa.m2m.add(ob)
 
         objects = RelationBase.objects.all()
-        self.assertEqual(repr(objects[0]), '<RelationBase: id 1, field_base (CharField) "base", fk (ForeignKey) None, m2m (ManyToManyField) 0>')
-        self.assertEqual(repr(objects[1]), '<RelationA: id 2, field_base (CharField) "A1", fk (ForeignKey) RelationBase, field_a (CharField) "A2", m2m (ManyToManyField) 2>')
-        self.assertEqual(repr(objects[2]), '<RelationB: id 3, field_base (CharField) "B1", fk (ForeignKey) RelationA, field_b (CharField) "B2", m2m (ManyToManyField) 1>')
-        self.assertEqual(repr(objects[3]), '<RelationBC: id 4, field_base (CharField) "C1", fk (ForeignKey) RelationA, field_b (CharField) "C2", field_c (CharField) "C3", m2m (ManyToManyField) 0>')
+        self.assertEqual(repr(
+            objects[0]),
+        '<RelationBase: id 1, field_base (CharField) "base", fk (ForeignKey) None, m2m (ManyToManyField) 0>')
+        self.assertEqual(repr(
+            objects[1]),
+        '<RelationA: id 2, field_base (CharField) "A1", fk (ForeignKey) RelationBase, field_a (CharField) "A2", m2m (ManyToManyField) 2>'
+        )        
+        self.assertEqual(repr(
+            objects[2]),
+        '<RelationB: id 3, field_base (CharField) "B1", fk (ForeignKey) RelationA, field_b (CharField) "B2", m2m (ManyToManyField) 1>')
+        self.assertEqual(repr(
+            objects[3]),
+        '<RelationBC: id 4, field_base (CharField) "C1", fk (ForeignKey) RelationA, field_b (CharField) "C2", field_c (CharField) "C3", m2m (ManyToManyField) 0>')
         self.assertEqual(len(objects), 4)
 
         oa = RelationBase.objects.get(id=2)
-        self.assertEqual(repr(oa.fk), '<RelationBase: id 1, field_base (CharField) "base", fk (ForeignKey) None, m2m (ManyToManyField) 0>')
+        self.assertEqual(repr(
+            oa.fk),
+        '<RelationBase: id 1, field_base (CharField) "base", fk (ForeignKey) None, m2m (ManyToManyField) 0>')
 
         objects = oa.relationbase_set.all()
-        self.assertEqual(repr(objects[0]), '<RelationB: id 3, field_base (CharField) "B1", fk (ForeignKey) RelationA, field_b (CharField) "B2", m2m (ManyToManyField) 1>')
-        self.assertEqual(repr(objects[1]), '<RelationBC: id 4, field_base (CharField) "C1", fk (ForeignKey) RelationA, field_b (CharField) "C2", field_c (CharField) "C3", m2m (ManyToManyField) 0>')
+        self.assertEqual(repr(
+            objects[0]),
+        '<RelationB: id 3, field_base (CharField) "B1", fk (ForeignKey) RelationA, field_b (CharField) "B2", m2m (ManyToManyField) 1>')
+        self.assertEqual(repr(
+            objects[1]),
+        '<RelationBC: id 4, field_base (CharField) "C1", fk (ForeignKey) RelationA, field_b (CharField) "C2", field_c (CharField) "C3", m2m (ManyToManyField) 0>')
         self.assertEqual(len(objects), 2)
 
         ob = RelationBase.objects.get(id=3)
-        self.assertEqual(repr(ob.fk), '<RelationA: id 2, field_base (CharField) "A1", fk (ForeignKey) RelationBase, field_a (CharField) "A2", m2m (ManyToManyField) 2>')
+        self.assertEqual(repr(
+            ob.fk),
+        '<RelationA: id 2, field_base (CharField) "A1", fk (ForeignKey) RelationBase, field_a (CharField) "A2", m2m (ManyToManyField) 2>')
 
         oa = RelationA.objects.get()
         objects = oa.m2m.all()
-        self.assertEqual(repr(objects[0]), '<RelationA: id 2, field_base (CharField) "A1", fk (ForeignKey) RelationBase, field_a (CharField) "A2", m2m (ManyToManyField) 2>')
-        self.assertEqual(repr(objects[1]), '<RelationB: id 3, field_base (CharField) "B1", fk (ForeignKey) RelationA, field_b (CharField) "B2", m2m (ManyToManyField) 1>')
+        self.assertEqual(repr(
+            objects[0]),
+        '<RelationA: id 2, field_base (CharField) "A1", fk (ForeignKey) RelationBase, field_a (CharField) "A2", m2m (ManyToManyField) 2>')
+        self.assertEqual(repr(
+            objects[1]),
+        '<RelationB: id 3, field_base (CharField) "B1", fk (ForeignKey) RelationA, field_b (CharField) "B2", m2m (ManyToManyField) 1>')
         self.assertEqual(len(objects), 2)
 
     def test_user_defined_manager(self):
@@ -690,7 +799,8 @@ class PolymorphicTests(TransactionTestCase):
         ModelWithMyManager.objects.create(field1='D1a', field4='D4a')
         ModelWithMyManager.objects.create(field1='D1b', field4='D4b')
 
-        objects = ModelWithMyManager.objects.all()   # MyManager should reverse the sorting of field1
+        # MyManager should reverse the sorting of field1
+        objects = ModelWithMyManager.objects.all()
         self.assertQuerysetEqual(
             objects,
             [
@@ -709,7 +819,8 @@ class PolymorphicTests(TransactionTestCase):
         ModelWithMyManagerNoDefault.objects.create(field1='D1a', field4='D4a')
         ModelWithMyManagerNoDefault.objects.create(field1='D1b', field4='D4b')
 
-        objects = ModelWithMyManagerNoDefault.my_objects.all()   # MyManager should reverse the sorting of field1
+        # MyManager should reverse the sorting of field1
+        objects = ModelWithMyManagerNoDefault.my_objects.all()
         self.assertQuerysetEqual(
             objects,
             [
@@ -720,9 +831,16 @@ class PolymorphicTests(TransactionTestCase):
         )
 
         self.assertIs(type(ModelWithMyManagerNoDefault.my_objects), MyManager)
-        self.assertIs(type(ModelWithMyManagerNoDefault.objects), PolymorphicManager)
-        self.assertIs(type(ModelWithMyManagerNoDefault._default_manager), PolymorphicManager)
-        self.assertIs(type(ModelWithMyManagerNoDefault.objects), models.Manager)
+        self.assertIs(type(ModelWithMyManagerNoDefault.objects),
+                      PolymorphicManager)
+        self.assertIs(
+            type(ModelWithMyManagerNoDefault._default_manager),
+            PolymorphicManager
+        )
+        self.assertIs(
+            type(ModelWithMyManagerNoDefault.objects),
+            models.Manager
+        )
 
     def test_user_objects_manager_as_secondary(self):
         self.create_model2abcd()
@@ -730,8 +848,14 @@ class PolymorphicTests(TransactionTestCase):
         ModelWithMyManagerDefault.objects.create(field1='D1b', field4='D4b')
 
         self.assertIs(type(ModelWithMyManagerDefault.my_objects), MyManager)
-        self.assertIs(type(ModelWithMyManagerDefault.objects), PolymorphicManager)
-        self.assertIs(type(ModelWithMyManagerDefault._default_manager), MyManager)
+        self.assertIs(
+            type(ModelWithMyManagerDefault.objects),
+            PolymorphicManager
+        )
+        self.assertIs(
+            type(ModelWithMyManagerDefault._default_manager),
+            MyManager
+        )
         self.assertIs(type(ModelWithMyManagerDefault.objects), models.Manager)
 
     def test_user_defined_queryset_as_manager(self):
@@ -750,8 +874,10 @@ class PolymorphicTests(TransactionTestCase):
             ordered=False,
         )
 
-        self.assertEqual(type(ModelWithMyManager2.objects).__name__, 'PolymorphicManagerFromMyManagerQuerySet')
-        self.assertEqual(type(ModelWithMyManager2._default_manager).__name__, 'PolymorphicManagerFromMyManagerQuerySet')
+        self.assertEqual(type(ModelWithMyManager2.objects).__name__,
+                         'PolymorphicManagerFromMyManagerQuerySet')
+        self.assertEqual(type(ModelWithMyManager2._default_manager).__name__,
+                         'PolymorphicManagerFromMyManagerQuerySet')
         self.assertIs(type(ModelWithMyManager2.objects), models.Manager)
 
     def test_manager_inheritance(self):
@@ -762,24 +888,31 @@ class PolymorphicTests(TransactionTestCase):
         # This is just a consistency check for now, testing standard Django behavior.
         parent = PlainParentModelWithManager.objects.create()
         child = PlainChildModelWithManager.objects.create(fk=parent)
-        self.assertIs(type(PlainParentModelWithManager._default_manager), models.Manager)
-        self.assertIs(type(PlainChildModelWithManager._default_manager), PlainMyManager)
+        self.assertIs(
+            type(PlainParentModelWithManager._default_manager), models.Manager)
+        self.assertIs(
+            type(PlainChildModelWithManager._default_manager), PlainMyManager)
         self.assertIs(type(PlainChildModelWithManager.objects), PlainMyManager)
-        self.assertIs(type(PlainChildModelWithManager.objects.all()), PlainMyManagerQuerySet)
+        self.assertIs(type(PlainChildModelWithManager.objects.all()),
+                      PlainMyManagerQuerySet)
 
         # A related set is created using the model's _default_manager, so does gain extra methods.
-        self.assertIs(type(parent.childmodel_set.my_queryset_foo()), PlainMyManagerQuerySet)
+        self.assertIs(type(parent.childmodel_set.my_queryset_foo()),
+                      PlainMyManagerQuerySet)
 
         # For polymorphic models, the same should happen.
         parent = ParentModelWithManager.objects.create()
         child = ChildModelWithManager.objects.create(fk=parent)
-        self.assertIs(type(ParentModelWithManager._default_manager), PolymorphicManager)
+        self.assertIs(
+            type(ParentModelWithManager._default_manager), PolymorphicManager)
         self.assertIs(type(ChildModelWithManager._default_manager), MyManager)
         self.assertIs(type(ChildModelWithManager.objects), MyManager)
-        self.assertIs(type(ChildModelWithManager.objects.my_queryset_foo()), MyManagerQuerySet)
+        self.assertIs(
+            type(ChildModelWithManager.objects.my_queryset_foo()), MyManagerQuerySet)
 
         # A related set is created using the model's _default_manager, so does gain extra methods.
-        self.assertIs(type(parent.childmodel_set.my_queryset_foo()), MyManagerQuerySet)
+        self.assertIs(
+            type(parent.childmodel_set.my_queryset_foo()), MyManagerQuerySet)
 
     def test_proxy_models(self):
         # prepare some data
@@ -828,7 +961,8 @@ class PolymorphicTests(TransactionTestCase):
         """Checks if ContentType is capable of returning proxy models."""
         from django.contrib.contenttypes.models import ContentType
 
-        ct = ContentType.objects.get_for_model(ProxyChild, for_concrete_model=False)
+        ct = ContentType.objects.get_for_model(
+            ProxyChild, for_concrete_model=False)
         self.assertEqual(ProxyChild, ct.model_class())
 
     def test_proxy_model_inheritance(self):
@@ -849,15 +983,19 @@ class PolymorphicTests(TransactionTestCase):
         # Getting single objects
         object1 = ProxyModelBase.objects.get(name='object1')
         object2 = ProxyModelBase.objects.get(name='object2')
-        self.assertEqual(repr(object1), '<ProxyModelA: id 1, name (CharField) "object1", field1 (CharField) "">')
-        self.assertEqual(repr(object2), '<ProxyModelB: id 2, name (CharField) "object2", field2 (CharField) "bb">')
+        self.assertEqual(repr(
+            object1), '<ProxyModelA: id 1, name (CharField) "object1", field1 (CharField) "">')
+        self.assertEqual(repr(
+            object2), '<ProxyModelB: id 2, name (CharField) "object2", field2 (CharField) "bb">')
         self.assertIsInstance(object1, ProxyModelA)
         self.assertIsInstance(object2, ProxyModelB)
 
         # Same for lists
         objects = list(ProxyModelBase.objects.all().order_by('name'))
-        self.assertEqual(repr(objects[0]), '<ProxyModelA: id 1, name (CharField) "object1", field1 (CharField) "">')
-        self.assertEqual(repr(objects[1]), '<ProxyModelB: id 2, name (CharField) "object2", field2 (CharField) "bb">')
+        self.assertEqual(repr(
+            objects[0]), '<ProxyModelA: id 1, name (CharField) "object1", field1 (CharField) "">')
+        self.assertEqual(repr(
+            objects[1]), '<ProxyModelB: id 2, name (CharField) "object2", field2 (CharField) "bb">')
         self.assertIsInstance(objects[0], ProxyModelA)
         self.assertIsInstance(objects[1], ProxyModelB)
 
@@ -866,13 +1004,16 @@ class PolymorphicTests(TransactionTestCase):
         CustomPkInherit.objects.create(b='b', i='i')
         qs = CustomPkBase.objects.all()
         self.assertEqual(len(qs), 2)
-        self.assertEqual(repr(qs[0]), '<CustomPkBase: id 1, b (CharField) "b">')
-        self.assertEqual(repr(qs[1]), '<CustomPkInherit: id 2, b (CharField) "b", custom_id (AutoField/pk) 1, i (CharField) "i">')
+        self.assertEqual(
+            repr(qs[0]), '<CustomPkBase: id 1, b (CharField) "b">')
+        self.assertEqual(repr(
+            qs[1]), '<CustomPkInherit: id 2, b (CharField) "b", custom_id (AutoField/pk) 1, i (CharField) "i">')
 
     def test_fix_getattribute(self):
         # fixed issue in PolymorphicModel.__getattribute__: field name same as model name
         o = ModelFieldNameTest.objects.create(modelfieldnametest='1')
-        self.assertEqual(repr(o), '<ModelFieldNameTest: id 1, modelfieldnametest (CharField)>')
+        self.assertEqual(
+            repr(o), '<ModelFieldNameTest: id 1, modelfieldnametest (CharField)>')
 
         # if subclass defined __init__ and accessed class members,
         # __getattribute__ had a problem: "...has no attribute 'sub_and_superclass_dict'"
@@ -889,8 +1030,10 @@ class PolymorphicTests(TransactionTestCase):
         self.assertEqual(p, t)
 
         # check that the accessors to parent and sublass work correctly and return the right object
-        p = ModelShow1_plain.objects.non_polymorphic().get(field1="TestParentLinkAndRelatedName")
-        self.assertNotEqual(p, t)  # p should be Plain1 and t TestParentLinkAndRelatedName, so not equal
+        p = ModelShow1_plain.objects.non_polymorphic().get(
+            field1="TestParentLinkAndRelatedName")
+        # p should be Plain1 and t TestParentLinkAndRelatedName, so not equal
+        self.assertNotEqual(p, t)
         self.assertEqual(p, t.superclass)
         self.assertEqual(p.related_name_subclass, t)
 
@@ -965,7 +1108,8 @@ class PolymorphicTests(TransactionTestCase):
         ])
         self.assertEqual(
             sorted(ArtProject.objects.values_list('topic', 'artist')),
-            [('Painting with Tim', 'T. Turner'), ('Sculpture with Tim', 'T. Turner')]
+            [('Painting with Tim', 'T. Turner'),
+             ('Sculpture with Tim', 'T. Turner')]
         )
 
     def test_bulk_create_proxy_inheritance(self):
@@ -989,7 +1133,8 @@ class PolymorphicTests(TransactionTestCase):
         )
         self.assertEqual(
             sorted(Duck.objects.values_list('name', flat=True)),
-            ['duck1', 'duck2', 'redheadduck1', 'redheadduck2', 'rubberduck1', 'rubberduck2'],
+            ['duck1', 'duck2', 'redheadduck1',
+                'redheadduck2', 'rubberduck1', 'rubberduck2'],
         )
 
     def test_bulk_create_unsupported_multi_table_inheritance(self):
