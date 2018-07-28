@@ -12,7 +12,6 @@ class ContribTests(TestCase):
     The test suite
     """
 
-
     def test_contrib_guardian(self):
         # Regular Django inheritance should return the child model content type.
         obj = PlainC()
