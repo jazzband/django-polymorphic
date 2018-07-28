@@ -1,5 +1,5 @@
 from django.conf import settings
-from django.conf.urls import include, url
+from django.conf.urls import url
 from django.contrib.admin import AdminSite
 from django.contrib.admin.templatetags.admin_urls import admin_urlname
 from django.contrib.auth.models import User
@@ -20,12 +20,14 @@ class AdminTestCase(TestCase):
     @classmethod
     def setUpClass(cls):
         super(AdminTestCase, cls).setUpClass()
-        cls.admin_user = User.objects.create_superuser('admin', 'admin@example.org', password='admin')
+        cls.admin_user = User.objects.create_superuser(
+            'admin', 'admin@example.org', password='admin')
 
     def setUp(self):
         super(AdminTestCase, self).setUp()
 
-        # Have a separate site, to avoid dependency on polymorphic wrapping or standard admin configuration
+        # Have a separate site, to avoid dependency on polymorphic
+        # wrapping or standard admin configuration
         self.admin_site = AdminSite()
 
         if self.model is not None:
@@ -43,7 +45,8 @@ class AdminTestCase(TestCase):
         return _dec
 
     def admin_register(self, model, admin_site):
-        """Register an model with admin to the test case, test client and URL reversing code."""
+        # Register an model with admin to the test case,
+        # test client and URL reversing code.
         self.admin_site.register(model, admin_site)
 
         # Make sure the URLs are reachable by reverse()
@@ -56,7 +59,8 @@ class AdminTestCase(TestCase):
         try:
             return self.admin_site._registry[model]
         except KeyError:
-            raise ValueError("Model not registered with admin: {}".format(model))
+            raise ValueError(
+                "Model not registered with admin: {}".format(model))
 
     @classmethod
     def tearDownClass(cls):
@@ -74,22 +78,32 @@ class AdminTestCase(TestCase):
 
     def get_change_url(self, model, object_id):
         admin_instance = self.get_admin_instance(model)
-        return reverse(admin_urlname(admin_instance.opts, 'change'), args=(object_id,))
+        return reverse(
+            admin_urlname(admin_instance.opts, 'change'),
+            args=(object_id,)
+        )
 
     def get_history_url(self, model, object_id):
         admin_instance = self.get_admin_instance(model)
-        return reverse(admin_urlname(admin_instance.opts, 'history'), args=(object_id,))
+        return reverse(
+            admin_urlname(admin_instance.opts, 'history'),
+            args=(object_id,)
+        )
 
     def get_delete_url(self, model, object_id):
         admin_instance = self.get_admin_instance(model)
-        return reverse(admin_urlname(admin_instance.opts, 'delete'), args=(object_id,))
+        return reverse(
+            admin_urlname(admin_instance.opts, 'delete'),
+            args=(object_id,)
+        )
 
     def admin_get_add(self, model, qs=''):
         """
         Make a direct "add" call to the admin page, circumvening login checks.
         """
         admin_instance = self.get_admin_instance(model)
-        request = self.create_admin_request('get', self.get_add_url(model) + qs)
+        request = self.create_admin_request(
+            'get', self.get_add_url(model) + qs)
         response = admin_instance.add_view(request)
         self.assertEqual(response.status_code, 200)
         return response
@@ -99,7 +113,8 @@ class AdminTestCase(TestCase):
         Make a direct "add" call to the admin page, circumvening login checks.
         """
         admin_instance = self.get_admin_instance(model)
-        request = self.create_admin_request('post', self.get_add_url(model) + qs, data=formdata)
+        request = self.create_admin_request(
+            'post', self.get_add_url(model) + qs, data=formdata)
         response = admin_instance.add_view(request)
         self.assertFormSuccess(request.path, response)
         return response
@@ -109,7 +124,8 @@ class AdminTestCase(TestCase):
         Make a direct "add" call to the admin page, circumvening login checks.
         """
         admin_instance = self.get_admin_instance(model)
-        request = self.create_admin_request('get', self.get_changelist_url(model))
+        request = self.create_admin_request(
+            'get', self.get_changelist_url(model))
         response = admin_instance.changelist_view(request)
         self.assertEqual(response.status_code, 200)
         return response
@@ -119,7 +135,8 @@ class AdminTestCase(TestCase):
         Perform a GET request on the admin page
         """
         admin_instance = self.get_admin_instance(model)
-        request = self.create_admin_request('get', self.get_change_url(model, object_id), data=query, **extra)
+        request = self.create_admin_request(
+            'get', self.get_change_url(model, object_id), data=query, **extra)
         response = admin_instance.change_view(request, str(object_id))
         self.assertEqual(response.status_code, 200)
         return response
@@ -129,7 +146,12 @@ class AdminTestCase(TestCase):
         Make a direct "add" call to the admin page, circumvening login checks.
         """
         admin_instance = self.get_admin_instance(model)
-        request = self.create_admin_request('post', self.get_change_url(model, object_id), data=formdata, **extra)
+        request = self.create_admin_request(
+            'post',
+            self.get_change_url(model, object_id),
+            data=formdata,
+            **extra
+        )
         response = admin_instance.change_view(request, str(object_id))
         self.assertFormSuccess(request.path, response)
         return response
@@ -139,7 +161,8 @@ class AdminTestCase(TestCase):
         Perform a GET request on the admin page
         """
         admin_instance = self.get_admin_instance(model)
-        request = self.create_admin_request('get', self.get_history_url(model, object_id), data=query, **extra)
+        request = self.create_admin_request(
+            'get', self.get_history_url(model, object_id), data=query, **extra)
         response = admin_instance.history_view(request, str(object_id))
         self.assertEqual(response.status_code, 200)
         return response
@@ -149,7 +172,8 @@ class AdminTestCase(TestCase):
         Perform a GET request on the admin delete page
         """
         admin_instance = self.get_admin_instance(model)
-        request = self.create_admin_request('get', self.get_delete_url(model, object_id), data=query, **extra)
+        request = self.create_admin_request(
+            'get', self.get_delete_url(model, object_id), data=query, **extra)
         response = admin_instance.delete_view(request, str(object_id))
         self.assertEqual(response.status_code, 200)
         return response
@@ -162,9 +186,11 @@ class AdminTestCase(TestCase):
             extra = {'data': {'post': 'yes'}}
 
         admin_instance = self.get_admin_instance(model)
-        request = self.create_admin_request('post', self.get_delete_url(model, object_id), **extra)
+        request = self.create_admin_request(
+            'post', self.get_delete_url(model, object_id), **extra)
         response = admin_instance.delete_view(request, str(object_id))
-        self.assertEqual(response.status_code, 302, "Form errors in calling {0}".format(request.path))
+        self.assertEqual(response.status_code, 302,
+                         "Form errors in calling {0}".format(request.path))
         return response
 
     def create_admin_request(self, method, url, data=None, **extra):
@@ -206,9 +232,18 @@ class AdminTestCase(TestCase):
             elif 'form' in context_data:
                 errors = context_data['form'].errors
             else:
-                raise KeyError("Unknown field for errors in the TemplateResponse!")
+                raise KeyError(
+                    "Unknown field for errors in the TemplateResponse!")
 
-            self.assertEqual(response.status_code, 302,
-                             "Form errors in calling {0}:\n{1}".format(request_url, errors.as_text()))
-        self.assertTrue('/login/?next=' not in response['Location'],
-                        "Received login response for {0}".format(request_url))
+            self.assertEqual(
+                response.status_code,
+                302,
+                "Form errors in calling {0}:\n{1}".format(
+                    request_url,
+                    errors.as_text()
+                )
+            )
+        self.assertTrue(
+            '/login/?next=' not in response['Location'],
+            "Received login response for {0}".format(request_url)
+        )
