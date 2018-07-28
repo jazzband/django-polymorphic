@@ -10,7 +10,6 @@ import sys
 import warnings
 
 import django
-from django.core.exceptions import ImproperlyConfigured
 from django.db import models
 from django.db.models.base import ModelBase
 from django.db.models.manager import ManagerDescriptor
@@ -22,14 +21,15 @@ from .query import PolymorphicQuerySet
 # These are forbidden as field names (a descriptive exception is raised)
 POLYMORPHIC_SPECIAL_Q_KWORDS = ['instance_of', 'not_instance_of']
 
-DUMPDATA_COMMAND = os.path.join('django', 'core', 'management', 'commands', 'dumpdata.py')
+DUMPDATA_COMMAND = os.path.join(
+    'django', 'core', 'management', 'commands', 'dumpdata.py')
 
 
 class ManagerInheritanceWarning(RuntimeWarning):
     pass
 
 
-###################################################################################
+################################################
 # PolymorphicModel meta class
 
 class PolymorphicModelBase(ModelBase):
@@ -70,7 +70,8 @@ class PolymorphicModelBase(ModelBase):
                 if not hasattr(attrs['Meta'], 'manager_inheritance_from_future'):
                     attrs['Meta'].manager_inheritance_from_future = True
             else:
-                attrs['Meta'] = type('Meta', (object,), {'manager_inheritance_from_future': True})
+                attrs['Meta'] = type('Meta', (object,), {
+                                     'manager_inheritance_from_future': True})
 
         # create new model
         new_class = self.call_superclass_new_method(model_name, bases, attrs)
@@ -80,7 +81,8 @@ class PolymorphicModelBase(ModelBase):
 
         # validate resulting default manager
         if not new_class._meta.abstract and not new_class._meta.swapped:
-            self.validate_model_manager(new_class.objects, model_name, "objects")
+            self.validate_model_manager(
+                new_class.objects, model_name, "objects")
 
         # for __init__ function of this class (monkeypatching inheritance accessors)
         new_class.polymorphic_super_sub_accessors_replaced = False
@@ -131,7 +133,8 @@ class PolymorphicModelBase(ModelBase):
 
         if do_app_label_workaround:
             meta.app_label = 'poly_dummy_app_label'
-        new_class = super(PolymorphicModelBase, self).__new__(self, model_name, bases, attrs)
+        new_class = super(PolymorphicModelBase, self).__new__(
+            self, model_name, bases, attrs)
         if do_app_label_workaround:
             del(meta.app_label)
         return new_class
@@ -156,14 +159,14 @@ class PolymorphicModelBase(ModelBase):
                 extra = ''
             e = ('PolymorphicModel: "{0}.{1}" manager is of type "{2}", but must be a subclass of'
                  ' PolymorphicManager.{extra} to support retrieving subclasses'.format(
-                model_name, manager_name, type(manager).__name__, extra=extra))
+                     model_name, manager_name, type(manager).__name__, extra=extra))
             warnings.warn(e, ManagerInheritanceWarning, stacklevel=3)
             return manager
 
         if not getattr(manager, 'queryset_class', None) or not issubclass(manager.queryset_class, PolymorphicQuerySet):
             e = ('PolymorphicModel: "{0}.{1}" has been instantiated with a queryset class '
                  'which is not a subclass of PolymorphicQuerySet (which is required)'.format(
-                model_name, manager_name))
+                     model_name, manager_name))
             warnings.warn(e, ManagerInheritanceWarning, stacklevel=3)
         return manager
 
@@ -171,7 +174,8 @@ class PolymorphicModelBase(ModelBase):
     def base_objects(self):
         warnings.warn(
             "Using PolymorphicModel.base_objects is deprecated.\n"
-            "Use {0}.objects.non_polymorphic() instead.".format(self.__class__.__name__),
+            "Use {0}.objects.non_polymorphic() instead.".format(
+                self.__class__.__name__),
             DeprecationWarning, stacklevel=2)
         return self._base_objects
 
@@ -198,7 +202,8 @@ class PolymorphicModelBase(ModelBase):
             # (non-polymorphic default manager is 'base_objects' for polymorphic models).
             # This way we don't need to patch django.core.management.commands.dumpdata
             # for all supported Django versions.
-            frm = inspect.stack()[1]  # frm[1] is caller file name, frm[3] is caller function name
+            # frm[1] is caller file name, frm[3] is caller function name
+            frm = inspect.stack()[1]
             if DUMPDATA_COMMAND in frm[1]:
                 return self._base_objects
 

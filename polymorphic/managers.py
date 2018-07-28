@@ -27,8 +27,10 @@ class PolymorphicManager(models.Manager):
 
     @classmethod
     def from_queryset(cls, queryset_class, class_name=None):
-        manager = super(PolymorphicManager, cls).from_queryset(queryset_class, class_name=class_name)
-        manager.queryset_class = queryset_class  # also set our version, Django uses _queryset_class
+        manager = super(PolymorphicManager, cls).from_queryset(
+            queryset_class, class_name=class_name)
+        # also set our version, Django uses _queryset_class
+        manager.queryset_class = queryset_class
         return manager
 
     def get_queryset(self):
@@ -38,7 +40,9 @@ class PolymorphicManager(models.Manager):
         return qs
 
     def __str__(self):
-        return '%s (PolymorphicManager) using %s' % (self.__class__.__name__, self.queryset_class.__name__)
+        return '%s (PolymorphicManager) using %s' % (
+            self.__class__.__name__,
+            self.queryset_class.__name__)
 
     # Proxied methods
     def non_polymorphic(self):
@@ -51,4 +55,5 @@ class PolymorphicManager(models.Manager):
         return self.all().not_instance_of(*args)
 
     def get_real_instances(self, base_result_objects=None):
-        return self.all().get_real_instances(base_result_objects=base_result_objects)
+        return self.all().get_real_instances(
+            base_result_objects=base_result_objects)
