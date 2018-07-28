@@ -2,10 +2,18 @@ from django.contrib import admin
 from django.contrib.contenttypes.models import ContentType
 from django.utils.html import escape
 
-from polymorphic.admin import PolymorphicChildModelAdmin, PolymorphicChildModelFilter, \
- PolymorphicInlineSupportMixin, PolymorphicParentModelAdmin, StackedPolymorphicInline
+from polymorphic.admin import (
+    PolymorphicChildModelAdmin,
+    PolymorphicChildModelFilter,
+    PolymorphicInlineSupportMixin,
+    PolymorphicParentModelAdmin, StackedPolymorphicInline
+)
 from polymorphic.tests.admintestcase import AdminTestCase
-from polymorphic.tests.models import InlineModelA, InlineModelB, InlineParent, Model2A, Model2B, Model2C, Model2D
+from polymorphic.tests.models import (
+    InlineModelA, InlineModelB,
+    InlineParent, Model2A, Model2B,
+    Model2C, Model2D
+)
 
 
 class PolymorphicAdminTests(AdminTestCase):
