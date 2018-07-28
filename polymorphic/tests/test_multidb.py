@@ -76,8 +76,10 @@ class MultipleDatabasesTests(TestCase):
 
     def test_forward_many_to_one_descriptor_on_non_default_database(self):
         def func():
-            blog = BlogA.objects.db_manager('secondary').create(name='Blog', info='Info')
-            entry = BlogEntry.objects.db_manager('secondary').create(blog=blog, text='Text')
+            blog = BlogA.objects.db_manager(
+                'secondary').create(name='Blog', info='Info')
+            entry = BlogEntry.objects.db_manager(
+                'secondary').create(blog=blog, text='Text')
             ContentType.objects.clear_cache()
             entry = BlogEntry.objects.db_manager('secondary').get(pk=entry.id)
             self.assertEqual(blog, entry.blog)
@@ -87,11 +89,14 @@ class MultipleDatabasesTests(TestCase):
 
     def test_reverse_many_to_one_descriptor_on_non_default_database(self):
         def func():
-            blog = BlogA.objects.db_manager('secondary').create(name='Blog', info='Info')
-            entry = BlogEntry.objects.db_manager('secondary').create(blog=blog, text='Text')
+            blog = BlogA.objects.db_manager(
+                'secondary').create(name='Blog', info='Info')
+            entry = BlogEntry.objects.db_manager(
+                'secondary').create(blog=blog, text='Text')
             ContentType.objects.clear_cache()
             blog = BlogA.objects.db_manager('secondary').get(pk=blog.id)
-            self.assertEqual(entry, blog.blogentry_set.using('secondary').get())
+            self.assertEqual(
+                entry, blog.blogentry_set.using('secondary').get())
 
         # Ensure no queries are made using the default database.
         self.assertNumQueries(0, func)
@@ -99,7 +104,8 @@ class MultipleDatabasesTests(TestCase):
     def test_reverse_one_to_one_descriptor_on_non_default_database(self):
         def func():
             m2a = Model2A.objects.db_manager('secondary').create(field1='A1')
-            one2one = One2OneRelatingModel.objects.db_manager('secondary').create(one2one=m2a, field1='121')
+            one2one = One2OneRelatingModel.objects.db_manager(
+                'secondary').create(one2one=m2a, field1='121')
             ContentType.objects.clear_cache()
             m2a = Model2A.objects.db_manager('secondary').get(pk=m2a.id)
             self.assertEqual(one2one, m2a.one2onerelatingmodel)
@@ -114,7 +120,8 @@ class MultipleDatabasesTests(TestCase):
             rm.many2many.add(m2a)
             ContentType.objects.clear_cache()
             m2a = Model2A.objects.db_manager('secondary').get(pk=m2a.id)
-            self.assertEqual(rm, m2a.relatingmodel_set.using('secondary').get())
+            self.assertEqual(
+                rm, m2a.relatingmodel_set.using('secondary').get())
 
         # Ensure no queries are made using the default database.
         self.assertNumQueries(0, func)
