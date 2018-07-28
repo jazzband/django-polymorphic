@@ -6,7 +6,8 @@ from __future__ import absolute_import
 
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
-from django.db.models.fields.related import ReverseOneToOneDescriptor, ForwardManyToOneDescriptor
+from django.db.models.fields.related import (
+    ReverseOneToOneDescriptor, ForwardManyToOneDescriptor)
 from django.db.utils import DEFAULT_DB_ALIAS
 from django.utils import six
 
@@ -14,7 +15,7 @@ from .base import PolymorphicModelBase
 from .managers import PolymorphicManager
 from .query_translate import translate_polymorphic_Q_object
 
-###################################################################################
+#########################################################
 # PolymorphicModel
 
 
@@ -31,18 +32,25 @@ class PolymorphicModel(six.with_metaclass(PolymorphicModelBase, models.Model)):
     Abstract base class that provides polymorphic behaviour
     for any model directly or indirectly derived from it.
 
-    PolymorphicModel declares one field for internal use (:attr:`polymorphic_ctype`)
-    and provides a polymorphic manager as the default manager (and as 'objects').
+    PolymorphicModel declares one field for internal use
+    (:attr:`polymorphic_ctype`)
+    and provides a polymorphic manager as the default manager
+    (and as 'objects').
     """
 
-    # for PolymorphicModelBase, so it can tell which models are polymorphic and which are not (duck typing)
+    # for PolymorphicModelBase, so it can tell which models
+    # are polymorphic and which are not (duck typing)
     polymorphic_model_marker = True
 
-    # for PolymorphicQuery, True => an overloaded __repr__ with nicer multi-line output is used by PolymorphicQuery
+    # for PolymorphicQuery, True => an overloaded __repr__
+    # with nicer multi-line output is used by PolymorphicQuery
     polymorphic_query_multiline_output = False
 
-    # avoid ContentType related field accessor clash (an error emitted by model validation)
-    #: The model field that stores the :class:`~django.contrib.contenttypes.models.ContentType` reference to the actual class.
+    # avoid ContentType related field accessor clash
+    # (an error emitted by model validation)
+    # : The model field that stores the
+    # :class:`~django.contrib.contenttypes.models.ContentType`
+    # reference to the actual class.
     polymorphic_ctype = models.ForeignKey(
         ContentType, null=True, editable=False, on_delete=models.CASCADE,
         related_name='polymorphic_%(app_label)s.%(class)s_set+'
@@ -73,7 +81,8 @@ class PolymorphicModel(six.with_metaclass(PolymorphicModelBase, models.Model)):
         # field to figure out the real class of this object
         # (used by PolymorphicQuerySet._get_real_instances)
         if not self.polymorphic_ctype_id:
-            self.polymorphic_ctype = ContentType.objects.db_manager(using).get_for_model(self, for_concrete_model=False)
+            self.polymorphic_ctype = ContentType.objects.db_manager(
+                using).get_for_model(self, for_concrete_model=False)
     pre_save_polymorphic.alters_data = True
 
     def save(self, *args, **kwargs):
@@ -103,7 +112,8 @@ class PolymorphicModel(six.with_metaclass(PolymorphicModelBase, models.Model)):
         # so we use the following version, which uses the ContentType manager cache.
         # Note that model_class() can return None for stale content types;
         # when the content type record still exists but no longer refers to an existing model.
-        model = ContentType.objects.db_manager(self._state.db).get_for_id(self.polymorphic_ctype_id).model_class()
+        model = ContentType.objects.db_manager(self._state.db).get_for_id(
+            self.polymorphic_ctype_id).model_class()
 
         # Protect against bad imports (dumpdata without --natural) or other
         # issues missing with the ContentType models.
@@ -119,13 +129,17 @@ class PolymorphicModel(six.with_metaclass(PolymorphicModelBase, models.Model)):
         model_class = self.get_real_instance_class()
         if model_class is None:
             return None
-        return ContentType.objects.db_manager(self._state.db).get_for_model(model_class, for_concrete_model=True).pk
+        return ContentType.objects.db_manager(
+            self._state.db).get_for_model(
+            model_class, for_concrete_model=True).pk
 
     def get_real_concrete_instance_class(self):
         model_class = self.get_real_instance_class()
         if model_class is None:
             return None
-        return ContentType.objects.db_manager(self._state.db).get_for_model(model_class, for_concrete_model=True).model_class()
+        return ContentType.objects.db_manager(
+            self._state.db).get_for_model(
+            model_class, for_concrete_model=True).model_class()
 
     def get_real_instance(self):
         """
@@ -182,11 +196,15 @@ class PolymorphicModel(six.with_metaclass(PolymorphicModelBase, models.Model)):
             # Here be dragons.
             orig_accessor = getattr(self.__class__, name, None)
             if issubclass(type(orig_accessor), (ReverseOneToOneDescriptor, ForwardManyToOneDescriptor)):
-                setattr(self.__class__, name, property(create_accessor_function_for_model(model, name)))
+                setattr(self.__class__, name, property(
+                    create_accessor_function_for_model(model, name)))
 
     def _get_inheritance_relation_fields_and_models(self):
-        """helper function for __init__:
-        determine names of all Django inheritance accessor member functions for type(self)"""
+        """
+        helper function for __init__:
+        determine names of all Django inheritance accessor
+        member functions for type(self)
+        """
 
         def add_model(model, field_name, result):
             result[field_name] = model
@@ -201,14 +219,18 @@ class PolymorphicModel(six.with_metaclass(PolymorphicModelBase, models.Model)):
         def add_all_super_models(model, result):
             for super_cls, field_to_super in model._meta.parents.items():
                 if field_to_super is not None:  # if not a link to a proxy model
-                    field_name = field_to_super.name  # the field on model can have a different name to super_cls._meta.module_name, if the field is created manually using 'parent_link'
+                    # the field on model can have a different name to super_cls._meta.module_name, if the field is created manually using 'parent_link'
+                    field_name = field_to_super.name
                     add_model_if_regular(super_cls, field_name, result)
                     add_all_super_models(super_cls, result)
 
         def add_all_sub_models(super_cls, result):
-            for sub_cls in super_cls.__subclasses__():  # go through all subclasses of model
-                if super_cls in sub_cls._meta.parents:  # super_cls may not be in sub_cls._meta.parents if super_cls is a proxy model
-                    field_to_super = sub_cls._meta.parents[super_cls]  # get the field that links sub_cls to super_cls
+            # go through all subclasses of model
+            for sub_cls in super_cls.__subclasses__():
+                # super_cls may not be in sub_cls._meta.parents if super_cls is a proxy model
+                if super_cls in sub_cls._meta.parents:
+                    # get the field that links sub_cls to super_cls
+                    field_to_super = sub_cls._meta.parents[super_cls]
                     if field_to_super is not None:    # if filed_to_super is not a link to a proxy model
                         super_to_sub_related_field = field_to_super.remote_field
                         if super_to_sub_related_field.related_name is None:
@@ -218,7 +240,8 @@ class PolymorphicModel(six.with_metaclass(PolymorphicModelBase, models.Model)):
                             # otherwise use the given related name
                             to_subclass_fieldname = super_to_sub_related_field.related_name
 
-                        add_model_if_regular(sub_cls, to_subclass_fieldname, result)
+                        add_model_if_regular(
+                            sub_cls, to_subclass_fieldname, result)
 
         result = {}
         add_all_super_models(self.__class__, result)
