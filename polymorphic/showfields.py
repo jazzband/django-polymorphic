@@ -12,8 +12,8 @@ RE_DEFERRED = re.compile('_Deferred_.*')
 @python_2_unicode_compatible
 class ShowFieldBase(object):
     """ base class for the ShowField... model mixins, does the work """
-
-    polymorphic_query_multiline_output = True  # cause nicer multiline PolymorphicQuery output
+    # cause nicer multiline PolymorphicQuery output
+    polymorphic_query_multiline_output = True
 
     polymorphic_showfield_type = False
     polymorphic_showfield_content = False
@@ -64,11 +64,13 @@ class ShowFieldBase(object):
 
             out = field.name
 
-            # if this is the standard primary key named "id", print it as we did with older versions of django_polymorphic
+            # if this is the standard primary key named "id",
+            # print it as we did with older versions of django_polymorphic
             if field.primary_key and field.name == 'id' and type(field) == models.AutoField:
                 out += ' ' + str(getattr(self, field.name))
 
-            # otherwise, display it just like all other fields (with correct type, shortened content etc.)
+            # otherwise, display it just like all other fields
+            # (with correct type, shortened content etc.)
             else:
                 if self.polymorphic_showfield_type:
                     out += ' (' + type(field).__name__
@@ -77,7 +79,8 @@ class ShowFieldBase(object):
                     out += ')'
 
                 if self.polymorphic_showfield_content:
-                    out += self._showfields_get_content(field.name, type(field))
+                    out += self._showfields_get_content(
+                        field.name, type(field))
 
             parts.append((False, out, ','))
 
@@ -106,16 +109,26 @@ class ShowFieldBase(object):
 
         # add annotate fields
         if hasattr(self, 'polymorphic_annotate_names'):
-            self._showfields_add_dynamic_fields(self.polymorphic_annotate_names, 'Ann', parts)
+            self._showfields_add_dynamic_fields(
+                self.polymorphic_annotate_names,
+                'Ann',
+                parts
+            )
 
         # add extra() select fields
         if hasattr(self, 'polymorphic_extra_select_names'):
-            self._showfields_add_dynamic_fields(self.polymorphic_extra_select_names, 'Extra', parts)
+            self._showfields_add_dynamic_fields(
+                self.polymorphic_extra_select_names,
+                'Extra',
+                parts
+            )
 
         if self.polymorphic_showfield_deferred:
             fields = self.get_deferred_fields()
             if fields:
-                parts.append((False, "deferred[{0}]".format(",".join(sorted(fields))), ''))
+                parts.append(
+                    (False,
+                        "deferred[{0}]".format(",".join(sorted(fields))), ''))
 
         # format result
 
@@ -161,7 +174,8 @@ class ShowFieldType(ShowFieldBase):
 
 
 class ShowFieldContent(ShowFieldBase):
-    """ model mixin that shows the object's class, it's fields and field contents """
+    # model mixin that shows the object's class,
+    # it's fields and field contents
     polymorphic_showfield_content = True
 
 
