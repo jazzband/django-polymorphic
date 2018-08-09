@@ -73,6 +73,7 @@ from polymorphic.tests.models import (
     RelationB,
     RelationBC,
     RelationBase,
+    RelatingModel,
     RubberDuck,
     TestParentLinkAndRelatedName,
     UUIDArtProject,
@@ -997,3 +998,12 @@ class PolymorphicTests(TransactionTestCase):
             MultiTableDerived.objects.bulk_create([
                 MultiTableDerived(field1='field1', field2='field2')
             ])
+
+    def test_prefetch_related_behaves_normally_with_polymorphic_model(self):
+        b1 = RelatingModel.objects.create()
+        b2 = RelatingModel.objects.create()
+        a = b1.many2many.create()
+        b2.many2many.add(a)
+        qs = RelatingModel.objects.prefetch_related('many2many')
+        for obj in qs:
+            self.assertEqual(len(obj.many2many.all()), 1)
