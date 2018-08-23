@@ -153,6 +153,7 @@ class BasePolymorphicModelFormSet(BaseModelFormSet):
         # the minimum forms.
         if i >= self.initial_form_count() and i >= self.min_num:
             defaults['empty_permitted'] = True
+            defaults['use_required_attribute'] = False
         defaults.update(kwargs)
 
         # Need to find the model that will be displayed in this form.
@@ -248,6 +249,7 @@ class BasePolymorphicModelFormSet(BaseModelFormSet):
                 auto_id=self.auto_id,
                 prefix=self.add_prefix('__prefix__'),
                 empty_permitted=True,
+                use_required_attribute=False,
                 **kwargs
             )
             self.add_fields(form, None)
