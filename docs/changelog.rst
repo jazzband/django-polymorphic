@@ -1,6 +1,12 @@
 Changelog
 =========
 
+Changes in 2.0.3 (2018-08-24)
+-----------------------------
+
+* Fixed admin crash for Django 2.1 with missing ``use_required_attribute``.
+
+
 Changes in 2.0.2 (2018-02-05)
 -----------------------------
 
