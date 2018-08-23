@@ -35,7 +35,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('title', models.CharField(max_length=200)),
-                ('polymorphic_ctype', models.ForeignKey(related_name='polymorphic_pexp.proxybase_set+', editable=False, to='contenttypes.ContentType', null=True)),
+                ('polymorphic_ctype', models.ForeignKey(related_name='polymorphic_pexp.proxybase_set+', editable=False, on_delete=models.CASCADE, to='contenttypes.ContentType', null=True)),
             ],
             options={
                 'ordering': ('title',),
@@ -66,7 +66,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='ArtProject',
             fields=[
-                ('project_ptr', models.OneToOneField(parent_link=True, auto_created=True, primary_key=True, serialize=False, to='pexp.Project')),
+                ('project_ptr', models.OneToOneField(parent_link=True, auto_created=True, primary_key=True, serialize=False, on_delete=models.CASCADE, to='pexp.Project')),
                 ('artist', models.CharField(max_length=30)),
             ],
             options={
@@ -77,7 +77,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='NormalModelB',
             fields=[
-                ('normalmodela_ptr', models.OneToOneField(parent_link=True, auto_created=True, primary_key=True, serialize=False, to='pexp.NormalModelA')),
+                ('normalmodela_ptr', models.OneToOneField(parent_link=True, auto_created=True, primary_key=True, serialize=False, on_delete=models.CASCADE, to='pexp.NormalModelA')),
                 ('field2', models.CharField(max_length=10)),
             ],
             bases=('pexp.normalmodela',),
@@ -85,7 +85,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='ResearchProject',
             fields=[
-                ('project_ptr', models.OneToOneField(parent_link=True, auto_created=True, primary_key=True, serialize=False, to='pexp.Project')),
+                ('project_ptr', models.OneToOneField(parent_link=True, auto_created=True, primary_key=True, serialize=False, on_delete=models.CASCADE, to='pexp.Project')),
                 ('supervisor', models.CharField(max_length=30)),
             ],
             options={
@@ -96,7 +96,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='TestModelB',
             fields=[
-                ('testmodela_ptr', models.OneToOneField(parent_link=True, auto_created=True, primary_key=True, serialize=False, to='pexp.TestModelA')),
+                ('testmodela_ptr', models.OneToOneField(parent_link=True, auto_created=True, primary_key=True, serialize=False, on_delete=models.CASCADE, to='pexp.TestModelA')),
                 ('field2', models.CharField(max_length=10)),
             ],
             options={
@@ -107,7 +107,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='UUIDModelB',
             fields=[
-                ('uuidmodela_ptr', models.OneToOneField(parent_link=True, auto_created=True, primary_key=True, serialize=False, to='pexp.UUIDModelA')),
+                ('uuidmodela_ptr', models.OneToOneField(parent_link=True, auto_created=True, primary_key=True, serialize=False, on_delete=models.CASCADE, to='pexp.UUIDModelA')),
                 ('field2', models.CharField(max_length=10)),
             ],
             options={
@@ -118,17 +118,17 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='uuidmodela',
             name='polymorphic_ctype',
-            field=models.ForeignKey(related_name='polymorphic_pexp.uuidmodela_set+', editable=False, to='contenttypes.ContentType', null=True),
+            field=models.ForeignKey(related_name='polymorphic_pexp.uuidmodela_set+', editable=False, on_delete=models.CASCADE, to='contenttypes.ContentType', null=True),
         ),
         migrations.AddField(
             model_name='testmodela',
             name='polymorphic_ctype',
-            field=models.ForeignKey(related_name='polymorphic_pexp.testmodela_set+', editable=False, to='contenttypes.ContentType', null=True),
+            field=models.ForeignKey(related_name='polymorphic_pexp.testmodela_set+', editable=False, on_delete=models.CASCADE, to='contenttypes.ContentType', null=True),
         ),
         migrations.AddField(
             model_name='project',
             name='polymorphic_ctype',
-            field=models.ForeignKey(related_name='polymorphic_pexp.project_set+', editable=False, to='contenttypes.ContentType', null=True),
+            field=models.ForeignKey(related_name='polymorphic_pexp.project_set+', editable=False, on_delete=models.CASCADE, to='contenttypes.ContentType', null=True),
         ),
         migrations.CreateModel(
             name='ProxyA',
@@ -151,7 +151,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='NormalModelC',
             fields=[
-                ('normalmodelb_ptr', models.OneToOneField(parent_link=True, auto_created=True, primary_key=True, serialize=False, to='pexp.NormalModelB')),
+                ('normalmodelb_ptr', models.OneToOneField(parent_link=True, auto_created=True, primary_key=True, serialize=False, on_delete=models.CASCADE, to='pexp.NormalModelB')),
                 ('field3', models.CharField(max_length=10)),
             ],
             bases=('pexp.normalmodelb',),
@@ -159,7 +159,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='TestModelC',
             fields=[
-                ('testmodelb_ptr', models.OneToOneField(parent_link=True, auto_created=True, primary_key=True, serialize=False, to='pexp.TestModelB')),
+                ('testmodelb_ptr', models.OneToOneField(parent_link=True, auto_created=True, primary_key=True, serialize=False, on_delete=models.CASCADE, to='pexp.TestModelB')),
                 ('field3', models.CharField(max_length=10)),
                 ('field4', models.ManyToManyField(related_name='related_c', to='pexp.TestModelB')),
             ],
@@ -171,7 +171,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='UUIDModelC',
             fields=[
-                ('uuidmodelb_ptr', models.OneToOneField(parent_link=True, auto_created=True, primary_key=True, serialize=False, to='pexp.UUIDModelB')),
+                ('uuidmodelb_ptr', models.OneToOneField(parent_link=True, auto_created=True, primary_key=True, serialize=False, on_delete=models.CASCADE, to='pexp.UUIDModelB')),
                 ('field3', models.CharField(max_length=10)),
             ],
             options={

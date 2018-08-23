@@ -38,7 +38,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='BankPayment',
             fields=[
-                ('payment_ptr', models.OneToOneField(parent_link=True, auto_created=True, primary_key=True, serialize=False, to='orders.Payment')),
+                ('payment_ptr', models.OneToOneField(parent_link=True, auto_created=True, primary_key=True, serialize=False, on_delete=models.CASCADE, to='orders.Payment')),
                 ('bank_name', models.CharField(max_length=100)),
                 ('swift', models.CharField(max_length=20)),
             ],
@@ -51,7 +51,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='CreditCardPayment',
             fields=[
-                ('payment_ptr', models.OneToOneField(parent_link=True, auto_created=True, primary_key=True, serialize=False, to='orders.Payment')),
+                ('payment_ptr', models.OneToOneField(parent_link=True, auto_created=True, primary_key=True, serialize=False, on_delete=models.CASCADE, to='orders.Payment')),
                 ('card_type', models.CharField(max_length=10)),
                 ('expiry_month', models.PositiveSmallIntegerField(choices=[(1, 'jan'), (2, 'feb'), (3, 'mar'), (4, 'apr'), (5, 'may'), (6, 'jun'), (7, 'jul'), (8, 'aug'), (9, 'sep'), (10, 'oct'), (11, 'nov'), (12, 'dec')])),
                 ('expiry_year', models.PositiveIntegerField()),
@@ -65,7 +65,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='SepaPayment',
             fields=[
-                ('payment_ptr', models.OneToOneField(parent_link=True, auto_created=True, primary_key=True, serialize=False, to='orders.Payment')),
+                ('payment_ptr', models.OneToOneField(parent_link=True, auto_created=True, primary_key=True, serialize=False, on_delete=models.CASCADE, to='orders.Payment')),
                 ('iban', models.CharField(max_length=34)),
                 ('bic', models.CharField(max_length=11)),
             ],
@@ -78,11 +78,11 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='payment',
             name='order',
-            field=models.ForeignKey(to='orders.Order'),
+            field=models.ForeignKey(to='orders.Order', on_delete=models.CASCADE),
         ),
         migrations.AddField(
             model_name='payment',
             name='polymorphic_ctype',
-            field=models.ForeignKey(related_name='polymorphic_orders.payment_set+', editable=False, to='contenttypes.ContentType', null=True),
+            field=models.ForeignKey(related_name='polymorphic_orders.payment_set+', editable=False, on_delete=models.CASCADE, to='contenttypes.ContentType', null=True),
         ),
     ]
