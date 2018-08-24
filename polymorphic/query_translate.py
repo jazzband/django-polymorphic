@@ -5,11 +5,11 @@ PolymorphicQuerySet support functions
 from __future__ import absolute_import
 
 import copy
-from functools import reduce
 
 from django.apps import apps
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
+from django.db.models import Q
 from django.db.models.fields.related import ForeignObjectRel, RelatedField
 from django.db.utils import DEFAULT_DB_ALIAS
 from django.utils import six
@@ -105,9 +105,9 @@ def _translate_polymorphic_filter_definition(queryset_model, field_path, field_v
     # handle instance_of expressions or alternatively,
     # if this is a normal Django filter expression, return None
     if field_path == 'instance_of':
-        return _create_model_filter_Q(field_val, using=using)
+        return create_instanceof_q(field_val, using=using)
     elif field_path == 'not_instance_of':
-        return _create_model_filter_Q(field_val, not_instance_of=True, using=using)
+        return create_instanceof_q(field_val, not_instance_of=True, using=using)
     elif '___' not in field_path:
         return None  # no change
 
@@ -214,7 +214,7 @@ def translate_polymorphic_field_path(queryset_model, field_path):
     return newpath
 
 
-def _create_model_filter_Q(modellist, not_instance_of=False, using=DEFAULT_DB_ALIAS):
+def create_instanceof_q(modellist, not_instance_of=False, using=DEFAULT_DB_ALIAS):
     """
     Helper function for instance_of / not_instance_of
     Creates and returns a Q object that filters for the models in modellist,
@@ -226,27 +226,32 @@ def _create_model_filter_Q(modellist, not_instance_of=False, using=DEFAULT_DB_AL
     efficiently however (regarding the resulting sql), should an optimization
     be needed.
     """
-
     if not modellist:
         return None
 
-    from .models import PolymorphicModel
-
-    if type(modellist) != list and type(modellist) != tuple:
+    if not isinstance(modellist, (list, tuple)):
+        from .models import PolymorphicModel
         if issubclass(modellist, PolymorphicModel):
             modellist = [modellist]
         else:
-            assert False, 'PolymorphicModel: instance_of expects a list of (polymorphic) models or a single (polymorphic) model'
+            raise TypeError(
+                'PolymorphicModel: instance_of expects a list of (polymorphic) '
+                'models or a single (polymorphic) model'
+            )
 
-    def q_class_with_subclasses(model):
-        q = models.Q(polymorphic_ctype=ContentType.objects.db_manager(using).get_for_model(model, for_concrete_model=False))
-        for subclass in model.__subclasses__():
-            q = q | q_class_with_subclasses(subclass)
-        return q
-
-    qlist = [q_class_with_subclasses(m) for m in modellist]
-
-    q_ored = reduce(lambda a, b: a | b, qlist)
+    contenttype_ids = _get_mro_content_type_ids(modellist, using)
+    q = Q(polymorphic_ctype__in=sorted(contenttype_ids))
     if not_instance_of:
-        q_ored = ~q_ored
-    return q_ored
+        q = ~q
+    return q
+
+
+def _get_mro_content_type_ids(models, using):
+    contenttype_ids = set()
+    for model in models:
+        ct = ContentType.objects.db_manager(using).get_for_model(model, for_concrete_model=False)
+        contenttype_ids.add(ct.pk)
+        subclasses = model.__subclasses__()
+        if subclasses:
+            contenttype_ids.update(_get_mro_content_type_ids(subclasses, using))
+    return contenttype_ids

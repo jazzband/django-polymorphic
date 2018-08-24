@@ -1,12 +1,13 @@
 import re
 import uuid
 
-import django
+from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.db.models import Case, Count, Q, When
 from django.test import TestCase, TransactionTestCase
 from django.utils import six
 
+from polymorphic import query_translate
 from polymorphic.managers import PolymorphicManager
 from polymorphic.models import PolymorphicTypeUndefined
 from polymorphic.tests.models import (
@@ -342,6 +343,14 @@ class PolymorphicTests(TransactionTestCase):
             transform=lambda o: o.__class__,
             ordered=False,
         )
+
+    def test_create_instanceof_q(self):
+        q = query_translate.create_instanceof_q([Model2B])
+        expected = sorted([
+            ContentType.objects.get_for_model(m).pk
+            for m in [Model2B, Model2C, Model2D]
+        ])
+        self.assertEqual(dict(q.children), dict(polymorphic_ctype__in=expected))
 
     def test_base_manager(self):
         def base_manager(model):
