@@ -203,7 +203,7 @@ class PolymorphicModelBase(ModelBase):
                 return self._base_objects
 
         manager = super(PolymorphicModelBase, self)._default_manager
-        if not isinstance(manager, PolymorphicManager):
+        if not isinstance(manager, PolymorphicManager) and not manager.__class__.__name__ == 'TreeManager':
             warnings.warn("{0}._default_manager is not a PolymorphicManager".format(
                 self.__class__.__name__
             ), ManagerInheritanceWarning)
