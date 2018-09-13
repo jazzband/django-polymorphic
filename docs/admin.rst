@@ -1,7 +1,7 @@
 Django admin integration
 ========================
 
-Off course, it's possible to register individual polymorphic models in the Django admin interface.
+Of course, it's possible to register individual polymorphic models in the Django admin interface.
 However, to use these models in a single cohesive interface, some extra base classes are available.
 
 Setup
