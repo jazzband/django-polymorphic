@@ -4,7 +4,7 @@ import uuid
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.db.models import Case, Count, Q, When
-from django.test import TestCase, TransactionTestCase
+from django.test import TransactionTestCase
 from django.utils import six
 
 from polymorphic import query_translate
@@ -68,13 +68,16 @@ from polymorphic.tests.models import (
     ProxyModelA,
     ProxyModelB,
     ProxyModelBase,
-    QuerySet,
     RedheadDuck,
     RelationA,
     RelationB,
     RelationBC,
     RelationBase,
     RubberDuck,
+    SubclassSelectorAbstractBaseModel,
+    SubclassSelectorAbstractConcreteModel,
+    SubclassSelectorProxyBaseModel,
+    SubclassSelectorProxyConcreteModel,
     TestParentLinkAndRelatedName,
     UUIDArtProject,
     UUIDPlainA,
@@ -852,21 +855,21 @@ class PolymorphicTests(TransactionTestCase):
         self.assertEqual(ProxyModelB.objects.model, ProxyModelB)
 
         # Create objects
-        ProxyModelA.objects.create(name="object1")
-        ProxyModelB.objects.create(name="object2", field2="bb")
+        object1_pk = ProxyModelA.objects.create(name="object1").pk
+        object2_pk = ProxyModelB.objects.create(name="object2", field2="bb").pk
 
         # Getting single objects
         object1 = ProxyModelBase.objects.get(name='object1')
         object2 = ProxyModelBase.objects.get(name='object2')
-        self.assertEqual(repr(object1), '<ProxyModelA: id 1, name (CharField) "object1", field1 (CharField) "">')
-        self.assertEqual(repr(object2), '<ProxyModelB: id 2, name (CharField) "object2", field2 (CharField) "bb">')
+        self.assertEqual(repr(object1), '<ProxyModelA: id %i, name (CharField) "object1", field1 (CharField) "">' % object1_pk)
+        self.assertEqual(repr(object2), '<ProxyModelB: id %i, name (CharField) "object2", field2 (CharField) "bb">' % object2_pk)
         self.assertIsInstance(object1, ProxyModelA)
         self.assertIsInstance(object2, ProxyModelB)
 
         # Same for lists
         objects = list(ProxyModelBase.objects.all().order_by('name'))
-        self.assertEqual(repr(objects[0]), '<ProxyModelA: id 1, name (CharField) "object1", field1 (CharField) "">')
-        self.assertEqual(repr(objects[1]), '<ProxyModelB: id 2, name (CharField) "object2", field2 (CharField) "bb">')
+        self.assertEqual(repr(objects[0]), '<ProxyModelA: id %i, name (CharField) "object1", field1 (CharField) "">' % object1_pk)
+        self.assertEqual(repr(objects[1]), '<ProxyModelB: id %i, name (CharField) "object2", field2 (CharField) "bb">' % object2_pk)
         self.assertIsInstance(objects[0], ProxyModelA)
         self.assertIsInstance(objects[1], ProxyModelB)
 
@@ -1006,3 +1009,21 @@ class PolymorphicTests(TransactionTestCase):
             MultiTableDerived.objects.bulk_create([
                 MultiTableDerived(field1='field1', field2='field2')
             ])
+
+    def test_can_query_using_subclass_selector_on_abstract_model(self):
+        obj = SubclassSelectorAbstractConcreteModel.objects.create(concrete_field='abc')
+
+        queried_obj = SubclassSelectorAbstractBaseModel.objects.filter(
+            SubclassSelectorAbstractConcreteModel___concrete_field='abc'
+        ).get()
+
+        self.assertEqual(obj.pk, queried_obj.pk)
+
+    def test_can_query_using_subclass_selector_on_proxy_model(self):
+        obj = SubclassSelectorProxyConcreteModel.objects.create(concrete_field='abc')
+
+        queried_obj = SubclassSelectorProxyBaseModel.objects.filter(
+            SubclassSelectorProxyConcreteModel___concrete_field='abc'
+        ).get()
+
+        self.assertEqual(obj.pk, queried_obj.pk)

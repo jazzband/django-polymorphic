@@ -1130,4 +1130,66 @@ class Migration(migrations.Migration):
             },
             bases=('tests.duck',),
         ),
+        migrations.CreateModel(
+            name='SubclassSelectorAbstractBaseModel',
+            fields=[
+                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('base_field', models.CharField(default='test_bf', max_length=10)),
+            ],
+            options={
+                'abstract': False,
+                'base_manager_name': 'objects',
+            },
+        ),
+        migrations.CreateModel(
+            name='SubclassSelectorProxyBaseModel',
+            fields=[
+                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('base_field', models.CharField(default='test_bf', max_length=10)),
+                ('polymorphic_ctype', models.ForeignKey(editable=False, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='polymorphic_tests.subclassselectorproxybasemodel_set+', to='contenttypes.ContentType')),
+            ],
+            options={
+                'abstract': False,
+                'base_manager_name': 'objects',
+            },
+        ),
+        migrations.CreateModel(
+            name='SubclassSelectorAbstractConcreteModel',
+            fields=[
+                ('subclassselectorabstractbasemodel_ptr', models.OneToOneField(auto_created=True, on_delete=django.db.models.deletion.CASCADE, parent_link=True, primary_key=True, serialize=False, to='tests.SubclassSelectorAbstractBaseModel')),
+                ('abstract_field', models.CharField(default='test_af', max_length=10)),
+                ('concrete_field', models.CharField(default='test_cf', max_length=10)),
+            ],
+            options={
+                'abstract': False,
+            },
+            bases=('tests.subclassselectorabstractbasemodel',),
+        ),
+        migrations.AddField(
+            model_name='subclassselectorabstractbasemodel',
+            name='polymorphic_ctype',
+            field=models.ForeignKey(editable=False, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='polymorphic_tests.subclassselectorabstractbasemodel_set+', to='contenttypes.ContentType'),
+        ),
+        migrations.CreateModel(
+            name='SubclassSelectorProxyModel',
+            fields=[
+            ],
+            options={
+                'proxy': True,
+                'indexes': [],
+            },
+            bases=('tests.subclassselectorproxybasemodel',),
+        ),
+        migrations.CreateModel(
+            name='SubclassSelectorProxyConcreteModel',
+            fields=[
+                ('subclassselectorproxybasemodel_ptr', models.OneToOneField(auto_created=True, on_delete=django.db.models.deletion.CASCADE, parent_link=True, primary_key=True, serialize=False, to='tests.SubclassSelectorProxyBaseModel')),
+                ('concrete_field', models.CharField(default='test_cf', max_length=10)),
+            ],
+            options={
+                'abstract': False,
+                'base_manager_name': 'objects',
+            },
+            bases=('tests.subclassselectorproxymodel',),
+        ),
     ]

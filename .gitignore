@@ -16,3 +16,4 @@ build/
 dist/
 docs/_build/
 htmlcov/
+venv/

@@ -196,6 +196,8 @@ def translate_polymorphic_field_path(queryset_model, field_path):
                 return myclass.__name__.lower()
             path = _create_base_path(baseclass, b)
             if path:
+                if b._meta.abstract or b._meta.proxy:
+                    return myclass.__name__.lower()
                 return path + '__' + myclass.__name__.lower()
         return ''
 
