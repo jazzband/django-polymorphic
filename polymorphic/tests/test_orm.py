@@ -967,7 +967,7 @@ class PolymorphicTests(TransactionTestCase):
             list(Model2A.objects.all())
 
     def test_invalid_polymorphic_id(self):
-        """Test that a proper error message is displayed when the database lacks the ``polymorphic_ctype_id``"""
+        """Test that a proper error message is displayed when the database ``polymorphic_ctype_id`` is invalid"""
         Model2A.objects.create(field1='A1')
         Model2B.objects.create(field1='A1', field2='B2')
         Model2B.objects.create(field1='A1', field2='B2')
