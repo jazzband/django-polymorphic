@@ -332,6 +332,14 @@ class PolymorphicTests(TransactionTestCase):
             transform=lambda o: o.__class__,
         )
 
+        # from empty list
+        objects = Model2A.objects.get_real_instances([])
+        self.assertQuerysetEqual(
+            objects,
+            [],
+            transform=lambda o: o.__class__,
+        )
+
     def test_translate_polymorphic_q_object(self):
         self.create_model2abcd()
 

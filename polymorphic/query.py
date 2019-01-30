@@ -474,7 +474,7 @@ class PolymorphicQuerySet(QuerySet):
         :rtype: PolymorphicQuerySet
         """
         "same as _get_real_instances, but make sure that __repr__ for ShowField... creates correct output"
-        if not base_result_objects:
+        if base_result_objects is None:
             base_result_objects = self
         olist = self._get_real_instances(base_result_objects)
         if not self.model.polymorphic_query_multiline_output:
