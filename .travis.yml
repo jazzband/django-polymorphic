@@ -1,6 +1,8 @@
 # https://travis-ci.org/django-polymorphic/django-polymorphic
-sudo: false
+sudo: True
 language: python
+cache: pip
+dist: xenial
 
 python: "3.6"
 
