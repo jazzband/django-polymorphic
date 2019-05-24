@@ -37,12 +37,17 @@ if not settings.configured:
             'django.contrib.auth',
             'django.contrib.contenttypes',
             'django.contrib.messages',
+            'django.contrib.sessions',
             'django.contrib.sites',
             'django.contrib.admin',
             'polymorphic',
             'polymorphic.tests',
         ),
-        MIDDLEWARE_CLASSES=(),
+        MIDDLEWARE=(
+            'django.contrib.auth.middleware.AuthenticationMiddleware',
+            'django.contrib.messages.middleware.MessageMiddleware',
+            'django.contrib.sessions.middleware.SessionMiddleware',
+        ),
         SITE_ID=3,
         TEMPLATES=[{
             "BACKEND": "django.template.backends.django.DjangoTemplates",
