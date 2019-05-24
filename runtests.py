@@ -46,6 +46,7 @@ if not settings.configured:
         MIDDLEWARE=(
             'django.contrib.auth.middleware.AuthenticationMiddleware',
             'django.contrib.messages.middleware.MessageMiddleware',
+            'django.contrib.sessions.middleware.SessionMiddleware',
         ),
         SITE_ID=3,
         TEMPLATES=[{
