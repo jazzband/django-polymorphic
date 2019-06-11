@@ -738,3 +738,17 @@ class DeepCopyTester(PolymorphicModel):
 
 class DeepCopyTester2(DeepCopyTester):
     binary_field2 = models.BinaryField()
+
+
+class DucksLake(models.Model):
+    lake = models.ForeignKey("LakeWithThrough", on_delete=models.CASCADE)
+    duck = models.ForeignKey(Duck, on_delete=models.CASCADE)
+    time = models.CharField(max_length=10)
+
+
+class Lake(models.Model):
+    ducks = models.ManyToManyField(Duck)
+
+
+class LakeWithThrough(models.Model):
+    ducks = models.ManyToManyField(Duck, through=DucksLake)

@@ -1745,3 +1745,27 @@ class PolymorphicTests(TransactionTestCase):
         }
         assert set(PolyExtension.objects.all()) == {poly_ext, child_ext}
         assert set(PolyExtChild.objects.all()) == {child_ext}
+
+    def test_manytomany_without_through_field(self):
+        from polymorphic.tests.models import Lake, RedheadDuck, RubberDuck
+
+        lake = Lake.objects.create()
+        rubber = RubberDuck.objects.create(name="Rubber")
+        redhead = RedheadDuck.objects.create(name="Redheat")
+        lake.ducks.add(rubber)
+        lake.ducks.add(redhead)
+        self.assertEqual(lake.ducks.count(), 2)
+        self.assertIsInstance(lake.ducks.all()[0], RubberDuck)
+        self.assertIsInstance(lake.ducks.all()[1], RedheadDuck)
+
+    def test_manytomany_with_through_field(self):
+        from polymorphic.tests.models import LakeWithThrough, DucksLake, RedheadDuck, RubberDuck
+
+        lake = LakeWithThrough.objects.create()
+        rubber = RubberDuck.objects.create(name="Rubber")
+        redhead = RedheadDuck.objects.create(name="Redheat")
+        DucksLake.objects.create(lake=lake, duck=rubber, time="morning")
+        DucksLake.objects.create(lake=lake, duck=redhead, time="afternoon")
+        self.assertEqual(lake.ducks.count(), 2)
+        self.assertIsInstance(lake.ducks.all()[0], RubberDuck)
+        self.assertIsInstance(lake.ducks.all()[1], RedheadDuck)
