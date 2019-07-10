@@ -128,7 +128,7 @@
                 nextIndex += 1;
                 // Hide add button in case we've hit the max, except we want to add infinitely
                 if ((maxForms.val() !== '') && (maxForms.val() - totalForms.val()) <= 0) {
-                    addButtons.parent().hide();
+                    addContainer.hide();
                 }
                 // The delete button of each row triggers a bunch of other things
                 row.find("a." + options.deleteCssClass).click(function(e1) {
@@ -146,7 +146,7 @@
                     $("#id_" + options.prefix + "-TOTAL_FORMS").val(forms.length);
                     // Show add button again once we drop below max
                     if ((maxForms.val() === '') || (maxForms.val() - forms.length) > 0) {
-                        addButtons.parent().show();
+                        addContainer.show();
                     }
                     // Also, update names and ids for all remaining form controls
                     // so they remain in sequence:
