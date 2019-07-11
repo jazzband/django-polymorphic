@@ -450,3 +450,31 @@ class MultiTableBase(PolymorphicModel):
 
 class MultiTableDerived(MultiTableBase):
     field2 = models.CharField(max_length=10)
+
+
+class SubclassSelectorAbstractBaseModel(PolymorphicModel):
+    base_field = models.CharField(max_length=10, default='test_bf')
+
+
+class SubclassSelectorAbstractModel(SubclassSelectorAbstractBaseModel):
+    abstract_field = models.CharField(max_length=10, default='test_af')
+
+    class Meta:
+        abstract = True
+
+
+class SubclassSelectorAbstractConcreteModel(SubclassSelectorAbstractModel):
+    concrete_field = models.CharField(max_length=10, default='test_cf')
+
+
+class SubclassSelectorProxyBaseModel(PolymorphicModel):
+    base_field = models.CharField(max_length=10, default='test_bf')
+
+
+class SubclassSelectorProxyModel(SubclassSelectorProxyBaseModel):
+    class Meta:
+        proxy = True
+
+
+class SubclassSelectorProxyConcreteModel(SubclassSelectorProxyModel):
+    concrete_field = models.CharField(max_length=10, default='test_cf')
