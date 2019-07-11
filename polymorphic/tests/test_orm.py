@@ -226,7 +226,7 @@ class PolymorphicTests(TransactionTestCase):
     def test_defer_fields(self):
         self.create_model2abcd()
 
-        objects_deferred = Model2A.objects.defer('field1')
+        objects_deferred = Model2A.objects.defer('field1').order_by('id')
 
         self.assertNotIn('field1', objects_deferred[0].__dict__, 'field1 was not deferred (using defer())')
         self.assertRegex(repr(objects_deferred[0]),
