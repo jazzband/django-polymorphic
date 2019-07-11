@@ -138,6 +138,8 @@ class PolymorphicQuerySet(QuerySet):
         base class used for this query are returned."""
         qs = self._clone()
         qs.polymorphic_disabled = True
+        if issubclass(qs._iterable_class, PolymorphicModelIterable):
+            qs._iterable_class = ModelIterable
         return qs
 
     def instance_of(self, *args):
