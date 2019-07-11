@@ -218,7 +218,7 @@ class ChildModelWithManager(PolymorphicModel):
 class PlainMyManagerQuerySet(QuerySet):
 
     def my_queryset_foo(self):
-        return self.all()  # Just a method to prove the existance of the custom queryset.
+        return self.all()  # Just a method to prove the existence of the custom queryset.
 
 
 class PlainMyManager(models.Manager):

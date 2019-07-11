@@ -4,12 +4,12 @@ import uuid
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.db.models import Case, Count, Q, When
-from django.test import TestCase, TransactionTestCase
+from django.test import TransactionTestCase
 from django.utils import six
 
 from polymorphic import query_translate
 from polymorphic.managers import PolymorphicManager
-from polymorphic.models import PolymorphicTypeUndefined
+from polymorphic.models import PolymorphicTypeInvalid, PolymorphicTypeUndefined
 from polymorphic.tests.models import (
     ArtProject,
     Base,
@@ -68,7 +68,6 @@ from polymorphic.tests.models import (
     ProxyModelA,
     ProxyModelB,
     ProxyModelBase,
-    QuerySet,
     RedheadDuck,
     RelationA,
     RelationB,
@@ -973,6 +972,17 @@ class PolymorphicTests(TransactionTestCase):
         Model2A.objects.all().update(polymorphic_ctype_id=None)
 
         with self.assertRaises(PolymorphicTypeUndefined):
+            list(Model2A.objects.all())
+
+    def test_invalid_polymorphic_id(self):
+        """Test that a proper error message is displayed when the database ``polymorphic_ctype_id`` is invalid"""
+        Model2A.objects.create(field1='A1')
+        Model2B.objects.create(field1='A1', field2='B2')
+        Model2B.objects.create(field1='A1', field2='B2')
+        invalid = ContentType.objects.get_for_model(PlainA).pk
+        Model2A.objects.all().update(polymorphic_ctype_id=invalid)
+
+        with self.assertRaises(PolymorphicTypeInvalid):
             list(Model2A.objects.all())
 
     def test_bulk_create_abstract_inheritance(self):
