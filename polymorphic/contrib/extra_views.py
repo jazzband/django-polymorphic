@@ -25,7 +25,7 @@ class PolymorphicFormSetMixin(object):
     formset_class = BasePolymorphicModelFormSet
 
     #: Default 0 extra forms
-    extra = 0
+    factory_kwargs = {'extra': 0}
 
     #: Define the children
     # :type: list[PolymorphicFormSetChild]
@@ -96,7 +96,7 @@ class PolymorphicInlineFormSetView(PolymorphicFormSetMixin, extra_views.InlineFo
     formset_class = BasePolymorphicInlineFormSet
 
 
-class PolymorphicInlineFormSet(PolymorphicFormSetMixin, extra_views.InlineFormSet):
+class PolymorphicInlineFormSet(PolymorphicFormSetMixin, extra_views.InlineFormSetFactory):
     """
     An inline to add to the ``inlines`` of
     the :class:`~extra_views.advanced.CreateWithInlinesView`
