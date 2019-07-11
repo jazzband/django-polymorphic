@@ -7,14 +7,13 @@ python: "3.6"
 
 env:
   - TOXENV=py27-django111
-  - TOXENV=py34-django111
-  - TOXENV=py34-django20
   - TOXENV=py35-django111
   - TOXENV=py35-django20
   - TOXENV=py35-djangomaster
   - TOXENV=py36-django111
   - TOXENV=py36-django20
   - TOXENV=py36-django21
+  - TOXENV=py36-django22
   - TOXENV=py36-djangomaster
   # XXX: Use a matrix to build these?
   - TOXENV=py36-django111-postgres DB=postgres
