@@ -107,13 +107,13 @@ class PolymorphicModel(six.with_metaclass(PolymorphicModelBase, models.Model)):
 
         # Protect against bad imports (dumpdata without --natural) or other
         # issues missing with the ContentType models.
-        if model is not None and not issubclass(model, self.__class__):
-            if self.__class__._meta.proxy_for_model is None or \
-                    not issubclass(model, self.__class__._meta.proxy_for_model):
-
-                raise PolymorphicTypeInvalid("ContentType {0} for {1} #{2} does not point to a subclass!".format(
-                    self.polymorphic_ctype_id, model, self.pk,
-                ))
+        if model is not None \
+                and not issubclass(model, self.__class__) \
+                and (self.__class__._meta.proxy_for_model is None \
+                     or not issubclass(model, self.__class__._meta.proxy_for_model)):
+            raise PolymorphicTypeInvalid("ContentType {0} for {1} #{2} does not point to a subclass!".format(
+                self.polymorphic_ctype_id, model, self.pk,
+            ))
 
         return model
 
