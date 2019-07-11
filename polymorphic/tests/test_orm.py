@@ -73,6 +73,7 @@ from polymorphic.tests.models import (
     RelationB,
     RelationBC,
     RelationBase,
+    RelatingModel,
     RubberDuck,
     SubclassSelectorAbstractBaseModel,
     SubclassSelectorAbstractConcreteModel,
@@ -1055,6 +1056,7 @@ class PolymorphicTests(TransactionTestCase):
                 MultiTableDerived(field1='field1', field2='field2')
             ])
 
+
     def test_can_query_using_subclass_selector_on_abstract_model(self):
         obj = SubclassSelectorAbstractConcreteModel.objects.create(concrete_field='abc')
 
@@ -1072,3 +1074,12 @@ class PolymorphicTests(TransactionTestCase):
         ).get()
 
         self.assertEqual(obj.pk, queried_obj.pk)
+
+    def test_prefetch_related_behaves_normally_with_polymorphic_model(self):
+        b1 = RelatingModel.objects.create()
+        b2 = RelatingModel.objects.create()
+        a = b1.many2many.create()
+        b2.many2many.add(a)
+        qs = RelatingModel.objects.prefetch_related('many2many')
+        for obj in qs:
+            self.assertEqual(len(obj.many2many.all()), 1)
