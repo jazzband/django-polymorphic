@@ -1,4 +1,5 @@
 # https://travis-ci.org/django-polymorphic/django-polymorphic
+dist: xenial
 sudo: false
 language: python
 
