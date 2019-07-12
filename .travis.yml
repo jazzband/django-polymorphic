@@ -1,25 +1,7 @@
 # https://travis-ci.org/django-polymorphic/django-polymorphic
 dist: xenial
-cache: pip
 sudo: false
 language: python
-
-python: "3.6"
-
-env:
-  - TOXENV=py27-django111
-  - TOXENV=py35-django111
-  - TOXENV=py35-django20
-  - TOXENV=py35-djangomaster
-  - TOXENV=py36-django111
-  - TOXENV=py36-django20
-  - TOXENV=py36-django21
-  - TOXENV=py36-django22
-  - TOXENV=py36-djangomaster
-  # XXX: Use a matrix to build these?
-  - TOXENV=py36-django111-postgres DB=postgres
-  - TOXENV=py36-django20-postgres DB=postgres
-  - TOXENV=py36-djangomaster-postgres DB=postgres
 
 services:
   - postgres
@@ -29,14 +11,12 @@ addons:
 matrix:
   fast_finish: true
   include:
-    # Django 1.11: Python 2.7, 3.4, 3.5, or 3.6
+    # Django 1.11: Python 2.7, 3.5, or 3.6
     - { env: TOXENV=py27-django111, python: 2.7 }
-    - { env: TOXENV=py34-django111, python: 3.4 }
     - { env: TOXENV=py35-django111, python: 3.5 }
     - { env: TOXENV=py36-django111, python: 3.6 }
     - { env: TOXENV=py36-django111-postgres DB=postgres, python: 3.6 }
-    # Django 2.0: Python 3.4, 3.5, or 3.6
-    - { env: TOXENV=py34-django20, python: 3.4 }
+    # Django 2.0: Python 3.5, or 3.6
     - { env: TOXENV=py35-django20, python: 3.5 }
     - { env: TOXENV=py36-django20, python: 3.6 }
     - { env: TOXENV=py36-django20-postgres DB=postgres, python: 3.6 }
@@ -49,16 +29,14 @@ matrix:
     - { env: TOXENV=py37-django22, python: 3.7 }
     - { env: TOXENV=py37-django22-postgres DB=postgres, python: 3.7 }
     # Django development master (direct from GitHub source):
-    - { env: TOXENV=py35-djangomaster, python: 3.5 }
     - { env: TOXENV=py36-djangomaster, python: 3.6 }
     - { env: TOXENV=py37-djangomaster, python: 3.7 }
     - { env: TOXENV=py37-djangomaster-postgres DB=postgres, python: 3.7 }
 
   allow_failures:
-    - { env: TOXENV=py35-djangomaster, python: 3.5 }
-    - { env: TOXENV=py36-djangomaster, python: 3.6 }
-    - { env: TOXENV=py37-djangomaster, python: 3.7 }
-    - { env: TOXENV=py37-djangomaster-postgres DB=postgres, python: 3.7 }
+    - env: TOXENV=py36-djangomaster
+    - env: TOXENV=py37-djangomaster
+    - env: TOXENV=py37-djangomaster-postgres DB=postgres
 
 cache:
   directories:
