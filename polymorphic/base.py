@@ -94,26 +94,6 @@ class PolymorphicModelBase(ModelBase):
 
         return new_class
 
-        @classmethod
-        def get_first_user_defined_manager(mcs, new_class):
-            # See if there is a manager attribute directly stored at this inheritance level.
-            mgr_list = []
-            for key, val in new_class.__dict__.items():
-                if isinstance(val, ManagerDescriptor):
-                    val = val.manager
-                if not isinstance(val, PolymorphicManager):
-                    continue
-
-                mgr_list.append((val.creation_counter, key, val))
-
-            # if there are user defined managers, use first one as _default_manager
-            if mgr_list:
-                _, manager_name, manager = sorted(mgr_list)[0]
-                # sys.stderr.write( '\n# first user defined manager for model "{model}":\n#  "{mgrname}": {mgr}\n#  manager model: {mgrmodel}\n\n'
-                #    .format( model=self.__name__, mgrname=manager_name, mgr=manager, mgrmodel=manager.model ) )
-                return manager
-            return None
-
     @classmethod
     def call_superclass_new_method(self, model_name, bases, attrs):
         """call __new__ method of super class and return the newly created class.
