@@ -683,10 +683,11 @@ class PolymorphicTests(TransactionTestCase):
         )
 
     def test_combine_querysets(self):
-        ModelX.objects.create(field_x='x')
-        ModelY.objects.create(field_y='y')
+        ModelX.objects.create(field_x='x', field_b='1')
+        ModelY.objects.create(field_y='y', field_b='2')
 
         qs = Base.objects.instance_of(ModelX) | Base.objects.instance_of(ModelY)
+        qs = qs.order_by('field_b')
         self.assertEqual(repr(qs[0]), '<ModelX: id 1, field_b (CharField), field_x (CharField)>')
         self.assertEqual(repr(qs[1]), '<ModelY: id 2, field_b (CharField), field_y (CharField)>')
         self.assertEqual(len(qs), 2)
