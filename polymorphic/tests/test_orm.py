@@ -343,6 +343,32 @@ class PolymorphicTests(TransactionTestCase):
             transform=lambda o: o.__class__,
         )
 
+    def test_queryset_missing_derived(self):
+        a = Model2A.objects.create(field1='A1')
+        b = Model2B.objects.create(field1='B1', field2='B2')
+        b_base = Model2A.objects.non_polymorphic().get(pk=b.pk)
+
+        b.delete(keep_parents=True)  # e.g. table was truncated
+
+        qs1 = Model2A.objects.order_by('field1').non_polymorphic()
+        qs2 = Model2A.objects.order_by('field1').all()
+
+        self.assertEqual(list(qs1), [a, b_base])
+        self.assertEqual(list(qs2), [a])
+
+    def test_queryset_missing_contenttype(self):
+        stale_ct = ContentType.objects.create(app_label='tests', model='nonexisting')
+        a1 = Model2A.objects.create(field1='A1')
+        a2 = Model2A.objects.create(field1='A2')
+
+        Model2B.objects.filter(pk=a2.pk).update(polymorphic_ctype=stale_ct)
+
+        qs1 = Model2A.objects.order_by('field1').non_polymorphic()
+        qs2 = Model2A.objects.order_by('field1').all()
+
+        self.assertEqual(list(qs1), [a1, a2])
+        self.assertEqual(list(qs2), [a1, a2])
+
     def test_translate_polymorphic_q_object(self):
         self.create_model2abcd()
 
