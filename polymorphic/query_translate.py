@@ -5,9 +5,11 @@ PolymorphicQuerySet support functions
 from __future__ import absolute_import
 
 import copy
+from collections import deque
 
 from django.apps import apps
 from django.contrib.contenttypes.models import ContentType
+from django.core.exceptions import FieldError
 from django.db import models
 from django.db.models import Q
 from django.db.models.fields.related import ForeignObjectRel, RelatedField
@@ -166,40 +168,9 @@ def translate_polymorphic_field_path(queryset_model, field_path):
         except models.FieldDoesNotExist:
             pass
 
-        # function to collect all sub-models, this should be optimized (cached)
-        def add_all_sub_models(model, result):
-            if issubclass(model, models.Model) and model != models.Model:
-                # model name is occurring twice in submodel inheritance tree => Error
-                if model.__name__ in result and model != result[model.__name__]:
-                    e = 'PolymorphicModel: model name alone is ambiguous: %s.%s and %s.%s!\n'
-                    e += 'In this case, please use the syntax: applabel__ModelName___field'
-                    assert model, e % (
-                        model._meta.app_label, model.__name__,
-                        result[model.__name__]._meta.app_label, result[model.__name__].__name__)
-
-                result[model.__name__] = model
-
-            for b in model.__subclasses__():
-                add_all_sub_models(b, result)
-
-        submodels = {}
-        add_all_sub_models(queryset_model, submodels)
+        submodels = _get_all_sub_models(queryset_model)
         model = submodels.get(classname, None)
         assert model, 'PolymorphicModel: model %s not found (not a subclass of %s)!' % (classname, queryset_model.__name__)
-
-    # create new field path for expressions, e.g. for baseclass=ModelA, myclass=ModelC
-    # 'modelb__modelc" is returned
-    def _create_base_path(baseclass, myclass):
-        bases = myclass.__bases__
-        for b in bases:
-            if b == baseclass:
-                return myclass.__name__.lower()
-            path = _create_base_path(baseclass, b)
-            if path:
-                if b._meta.abstract or b._meta.proxy:
-                    return myclass.__name__.lower()
-                return path + '__' + myclass.__name__.lower()
-        return ''
 
     basepath = _create_base_path(queryset_model, model)
 
@@ -214,6 +185,50 @@ def translate_polymorphic_field_path(queryset_model, field_path):
 
     newpath += pure_field_path
     return newpath
+
+
+def _get_all_sub_models(base_model):
+    """#Collect all sub-models, this should be optimized (cached)"""
+    result = {}
+    queue = deque([base_model])
+
+    while queue:
+        model = queue.popleft()
+        if issubclass(model, models.Model) and model != models.Model:
+            # model name is occurring twice in submodel inheritance tree => Error
+            if model.__name__ in result and model != result[model.__name__]:
+                raise FieldError(
+                    'PolymorphicModel: model name alone is ambiguous: %s.%s and %s.%s match!\n'
+                    'In this case, please use the syntax: applabel__ModelName___field' % (
+                        model._meta.app_label, model.__name__,
+                        result[model.__name__]._meta.app_label,
+                        result[model.__name__].__name__
+                    )
+                )
+
+            result[model.__name__] = model
+        queue.extend(model.__subclasses__())
+
+    return result
+
+
+def _create_base_path(baseclass, myclass):
+    # create new field path for expressions, e.g. for baseclass=ModelA, myclass=ModelC
+    # 'modelb__modelc" is returned
+    bases = myclass.__bases__
+    for b in bases:
+        if b == baseclass:
+            return _get_query_related_name(myclass)
+        path = _create_base_path(baseclass, b)
+        if path:
+            if b._meta.abstract or b._meta.proxy:
+                return myclass.__name__.lower()
+            return path + '__' + _get_query_related_name(myclass)
+    return ''
+
+
+def _get_query_related_name(myclass):
+    return myclass.__name__.lower()
 
 
 def create_instanceof_q(modellist, not_instance_of=False, using=DEFAULT_DB_ALIAS):
