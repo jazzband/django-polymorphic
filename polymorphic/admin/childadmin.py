@@ -5,7 +5,6 @@ import inspect
 
 from django.contrib import admin
 from django.urls import resolve
-from django.utils import six
 from django.utils.translation import ugettext_lazy as _
 
 from polymorphic.utils import get_base_polymorphic_model
@@ -216,7 +215,7 @@ class PolymorphicChildModelAdmin(admin.ModelAdmin):
         # By not declaring the fields/form in the base class,
         # get_form() will populate the form with all available fields.
         form = self.get_form(request, obj, exclude=exclude)
-        subclass_fields = list(six.iterkeys(form.base_fields)) + list(self.get_readonly_fields(request, obj))
+        subclass_fields = list(form.base_fields.keys()) + list(self.get_readonly_fields(request, obj))
 
         # Find which fields are not part of the common fields.
         for fieldset in self.get_base_fieldsets(request, obj):

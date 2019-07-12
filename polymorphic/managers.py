@@ -5,7 +5,7 @@ The manager class for use in the models.
 from __future__ import unicode_literals
 
 from django.db import models
-from django.utils.six import python_2_unicode_compatible
+from polymorphic.compat import python_2_unicode_compatible
 from polymorphic.query import PolymorphicQuerySet
 
 

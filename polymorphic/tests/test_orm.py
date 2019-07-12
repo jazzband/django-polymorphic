@@ -5,9 +5,8 @@ from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.db.models import Case, Count, Q, When
 from django.test import TransactionTestCase
-from django.utils import six
 
-from polymorphic import query_translate
+from polymorphic import compat, query_translate
 from polymorphic.managers import PolymorphicManager
 from polymorphic.models import PolymorphicTypeInvalid, PolymorphicTypeUndefined
 from polymorphic.tests.models import (
@@ -566,7 +565,7 @@ class PolymorphicTests(TransactionTestCase):
             select={"topic": "tests_modelextraexternal.topic"},
             where=["tests_modelextraa.id = tests_modelextraexternal.id"],
         )
-        if six.PY3:
+        if compat.PY3:
             self.assertEqual(repr(objects[0]), '<ModelExtraA: id 1, field1 (CharField) "A1" - Extra: topic (str) "extra1">')
             self.assertEqual(repr(objects[1]), '<ModelExtraB: id 2, field1 (CharField) "B1", field2 (CharField) "B2" - Extra: topic (str) "extra2">')
             self.assertEqual(repr(objects[2]), '<ModelExtraC: id 3, field1 (CharField) "C1", field2 (CharField) "C2", field3 (CharField) "C3" - Extra: topic (str) "extra3">')

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-
+import django
 import uuid
 
 from django.contrib.contenttypes.models import ContentType
@@ -201,8 +201,9 @@ class MROBase3(models.Model):
 
 
 class MRODerived(MROBase2, MROBase3):
-    class Meta:
-        manager_inheritance_from_future = True
+    if django.VERSION < (3, 0):
+        class Meta:
+            manager_inheritance_from_future = True
 
 
 class ParentModelWithManager(PolymorphicModel):

@@ -8,8 +8,8 @@ from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.db.models.fields.related import ReverseOneToOneDescriptor, ForwardManyToOneDescriptor
 from django.db.utils import DEFAULT_DB_ALIAS
-from django.utils import six
 
+from polymorphic.compat import with_metaclass
 from .base import PolymorphicModelBase
 from .managers import PolymorphicManager
 from .query_translate import translate_polymorphic_Q_object
@@ -26,7 +26,7 @@ class PolymorphicTypeInvalid(RuntimeError):
     pass
 
 
-class PolymorphicModel(six.with_metaclass(PolymorphicModelBase, models.Model)):
+class PolymorphicModel(with_metaclass(PolymorphicModelBase, models.Model)):
     """
     Abstract base class that provides polymorphic behaviour
     for any model directly or indirectly derived from it.

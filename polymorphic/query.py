@@ -10,8 +10,8 @@ from collections import defaultdict
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import FieldDoesNotExist
 from django.db.models.query import ModelIterable, Q, QuerySet
-from django.utils import six
 
+from . import compat
 from .query_translate import translate_polymorphic_filter_definitions_in_kwargs, translate_polymorphic_filter_definitions_in_args
 from .query_translate import translate_polymorphic_field_path, translate_polymorphic_Q_object
 
@@ -162,7 +162,7 @@ class PolymorphicQuerySet(QuerySet):
         """translate the field paths in the args, then call vanilla order_by."""
         field_names = [
             translate_polymorphic_field_path(self.model, a)
-            if isinstance(a, six.string_types) else a  # allow expressions to pass unchanged
+            if isinstance(a, compat.string_types) else a  # allow expressions to pass unchanged
             for a in field_names
         ]
         return super(PolymorphicQuerySet, self).order_by(*field_names)
@@ -267,7 +267,7 @@ class PolymorphicQuerySet(QuerySet):
 
         for a in args:
             test___lookup(a)
-        for a in six.itervalues(kwargs):
+        for a in kwargs.values():
             patch_lookup(a)
 
     def annotate(self, *args, **kwargs):
@@ -430,12 +430,12 @@ class PolymorphicQuerySet(QuerySet):
                     real_object = transmogrify(real_class, real_object)
 
                 if self.query.annotations:
-                    for anno_field_name in six.iterkeys(self.query.annotations):
+                    for anno_field_name in self.query.annotations.keys():
                         attr = getattr(base_object, anno_field_name)
                         setattr(real_object, anno_field_name, attr)
 
                 if self.query.extra_select:
-                    for select_field_name in six.iterkeys(self.query.extra_select):
+                    for select_field_name in self.query.extra_select.keys():
                         attr = getattr(base_object, select_field_name)
                         setattr(real_object, select_field_name, attr)
 
@@ -445,13 +445,13 @@ class PolymorphicQuerySet(QuerySet):
 
         # set polymorphic_annotate_names in all objects (currently just used for debugging/printing)
         if self.query.annotations:
-            annotate_names = list(six.iterkeys(self.query.annotations))  # get annotate field list
+            annotate_names = list(self.query.annotations.keys())  # get annotate field list
             for real_object in resultlist:
                 real_object.polymorphic_annotate_names = annotate_names
 
         # set polymorphic_extra_select_names in all objects (currently just used for debugging/printing)
         if self.query.extra_select:
-            extra_select_names = list(six.iterkeys(self.query.extra_select))  # get extra select field list
+            extra_select_names = list(self.query.extra_select.keys())  # get extra select field list
             for real_object in resultlist:
                 real_object.polymorphic_extra_select_names = extra_select_names
 

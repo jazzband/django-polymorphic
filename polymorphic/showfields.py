@@ -2,8 +2,9 @@
 import re
 
 from django.db import models
-from django.utils import six
-from django.utils.six import python_2_unicode_compatible
+
+from . import compat
+from .compat import python_2_unicode_compatible
 
 
 RE_DEFERRED = re.compile('_Deferred_.*')
@@ -41,7 +42,7 @@ class ShowFieldBase(object):
                 out += content.__class__.__name__
         elif issubclass(field_type, models.ManyToManyField):
             out += '%d' % content.count()
-        elif isinstance(content, six.integer_types):
+        elif isinstance(content, compat.integer_types):
             out += str(content)
         elif content is None:
             out += 'None'

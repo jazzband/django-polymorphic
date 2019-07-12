@@ -14,7 +14,6 @@ from django.db import models
 from django.db.models import Q
 from django.db.models.fields.related import ForeignObjectRel, RelatedField
 from django.db.utils import DEFAULT_DB_ALIAS
-from django.utils import six
 
 
 ###################################################################################
@@ -24,6 +23,8 @@ from django.utils import six
 # They form a kind of small framework for easily adding more
 # functionality to filters and Q objects.
 # Probably a more general queryset enhancement class could be made out of them.
+from polymorphic import compat
+
 
 def translate_polymorphic_filter_definitions_in_kwargs(queryset_model, kwargs, using=DEFAULT_DB_ALIAS):
     """
@@ -129,7 +130,7 @@ def translate_polymorphic_field_path(queryset_model, field_path):
     into modela__modelb__modelc__field3.
     Returns: translated path (unchanged, if no translation needed)
     """
-    if not isinstance(field_path, six.string_types):
+    if not isinstance(field_path, compat.string_types):
         raise ValueError("Expected field name as string: {0}".format(field_path))
 
     classname, sep, pure_field_path = field_path.partition('___')
