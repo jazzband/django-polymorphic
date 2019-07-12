@@ -1,6 +1,22 @@
 Changelog
 =========
 
+Changes in 2.1 (tbd)
+--------------------
+
+* Added Django 2.2 support.
+* Change iterable class for ``.non_polymorphic()``, to completely cirvumvent polymorphic.
+* Fixed Django 3.0 alpha compatibility.
+* Fixed compatibility with current django-extra-views_ in ``polymorphic.contrib.extra_views``.
+* Fixed missing hiding of the add-button of polymorphic lines in the Django admin.
+* Fixed model subclass ``___`` selector for abstract/proxy models.
+* Fixed model subclass ``___`` selector for models with a custom ``OneToOneField(parent_link=True)``.
+* Fixed unwanted results on calling ``queryset.get_real_instances([])``.
+* Fixed ``prefetch_related()`` support.
+* Fixed unwanted ``TypeError`` exception when ``PolymorphicTypeInvalid`` should have raised.
+* Optimized SQL for ``instance_of`` filter: use ``IN`` statement instead of ``OR`` clauses.
+
+
 Changes in 2.0.3 (2018-08-24)
 -----------------------------
 
@@ -380,6 +396,7 @@ It supports Django 1.1 up till 1.4 and Python 2.4 up till 2.7.
 For a detailed list of it's changes, see the :doc:`archived changelog <changelog_archive>`.
 
 .. _Grappelli: http://grappelliproject.com/
+.. _django-extra-views: https://github.com/AndrewIngram/django-extra-views
 .. _django-guardian: https://github.com/django-guardian/django-guardian
 .. _django-parler: https://github.com/django-parler/django-parler
 .. _django-reversion: https://github.com/etianen/django-reversion
