@@ -364,6 +364,7 @@ class PolymorphicQuerySet(QuerySet):
                     # upcast it and put it in the results
                     resultlist.append(transmogrify(real_concrete_class, base_object))
                 else:
+                    # This model has a concrete derived class, track it for bulk retrieval.
                     real_concrete_class = content_type_manager.get_for_id(real_concrete_class_id).model_class()
                     idlist_per_model[real_concrete_class].append(getattr(base_object, pk_name))
                     indexlist_per_model[real_concrete_class].append((i, len(resultlist)))
@@ -416,7 +417,12 @@ class PolymorphicQuerySet(QuerySet):
             for i, j in indices:
                 base_object = base_result_objects[i]
                 o_pk = getattr(base_object, pk_name)
-                real_object = copy.copy(real_objects_dict[o_pk])
+                real_object = real_objects_dict.get(o_pk)
+                if real_object is None:
+                    continue
+
+                # need shallow copy to avoid duplication in caches (see PR #353)
+                real_object = copy.copy(real_object)
                 real_class = real_object.get_real_instance_class()
 
                 # If the real class is a proxy, upcast it
