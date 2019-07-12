@@ -215,19 +215,26 @@ def _get_all_sub_models(base_model):
 def _create_base_path(baseclass, myclass):
     # create new field path for expressions, e.g. for baseclass=ModelA, myclass=ModelC
     # 'modelb__modelc" is returned
-    bases = myclass.__bases__
-    for b in bases:
+    for b in myclass.__bases__:
         if b == baseclass:
             return _get_query_related_name(myclass)
+
         path = _create_base_path(baseclass, b)
         if path:
             if b._meta.abstract or b._meta.proxy:
-                return myclass.__name__.lower()
-            return path + '__' + _get_query_related_name(myclass)
+                return _get_query_related_name(myclass)
+            else:
+                return path + '__' + _get_query_related_name(myclass)
     return ''
 
 
 def _get_query_related_name(myclass):
+    for f in myclass._meta.local_fields:
+        if isinstance(f, models.OneToOneField) and f.remote_field.parent_link:
+            return f.related_query_name()
+
+    # Fallback to undetected name,
+    # this happens on proxy models (e.g. SubclassSelectorProxyModel)
     return myclass.__name__.lower()
 
 
