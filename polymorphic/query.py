@@ -164,10 +164,11 @@ class PolymorphicQuerySet(QuerySet):
         # We override this internal Django functon as it is used for all filter member functions.
         q_objects = translate_polymorphic_filter_definitions_in_args(
             self.model, args, using=self.db
-        )  # the Q objects
+        )
+        # filter_field='data'
         additional_args = translate_polymorphic_filter_definitions_in_kwargs(
             self.model, kwargs, using=self.db
-        )  # filter_field='data'
+        )
         return super(PolymorphicQuerySet, self)._filter_or_exclude(
             negate, *(list(q_objects) + additional_args), **kwargs
         )
@@ -408,9 +409,8 @@ class PolymorphicQuerySet(QuerySet):
             real_objects = real_concrete_class._base_objects.db_manager(self.db).filter(
                 **{("%s__in" % pk_name): idlist}
             )
-            real_objects.query.select_related = (
-                self.query.select_related
-            )  # copy select related configuration to new qs
+            # copy select related configuration to new qs
+            real_objects.query.select_related = self.query.select_related
 
             # Copy deferred fields configuration to the new queryset
             deferred_loading_fields = []
@@ -479,17 +479,15 @@ class PolymorphicQuerySet(QuerySet):
 
         # set polymorphic_annotate_names in all objects (currently just used for debugging/printing)
         if self.query.annotations:
-            annotate_names = list(
-                self.query.annotations.keys()
-            )  # get annotate field list
+            # get annotate field list
+            annotate_names = list(self.query.annotations.keys())
             for real_object in resultlist:
                 real_object.polymorphic_annotate_names = annotate_names
 
         # set polymorphic_extra_select_names in all objects (currently just used for debugging/printing)
         if self.query.extra_select:
-            extra_select_names = list(
-                self.query.extra_select.keys()
-            )  # get extra select field list
+            # get extra select field list
+            extra_select_names = list(self.query.extra_select.keys())
             for real_object in resultlist:
                 real_object.polymorphic_extra_select_names = extra_select_names
 

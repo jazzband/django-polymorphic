@@ -812,9 +812,8 @@ class PolymorphicTests(TransactionTestCase):
         ModelWithMyManager.objects.create(field1="D1a", field4="D4a")
         ModelWithMyManager.objects.create(field1="D1b", field4="D4b")
 
-        objects = (
-            ModelWithMyManager.objects.all()
-        )  # MyManager should reverse the sorting of field1
+        # MyManager should reverse the sorting of field1
+        objects = ModelWithMyManager.objects.all()
         self.assertQuerysetEqual(
             objects,
             [(ModelWithMyManager, "D1b", "D4b"), (ModelWithMyManager, "D1a", "D4a")],
@@ -830,9 +829,8 @@ class PolymorphicTests(TransactionTestCase):
         ModelWithMyManagerNoDefault.objects.create(field1="D1a", field4="D4a")
         ModelWithMyManagerNoDefault.objects.create(field1="D1b", field4="D4b")
 
-        objects = (
-            ModelWithMyManagerNoDefault.my_objects.all()
-        )  # MyManager should reverse the sorting of field1
+        # MyManager should reverse the sorting of field1
+        objects = ModelWithMyManagerNoDefault.my_objects.all()
         self.assertQuerysetEqual(
             objects,
             [
@@ -1049,9 +1047,8 @@ class PolymorphicTests(TransactionTestCase):
         p = ModelShow1_plain.objects.non_polymorphic().get(
             field1="TestParentLinkAndRelatedName"
         )
-        self.assertNotEqual(
-            p, t
-        )  # p should be Plain1 and t TestParentLinkAndRelatedName, so not equal
+        # p should be Plain1 and t TestParentLinkAndRelatedName, so not equal
+        self.assertNotEqual(p, t)
         self.assertEqual(p, t.superclass)
         self.assertEqual(p.related_name_subclass, t)
 
@@ -1228,12 +1225,12 @@ class PolymorphicTests(TransactionTestCase):
         qs = RelatingModel.objects.order_by("pk").prefetch_related("many2many")
         objects = list(qs)
         self.assertEqual(len(objects[0].many2many.all()), 1)
-        self.assertEqual(
-            len(objects[1].many2many.all()), 0
-        )  # derived object was not fetched
-        self.assertEqual(
-            len(objects[1].many2many.non_polymorphic()), 1
-        )  # base object does exist
+
+        # derived object was not fetched
+        self.assertEqual(len(objects[1].many2many.all()), 0)
+
+        # base object does exist
+        self.assertEqual(len(objects[1].many2many.non_polymorphic()), 1)
 
     def test_refresh_from_db_fields(self):
         """Test whether refresh_from_db(fields=..) works as it performs .only() queries"""

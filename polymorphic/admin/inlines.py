@@ -229,9 +229,8 @@ class PolymorphicInlineModelAdmin(InlineModelAdmin):
                 exclude = list(self.exclude)
 
             exclude.extend(self.get_readonly_fields(request, obj))
-            exclude.append(
-                "polymorphic_ctype"
-            )  # Django 1.10 blocks it, as it's a readonly field.
+            # Add forcefully, as Django 1.10 doesn't include readonly fields.
+            exclude.append("polymorphic_ctype")
 
             if (
                 self.exclude is None

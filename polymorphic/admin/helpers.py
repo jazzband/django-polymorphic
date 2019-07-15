@@ -32,9 +32,8 @@ class PolymorphicInlineAdminFormSet(InlineAdminFormSet):
     """
 
     def __init__(self, *args, **kwargs):
-        self.request = kwargs.pop(
-            "request", None
-        )  # Assigned later via PolymorphicInlineSupportMixin later.
+        # Assigned later via PolymorphicInlineSupportMixin later.
+        self.request = kwargs.pop("request", None)
         self.obj = kwargs.pop("obj", None)
         super(PolymorphicInlineAdminFormSet, self).__init__(*args, **kwargs)
 

@@ -177,9 +177,8 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
 
         model_class = ct.model_class()
         if not model_class:
-            raise Http404(
-                "No model found for '{0}.{1}'.".format(*ct.natural_key())
-            )  # Handle model deletion
+            # Handle model deletion
+            raise Http404("No model found for '{0}.{1}'.".format(*ct.natural_key()))
 
         return self._get_real_admin_by_model(model_class, super_if_self=super_if_self)
 

@@ -157,9 +157,8 @@ class ModelUnderRelChild(PolymorphicModel):
 
 class MyManagerQuerySet(PolymorphicQuerySet):
     def my_queryset_foo(self):
-        return (
-            self.all()
-        )  # Just a method to prove the existance of the custom queryset.
+        # Just a method to prove the existence of the custom queryset.
+        return self.all()
 
 
 class MyManager(PolymorphicManager):
@@ -205,9 +204,8 @@ class MROBase2(MROBase1):
 
 
 class MROBase3(models.Model):
-    base_3_id = models.AutoField(
-        primary_key=True
-    )  # make sure 'id' field doesn't clash, detected by Django 1.11
+    # make sure 'id' field doesn't clash, detected by Django 1.11
+    base_3_id = models.AutoField(primary_key=True)
     objects = models.Manager()
 
 
@@ -232,9 +230,8 @@ class ChildModelWithManager(PolymorphicModel):
 
 class PlainMyManagerQuerySet(QuerySet):
     def my_queryset_foo(self):
-        return (
-            self.all()
-        )  # Just a method to prove the existence of the custom queryset.
+        # Just a method to prove the existence of the custom queryset.
+        return self.all()
 
 
 class PlainMyManager(models.Manager):

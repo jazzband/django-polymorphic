@@ -13,9 +13,8 @@ RE_DEFERRED = re.compile("_Deferred_.*")
 class ShowFieldBase(object):
     """ base class for the ShowField... model mixins, does the work """
 
-    polymorphic_query_multiline_output = (
-        True
-    )  # cause nicer multiline PolymorphicQuery output
+    # cause nicer multiline PolymorphicQuery output
+    polymorphic_query_multiline_output = True
 
     polymorphic_showfield_type = False
     polymorphic_showfield_content = False

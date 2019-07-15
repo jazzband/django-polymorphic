@@ -28,9 +28,8 @@ class PolymorphicManager(models.Manager):
         manager = super(PolymorphicManager, cls).from_queryset(
             queryset_class, class_name=class_name
         )
-        manager.queryset_class = (
-            queryset_class
-        )  # also set our version, Django uses _queryset_class
+        # also set our version, Django uses _queryset_class
+        manager.queryset_class = queryset_class
         return manager
 
     def get_queryset(self):
