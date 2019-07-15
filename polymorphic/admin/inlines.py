@@ -5,6 +5,7 @@ Each row in the inline can correspond with a different subclass.
 """
 from functools import partial
 
+from django.conf import settings
 from django.contrib.admin.options import InlineModelAdmin
 from django.contrib.admin.utils import flatten_fieldsets
 from django.core.exceptions import ImproperlyConfigured
@@ -36,7 +37,13 @@ class PolymorphicInlineModelAdmin(InlineModelAdmin):
     #: The extra media to add for the polymorphic inlines effect.
     #: This can be redefined for subclasses.
     polymorphic_media = Media(
-        js=("polymorphic/js/polymorphic_inlines.js",),
+        js=(
+            "admin/js/vendor/jquery/jquery{}.js".format(
+                "" if settings.DEBUG else ".min"
+            ),
+            "admin/js/jquery.init.js",
+            "polymorphic/js/polymorphic_inlines.js",
+        ),
         css={"all": ("polymorphic/css/polymorphic_inlines.css",)},
     )
 
