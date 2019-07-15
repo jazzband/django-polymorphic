@@ -1234,3 +1234,14 @@ class PolymorphicTests(TransactionTestCase):
         self.assertEqual(
             len(objects[1].many2many.non_polymorphic()), 1
         )  # base object does exist
+
+    def test_refresh_from_db_fields(self):
+        """Test whether refresh_from_db(fields=..) works as it performs .only() queries"""
+        obj = Model2B.objects.create(field1="aa", field2="bb")
+        Model2B.objects.filter(pk=obj.pk).update(field1="aa1", field2="bb2")
+        obj.refresh_from_db(fields=["field2"])
+        assert obj.field1 == "aa"
+        assert obj.field2 == "bb2"
+
+        obj.refresh_from_db(fields=["field1"])
+        assert obj.field1 == "aa1"
