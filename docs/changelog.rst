@@ -1,6 +1,12 @@
 Changelog
 =========
 
+Changes in 2.1.1 (2019-07-15)
+-----------------------------
+
+* Fixed admin import error due to ``isort`` changes.
+
+
 Changes in 2.1 (2019-07-15)
 ---------------------------
 
