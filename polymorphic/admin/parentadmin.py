@@ -7,7 +7,7 @@ from django.contrib import admin
 from django.contrib.admin.helpers import AdminErrorList, AdminForm
 from django.contrib.admin.templatetags.admin_urls import add_preserved_filters
 from django.contrib.contenttypes.models import ContentType
-from django.core.exceptions import PermissionDenied, ImproperlyConfigured
+from django.core.exceptions import ImproperlyConfigured, PermissionDenied
 from django.db import models
 from django.http import Http404, HttpResponseRedirect
 from django.template.response import TemplateResponse
@@ -15,9 +15,10 @@ from django.utils.encoding import force_text
 from django.utils.http import urlencode
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
-from polymorphic.utils import get_base_polymorphic_model
-from .forms import PolymorphicModelChoiceForm
 
+from polymorphic.utils import get_base_polymorphic_model
+
+from .forms import PolymorphicModelChoiceForm
 
 try:
     # Django 2.0+
@@ -73,7 +74,9 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
     pk_regex = r"(\d+|__fk__)"
 
     def __init__(self, model, admin_site, *args, **kwargs):
-        super(PolymorphicParentModelAdmin, self).__init__(model, admin_site, *args, **kwargs)
+        super(PolymorphicParentModelAdmin, self).__init__(
+            model, admin_site, *args, **kwargs
+        )
         self._is_setup = False
 
         if self.base_model is None:
@@ -105,12 +108,22 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
         # After the get_urls() is called, the URLs of the child model can't be exposed anymore to the Django URLconf,
         # which also means that a "Save and continue editing" button won't work.
         if self._is_setup:
-            raise RegistrationClosed("The admin model can't be registered anymore at this point.")
+            raise RegistrationClosed(
+                "The admin model can't be registered anymore at this point."
+            )
 
         if not issubclass(model, self.base_model):
-            raise TypeError("{0} should be a subclass of {1}".format(model.__name__, self.base_model.__name__))
+            raise TypeError(
+                "{0} should be a subclass of {1}".format(
+                    model.__name__, self.base_model.__name__
+                )
+            )
         if not issubclass(model_admin, admin.ModelAdmin):
-            raise TypeError("{0} should be a subclass of {1}".format(model_admin.__name__, admin.ModelAdmin.__name__))
+            raise TypeError(
+                "{0} should be a subclass of {1}".format(
+                    model_admin.__name__, admin.ModelAdmin.__name__
+                )
+            )
 
         self._child_admin_site.register(model, model_admin)
 
@@ -134,7 +147,7 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
         self._lazy_setup()
         choices = []
         for model in self.get_child_models():
-            perm_function_name = 'has_{0}_permission'.format(action)
+            perm_function_name = "has_{0}_permission".format(action)
             model_admin = self._get_real_admin_by_model(model)
             perm_function = getattr(model_admin, perm_function_name)
             if not perm_function(request):
@@ -145,21 +158,28 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
 
     def _get_real_admin(self, object_id, super_if_self=True):
         try:
-            obj = self.model.objects.non_polymorphic() \
-                .values('polymorphic_ctype').get(pk=object_id)
+            obj = (
+                self.model.objects.non_polymorphic()
+                .values("polymorphic_ctype")
+                .get(pk=object_id)
+            )
         except self.model.DoesNotExist:
             raise Http404
-        return self._get_real_admin_by_ct(obj['polymorphic_ctype'], super_if_self=super_if_self)
+        return self._get_real_admin_by_ct(
+            obj["polymorphic_ctype"], super_if_self=super_if_self
+        )
 
     def _get_real_admin_by_ct(self, ct_id, super_if_self=True):
         try:
             ct = ContentType.objects.get_for_id(ct_id)
         except ContentType.DoesNotExist as e:
-            raise Http404(e)   # Handle invalid GET parameters
+            raise Http404(e)  # Handle invalid GET parameters
 
         model_class = ct.model_class()
         if not model_class:
-            raise Http404("No model found for '{0}.{1}'.".format(*ct.natural_key()))  # Handle model deletion
+            raise Http404(
+                "No model found for '{0}.{1}'.".format(*ct.natural_key())
+            )  # Handle model deletion
 
         return self._get_real_admin_by_model(model_class, super_if_self=super_if_self)
 
@@ -167,14 +187,22 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
         # In case of a ?ct_id=### parameter, the view is already checked for permissions.
         # Hence, make sure this is a derived object, or risk exposing other admin interfaces.
         if model_class not in self._child_models:
-            raise PermissionDenied("Invalid model '{0}', it must be registered as child model.".format(model_class))
+            raise PermissionDenied(
+                "Invalid model '{0}', it must be registered as child model.".format(
+                    model_class
+                )
+            )
 
         try:
             # HACK: the only way to get the instance of an model admin,
             # is to read the registry of the AdminSite.
             real_admin = self._child_admin_site._registry[model_class]
         except KeyError:
-            raise ChildAdminNotRegistered("No child admin site was registered for a '{0}' model.".format(model_class))
+            raise ChildAdminNotRegistered(
+                "No child admin site was registered for a '{0}' model.".format(
+                    model_class
+                )
+            )
 
         if super_if_self and real_admin is self:
             return super(PolymorphicParentModelAdmin, self)
@@ -188,19 +216,21 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
             qs = qs.non_polymorphic()
         return qs
 
-    def add_view(self, request, form_url='', extra_context=None):
+    def add_view(self, request, form_url="", extra_context=None):
         """Redirect the add view to the real admin."""
-        ct_id = int(request.GET.get('ct_id', 0))
+        ct_id = int(request.GET.get("ct_id", 0))
         if not ct_id:
             # Display choices
             return self.add_type_view(request)
         else:
             real_admin = self._get_real_admin_by_ct(ct_id)
             # rebuild form_url, otherwise libraries below will override it.
-            form_url = add_preserved_filters({
-                'preserved_filters': urlencode({'ct_id': ct_id}),
-                'opts': self.model._meta},
-                form_url
+            form_url = add_preserved_filters(
+                {
+                    "preserved_filters": urlencode({"ct_id": ct_id}),
+                    "opts": self.model._meta,
+                },
+                form_url,
             )
             return real_admin.add_view(request, form_url, extra_context)
 
@@ -218,7 +248,9 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
             return real_admin.changeform_view(request, object_id, *args, **kwargs)
         else:
             # Add view. As it should already be handled via `add_view`, this means something custom is done here!
-            return super(PolymorphicParentModelAdmin, self).changeform_view(request, object_id, *args, **kwargs)
+            return super(PolymorphicParentModelAdmin, self).changeform_view(
+                request, object_id, *args, **kwargs
+            )
 
     def history_view(self, request, object_id, extra_context=None):
         """Redirect the history view to the real admin."""
@@ -231,14 +263,14 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
         return real_admin.delete_view(request, object_id, extra_context)
 
     def get_preserved_filters(self, request):
-        if '_changelist_filters' in request.GET:
+        if "_changelist_filters" in request.GET:
             request.GET = request.GET.copy()
-            filters = request.GET.get('_changelist_filters')
+            filters = request.GET.get("_changelist_filters")
             f = filters.split("&")
             for x in f:
-                c = x.split('=')
+                c = x.split("=")
                 request.GET[c[0]] = c[1]
-            del request.GET['_changelist_filters']
+            del request.GET["_changelist_filters"]
         return super(PolymorphicParentModelAdmin, self).get_preserved_filters(request)
 
     def get_urls(self):
@@ -256,91 +288,100 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
         """
         Forward any request to a custom view of the real admin.
         """
-        ct_id = int(request.GET.get('ct_id', 0))
+        ct_id = int(request.GET.get("ct_id", 0))
         if not ct_id:
             # See if the path started with an ID.
             try:
-                pos = path.find('/')
+                pos = path.find("/")
                 if pos == -1:
                     object_id = long(path)
                 else:
                     object_id = long(path[0:pos])
             except ValueError:
-                raise Http404("No ct_id parameter, unable to find admin subclass for path '{0}'.".format(path))
+                raise Http404(
+                    "No ct_id parameter, unable to find admin subclass for path '{0}'.".format(
+                        path
+                    )
+                )
 
-            ct_id = self.model.objects.values_list('polymorphic_ctype_id', flat=True).get(pk=object_id)
+            ct_id = self.model.objects.values_list(
+                "polymorphic_ctype_id", flat=True
+            ).get(pk=object_id)
 
         real_admin = self._get_real_admin_by_ct(ct_id)
-        resolver = URLResolver('^', real_admin.urls)
+        resolver = URLResolver("^", real_admin.urls)
         resolvermatch = resolver.resolve(path)  # May raise Resolver404
         if not resolvermatch:
             raise Http404("No match for path '{0}' in admin subclass.".format(path))
 
         return resolvermatch.func(request, *resolvermatch.args, **resolvermatch.kwargs)
 
-    def add_type_view(self, request, form_url=''):
+    def add_type_view(self, request, form_url=""):
         """
         Display a choice form to select which page type to add.
         """
         if not self.has_add_permission(request):
             raise PermissionDenied
 
-        extra_qs = ''
-        if request.META['QUERY_STRING']:
+        extra_qs = ""
+        if request.META["QUERY_STRING"]:
             # QUERY_STRING is bytes in Python 3, using force_text() to decode it as string.
             # See QueryDict how Django deals with that.
-            extra_qs = '&{0}'.format(force_text(request.META['QUERY_STRING']))
+            extra_qs = "&{0}".format(force_text(request.META["QUERY_STRING"]))
 
-        choices = self.get_child_type_choices(request, 'add')
+        choices = self.get_child_type_choices(request, "add")
         if len(choices) == 1:
-            return HttpResponseRedirect('?ct_id={0}{1}'.format(choices[0][0], extra_qs))
+            return HttpResponseRedirect("?ct_id={0}{1}".format(choices[0][0], extra_qs))
 
         # Create form
         form = self.add_type_form(
-            data=request.POST if request.method == 'POST' else None,
-            initial={'ct_id': choices[0][0]}
+            data=request.POST if request.method == "POST" else None,
+            initial={"ct_id": choices[0][0]},
         )
-        form.fields['ct_id'].choices = choices
+        form.fields["ct_id"].choices = choices
 
         if form.is_valid():
-            return HttpResponseRedirect('?ct_id={0}{1}'.format(form.cleaned_data['ct_id'], extra_qs))
+            return HttpResponseRedirect(
+                "?ct_id={0}{1}".format(form.cleaned_data["ct_id"], extra_qs)
+            )
 
         # Wrap in all admin layout
-        fieldsets = ((None, {'fields': ('ct_id',)}),)
+        fieldsets = ((None, {"fields": ("ct_id",)}),)
         adminForm = AdminForm(form, fieldsets, {}, model_admin=self)
         media = self.media + adminForm.media
         opts = self.model._meta
 
         context = {
-            'title': _('Add %s') % force_text(opts.verbose_name),
-            'adminform': adminForm,
-            'is_popup': ("_popup" in request.POST or
-                         "_popup" in request.GET),
-            'media': mark_safe(media),
-            'errors': AdminErrorList(form, ()),
-            'app_label': opts.app_label,
+            "title": _("Add %s") % force_text(opts.verbose_name),
+            "adminform": adminForm,
+            "is_popup": ("_popup" in request.POST or "_popup" in request.GET),
+            "media": mark_safe(media),
+            "errors": AdminErrorList(form, ()),
+            "app_label": opts.app_label,
         }
         return self.render_add_type_form(request, context, form_url)
 
-    def render_add_type_form(self, request, context, form_url=''):
+    def render_add_type_form(self, request, context, form_url=""):
         """
         Render the page type choice form.
         """
         opts = self.model._meta
         app_label = opts.app_label
-        context.update({
-            'has_change_permission': self.has_change_permission(request),
-            'form_url': mark_safe(form_url),
-            'opts': opts,
-            'add': True,
-            'save_on_top': self.save_on_top,
-        })
+        context.update(
+            {
+                "has_change_permission": self.has_change_permission(request),
+                "form_url": mark_safe(form_url),
+                "opts": opts,
+                "add": True,
+                "save_on_top": self.save_on_top,
+            }
+        )
 
         templates = self.add_type_template or [
             "admin/%s/%s/add_type_form.html" % (app_label, opts.object_name.lower()),
             "admin/%s/add_type_form.html" % app_label,
             "admin/polymorphic/add_type_form.html",  # added default here
-            "admin/add_type_form.html"
+            "admin/add_type_form.html",
         ]
 
         request.current_app = self.admin_site.name
@@ -359,7 +400,8 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
             "admin/%s/%s/change_list.html" % (app_label, opts.object_name.lower()),
             "admin/%s/change_list.html" % app_label,
             # Added base class:
-            "admin/%s/%s/change_list.html" % (base_app_label, base_opts.object_name.lower()),
+            "admin/%s/%s/change_list.html"
+            % (base_app_label, base_opts.object_name.lower()),
             "admin/%s/change_list.html" % base_app_label,
-            "admin/change_list.html"
+            "admin/change_list.html",
         ]

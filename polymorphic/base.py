@@ -20,9 +20,11 @@ from .query import PolymorphicQuerySet
 
 # PolymorphicQuerySet Q objects (and filter()) support these additional key words.
 # These are forbidden as field names (a descriptive exception is raised)
-POLYMORPHIC_SPECIAL_Q_KWORDS = ['instance_of', 'not_instance_of']
+POLYMORPHIC_SPECIAL_Q_KWORDS = ["instance_of", "not_instance_of"]
 
-DUMPDATA_COMMAND = os.path.join('django', 'core', 'management', 'commands', 'dumpdata.py')
+DUMPDATA_COMMAND = os.path.join(
+    "django", "core", "management", "commands", "dumpdata.py"
+)
 
 
 class ManagerInheritanceWarning(RuntimeWarning):
@@ -31,6 +33,7 @@ class ManagerInheritanceWarning(RuntimeWarning):
 
 ###################################################################################
 # PolymorphicModel meta class
+
 
 class PolymorphicModelBase(ModelBase):
     """
@@ -60,17 +63,21 @@ class PolymorphicModelBase(ModelBase):
         # print; print '###', model_name, '- bases:', bases
 
         # Workaround compatibility issue with six.with_metaclass() and custom Django model metaclasses:
-        if not attrs and model_name == 'NewBase':
-            return super(PolymorphicModelBase, self).__new__(self, model_name, bases, attrs)
+        if not attrs and model_name == "NewBase":
+            return super(PolymorphicModelBase, self).__new__(
+                self, model_name, bases, attrs
+            )
 
         # Make sure that manager_inheritance_from_future is set, since django-polymorphic 1.x already
         # simulated that behavior on the polymorphic manager to all subclasses behave like polymorphics
         if django.VERSION < (2, 0):
-            if 'Meta' in attrs:
-                if not hasattr(attrs['Meta'], 'manager_inheritance_from_future'):
-                    attrs['Meta'].manager_inheritance_from_future = True
+            if "Meta" in attrs:
+                if not hasattr(attrs["Meta"], "manager_inheritance_from_future"):
+                    attrs["Meta"].manager_inheritance_from_future = True
             else:
-                attrs['Meta'] = type('Meta', (object,), {'manager_inheritance_from_future': True})
+                attrs["Meta"] = type(
+                    "Meta", (object,), {"manager_inheritance_from_future": True}
+                )
 
         # create new model
         new_class = self.call_superclass_new_method(model_name, bases, attrs)
@@ -103,17 +110,21 @@ class PolymorphicModelBase(ModelBase):
         # We run into this problem if polymorphic.py is located in a top-level directory
         # which is directly in the python path. To work around this we temporarily set
         # app_label here for PolymorphicModel.
-        meta = attrs.get('Meta', None)
-        do_app_label_workaround = (meta
-                                   and attrs['__module__'] == 'polymorphic'
-                                   and model_name == 'PolymorphicModel'
-                                   and getattr(meta, 'app_label', None) is None)
+        meta = attrs.get("Meta", None)
+        do_app_label_workaround = (
+            meta
+            and attrs["__module__"] == "polymorphic"
+            and model_name == "PolymorphicModel"
+            and getattr(meta, "app_label", None) is None
+        )
 
         if do_app_label_workaround:
-            meta.app_label = 'poly_dummy_app_label'
-        new_class = super(PolymorphicModelBase, self).__new__(self, model_name, bases, attrs)
+            meta.app_label = "poly_dummy_app_label"
+        new_class = super(PolymorphicModelBase, self).__new__(
+            self, model_name, bases, attrs
+        )
         if do_app_label_workaround:
-            del(meta.app_label)
+            del meta.app_label
         return new_class
 
     @classmethod
@@ -133,17 +144,25 @@ class PolymorphicModelBase(ModelBase):
             if django.VERSION < (2, 0):
                 extra = "\nConsider using Meta.manager_inheritance_from_future = True for Django 1.x projects"
             else:
-                extra = ''
-            e = ('PolymorphicModel: "{0}.{1}" manager is of type "{2}", but must be a subclass of'
-                 ' PolymorphicManager.{extra} to support retrieving subclasses'.format(
-                model_name, manager_name, type(manager).__name__, extra=extra))
+                extra = ""
+            e = (
+                'PolymorphicModel: "{0}.{1}" manager is of type "{2}", but must be a subclass of'
+                " PolymorphicManager.{extra} to support retrieving subclasses".format(
+                    model_name, manager_name, type(manager).__name__, extra=extra
+                )
+            )
             warnings.warn(e, ManagerInheritanceWarning, stacklevel=3)
             return manager
 
-        if not getattr(manager, 'queryset_class', None) or not issubclass(manager.queryset_class, PolymorphicQuerySet):
-            e = ('PolymorphicModel: "{0}.{1}" has been instantiated with a queryset class '
-                 'which is not a subclass of PolymorphicQuerySet (which is required)'.format(
-                model_name, manager_name))
+        if not getattr(manager, "queryset_class", None) or not issubclass(
+            manager.queryset_class, PolymorphicQuerySet
+        ):
+            e = (
+                'PolymorphicModel: "{0}.{1}" has been instantiated with a queryset class '
+                "which is not a subclass of PolymorphicQuerySet (which is required)".format(
+                    model_name, manager_name
+                )
+            )
             warnings.warn(e, ManagerInheritanceWarning, stacklevel=3)
         return manager
 
@@ -151,8 +170,12 @@ class PolymorphicModelBase(ModelBase):
     def base_objects(self):
         warnings.warn(
             "Using PolymorphicModel.base_objects is deprecated.\n"
-            "Use {0}.objects.non_polymorphic() instead.".format(self.__class__.__name__),
-            DeprecationWarning, stacklevel=2)
+            "Use {0}.objects.non_polymorphic() instead.".format(
+                self.__class__.__name__
+            ),
+            DeprecationWarning,
+            stacklevel=2,
+        )
         return self._base_objects
 
     @property
@@ -162,13 +185,13 @@ class PolymorphicModelBase(ModelBase):
         # manager as default manager for the third level of inheritance when
         # that third level doesn't define a manager at all.
         manager = models.Manager()
-        manager.name = 'base_objects'
+        manager.name = "base_objects"
         manager.model = self
         return manager
 
     @property
     def _default_manager(self):
-        if len(sys.argv) > 1 and sys.argv[1] == 'dumpdata':
+        if len(sys.argv) > 1 and sys.argv[1] == "dumpdata":
             # TODO: investigate Django how this can be avoided
             # hack: a small patch to Django would be a better solution.
             # Django's management command 'dumpdata' relies on non-polymorphic
@@ -178,14 +201,19 @@ class PolymorphicModelBase(ModelBase):
             # (non-polymorphic default manager is 'base_objects' for polymorphic models).
             # This way we don't need to patch django.core.management.commands.dumpdata
             # for all supported Django versions.
-            frm = inspect.stack()[1]  # frm[1] is caller file name, frm[3] is caller function name
+            frm = inspect.stack()[
+                1
+            ]  # frm[1] is caller file name, frm[3] is caller function name
             if DUMPDATA_COMMAND in frm[1]:
                 return self._base_objects
 
         manager = super(PolymorphicModelBase, self)._default_manager
         if not isinstance(manager, PolymorphicManager):
-            warnings.warn("{0}._default_manager is not a PolymorphicManager".format(
-                self.__class__.__name__
-            ), ManagerInheritanceWarning)
+            warnings.warn(
+                "{0}._default_manager is not a PolymorphicManager".format(
+                    self.__class__.__name__
+                ),
+                ManagerInheritanceWarning,
+            )
 
         return manager

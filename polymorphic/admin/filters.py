@@ -14,11 +14,12 @@ class PolymorphicChildModelFilter(admin.SimpleListFilter):
 
         list_filter = (PolymorphicChildModelFilter,)
     """
-    title = _('Type')
-    parameter_name = 'polymorphic_ctype'
+
+    title = _("Type")
+    parameter_name = "polymorphic_ctype"
 
     def lookups(self, request, model_admin):
-        return model_admin.get_child_type_choices(request, 'change')
+        return model_admin.get_child_type_choices(request, "change")
 
     def queryset(self, request, queryset):
         try:
@@ -31,5 +32,8 @@ class PolymorphicChildModelFilter(admin.SimpleListFilter):
                 if choice_value == value:
                     return queryset.filter(polymorphic_ctype_id=choice_value)
             raise PermissionDenied(
-                'Invalid ContentType "{0}". It must be registered as child model.'.format(value))
+                'Invalid ContentType "{0}". It must be registered as child model.'.format(
+                    value
+                )
+            )
         return queryset

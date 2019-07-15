@@ -1,7 +1,8 @@
 from django.contrib import admin
 
 from polymorphic.admin import PolymorphicInlineSupportMixin, StackedPolymorphicInline
-from .models import Order, Payment, CreditCardPayment, BankPayment, SepaPayment
+
+from .models import BankPayment, CreditCardPayment, Order, Payment, SepaPayment
 
 
 class CreditCardPaymentInline(StackedPolymorphicInline.Child):
@@ -24,11 +25,7 @@ class PaymentInline(StackedPolymorphicInline):
     """
 
     model = Payment
-    child_inlines = (
-        CreditCardPaymentInline,
-        BankPaymentInline,
-        SepaPaymentInline,
-    )
+    child_inlines = (CreditCardPaymentInline, BankPaymentInline, SepaPaymentInline)
 
 
 @admin.register(Order)
@@ -39,5 +36,5 @@ class OrderAdmin(PolymorphicInlineSupportMixin, admin.ModelAdmin):
     To make sure the inlines are properly handled,
     the ``PolymorphicInlineSupportMixin`` is needed to
     """
-    inlines = (PaymentInline,)
 
+    inlines = (PaymentInline,)

@@ -13,4 +13,3 @@ try:
     __version__ = pkg_resources.require("django-polymorphic")[0].version
 except pkg_resources.DistributionNotFound:
     __version__ = None  # for RTD among others
-

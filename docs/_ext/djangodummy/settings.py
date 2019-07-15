@@ -5,11 +5,9 @@
 # so the docs root won't be detected by find_packages()
 
 # Display sane URLs in the docs:
-STATIC_URL = '/static/'
+STATIC_URL = "/static/"
 
 # Avoid error for missing the secret key
-SECRET_KEY = 'docs'
+SECRET_KEY = "docs"
 
-INSTALLED_APPS = [
-    'django.contrib.contenttypes',
-]
+INSTALLED_APPS = ["django.contrib.contenttypes"]

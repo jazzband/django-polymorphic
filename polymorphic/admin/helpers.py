@@ -5,7 +5,7 @@ This makes sure that admin fieldsets/layout settings are exported to the templat
 """
 import json
 
-from django.contrib.admin.helpers import InlineAdminFormSet, InlineAdminForm, AdminField
+from django.contrib.admin.helpers import AdminField, InlineAdminForm, InlineAdminFormSet
 from django.utils.encoding import force_text
 from django.utils.text import capfirst
 from django.utils.translation import ugettext
@@ -19,11 +19,11 @@ class PolymorphicInlineAdminForm(InlineAdminForm):
     """
 
     def polymorphic_ctype_field(self):
-        return AdminField(self.form, 'polymorphic_ctype', False)
+        return AdminField(self.form, "polymorphic_ctype", False)
 
     @property
     def is_empty(self):
-        return '__prefix__' in self.form.prefix
+        return "__prefix__" in self.form.prefix
 
 
 class PolymorphicInlineAdminFormSet(InlineAdminFormSet):
@@ -32,15 +32,19 @@ class PolymorphicInlineAdminFormSet(InlineAdminFormSet):
     """
 
     def __init__(self, *args, **kwargs):
-        self.request = kwargs.pop('request', None)  # Assigned later via PolymorphicInlineSupportMixin later.
-        self.obj = kwargs.pop('obj', None)
+        self.request = kwargs.pop(
+            "request", None
+        )  # Assigned later via PolymorphicInlineSupportMixin later.
+        self.obj = kwargs.pop("obj", None)
         super(PolymorphicInlineAdminFormSet, self).__init__(*args, **kwargs)
 
     def __iter__(self):
         """
         Output all forms using the proper subtype settings.
         """
-        for form, original in zip(self.formset.initial_forms, self.formset.get_queryset()):
+        for form, original in zip(
+            self.formset.initial_forms, self.formset.get_queryset()
+        ):
             # Output the form
             model = original.get_real_instance_class()
             child_inline = self.opts.get_child_inline_instance(model)
@@ -54,7 +58,7 @@ class PolymorphicInlineAdminFormSet(InlineAdminFormSet):
                 original=original,
                 readonly_fields=self.get_child_readonly_fields(child_inline),
                 model_admin=child_inline,
-                view_on_site_url=view_on_site_url
+                view_on_site_url=view_on_site_url,
             )
 
         # Extra rows, and empty prefixed forms.
@@ -88,22 +92,24 @@ class PolymorphicInlineAdminFormSet(InlineAdminFormSet):
         This overrides the default Django version to add the ``childTypes`` data.
         """
         verbose_name = self.opts.verbose_name
-        return json.dumps({
-            'name': '#%s' % self.formset.prefix,
-            'options': {
-                'prefix': self.formset.prefix,
-                'addText': ugettext('Add another %(verbose_name)s') % {
-                    'verbose_name': capfirst(verbose_name),
+        return json.dumps(
+            {
+                "name": "#%s" % self.formset.prefix,
+                "options": {
+                    "prefix": self.formset.prefix,
+                    "addText": ugettext("Add another %(verbose_name)s")
+                    % {"verbose_name": capfirst(verbose_name)},
+                    "childTypes": [
+                        {
+                            "type": model._meta.model_name,
+                            "name": force_text(model._meta.verbose_name),
+                        }
+                        for model in self.formset.child_forms.keys()
+                    ],
+                    "deleteText": ugettext("Remove"),
                 },
-                'childTypes': [
-                    {
-                        'type': model._meta.model_name,
-                        'name': force_text(model._meta.verbose_name)
-                    } for model in self.formset.child_forms.keys()
-                ],
-                'deleteText': ugettext('Remove'),
             }
-        })
+        )
 
 
 class PolymorphicInlineSupportMixin(object):
@@ -119,14 +125,17 @@ class PolymorphicInlineSupportMixin(object):
     :class:`~django.contrib.admin.helpers.InlineAdminFormSet` for the polymorphic formsets.
     """
 
-    def get_inline_formsets(self, request, formsets, inline_instances, obj=None, *args, **kwargs):
+    def get_inline_formsets(
+        self, request, formsets, inline_instances, obj=None, *args, **kwargs
+    ):
         """
         Overwritten version to produce the proper admin wrapping for the
         polymorphic inline formset. This fixes the media and form appearance
         of the inline polymorphic models.
         """
-        inline_admin_formsets = super(PolymorphicInlineSupportMixin, self).get_inline_formsets(
-            request, formsets, inline_instances, obj=obj)
+        inline_admin_formsets = super(
+            PolymorphicInlineSupportMixin, self
+        ).get_inline_formsets(request, formsets, inline_instances, obj=obj)
 
         for admin_formset in inline_admin_formsets:
             if isinstance(admin_formset.formset, BasePolymorphicModelFormSet):

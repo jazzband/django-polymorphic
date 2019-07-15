@@ -5,15 +5,20 @@ The ``extra_views.advanced`` provides a method to combine that with a create/upd
 This package provides classes that support both options for polymorphic formsets.
 """
 from __future__ import absolute_import
-from django.core.exceptions import ImproperlyConfigured
-import extra_views
-from polymorphic.formsets import polymorphic_child_forms_factory, BasePolymorphicModelFormSet, BasePolymorphicInlineFormSet
 
+import extra_views
+from django.core.exceptions import ImproperlyConfigured
+
+from polymorphic.formsets import (
+    BasePolymorphicInlineFormSet,
+    BasePolymorphicModelFormSet,
+    polymorphic_child_forms_factory,
+)
 
 __all__ = (
-    'PolymorphicFormSetView',
-    'PolymorphicInlineFormSetView',
-    'PolymorphicInlineFormSet',
+    "PolymorphicFormSetView",
+    "PolymorphicInlineFormSetView",
+    "PolymorphicInlineFormSet",
 )
 
 
@@ -25,7 +30,7 @@ class PolymorphicFormSetMixin(object):
     formset_class = BasePolymorphicModelFormSet
 
     #: Default 0 extra forms
-    factory_kwargs = {'extra': 0}
+    factory_kwargs = {"extra": 0}
 
     #: Define the children
     # :type: list[PolymorphicFormSetChild]
@@ -36,7 +41,9 @@ class PolymorphicFormSetMixin(object):
         :rtype: list[PolymorphicFormSetChild]
         """
         if not self.formset_children:
-            raise ImproperlyConfigured("Define 'formset_children' as list of `PolymorphicFormSetChild`")
+            raise ImproperlyConfigured(
+                "Define 'formset_children' as list of `PolymorphicFormSetChild`"
+            )
         return self.formset_children
 
     def get_formset_child_kwargs(self):
@@ -51,7 +58,9 @@ class PolymorphicFormSetMixin(object):
         # reuse the standard factories, and then add `child_forms`, the same can be done here.
         # This makes sure the base class construction is completely honored.
         FormSet = super(PolymorphicFormSetMixin, self).get_formset()
-        FormSet.child_forms = polymorphic_child_forms_factory(self.get_formset_children(), **self.get_formset_child_kwargs())
+        FormSet.child_forms = polymorphic_child_forms_factory(
+            self.get_formset_children(), **self.get_formset_child_kwargs()
+        )
         return FormSet
 
 
@@ -72,10 +81,13 @@ class PolymorphicFormSetView(PolymorphicFormSetMixin, extra_views.ModelFormSetVi
             ]
 
     """
+
     formset_class = BasePolymorphicModelFormSet
 
 
-class PolymorphicInlineFormSetView(PolymorphicFormSetMixin, extra_views.InlineFormSetView):
+class PolymorphicInlineFormSetView(
+    PolymorphicFormSetMixin, extra_views.InlineFormSetView
+):
     """
     A view that displays a single polymorphic formset - with one parent object.
     This is a variation of the :mod:`extra_views` package classes for django-polymorphic.
@@ -93,10 +105,13 @@ class PolymorphicInlineFormSetView(PolymorphicFormSetMixin, extra_views.InlineFo
                 PolymorphicFormSetChild(ItemSubclass2),
             ]
     """
+
     formset_class = BasePolymorphicInlineFormSet
 
 
-class PolymorphicInlineFormSet(PolymorphicFormSetMixin, extra_views.InlineFormSetFactory):
+class PolymorphicInlineFormSet(
+    PolymorphicFormSetMixin, extra_views.InlineFormSetFactory
+):
     """
     An inline to add to the ``inlines`` of
     the :class:`~extra_views.advanced.CreateWithInlinesView`
@@ -123,4 +138,5 @@ class PolymorphicInlineFormSet(PolymorphicFormSetMixin, extra_views.InlineFormSe
                 return self.object.get_absolute_url()
 
     """
+
     formset_class = BasePolymorphicInlineFormSet

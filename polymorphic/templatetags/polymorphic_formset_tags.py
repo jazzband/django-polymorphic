@@ -7,7 +7,6 @@ from django.utils.translation import ugettext
 
 from polymorphic.formsets import BasePolymorphicModelFormSet
 
-
 register = Library()
 
 
@@ -19,7 +18,7 @@ def include_empty_form(formset):
     for form in formset:
         yield form
 
-    if hasattr(formset, 'empty_forms'):
+    if hasattr(formset, "empty_forms"):
         # BasePolymorphicModelFormSet
         for form in formset.empty_forms:
             yield form
@@ -40,24 +39,25 @@ def as_script_options(formset):
     - ``add_text``
     - ``show_add_button``
     """
-    verbose_name = getattr(formset, 'verbose_name', formset.model._meta.verbose_name)
+    verbose_name = getattr(formset, "verbose_name", formset.model._meta.verbose_name)
     options = {
-        'prefix': formset.prefix,
-        'pkFieldName': formset.model._meta.pk.name,
-        'addText': getattr(formset, 'add_text', None) or ugettext('Add another %(verbose_name)s') % {
-            'verbose_name': capfirst(verbose_name),
-        },
-        'showAddButton': getattr(formset, 'show_add_button', True),
-        'deleteText': ugettext('Delete'),
+        "prefix": formset.prefix,
+        "pkFieldName": formset.model._meta.pk.name,
+        "addText": getattr(formset, "add_text", None)
+        or ugettext("Add another %(verbose_name)s")
+        % {"verbose_name": capfirst(verbose_name)},
+        "showAddButton": getattr(formset, "show_add_button", True),
+        "deleteText": ugettext("Delete"),
     }
 
     if isinstance(formset, BasePolymorphicModelFormSet):
         # Allow to add different types
-        options['childTypes'] = [
+        options["childTypes"] = [
             {
-                'name': force_text(model._meta.verbose_name),
-                'type': model._meta.model_name,
-            } for model in formset.child_forms.keys()
+                "name": force_text(model._meta.verbose_name),
+                "type": model._meta.model_name,
+            }
+            for model in formset.child_forms.keys()
         ]
 
     return json.dumps(options)

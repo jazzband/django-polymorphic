@@ -11,12 +11,13 @@ class Order(models.Model):
     """
     An example order that has polymorphic relations
     """
+
     title = models.CharField(_("Title"), max_length=200)
 
     class Meta:
         verbose_name = _("Organisation")
         verbose_name_plural = _("Organisations")
-        ordering = ('title',)
+        ordering = ("title",)
 
     def __str__(self):
         return self.title
@@ -27,8 +28,9 @@ class Payment(PolymorphicModel):
     """
     A generic payment model.
     """
+
     order = models.ForeignKey(Order, on_delete=models.CASCADE)
-    currency = models.CharField(default='USD', max_length=3)
+    currency = models.CharField(default="USD", max_length=3)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
 
     class Meta:
@@ -43,6 +45,7 @@ class CreditCardPayment(Payment):
     """
     Credit card
     """
+
     MONTH_CHOICES = [(i, n) for i, n in sorted(MONTHS_3.items())]
 
     card_type = models.CharField(max_length=10)
@@ -58,6 +61,7 @@ class BankPayment(Payment):
     """
     Payment by bank
     """
+
     bank_name = models.CharField(max_length=100)
     swift = models.CharField(max_length=20)
 
@@ -70,6 +74,7 @@ class SepaPayment(Payment):
     """
     Payment by SEPA (EU)
     """
+
     iban = models.CharField(max_length=34)
     bic = models.CharField(max_length=11)
 

@@ -10,7 +10,7 @@ def get_polymorphic_base_content_type(obj):
 
     https://django-guardian.readthedocs.io/en/latest/configuration.html#guardian-get-content-type
     """
-    if hasattr(obj, 'polymorphic_model_marker'):
+    if hasattr(obj, "polymorphic_model_marker"):
         try:
             superclasses = list(obj.__class__.mro())
         except TypeError:
@@ -19,11 +19,11 @@ def get_polymorphic_base_content_type(obj):
 
         polymorphic_superclasses = list()
         for sclass in superclasses:
-            if hasattr(sclass, 'polymorphic_model_marker'):
+            if hasattr(sclass, "polymorphic_model_marker"):
                 polymorphic_superclasses.append(sclass)
 
         # PolymorphicMPTT adds an additional class between polymorphic and base class.
-        if hasattr(obj, 'can_have_children'):
+        if hasattr(obj, "can_have_children"):
             root_polymorphic_class = polymorphic_superclasses[-3]
         else:
             root_polymorphic_class = polymorphic_superclasses[-2]

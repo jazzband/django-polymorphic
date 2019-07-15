@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-import django
 import uuid
 
+import django
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.db.models.query import QuerySet
@@ -9,7 +9,11 @@ from django.db.models.query import QuerySet
 from polymorphic.managers import PolymorphicManager
 from polymorphic.models import PolymorphicModel
 from polymorphic.query import PolymorphicQuerySet
-from polymorphic.showfields import ShowFieldContent, ShowFieldType, ShowFieldTypeAndContent
+from polymorphic.showfields import (
+    ShowFieldContent,
+    ShowFieldType,
+    ShowFieldTypeAndContent,
+)
 
 
 class PlainA(models.Model):
@@ -59,17 +63,17 @@ class ModelExtraExternal(models.Model):
 
 class ModelShow1(ShowFieldType, PolymorphicModel):
     field1 = models.CharField(max_length=10)
-    m2m = models.ManyToManyField('self')
+    m2m = models.ManyToManyField("self")
 
 
 class ModelShow2(ShowFieldContent, PolymorphicModel):
     field1 = models.CharField(max_length=10)
-    m2m = models.ManyToManyField('self')
+    m2m = models.ManyToManyField("self")
 
 
 class ModelShow3(ShowFieldTypeAndContent, PolymorphicModel):
     field1 = models.CharField(max_length=10)
-    m2m = models.ManyToManyField('self')
+    m2m = models.ManyToManyField("self")
 
 
 class ModelShow1_plain(PolymorphicModel):
@@ -108,8 +112,10 @@ class Enhance_Inherit(Enhance_Base, Enhance_Plain):
 
 class RelationBase(ShowFieldTypeAndContent, PolymorphicModel):
     field_base = models.CharField(max_length=10)
-    fk = models.ForeignKey('self', on_delete=models.CASCADE, null=True, related_name='relationbase_set')
-    m2m = models.ManyToManyField('self')
+    fk = models.ForeignKey(
+        "self", on_delete=models.CASCADE, null=True, related_name="relationbase_set"
+    )
+    m2m = models.ManyToManyField("self")
 
 
 class RelationA(RelationBase):
@@ -143,21 +149,24 @@ class ModelUnderRelParent(PolymorphicModel):
 
 
 class ModelUnderRelChild(PolymorphicModel):
-    parent = models.ForeignKey(ModelUnderRelParent, on_delete=models.CASCADE, related_name='children')
+    parent = models.ForeignKey(
+        ModelUnderRelParent, on_delete=models.CASCADE, related_name="children"
+    )
     _private2 = models.CharField(max_length=10)
 
 
 class MyManagerQuerySet(PolymorphicQuerySet):
-
     def my_queryset_foo(self):
-        return self.all()  # Just a method to prove the existance of the custom queryset.
+        return (
+            self.all()
+        )  # Just a method to prove the existance of the custom queryset.
 
 
 class MyManager(PolymorphicManager):
     queryset_class = MyManagerQuerySet
 
     def get_queryset(self):
-        return super(MyManager, self).get_queryset().order_by('-field1')
+        return super(MyManager, self).get_queryset().order_by("-field1")
 
     def my_queryset_foo(self):
         return self.all().my_queryset_foo()
@@ -196,12 +205,15 @@ class MROBase2(MROBase1):
 
 
 class MROBase3(models.Model):
-    base_3_id = models.AutoField(primary_key=True)   # make sure 'id' field doesn't clash, detected by Django 1.11
+    base_3_id = models.AutoField(
+        primary_key=True
+    )  # make sure 'id' field doesn't clash, detected by Django 1.11
     objects = models.Manager()
 
 
 class MRODerived(MROBase2, MROBase3):
     if django.VERSION < (3, 0):
+
         class Meta:
             manager_inheritance_from_future = True
 
@@ -212,18 +224,20 @@ class ParentModelWithManager(PolymorphicModel):
 
 class ChildModelWithManager(PolymorphicModel):
     # Also test whether foreign keys receive the manager:
-    fk = models.ForeignKey(ParentModelWithManager, on_delete=models.CASCADE, related_name='childmodel_set')
+    fk = models.ForeignKey(
+        ParentModelWithManager, on_delete=models.CASCADE, related_name="childmodel_set"
+    )
     objects = MyManager()
 
 
 class PlainMyManagerQuerySet(QuerySet):
-
     def my_queryset_foo(self):
-        return self.all()  # Just a method to prove the existence of the custom queryset.
+        return (
+            self.all()
+        )  # Just a method to prove the existence of the custom queryset.
 
 
 class PlainMyManager(models.Manager):
-
     def my_queryset_foo(self):
         return self.get_queryset().my_queryset_foo()
 
@@ -236,7 +250,11 @@ class PlainParentModelWithManager(models.Model):
 
 
 class PlainChildModelWithManager(models.Model):
-    fk = models.ForeignKey(PlainParentModelWithManager, on_delete=models.CASCADE, related_name='childmodel_set')
+    fk = models.ForeignKey(
+        PlainParentModelWithManager,
+        on_delete=models.CASCADE,
+        related_name="childmodel_set",
+    )
     objects = PlainMyManager()
 
 
@@ -270,14 +288,14 @@ class InitTestModel(ShowFieldType, PolymorphicModel):
     bar = models.CharField(max_length=100)
 
     def __init__(self, *args, **kwargs):
-        kwargs['bar'] = self.x()
+        kwargs["bar"] = self.x()
         super(InitTestModel, self).__init__(*args, **kwargs)
 
 
 class InitTestModelSubclass(InitTestModel):
-
     def x(self):
-        return 'XYZ'
+        return "XYZ"
+
 
 # models from github issue
 
@@ -319,6 +337,7 @@ class UUIDPlainB(UUIDPlainA):
 class UUIDPlainC(UUIDPlainB):
     field3 = models.CharField(max_length=10)
 
+
 # base -> proxy
 
 
@@ -327,13 +346,13 @@ class ProxyBase(PolymorphicModel):
 
 
 class ProxyChild(ProxyBase):
-
     class Meta:
         proxy = True
 
 
 class NonProxyChild(ProxyBase):
     name = models.CharField(max_length=10)
+
 
 # base -> proxy -> real models
 
@@ -343,7 +362,6 @@ class ProxiedBase(ShowFieldTypeAndContent, PolymorphicModel):
 
 
 class ProxyModelBase(ProxiedBase):
-
     class Meta:
         proxy = True
 
@@ -364,14 +382,20 @@ class ProxyModelB(ProxyModelBase):
 # with related field 'ContentType.relatednameclash_set'." (reported by Andrew Ingram)
 # fixed with related_name
 class RelatedNameClash(ShowFieldType, PolymorphicModel):
-    ctype = models.ForeignKey(ContentType, on_delete=models.CASCADE, null=True, editable=False)
+    ctype = models.ForeignKey(
+        ContentType, on_delete=models.CASCADE, null=True, editable=False
+    )
+
 
 # class with a parent_link to superclass, and a related_name back to subclass
 
 
 class TestParentLinkAndRelatedName(ModelShow1_plain):
     superclass = models.OneToOneField(
-        ModelShow1_plain, on_delete=models.CASCADE, parent_link=True, related_name='related_name_subclass'
+        ModelShow1_plain,
+        on_delete=models.CASCADE,
+        parent_link=True,
+        related_name="related_name_subclass",
     )
 
 
@@ -398,7 +422,7 @@ class AbstractModel(PolymorphicModel):
 
 class SwappableModel(AbstractModel):
     class Meta:
-        swappable = 'POLYMORPHIC_TEST_SWAPPABLE'
+        swappable = "POLYMORPHIC_TEST_SWAPPABLE"
 
 
 class SwappedModel(AbstractModel):
@@ -410,7 +434,9 @@ class InlineParent(models.Model):
 
 
 class InlineModelA(PolymorphicModel):
-    parent = models.ForeignKey(InlineParent, related_name='inline_children', on_delete=models.CASCADE)
+    parent = models.ForeignKey(
+        InlineParent, related_name="inline_children", on_delete=models.CASCADE
+    )
     field1 = models.CharField(max_length=10)
 
 
@@ -434,13 +460,11 @@ class Duck(PolymorphicModel):
 
 
 class RedheadDuck(Duck):
-
     class Meta:
         proxy = True
 
 
 class RubberDuck(Duck):
-
     class Meta:
         proxy = True
 
@@ -454,22 +478,22 @@ class MultiTableDerived(MultiTableBase):
 
 
 class SubclassSelectorAbstractBaseModel(PolymorphicModel):
-    base_field = models.CharField(max_length=10, default='test_bf')
+    base_field = models.CharField(max_length=10, default="test_bf")
 
 
 class SubclassSelectorAbstractModel(SubclassSelectorAbstractBaseModel):
-    abstract_field = models.CharField(max_length=10, default='test_af')
+    abstract_field = models.CharField(max_length=10, default="test_af")
 
     class Meta:
         abstract = True
 
 
 class SubclassSelectorAbstractConcreteModel(SubclassSelectorAbstractModel):
-    concrete_field = models.CharField(max_length=10, default='test_cf')
+    concrete_field = models.CharField(max_length=10, default="test_cf")
 
 
 class SubclassSelectorProxyBaseModel(PolymorphicModel):
-    base_field = models.CharField(max_length=10, default='test_bf')
+    base_field = models.CharField(max_length=10, default="test_bf")
 
 
 class SubclassSelectorProxyModel(SubclassSelectorProxyBaseModel):
@@ -478,4 +502,4 @@ class SubclassSelectorProxyModel(SubclassSelectorProxyBaseModel):
 
 
 class SubclassSelectorProxyConcreteModel(SubclassSelectorProxyModel):
-    concrete_field = models.CharField(max_length=10, default='test_cf')
+    concrete_field = models.CharField(max_length=10, default="test_cf")

@@ -2,9 +2,9 @@ import sys
 
 from django.contrib.contenttypes.models import ContentType
 from django.db import DEFAULT_DB_ALIAS
-from polymorphic.models import PolymorphicModel
 
 from polymorphic.base import PolymorphicModelBase
+from polymorphic.models import PolymorphicModel
 
 
 def reset_polymorphic_ctype(*models, **filters):
@@ -16,8 +16,8 @@ def reset_polymorphic_ctype(*models, **filters):
     Add ``preserve_existing=True`` to skip models which already
     have a polymorphic content type.
     """
-    using = filters.pop('using', DEFAULT_DB_ALIAS)
-    ignore_existing = filters.pop('ignore_existing', False)
+    using = filters.pop("using", DEFAULT_DB_ALIAS)
+    ignore_existing = filters.pop("ignore_existing", False)
 
     models = sort_by_subclass(*models)
     if ignore_existing:
@@ -26,7 +26,9 @@ def reset_polymorphic_ctype(*models, **filters):
         models = reversed(models)
 
     for new_model in models:
-        new_ct = ContentType.objects.db_manager(using).get_for_model(new_model, for_concrete_model=False)
+        new_ct = ContentType.objects.db_manager(using).get_for_model(
+            new_model, for_concrete_model=False
+        )
 
         qs = new_model.objects.db_manager(using)
         if ignore_existing:
@@ -61,6 +63,7 @@ def sort_by_subclass(*classes):
         return sorted(classes, cmp=_compare_mro)
     else:
         from functools import cmp_to_key
+
         return sorted(classes, key=cmp_to_key(_compare_mro))
 
 
@@ -69,8 +72,10 @@ def get_base_polymorphic_model(ChildModel, allow_abstract=False):
     First the first concrete model in the inheritance chain that inherited from the PolymorphicModel.
     """
     for Model in reversed(ChildModel.mro()):
-        if isinstance(Model, PolymorphicModelBase) and \
-                Model is not PolymorphicModel and \
-                (allow_abstract or not Model._meta.abstract):
+        if (
+            isinstance(Model, PolymorphicModelBase)
+            and Model is not PolymorphicModel
+            and (allow_abstract or not Model._meta.abstract)
+        ):
             return Model
     return None

@@ -8,6 +8,7 @@ from django.urls import resolve
 from django.utils.translation import ugettext_lazy as _
 
 from polymorphic.utils import get_base_polymorphic_model
+
 from ..admin import PolymorphicParentModelAdmin
 
 
@@ -46,7 +47,9 @@ class PolymorphicChildModelAdmin(admin.ModelAdmin):
     show_in_index = False
 
     def __init__(self, model, admin_site, *args, **kwargs):
-        super(PolymorphicChildModelAdmin, self).__init__(model, admin_site, *args, **kwargs)
+        super(PolymorphicChildModelAdmin, self).__init__(
+            model, admin_site, *args, **kwargs
+        )
 
         if self.base_model is None:
             self.base_model = get_base_polymorphic_model(model)
@@ -59,19 +62,23 @@ class PolymorphicChildModelAdmin(admin.ModelAdmin):
         #
         # Instead, pass the form unchecked here, because the standard ModelForm will just work.
         # If the derived class sets the model explicitly, respect that setting.
-        kwargs.setdefault('form', self.base_form or self.form)
+        kwargs.setdefault("form", self.base_form or self.form)
 
         # prevent infinite recursion when this is called from get_subclass_fields
         if not self.fieldsets and not self.fields:
-            kwargs.setdefault('fields', '__all__')
+            kwargs.setdefault("fields", "__all__")
 
         return super(PolymorphicChildModelAdmin, self).get_form(request, obj, **kwargs)
 
     def get_model_perms(self, request):
         match = resolve(request.path)
 
-        if not self.show_in_index and match.app_name == 'admin' and match.url_name in ('index', 'app_list'):
-            return {'add': False, 'change': False, 'delete': False}
+        if (
+            not self.show_in_index
+            and match.app_name == "admin"
+            and match.url_name in ("index", "app_list")
+        ):
+            return {"add": False, "change": False, "delete": False}
         return super(PolymorphicChildModelAdmin, self).get_model_perms(request)
 
     @property
@@ -87,10 +94,11 @@ class PolymorphicChildModelAdmin(admin.ModelAdmin):
             "admin/%s/%s/change_form.html" % (app_label, opts.object_name.lower()),
             "admin/%s/change_form.html" % app_label,
             # Added:
-            "admin/%s/%s/change_form.html" % (base_app_label, base_opts.object_name.lower()),
+            "admin/%s/%s/change_form.html"
+            % (base_app_label, base_opts.object_name.lower()),
             "admin/%s/change_form.html" % base_app_label,
             "admin/polymorphic/change_form.html",
-            "admin/change_form.html"
+            "admin/change_form.html",
         ]
 
     @property
@@ -103,13 +111,15 @@ class PolymorphicChildModelAdmin(admin.ModelAdmin):
         base_app_label = base_opts.app_label
 
         return [
-            "admin/%s/%s/delete_confirmation.html" % (app_label, opts.object_name.lower()),
+            "admin/%s/%s/delete_confirmation.html"
+            % (app_label, opts.object_name.lower()),
             "admin/%s/delete_confirmation.html" % app_label,
             # Added:
-            "admin/%s/%s/delete_confirmation.html" % (base_app_label, base_opts.object_name.lower()),
+            "admin/%s/%s/delete_confirmation.html"
+            % (base_app_label, base_opts.object_name.lower()),
             "admin/%s/delete_confirmation.html" % base_app_label,
             "admin/polymorphic/delete_confirmation.html",
-            "admin/delete_confirmation.html"
+            "admin/delete_confirmation.html",
         ]
 
     @property
@@ -125,15 +135,16 @@ class PolymorphicChildModelAdmin(admin.ModelAdmin):
             "admin/%s/%s/object_history.html" % (app_label, opts.object_name.lower()),
             "admin/%s/object_history.html" % app_label,
             # Added:
-            "admin/%s/%s/object_history.html" % (base_app_label, base_opts.object_name.lower()),
+            "admin/%s/%s/object_history.html"
+            % (base_app_label, base_opts.object_name.lower()),
             "admin/%s/object_history.html" % base_app_label,
             "admin/polymorphic/object_history.html",
-            "admin/object_history.html"
+            "admin/object_history.html",
         ]
 
     def _get_parent_admin(self):
         # this returns parent admin instance on which to call response_post_save methods
-        parent_model = self.model._meta.get_field('polymorphic_ctype').model
+        parent_model = self.model._meta.get_field("polymorphic_ctype").model
         if parent_model == self.model:
             # when parent_model is in among child_models, just return super instance
             return super(PolymorphicChildModelAdmin, self)
@@ -149,11 +160,15 @@ class PolymorphicChildModelAdmin(admin.ModelAdmin):
 
                 # Fetch admin instance for model class, see if it's a possible candidate.
                 model_admin = self.admin_site._registry.get(klass)
-                if model_admin is not None and isinstance(model_admin, PolymorphicParentModelAdmin):
+                if model_admin is not None and isinstance(
+                    model_admin, PolymorphicParentModelAdmin
+                ):
                     return model_admin  # Success!
 
             # If we get this far without returning there is no admin available
-            raise ParentAdminNotRegistered("No parent admin was registered for a '{0}' model.".format(parent_model))
+            raise ParentAdminNotRegistered(
+                "No parent admin was registered for a '{0}' model.".format(parent_model)
+            )
 
     def response_post_save_add(self, request, obj):
         return self._get_parent_admin().response_post_save_add(request, obj)
@@ -161,26 +176,28 @@ class PolymorphicChildModelAdmin(admin.ModelAdmin):
     def response_post_save_change(self, request, obj):
         return self._get_parent_admin().response_post_save_change(request, obj)
 
-    def render_change_form(self, request, context, add=False, change=False, form_url='', obj=None):
-        context.update({
-            'base_opts': self.base_model._meta,
-        })
-        return super(PolymorphicChildModelAdmin, self).render_change_form(request, context, add=add, change=change, form_url=form_url, obj=obj)
+    def render_change_form(
+        self, request, context, add=False, change=False, form_url="", obj=None
+    ):
+        context.update({"base_opts": self.base_model._meta})
+        return super(PolymorphicChildModelAdmin, self).render_change_form(
+            request, context, add=add, change=change, form_url=form_url, obj=obj
+        )
 
     def delete_view(self, request, object_id, context=None):
-        extra_context = {
-            'base_opts': self.base_model._meta,
-        }
-        return super(PolymorphicChildModelAdmin, self).delete_view(request, object_id, extra_context)
+        extra_context = {"base_opts": self.base_model._meta}
+        return super(PolymorphicChildModelAdmin, self).delete_view(
+            request, object_id, extra_context
+        )
 
     def history_view(self, request, object_id, extra_context=None):
         # Make sure the history view can also display polymorphic breadcrumbs
-        context = {
-            'base_opts': self.base_model._meta,
-        }
+        context = {"base_opts": self.base_model._meta}
         if extra_context:
             context.update(extra_context)
-        return super(PolymorphicChildModelAdmin, self).history_view(request, object_id, extra_context=context)
+        return super(PolymorphicChildModelAdmin, self).history_view(
+            request, object_id, extra_context=context
+        )
 
     # ---- Extra: improving the form/fieldset default display ----
 
@@ -201,7 +218,7 @@ class PolymorphicChildModelAdmin(admin.ModelAdmin):
         if other_fields:
             return (
                 base_fieldsets[0],
-                (self.extra_fieldset_title, {'fields': other_fields}),
+                (self.extra_fieldset_title, {"fields": other_fields}),
             ) + base_fieldsets[1:]
         else:
             return base_fieldsets
@@ -215,13 +232,15 @@ class PolymorphicChildModelAdmin(admin.ModelAdmin):
         # By not declaring the fields/form in the base class,
         # get_form() will populate the form with all available fields.
         form = self.get_form(request, obj, exclude=exclude)
-        subclass_fields = list(form.base_fields.keys()) + list(self.get_readonly_fields(request, obj))
+        subclass_fields = list(form.base_fields.keys()) + list(
+            self.get_readonly_fields(request, obj)
+        )
 
         # Find which fields are not part of the common fields.
         for fieldset in self.get_base_fieldsets(request, obj):
-            for field in fieldset[1]['fields']:
+            for field in fieldset[1]["fields"]:
                 try:
                     subclass_fields.remove(field)
                 except ValueError:
-                    pass   # field not found in form, Django will raise exception later.
+                    pass  # field not found in form, Django will raise exception later.
         return subclass_fields

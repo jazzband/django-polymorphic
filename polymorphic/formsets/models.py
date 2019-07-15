@@ -3,10 +3,18 @@ from collections import OrderedDict
 from django import forms
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ImproperlyConfigured, ValidationError
-from django.forms.models import ModelForm, BaseModelFormSet, BaseInlineFormSet, modelform_factory, modelformset_factory, inlineformset_factory
+from django.forms.models import (
+    BaseInlineFormSet,
+    BaseModelFormSet,
+    ModelForm,
+    inlineformset_factory,
+    modelform_factory,
+    modelformset_factory,
+)
 from django.utils.functional import cached_property
 
 from polymorphic.models import PolymorphicModel
+
 from .utils import add_media
 
 
@@ -20,9 +28,19 @@ class PolymorphicFormSetChild(object):
     Provide this information in the :func:'polymorphic_inlineformset_factory' construction.
     """
 
-    def __init__(self, model, form=ModelForm, fields=None, exclude=None,
-                 formfield_callback=None, widgets=None, localized_fields=None,
-                 labels=None, help_texts=None, error_messages=None):
+    def __init__(
+        self,
+        model,
+        form=ModelForm,
+        fields=None,
+        exclude=None,
+        formfield_callback=None,
+        widgets=None,
+        localized_fields=None,
+        labels=None,
+        help_texts=None,
+        error_messages=None,
+    ):
 
         self.model = model
 
@@ -59,20 +77,20 @@ class PolymorphicFormSetChild(object):
         # we allow to define things like 'extra_...' fields that are amended to the current child settings.
 
         exclude = list(self.exclude)
-        extra_exclude = kwargs.pop('extra_exclude', None)
+        extra_exclude = kwargs.pop("extra_exclude", None)
         if extra_exclude:
             exclude += list(extra_exclude)
 
         defaults = {
-            'form': self._form_base,
-            'formfield_callback': self.formfield_callback,
-            'fields': self.fields,
-            'exclude': exclude,
+            "form": self._form_base,
+            "formfield_callback": self.formfield_callback,
+            "fields": self.fields,
+            "exclude": exclude,
             # 'for_concrete_model': for_concrete_model,
-            'localized_fields': self.localized_fields,
-            'labels': self.labels,
-            'help_texts': self.help_texts,
-            'error_messages': self.error_messages,
+            "localized_fields": self.localized_fields,
+            "labels": self.labels,
+            "help_texts": self.help_texts,
+            "error_messages": self.error_messages,
             # 'field_classes': field_classes,
         }
         defaults.update(kwargs)
@@ -125,61 +143,71 @@ class BasePolymorphicModelFormSet(BaseModelFormSet):
             pk_field = self.model._meta.pk
             to_python = self._get_to_python(pk_field)
             pk = to_python(pk)
-            kwargs['instance'] = self._existing_object(pk)
-        if i < self.initial_form_count() and 'instance' not in kwargs:
-            kwargs['instance'] = self.get_queryset()[i]
+            kwargs["instance"] = self._existing_object(pk)
+        if i < self.initial_form_count() and "instance" not in kwargs:
+            kwargs["instance"] = self.get_queryset()[i]
         if i >= self.initial_form_count() and self.initial_extra:
             # Set initial values for extra forms
             try:
-                kwargs['initial'] = self.initial_extra[i - self.initial_form_count()]
+                kwargs["initial"] = self.initial_extra[i - self.initial_form_count()]
             except IndexError:
                 pass
 
         # BaseFormSet logic, with custom formset_class
         defaults = {
-            'auto_id': self.auto_id,
-            'prefix': self.add_prefix(i),
-            'error_class': self.error_class,
+            "auto_id": self.auto_id,
+            "prefix": self.add_prefix(i),
+            "error_class": self.error_class,
         }
         if self.is_bound:
-            defaults['data'] = self.data
-            defaults['files'] = self.files
-        if self.initial and 'initial' not in kwargs:
+            defaults["data"] = self.data
+            defaults["files"] = self.files
+        if self.initial and "initial" not in kwargs:
             try:
-                defaults['initial'] = self.initial[i]
+                defaults["initial"] = self.initial[i]
             except IndexError:
                 pass
         # Allow extra forms to be empty, unless they're part of
         # the minimum forms.
         if i >= self.initial_form_count() and i >= self.min_num:
-            defaults['empty_permitted'] = True
-            defaults['use_required_attribute'] = False
+            defaults["empty_permitted"] = True
+            defaults["use_required_attribute"] = False
         defaults.update(kwargs)
 
         # Need to find the model that will be displayed in this form.
         # Hence, peeking in the self.queryset_data beforehand.
         if self.is_bound:
-            if 'instance' in defaults:
+            if "instance" in defaults:
                 # Object is already bound to a model, won't change the content type
-                model = defaults['instance'].get_real_instance_class()  # allow proxy models
+                model = defaults[
+                    "instance"
+                ].get_real_instance_class()  # allow proxy models
             else:
                 # Extra or empty form, use the provided type.
                 # Note this completely tru
-                prefix = defaults['prefix']
+                prefix = defaults["prefix"]
                 try:
                     ct_id = int(self.data["{0}-polymorphic_ctype".format(prefix)])
                 except (KeyError, ValueError):
-                    raise ValidationError("Formset row {0} has no 'polymorphic_ctype' defined!".format(prefix))
+                    raise ValidationError(
+                        "Formset row {0} has no 'polymorphic_ctype' defined!".format(
+                            prefix
+                        )
+                    )
 
                 model = ContentType.objects.get_for_id(ct_id).model_class()
                 if model not in self.child_forms:
                     # Perform basic validation, as we skip the ChoiceField here.
-                    raise UnsupportedChildType("Child model type {0} is not part of the formset".format(model))
+                    raise UnsupportedChildType(
+                        "Child model type {0} is not part of the formset".format(model)
+                    )
         else:
-            if 'instance' in defaults:
-                model = defaults['instance'].get_real_instance_class()  # allow proxy models
-            elif 'polymorphic_ctype' in defaults.get('initial', {}):
-                model = defaults['initial']['polymorphic_ctype'].model_class()
+            if "instance" in defaults:
+                model = defaults[
+                    "instance"
+                ].get_real_instance_class()  # allow proxy models
+            elif "polymorphic_ctype" in defaults.get("initial", {}):
+                model = defaults["initial"]["polymorphic_ctype"].model_class()
             elif i < len(self.queryset_data):
                 model = self.queryset_data[i].__class__
             else:
@@ -196,9 +224,13 @@ class BasePolymorphicModelFormSet(BaseModelFormSet):
 
     def add_fields(self, form, index):
         """Add a hidden field for the content type."""
-        ct = ContentType.objects.get_for_model(form._meta.model, for_concrete_model=False)
+        ct = ContentType.objects.get_for_model(
+            form._meta.model, for_concrete_model=False
+        )
         choices = [(ct.pk, ct)]  # Single choice, existing forms can't change the value.
-        form.fields['polymorphic_ctype'] = forms.ChoiceField(choices=choices, initial=ct.pk, required=False, widget=forms.HiddenInput)
+        form.fields["polymorphic_ctype"] = forms.ChoiceField(
+            choices=choices, initial=ct.pk, required=False, widget=forms.HiddenInput
+        )
         super(BasePolymorphicModelFormSet, self).add_fields(form, index)
 
     def get_form_class(self, model):
@@ -206,7 +238,9 @@ class BasePolymorphicModelFormSet(BaseModelFormSet):
         Return the proper form class for the given model.
         """
         if not self.child_forms:
-            raise ImproperlyConfigured("No 'child_forms' defined in {0}".format(self.__class__.__name__))
+            raise ImproperlyConfigured(
+                "No 'child_forms' defined in {0}".format(self.__class__.__name__)
+            )
         if not issubclass(model, PolymorphicModel):
             raise TypeError("Expect polymorphic model type, not {0}".format(model))
 
@@ -218,7 +252,8 @@ class BasePolymorphicModelFormSet(BaseModelFormSet):
                 "The '{0}' found a '{1}' model in the queryset, "
                 "but no form class is registered to display it.".format(
                     self.__class__.__name__, model.__name__
-                ))
+                )
+            )
 
     def is_multipart(self):
         """
@@ -247,7 +282,7 @@ class BasePolymorphicModelFormSet(BaseModelFormSet):
 
             form = form_class(
                 auto_id=self.auto_id,
-                prefix=self.add_prefix('__prefix__'),
+                prefix=self.add_prefix("__prefix__"),
                 empty_permitted=True,
                 use_required_attribute=False,
                 **kwargs
@@ -259,20 +294,37 @@ class BasePolymorphicModelFormSet(BaseModelFormSet):
     @property
     def empty_form(self):
         # TODO: make an exception when can_add_base is defined?
-        raise RuntimeError("'empty_form' is not used in polymorphic formsets, use 'empty_forms' instead.")
+        raise RuntimeError(
+            "'empty_form' is not used in polymorphic formsets, use 'empty_forms' instead."
+        )
 
 
-def polymorphic_modelformset_factory(model, formset_children,
-                                     formset=BasePolymorphicModelFormSet,
-                                     # Base field
-                                     # TODO: should these fields be removed in favor of creating
-                                     # the base form as a formset child too?
-                                     form=ModelForm,
-                                     fields=None, exclude=None, extra=1, can_order=False,
-                                     can_delete=True, max_num=None, formfield_callback=None,
-                                     widgets=None, validate_max=False, localized_fields=None,
-                                     labels=None, help_texts=None, error_messages=None,
-                                     min_num=None, validate_min=False, field_classes=None, child_form_kwargs=None):
+def polymorphic_modelformset_factory(
+    model,
+    formset_children,
+    formset=BasePolymorphicModelFormSet,
+    # Base field
+    # TODO: should these fields be removed in favor of creating
+    # the base form as a formset child too?
+    form=ModelForm,
+    fields=None,
+    exclude=None,
+    extra=1,
+    can_order=False,
+    can_delete=True,
+    max_num=None,
+    formfield_callback=None,
+    widgets=None,
+    validate_max=False,
+    localized_fields=None,
+    labels=None,
+    help_texts=None,
+    error_messages=None,
+    min_num=None,
+    validate_min=False,
+    field_classes=None,
+    child_form_kwargs=None,
+):
     """
     Construct the class for an polymorphic model formset.
 
@@ -285,25 +337,25 @@ def polymorphic_modelformset_factory(model, formset_children,
     :rtype: type
     """
     kwargs = {
-        'model': model,
-        'form': form,
-        'formfield_callback': formfield_callback,
-        'formset': formset,
-        'extra': extra,
-        'can_delete': can_delete,
-        'can_order': can_order,
-        'fields': fields,
-        'exclude': exclude,
-        'min_num': min_num,
-        'max_num': max_num,
-        'widgets': widgets,
-        'validate_min': validate_min,
-        'validate_max': validate_max,
-        'localized_fields': localized_fields,
-        'labels': labels,
-        'help_texts': help_texts,
-        'error_messages': error_messages,
-        'field_classes': field_classes,
+        "model": model,
+        "form": form,
+        "formfield_callback": formfield_callback,
+        "formset": formset,
+        "extra": extra,
+        "can_delete": can_delete,
+        "can_order": can_order,
+        "fields": fields,
+        "exclude": exclude,
+        "min_num": min_num,
+        "max_num": max_num,
+        "widgets": widgets,
+        "validate_min": validate_min,
+        "validate_max": validate_max,
+        "localized_fields": localized_fields,
+        "labels": labels,
+        "help_texts": help_texts,
+        "error_messages": error_messages,
+        "field_classes": field_classes,
     }
     FormSet = modelformset_factory(**kwargs)
 
@@ -313,7 +365,9 @@ def polymorphic_modelformset_factory(model, formset_children,
     if child_form_kwargs:
         child_kwargs.update(child_form_kwargs)
 
-    FormSet.child_forms = polymorphic_child_forms_factory(formset_children, **child_kwargs)
+    FormSet.child_forms = polymorphic_child_forms_factory(
+        formset_children, **child_kwargs
+    )
     return FormSet
 
 
@@ -326,17 +380,34 @@ class BasePolymorphicInlineFormSet(BaseInlineFormSet, BasePolymorphicModelFormSe
         return super(BasePolymorphicInlineFormSet, self)._construct_form(i, **kwargs)
 
 
-def polymorphic_inlineformset_factory(parent_model, model, formset_children,
-                                      formset=BasePolymorphicInlineFormSet, fk_name=None,
-                                      # Base field
-                                      # TODO: should these fields be removed in favor of creating
-                                      # the base form as a formset child too?
-                                      form=ModelForm,
-                                      fields=None, exclude=None, extra=1, can_order=False,
-                                      can_delete=True, max_num=None, formfield_callback=None,
-                                      widgets=None, validate_max=False, localized_fields=None,
-                                      labels=None, help_texts=None, error_messages=None,
-                                      min_num=None, validate_min=False, field_classes=None, child_form_kwargs=None):
+def polymorphic_inlineformset_factory(
+    parent_model,
+    model,
+    formset_children,
+    formset=BasePolymorphicInlineFormSet,
+    fk_name=None,
+    # Base field
+    # TODO: should these fields be removed in favor of creating
+    # the base form as a formset child too?
+    form=ModelForm,
+    fields=None,
+    exclude=None,
+    extra=1,
+    can_order=False,
+    can_delete=True,
+    max_num=None,
+    formfield_callback=None,
+    widgets=None,
+    validate_max=False,
+    localized_fields=None,
+    labels=None,
+    help_texts=None,
+    error_messages=None,
+    min_num=None,
+    validate_min=False,
+    field_classes=None,
+    child_form_kwargs=None,
+):
     """
     Construct the class for an inline polymorphic formset.
 
@@ -349,27 +420,27 @@ def polymorphic_inlineformset_factory(parent_model, model, formset_children,
     :rtype: type
     """
     kwargs = {
-        'parent_model': parent_model,
-        'model': model,
-        'form': form,
-        'formfield_callback': formfield_callback,
-        'formset': formset,
-        'fk_name': fk_name,
-        'extra': extra,
-        'can_delete': can_delete,
-        'can_order': can_order,
-        'fields': fields,
-        'exclude': exclude,
-        'min_num': min_num,
-        'max_num': max_num,
-        'widgets': widgets,
-        'validate_min': validate_min,
-        'validate_max': validate_max,
-        'localized_fields': localized_fields,
-        'labels': labels,
-        'help_texts': help_texts,
-        'error_messages': error_messages,
-        'field_classes': field_classes,
+        "parent_model": parent_model,
+        "model": model,
+        "form": form,
+        "formfield_callback": formfield_callback,
+        "formset": formset,
+        "fk_name": fk_name,
+        "extra": extra,
+        "can_delete": can_delete,
+        "can_order": can_order,
+        "fields": fields,
+        "exclude": exclude,
+        "min_num": min_num,
+        "max_num": max_num,
+        "widgets": widgets,
+        "validate_min": validate_min,
+        "validate_max": validate_max,
+        "localized_fields": localized_fields,
+        "labels": labels,
+        "help_texts": help_texts,
+        "error_messages": error_messages,
+        "field_classes": field_classes,
     }
     FormSet = inlineformset_factory(**kwargs)
 
@@ -379,5 +450,7 @@ def polymorphic_inlineformset_factory(parent_model, model, formset_children,
     if child_form_kwargs:
         child_kwargs.update(child_form_kwargs)
 
-    FormSet.child_forms = polymorphic_child_forms_factory(formset_children, **child_kwargs)
+    FormSet.child_forms = polymorphic_child_forms_factory(
+        formset_children, **child_kwargs
+    )
     return FormSet

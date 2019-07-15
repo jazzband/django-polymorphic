@@ -6,6 +6,6 @@ from django.views.generic import RedirectView
 admin.autodiscover()
 
 urlpatterns = [
-    url(r'^admin/', admin.site.urls),
-    url(r'^$', RedirectView.as_view(url=reverse_lazy('admin:index'), permanent=False)),
+    url(r"^admin/", admin.site.urls),
+    url(r"^$", RedirectView.as_view(url=reverse_lazy("admin:index"), permanent=False)),
 ]

@@ -1,26 +1,36 @@
 from django.test import TransactionTestCase
 
-from polymorphic.models import PolymorphicTypeUndefined, PolymorphicModel
-from polymorphic.tests.models import Model2A, Model2B, Model2C, Model2D, Enhance_Inherit, Enhance_Base
-from polymorphic.utils import reset_polymorphic_ctype, sort_by_subclass, get_base_polymorphic_model
+from polymorphic.models import PolymorphicModel, PolymorphicTypeUndefined
+from polymorphic.tests.models import (
+    Enhance_Base,
+    Enhance_Inherit,
+    Model2A,
+    Model2B,
+    Model2C,
+    Model2D,
+)
+from polymorphic.utils import (
+    get_base_polymorphic_model,
+    reset_polymorphic_ctype,
+    sort_by_subclass,
+)
 
 
 class UtilsTests(TransactionTestCase):
-
     def test_sort_by_subclass(self):
         self.assertEqual(
             sort_by_subclass(Model2D, Model2B, Model2D, Model2A, Model2C),
-            [Model2A, Model2B, Model2C, Model2D, Model2D]
+            [Model2A, Model2B, Model2C, Model2D, Model2D],
         )
 
     def test_reset_polymorphic_ctype(self):
         """
         Test the the polymorphic_ctype_id can be restored.
         """
-        Model2A.objects.create(field1='A1')
-        Model2D.objects.create(field1='A1', field2='B2', field3='C3', field4='D4')
-        Model2B.objects.create(field1='A1', field2='B2')
-        Model2B.objects.create(field1='A1', field2='B2')
+        Model2A.objects.create(field1="A1")
+        Model2D.objects.create(field1="A1", field2="B2", field3="C3", field4="D4")
+        Model2B.objects.create(field1="A1", field2="B2")
+        Model2B.objects.create(field1="A1", field2="B2")
         Model2A.objects.all().update(polymorphic_ctype_id=None)
 
         with self.assertRaises(PolymorphicTypeUndefined):
@@ -30,12 +40,7 @@ class UtilsTests(TransactionTestCase):
 
         self.assertQuerysetEqual(
             Model2A.objects.order_by("pk"),
-            [
-                Model2A,
-                Model2D,
-                Model2B,
-                Model2B,
-            ],
+            [Model2A, Model2D, Model2B, Model2B],
             transform=lambda o: o.__class__,
         )
 
@@ -59,6 +64,7 @@ class UtilsTests(TransactionTestCase):
         """
         Skipping abstract models that can't be used for querying.
         """
+
         class A(PolymorphicModel):
             class Meta:
                 abstract = True

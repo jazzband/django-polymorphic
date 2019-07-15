@@ -1,14 +1,14 @@
 from django.template import Library, Node, TemplateSyntaxError
+
 from polymorphic import compat
 
 register = Library()
 
 
 class BreadcrumbScope(Node):
-
     def __init__(self, base_opts, nodelist):
         self.base_opts = base_opts
-        self.nodelist = nodelist   # Note, takes advantage of Node.child_nodelists
+        self.nodelist = nodelist  # Note, takes advantage of Node.child_nodelists
 
     @classmethod
     def parse(cls, parser, token):
@@ -16,15 +16,14 @@ class BreadcrumbScope(Node):
         if len(bits) == 2:
             (tagname, base_opts) = bits
             base_opts = parser.compile_filter(base_opts)
-            nodelist = parser.parse(('endbreadcrumb_scope',))
+            nodelist = parser.parse(("endbreadcrumb_scope",))
             parser.delete_first_token()
 
-            return cls(
-                base_opts=base_opts,
-                nodelist=nodelist
-            )
+            return cls(base_opts=base_opts, nodelist=nodelist)
         else:
-            raise TemplateSyntaxError("{0} tag expects 1 argument".format(token.contents[0]))
+            raise TemplateSyntaxError(
+                "{0} tag expects 1 argument".format(token.contents[0])
+            )
 
     def render(self, context):
         # app_label is really hard to overwrite in the standard Django ModelAdmin.
@@ -34,8 +33,8 @@ class BreadcrumbScope(Node):
         new_vars = {}
         if base_opts and not isinstance(base_opts, compat.string_types):
             new_vars = {
-                'app_label': base_opts.app_label,  # What this is all about
-                'opts': base_opts,
+                "app_label": base_opts.app_label,  # What this is all about
+                "opts": base_opts,
             }
 
         new_scope = context.push()

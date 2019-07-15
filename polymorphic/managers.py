@@ -5,14 +5,11 @@ The manager class for use in the models.
 from __future__ import unicode_literals
 
 from django.db import models
+
 from polymorphic.compat import python_2_unicode_compatible
 from polymorphic.query import PolymorphicQuerySet
 
-
-__all__ = (
-    'PolymorphicManager',
-    'PolymorphicQuerySet',
-)
+__all__ = ("PolymorphicManager", "PolymorphicQuerySet")
 
 
 @python_2_unicode_compatible
@@ -23,12 +20,17 @@ class PolymorphicManager(models.Manager):
     Usually not explicitly needed, except if a custom manager or
     a custom queryset class is to be used.
     """
+
     queryset_class = PolymorphicQuerySet
 
     @classmethod
     def from_queryset(cls, queryset_class, class_name=None):
-        manager = super(PolymorphicManager, cls).from_queryset(queryset_class, class_name=class_name)
-        manager.queryset_class = queryset_class  # also set our version, Django uses _queryset_class
+        manager = super(PolymorphicManager, cls).from_queryset(
+            queryset_class, class_name=class_name
+        )
+        manager.queryset_class = (
+            queryset_class
+        )  # also set our version, Django uses _queryset_class
         return manager
 
     def get_queryset(self):
@@ -38,7 +40,10 @@ class PolymorphicManager(models.Manager):
         return qs
 
     def __str__(self):
-        return '%s (PolymorphicManager) using %s' % (self.__class__.__name__, self.queryset_class.__name__)
+        return "%s (PolymorphicManager) using %s" % (
+            self.__class__.__name__,
+            self.queryset_class.__name__,
+        )
 
     # Proxied methods
     def non_polymorphic(self):

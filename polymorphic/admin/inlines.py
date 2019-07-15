@@ -10,9 +10,14 @@ from django.contrib.admin.utils import flatten_fieldsets
 from django.core.exceptions import ImproperlyConfigured
 from django.forms import Media
 
-from polymorphic.formsets import polymorphic_child_forms_factory, BasePolymorphicInlineFormSet, \
-    PolymorphicFormSetChild, UnsupportedChildType
+from polymorphic.formsets import (
+    BasePolymorphicInlineFormSet,
+    PolymorphicFormSetChild,
+    UnsupportedChildType,
+    polymorphic_child_forms_factory,
+)
 from polymorphic.formsets.utils import add_media
+
 from .helpers import PolymorphicInlineSupportMixin
 
 
@@ -31,14 +36,8 @@ class PolymorphicInlineModelAdmin(InlineModelAdmin):
     #: The extra media to add for the polymorphic inlines effect.
     #: This can be redefined for subclasses.
     polymorphic_media = Media(
-        js=(
-            'polymorphic/js/polymorphic_inlines.js',
-        ),
-        css={
-            'all': (
-                'polymorphic/css/polymorphic_inlines.css',
-            )
-        }
+        js=("polymorphic/js/polymorphic_inlines.js",),
+        css={"all": ("polymorphic/css/polymorphic_inlines.css",)},
     )
 
     #: The extra forms to show
@@ -90,7 +89,9 @@ class PolymorphicInlineModelAdmin(InlineModelAdmin):
         try:
             return self._child_inlines_lookup[model]
         except KeyError:
-            raise UnsupportedChildType("Model '{0}' not found in child_inlines".format(model.__name__))
+            raise UnsupportedChildType(
+                "Model '{0}' not found in child_inlines".format(model.__name__)
+            )
 
     def get_formset(self, request, obj=None, **kwargs):
         """
@@ -101,7 +102,9 @@ class PolymorphicInlineModelAdmin(InlineModelAdmin):
         :rtype: type
         """
         # Construct the FormSet class
-        FormSet = super(PolymorphicInlineModelAdmin, self).get_formset(request, obj=obj, **kwargs)
+        FormSet = super(PolymorphicInlineModelAdmin, self).get_formset(
+            request, obj=obj, **kwargs
+        )
 
         # Instead of completely redefining super().get_formset(), we use
         # the regular inlineformset_factory(), and amend that with our extra bits.
@@ -151,7 +154,10 @@ class PolymorphicInlineModelAdmin(InlineModelAdmin):
             child_media = child_instance.media
 
             # Avoid adding the same media object again and again
-            if child_media._css != base_media._css and child_media._js != base_media._js:
+            if (
+                child_media._css != base_media._css
+                and child_media._js != base_media._js
+            ):
                 add_media(all_media, child_media)
 
         add_media(all_media, self.polymorphic_media)
@@ -170,12 +176,15 @@ class PolymorphicInlineModelAdmin(InlineModelAdmin):
 
         The model form options however, will all be read.
         """
+
         formset_child = PolymorphicFormSetChild
         extra = 0  # TODO: currently unused for the children.
 
         def __init__(self, parent_inline):
             self.parent_inline = parent_inline
-            super(PolymorphicInlineModelAdmin.Child, self).__init__(parent_inline.parent_model, parent_inline.admin_site)
+            super(PolymorphicInlineModelAdmin.Child, self).__init__(
+                parent_inline.parent_model, parent_inline.admin_site
+            )
 
         def get_formset(self, request, obj=None, **kwargs):
             # The child inline is only used to construct the form,
@@ -209,8 +218,8 @@ class PolymorphicInlineModelAdmin(InlineModelAdmin):
             #
             # Transfer the local inline attributes to the formset child,
             # this allows overriding settings.
-            if 'fields' in kwargs:
-                fields = kwargs.pop('fields')
+            if "fields" in kwargs:
+                fields = kwargs.pop("fields")
             else:
                 fields = flatten_fieldsets(self.get_fieldsets(request, obj))
 
@@ -220,9 +229,15 @@ class PolymorphicInlineModelAdmin(InlineModelAdmin):
                 exclude = list(self.exclude)
 
             exclude.extend(self.get_readonly_fields(request, obj))
-            exclude.append('polymorphic_ctype')  # Django 1.10 blocks it, as it's a readonly field.
+            exclude.append(
+                "polymorphic_ctype"
+            )  # Django 1.10 blocks it, as it's a readonly field.
 
-            if self.exclude is None and hasattr(self.form, '_meta') and self.form._meta.exclude:
+            if (
+                self.exclude is None
+                and hasattr(self.form, "_meta")
+                and self.form._meta.exclude
+            ):
                 # Take the custom ModelForm's Meta.exclude into account only if the
                 # InlineModelAdmin doesn't define its own.
                 exclude.extend(self.form._meta.exclude)
@@ -232,7 +247,9 @@ class PolymorphicInlineModelAdmin(InlineModelAdmin):
                 "form": self.form,
                 "fields": fields,
                 "exclude": exclude or None,
-                "formfield_callback": partial(self.formfield_for_dbfield, request=request),
+                "formfield_callback": partial(
+                    self.formfield_for_dbfield, request=request
+                ),
             }
             defaults.update(kwargs)
 
@@ -247,5 +264,6 @@ class StackedPolymorphicInline(PolymorphicInlineModelAdmin):
     Stacked inline for django-polymorphic models.
     Since tabular doesn't make much sense with changed fields, just offer this one.
     """
+
     #: The default template to use.
-    template = 'admin/polymorphic/edit_inline/stacked.html'
+    template = "admin/polymorphic/edit_inline/stacked.html"

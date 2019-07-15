@@ -12,6 +12,7 @@ class AdminTestCase(TestCase):
     """
     Testing the admin site
     """
+
     #: The model to test
     model = None
     #: The admin class to test
@@ -20,7 +21,9 @@ class AdminTestCase(TestCase):
     @classmethod
     def setUpClass(cls):
         super(AdminTestCase, cls).setUpClass()
-        cls.admin_user = User.objects.create_superuser('admin', 'admin@example.org', password='admin')
+        cls.admin_user = User.objects.create_superuser(
+            "admin", "admin@example.org", password="admin"
+        )
 
     def setUp(self):
         super(AdminTestCase, self).setUp()
@@ -37,9 +40,11 @@ class AdminTestCase(TestCase):
 
     def register(self, model):
         """Decorator, like admin.register()"""
+
         def _dec(admin_class):
             self.admin_register(model, admin_class)
             return admin_class
+
         return _dec
 
     def admin_register(self, model, admin_site):
@@ -48,9 +53,7 @@ class AdminTestCase(TestCase):
 
         # Make sure the URLs are reachable by reverse()
         clear_url_caches()
-        set_urlconf(tuple([
-            url('^tmp-admin/', self.admin_site.urls)
-        ]))
+        set_urlconf(tuple([url("^tmp-admin/", self.admin_site.urls)]))
 
     def get_admin_instance(self, model):
         try:
@@ -66,40 +69,42 @@ class AdminTestCase(TestCase):
 
     def get_add_url(self, model):
         admin_instance = self.get_admin_instance(model)
-        return reverse(admin_urlname(admin_instance.opts, 'add'))
+        return reverse(admin_urlname(admin_instance.opts, "add"))
 
     def get_changelist_url(self, model):
         admin_instance = self.get_admin_instance(model)
-        return reverse(admin_urlname(admin_instance.opts, 'changelist'))
+        return reverse(admin_urlname(admin_instance.opts, "changelist"))
 
     def get_change_url(self, model, object_id):
         admin_instance = self.get_admin_instance(model)
-        return reverse(admin_urlname(admin_instance.opts, 'change'), args=(object_id,))
+        return reverse(admin_urlname(admin_instance.opts, "change"), args=(object_id,))
 
     def get_history_url(self, model, object_id):
         admin_instance = self.get_admin_instance(model)
-        return reverse(admin_urlname(admin_instance.opts, 'history'), args=(object_id,))
+        return reverse(admin_urlname(admin_instance.opts, "history"), args=(object_id,))
 
     def get_delete_url(self, model, object_id):
         admin_instance = self.get_admin_instance(model)
-        return reverse(admin_urlname(admin_instance.opts, 'delete'), args=(object_id,))
+        return reverse(admin_urlname(admin_instance.opts, "delete"), args=(object_id,))
 
-    def admin_get_add(self, model, qs=''):
+    def admin_get_add(self, model, qs=""):
         """
         Make a direct "add" call to the admin page, circumvening login checks.
         """
         admin_instance = self.get_admin_instance(model)
-        request = self.create_admin_request('get', self.get_add_url(model) + qs)
+        request = self.create_admin_request("get", self.get_add_url(model) + qs)
         response = admin_instance.add_view(request)
         self.assertEqual(response.status_code, 200)
         return response
 
-    def admin_post_add(self, model, formdata, qs=''):
+    def admin_post_add(self, model, formdata, qs=""):
         """
         Make a direct "add" call to the admin page, circumvening login checks.
         """
         admin_instance = self.get_admin_instance(model)
-        request = self.create_admin_request('post', self.get_add_url(model) + qs, data=formdata)
+        request = self.create_admin_request(
+            "post", self.get_add_url(model) + qs, data=formdata
+        )
         response = admin_instance.add_view(request)
         self.assertFormSuccess(request.path, response)
         return response
@@ -109,7 +114,7 @@ class AdminTestCase(TestCase):
         Make a direct "add" call to the admin page, circumvening login checks.
         """
         admin_instance = self.get_admin_instance(model)
-        request = self.create_admin_request('get', self.get_changelist_url(model))
+        request = self.create_admin_request("get", self.get_changelist_url(model))
         response = admin_instance.changelist_view(request)
         self.assertEqual(response.status_code, 200)
         return response
@@ -119,7 +124,9 @@ class AdminTestCase(TestCase):
         Perform a GET request on the admin page
         """
         admin_instance = self.get_admin_instance(model)
-        request = self.create_admin_request('get', self.get_change_url(model, object_id), data=query, **extra)
+        request = self.create_admin_request(
+            "get", self.get_change_url(model, object_id), data=query, **extra
+        )
         response = admin_instance.change_view(request, str(object_id))
         self.assertEqual(response.status_code, 200)
         return response
@@ -129,7 +136,9 @@ class AdminTestCase(TestCase):
         Make a direct "add" call to the admin page, circumvening login checks.
         """
         admin_instance = self.get_admin_instance(model)
-        request = self.create_admin_request('post', self.get_change_url(model, object_id), data=formdata, **extra)
+        request = self.create_admin_request(
+            "post", self.get_change_url(model, object_id), data=formdata, **extra
+        )
         response = admin_instance.change_view(request, str(object_id))
         self.assertFormSuccess(request.path, response)
         return response
@@ -139,7 +148,9 @@ class AdminTestCase(TestCase):
         Perform a GET request on the admin page
         """
         admin_instance = self.get_admin_instance(model)
-        request = self.create_admin_request('get', self.get_history_url(model, object_id), data=query, **extra)
+        request = self.create_admin_request(
+            "get", self.get_history_url(model, object_id), data=query, **extra
+        )
         response = admin_instance.history_view(request, str(object_id))
         self.assertEqual(response.status_code, 200)
         return response
@@ -149,7 +160,9 @@ class AdminTestCase(TestCase):
         Perform a GET request on the admin delete page
         """
         admin_instance = self.get_admin_instance(model)
-        request = self.create_admin_request('get', self.get_delete_url(model, object_id), data=query, **extra)
+        request = self.create_admin_request(
+            "get", self.get_delete_url(model, object_id), data=query, **extra
+        )
         response = admin_instance.delete_view(request, str(object_id))
         self.assertEqual(response.status_code, 200)
         return response
@@ -159,12 +172,16 @@ class AdminTestCase(TestCase):
         Make a direct "add" call to the admin page, circumvening login checks.
         """
         if not extra:
-            extra = {'data': {'post': 'yes'}}
+            extra = {"data": {"post": "yes"}}
 
         admin_instance = self.get_admin_instance(model)
-        request = self.create_admin_request('post', self.get_delete_url(model, object_id), **extra)
+        request = self.create_admin_request(
+            "post", self.get_delete_url(model, object_id), **extra
+        )
         response = admin_instance.delete_view(request, str(object_id))
-        self.assertEqual(response.status_code, 302, "Form errors in calling {0}".format(request.path))
+        self.assertEqual(
+            response.status_code, 302, "Form errors in calling {0}".format(request.path)
+        )
         return response
 
     def create_admin_request(self, method, url, data=None, **extra):
@@ -174,8 +191,8 @@ class AdminTestCase(TestCase):
         factory_method = getattr(RequestFactory(), method)
 
         if data is not None:
-            if method != 'get':
-                data['csrfmiddlewaretoken'] = 'foo'
+            if method != "get":
+                data["csrfmiddlewaretoken"] = "foo"
             dummy_request = factory_method(url, data=data)
             dummy_request.user = self.admin_user
 
@@ -185,7 +202,7 @@ class AdminTestCase(TestCase):
             # data = base_data
 
         request = factory_method(url, data=data, **extra)
-        request.COOKIES[settings.CSRF_COOKIE_NAME] = 'foo'
+        request.COOKIES[settings.CSRF_COOKIE_NAME] = "foo"
         request.csrf_processing_done = True
 
         # Add properties which middleware would typically do
@@ -201,14 +218,21 @@ class AdminTestCase(TestCase):
         self.assertIn(response.status_code, [200, 302])
         if response.status_code != 302:
             context_data = response.context_data
-            if 'errors' in context_data:
-                errors = response.context_data['errors']
-            elif 'form' in context_data:
-                errors = context_data['form'].errors
+            if "errors" in context_data:
+                errors = response.context_data["errors"]
+            elif "form" in context_data:
+                errors = context_data["form"].errors
             else:
                 raise KeyError("Unknown field for errors in the TemplateResponse!")
 
-            self.assertEqual(response.status_code, 302,
-                             "Form errors in calling {0}:\n{1}".format(request_url, errors.as_text()))
-        self.assertTrue('/login/?next=' not in response['Location'],
-                        "Received login response for {0}".format(request_url))
+            self.assertEqual(
+                response.status_code,
+                302,
+                "Form errors in calling {0}:\n{1}".format(
+                    request_url, errors.as_text()
+                ),
+            )
+        self.assertTrue(
+            "/login/?next=" not in response["Location"],
+            "Received login response for {0}".format(request_url),
+        )

@@ -8,6 +8,7 @@ from polymorphic.showfields import ShowFieldContent, ShowFieldTypeAndContent
 
 class Project(ShowFieldContent, PolymorphicModel):
     """Polymorphic model"""
+
     topic = models.CharField(max_length=30)
 
 
@@ -21,6 +22,7 @@ class ResearchProject(Project):
 
 class UUIDModelA(ShowFieldTypeAndContent, PolymorphicModel):
     """UUID as primary key example"""
+
     uuid_primary_key = models.UUIDField(primary_key=True)
     field1 = models.CharField(max_length=10)
 
@@ -35,17 +37,17 @@ class UUIDModelC(UUIDModelB):
 
 class ProxyBase(PolymorphicModel):
     """Proxy model example - a single table with multiple types."""
+
     title = models.CharField(max_length=200)
 
     def __unicode__(self):
         return u"<ProxyBase[type={0}]: {1}>".format(self.polymorphic_ctype, self.title)
 
     class Meta:
-        ordering = ('title',)
+        ordering = ("title",)
 
 
 class ProxyA(ProxyBase):
-
     class Meta:
         proxy = True
 
@@ -54,7 +56,6 @@ class ProxyA(ProxyBase):
 
 
 class ProxyB(ProxyBase):
-
     class Meta:
         proxy = True
 
@@ -63,6 +64,7 @@ class ProxyB(ProxyBase):
 
 
 # Internals for management command tests
+
 
 class TestModelA(ShowFieldTypeAndContent, PolymorphicModel):
     field1 = models.CharField(max_length=10)
@@ -74,11 +76,12 @@ class TestModelB(TestModelA):
 
 class TestModelC(TestModelB):
     field3 = models.CharField(max_length=10)
-    field4 = models.ManyToManyField(TestModelB, related_name='related_c')
+    field4 = models.ManyToManyField(TestModelB, related_name="related_c")
 
 
 class NormalModelA(models.Model):
     """Normal Django inheritance, no polymorphic behavior"""
+
     field1 = models.CharField(max_length=10)
 
 

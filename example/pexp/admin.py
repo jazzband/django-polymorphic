@@ -1,6 +1,11 @@
 from django.contrib import admin
-from polymorphic.admin import PolymorphicParentModelAdmin, PolymorphicChildModelAdmin, PolymorphicChildModelFilter
+
 from pexp.models import *
+from polymorphic.admin import (
+    PolymorphicChildModelAdmin,
+    PolymorphicChildModelFilter,
+    PolymorphicParentModelAdmin,
+)
 
 
 class ProjectAdmin(PolymorphicParentModelAdmin):
@@ -14,11 +19,7 @@ class ProjectChildAdmin(PolymorphicChildModelAdmin):
 
     # On purpose, only have the shared fields here.
     # The fields of the derived model should still be displayed.
-    base_fieldsets = (
-        ("Base fields", {
-            'fields': ('topic',)
-        }),
-    )
+    base_fieldsets = (("Base fields", {"fields": ("topic",)}),)
 
 
 admin.site.register(Project, ProjectAdmin)

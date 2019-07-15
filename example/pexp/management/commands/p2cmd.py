@@ -7,11 +7,11 @@ import sys
 import time
 from pprint import pprint
 from random import Random
+
 from django.core.management import BaseCommand
 from django.db import connection
 
 from pexp.models import *
-
 
 rnd = Random()
 
@@ -24,7 +24,7 @@ def show_queries():
     connection.queries = []
 
 
-def print_timing(func, message='', iterations=1):
+def print_timing(func, message="", iterations=1):
     def wrapper(*arg):
         results = []
         connection.queries_log.clear()
@@ -36,13 +36,12 @@ def print_timing(func, message='', iterations=1):
         res_sum = 0
         for r in results:
             res_sum += r
-        print("%s%-19s: %.4f ms, %i queries (%i times)" % (
-            message, func.func_name,
-            res_sum,
-            len(connection.queries),
-            iterations
-        ))
+        print(
+            "%s%-19s: %.4f ms, %i queries (%i times)"
+            % (message, func.func_name, res_sum, len(connection.queries), iterations)
+        )
         sys.stdout.flush()
+
     return wrapper
 
 
@@ -52,9 +51,9 @@ class Command(BaseCommand):
     def handle_noargs(self, **options):
         if False:
             TestModelA.objects.all().delete()
-            a = TestModelA.objects.create(field1='A1')
-            b = TestModelB.objects.create(field1='B1', field2='B2')
-            c = TestModelC.objects.create(field1='C1', field2='C2', field3='C3')
+            a = TestModelA.objects.create(field1="A1")
+            b = TestModelB.objects.create(field1="B1", field2="B2")
+            c = TestModelC.objects.create(field1="C1", field2="C2", field3="C3")
             connection.queries_log.clear()
             print(TestModelC.base_objects.all())
             show_queries()
@@ -64,7 +63,9 @@ class Command(BaseCommand):
             for i in range(1000):
                 a = TestModelA.objects.create(field1=str(i % 100))
                 b = TestModelB.objects.create(field1=str(i % 100), field2=str(i % 200))
-                c = TestModelC.objects.create(field1=str(i % 100), field2=str(i % 200), field3=str(i % 300))
+                c = TestModelC.objects.create(
+                    field1=str(i % 100), field2=str(i % 200), field3=str(i % 300)
+                )
                 if i % 100 == 0:
                     print(i)
 
@@ -77,9 +78,9 @@ class Command(BaseCommand):
         return
 
         NormalModelA.objects.all().delete()
-        a = NormalModelA.objects.create(field1='A1')
-        b = NormalModelB.objects.create(field1='B1', field2='B2')
-        c = NormalModelC.objects.create(field1='C1', field2='C2', field3='C3')
+        a = NormalModelA.objects.create(field1="A1")
+        b = NormalModelB.objects.create(field1="B1", field2="B2")
+        c = NormalModelC.objects.create(field1="C1", field2="C2", field3="C3")
         qs = TestModelA.objects.raw("SELECT * from pexp_testmodela")
         for o in list(qs):
             print(o)
@@ -87,7 +88,8 @@ class Command(BaseCommand):
 
 def poly_sql_query():
     cursor = connection.cursor()
-    cursor.execute("""
+    cursor.execute(
+        """
         SELECT id, pexp_testmodela.field1, pexp_testmodelb.field2, pexp_testmodelc.field3
         FROM pexp_testmodela
         LEFT OUTER JOIN pexp_testmodelb
@@ -96,18 +98,23 @@ def poly_sql_query():
         ON pexp_testmodelb.testmodela_ptr_id = pexp_testmodelc.testmodelb_ptr_id
         WHERE pexp_testmodela.field1=%i
         ORDER BY pexp_testmodela.id
-        """ % rnd.randint(0, 100))
+        """
+        % rnd.randint(0, 100)
+    )
     # row=cursor.fetchone()
     return
 
 
 def poly_sql_query2():
     cursor = connection.cursor()
-    cursor.execute("""
+    cursor.execute(
+        """
         SELECT id, pexp_testmodela.field1
         FROM pexp_testmodela
         WHERE pexp_testmodela.field1=%i
         ORDER BY pexp_testmodela.id
-        """ % rnd.randint(0, 100))
+        """
+        % rnd.randint(0, 100)
+    )
     # row=cursor.fetchone()
     return
