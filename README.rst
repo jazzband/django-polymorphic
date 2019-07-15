@@ -4,6 +4,8 @@
     :target: https://pypi.python.org/pypi/django-polymorphic/
 .. image:: https://img.shields.io/codecov/c/github/django-polymorphic/django-polymorphic/master.svg
     :target: https://codecov.io/github/django-polymorphic/django-polymorphic?branch=master
+.. image:: https://readthedocs.org/projects/django-polymorphic/badge/?version=stable
+    :target: https://django-polymorphic.readthedocs.io/en/stable/
 
 Polymorphic Models for Django
 =============================
