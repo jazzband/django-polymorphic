@@ -1,6 +1,12 @@
 Changelog
 =========
 
+Changes in 2.1.2 (2019-17-15)
+-----------------------------
+
+* Fix ``PolymorphicInlineModelAdmin`` media jQuery include for Django 2.0+
+
+
 Changes in 2.1.1 (2019-07-15)
 -----------------------------
 
