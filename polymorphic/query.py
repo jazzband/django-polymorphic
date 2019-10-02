@@ -7,8 +7,8 @@ from __future__ import absolute_import
 import copy
 from collections import defaultdict
 
+from django.core.exceptions import FieldDoesNotExist
 from django.contrib.contenttypes.models import ContentType
-from django.db.models import FieldDoesNotExist
 from django.db.models.query import ModelIterable, Q, QuerySet
 
 from . import compat
