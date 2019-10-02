@@ -16,10 +16,6 @@ matrix:
     - { env: TOXENV=py35-django111, python: 3.5 }
     - { env: TOXENV=py36-django111, python: 3.6 }
     - { env: TOXENV=py36-django111-postgres DB=postgres, python: 3.6 }
-    # Django 2.0: Python 3.5, or 3.6
-    - { env: TOXENV=py35-django20, python: 3.5 }
-    - { env: TOXENV=py36-django20, python: 3.6 }
-    - { env: TOXENV=py36-django20-postgres DB=postgres, python: 3.6 }
     # Django 2.1: Python 3.6, or 3.7
     - { env: TOXENV=py36-django21, python: 3.6 }
     - { env: TOXENV=py37-django21, python: 3.7 }
