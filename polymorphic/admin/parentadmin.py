@@ -91,7 +91,7 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
         # Make absolutely sure that the child models don't use the old 0.9 format,
         # as of polymorphic 1.4 this deprecated configuration is no longer supported.
         # Instead, register the child models in the admin too.
-        if self._child_models and not issubclass(self._child_models[0], models.Model):
+        if self._child_models and not (type(self._child_models[0]) is type and issubclass(self._child_models[0], models.Model)):
             raise ImproperlyConfigured(
                 "Since django-polymorphic 1.4, the `child_models` attribute "
                 "and `get_child_models()` method should be a list of models only.\n"
