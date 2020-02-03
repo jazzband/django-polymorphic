@@ -14,7 +14,7 @@ from django.template.response import TemplateResponse
 from django.utils.encoding import force_str
 from django.utils.http import urlencode
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from polymorphic.utils import get_base_polymorphic_model
 

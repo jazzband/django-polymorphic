@@ -5,7 +5,7 @@ import inspect
 
 from django.contrib import admin
 from django.urls import resolve
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from polymorphic.utils import get_base_polymorphic_model
 
