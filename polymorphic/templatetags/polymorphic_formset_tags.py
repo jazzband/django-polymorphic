@@ -1,7 +1,7 @@
 import json
 
 from django.template import Library
-from django.utils.encoding import force_text
+from django.utils.encoding import force_str
 from django.utils.text import capfirst
 from django.utils.translation import ugettext
 
@@ -54,7 +54,7 @@ def as_script_options(formset):
         # Allow to add different types
         options["childTypes"] = [
             {
-                "name": force_text(model._meta.verbose_name),
+                "name": force_str(model._meta.verbose_name),
                 "type": model._meta.model_name,
             }
             for model in formset.child_forms.keys()
