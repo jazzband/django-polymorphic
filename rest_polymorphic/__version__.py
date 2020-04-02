@@ -1,4 +1,4 @@
-__version__ = '0.1.8'
+__version__ = '0.1.9'
 __title__ = 'django-rest-polymorphic'
 __description__ = 'Polymorphic serializers for Django REST Framework.'
 __url__ = 'https://github.com/apirobot/django-rest-polymorphic'
