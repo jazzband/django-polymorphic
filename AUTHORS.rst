@@ -11,3 +11,5 @@ Contributors
 ------------
 
 * Jeff Hackshaw <jeffrey.hackshaw@gmail.com>
+* T. Franzel
+* Ignacio Losiggio <iglosiggio@gmail.com>
