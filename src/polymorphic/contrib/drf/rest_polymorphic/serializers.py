@@ -1,4 +1,4 @@
-from collections import Mapping
+from collections.abc import Mapping
 from six import string_types
 
 from django.core.exceptions import ImproperlyConfigured
