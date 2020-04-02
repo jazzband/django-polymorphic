@@ -2,6 +2,7 @@
 from __future__ import absolute_import, unicode_literals
 
 import django
+from django.core import management
 
 DEBUG = True
 USE_TZ = True
@@ -31,3 +32,6 @@ if django.VERSION >= (1, 10):
     MIDDLEWARE = ()
 else:
     MIDDLEWARE_CLASSES = ()
+
+django.setup()
+management.call_command('migrate')
