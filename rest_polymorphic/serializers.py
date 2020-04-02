@@ -4,6 +4,7 @@ from six import string_types
 from django.core.exceptions import ImproperlyConfigured
 from django.db import models
 from rest_framework import serializers
+from rest_framework.fields import empty
 
 
 class PolymorphicSerializer(serializers.Serializer):
@@ -89,6 +90,14 @@ class PolymorphicSerializer(serializers.Serializer):
             child_valid = serializer.is_valid(*args, **kwargs)
             self._errors.update(serializer.errors)
         return valid and child_valid
+    
+    def run_validation(self, data=empty):
+        resource_type = self._get_resource_type_from_mapping(data)
+        serializer = self._get_serializer_from_resource_type(resource_type)
+        validated_data = serializer.run_validation(data)
+        validated_data[self.resource_type_field_name] = resource_type
+        return validated_data
+
 
     # --------------
     # Implementation
