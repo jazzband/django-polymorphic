@@ -696,7 +696,7 @@ class PolymorphicTests(TransactionTestCase):
         oa.m2m.add(oa)
         oa.m2m.add(ob)
 
-        objects = RelationBase.objects.all()
+        objects = RelationBase.objects.order_by("pk").all()
         assert (
             repr(objects[0])
             == '<RelationBase: id 1, field_base (CharField) "base", fk (ForeignKey) None, m2m (ManyToManyField) 0>'

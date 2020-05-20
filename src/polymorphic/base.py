@@ -60,6 +60,13 @@ class PolymorphicModelBase(ModelBase):
         # create new model
         new_class = self.call_superclass_new_method(model_name, bases, attrs, **kwargs)
 
+        if new_class._meta.base_manager_name is None:
+            # by default, use polymorphic manager as the base manager - i.e. for
+            # related fields etc. This could happen in multi-inheritance scenarios
+            # where one parent is polymorphic and the other not and the non poly parent
+            # is higher in the MRO
+            new_class._meta.base_manager_name = "objects"
+
         # check if the model fields are all allowed
         self.validate_model_fields(new_class)
 
