@@ -109,7 +109,13 @@ class Enhance_Inherit(Enhance_Base, Enhance_Plain):
     field_i = models.CharField(max_length=30)
 
 
-class RelationBase(ShowFieldTypeAndContent, PolymorphicModel):
+class RelationAbstractModel(models.Model):
+    class Meta:
+        abstract = True
+
+
+# class RelationBase(ShowFieldTypeAndContent, PolymorphicModel, RelationAbstractModel):  # this works!
+class RelationBase(RelationAbstractModel, ShowFieldTypeAndContent, PolymorphicModel):
     field_base = models.CharField(max_length=30)
     fk = models.ForeignKey(
         "self", on_delete=models.CASCADE, null=True, related_name="relationbase_set"
