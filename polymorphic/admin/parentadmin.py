@@ -3,6 +3,7 @@ The parent admin displays the list view of the base model.
 """
 import sys
 
+import django
 from django.contrib import admin
 from django.contrib.admin.helpers import AdminErrorList, AdminForm
 from django.contrib.admin.templatetags.admin_urls import add_preserved_filters
@@ -14,7 +15,10 @@ from django.template.response import TemplateResponse
 from django.utils.encoding import force_text
 from django.utils.http import urlencode
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext_lazy as _
+if django.VERSION > (3, ):
+    from django.utils.translation import gettext_lazy as _
+else:
+    from django.utils.translation import ugettext_lazy as _
 
 from polymorphic.utils import get_base_polymorphic_model
 

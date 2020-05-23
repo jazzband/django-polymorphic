@@ -1,7 +1,11 @@
+import django
 from django.db import models
 from django.utils.dates import MONTHS_3
 from django.utils.six import python_2_unicode_compatible
-from django.utils.translation import ugettext_lazy as _
+if django.VERSION > (3, ):
+    from django.utils.translation import gettext_lazy as _
+else:
+    from django.utils.translation import ugettext_lazy as _
 
 from polymorphic.models import PolymorphicModel
 
