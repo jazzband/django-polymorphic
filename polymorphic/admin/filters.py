@@ -1,6 +1,10 @@
+import django
 from django.contrib import admin
 from django.core.exceptions import PermissionDenied
-from django.utils.translation import ugettext_lazy as _
+if django.VERSION > (3, ):
+    from django.utils.translation import gettext_lazy as _
+else:
+    from django.utils.translation import ugettext_lazy as _
 
 
 class PolymorphicChildModelFilter(admin.SimpleListFilter):

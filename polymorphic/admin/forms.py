@@ -1,6 +1,10 @@
+import django
 from django import forms
 from django.contrib.admin.widgets import AdminRadioSelect
-from django.utils.translation import ugettext_lazy as _
+if django.VERSION > (3, ):
+    from django.utils.translation import gettext_lazy as _
+else:
+    from django.utils.translation import ugettext_lazy as _
 
 
 class PolymorphicModelChoiceForm(forms.Form):

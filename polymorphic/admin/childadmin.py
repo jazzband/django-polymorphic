@@ -3,9 +3,13 @@ The child admin displays the change/delete view of the subclass model.
 """
 import inspect
 
+import django
 from django.contrib import admin
 from django.urls import resolve
-from django.utils.translation import ugettext_lazy as _
+if django.VERSION > (3, ):
+    from django.utils.translation import gettext_lazy as _
+else:
+    from django.utils.translation import ugettext_lazy as _
 
 from polymorphic.utils import get_base_polymorphic_model
 
