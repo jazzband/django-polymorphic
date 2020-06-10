@@ -146,13 +146,14 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
         """
         self._lazy_setup()
         choices = []
-        for model in self.get_child_models():
+        content_types = ContentType.objects.get_for_models(*self.get_child_models(), for_concrete_models=False)
+
+        for model, ct in content_types.items():
             perm_function_name = "has_{0}_permission".format(action)
             model_admin = self._get_real_admin_by_model(model)
             perm_function = getattr(model_admin, perm_function_name)
             if not perm_function(request):
                 continue
-            ct = ContentType.objects.get_for_model(model, for_concrete_model=False)
             choices.append((ct.id, model._meta.verbose_name))
         return choices
 
