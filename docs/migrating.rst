@@ -29,7 +29,6 @@ can be included in a single Django migration. For example:
 .. code-block:: python
 
     # -*- coding: utf-8 -*-
-    from __future__ import unicode_literals
     from django.db import migrations, models
 
 

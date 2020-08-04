@@ -40,7 +40,7 @@ class ShowFieldBase(object):
                 out += content.__class__.__name__
         elif issubclass(field_type, models.ManyToManyField):
             out += "%d" % content.count()
-        elif isinstance(content, compat.integer_types):
+        elif isinstance(content, int):
             out += str(content)
         elif content is None:
             out += "None"

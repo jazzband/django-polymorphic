@@ -2,8 +2,6 @@
 """
 QuerySet for PolymorphicModel
 """
-from __future__ import absolute_import
-
 import copy
 from collections import defaultdict
 
@@ -177,7 +175,7 @@ class PolymorphicQuerySet(QuerySet):
         """translate the field paths in the args, then call vanilla order_by."""
         field_names = [
             translate_polymorphic_field_path(self.model, a)
-            if isinstance(a, compat.string_types)
+            if isinstance(a, str)
             else a  # allow expressions to pass unchanged
             for a in field_names
         ]

@@ -1,5 +1,3 @@
-import sys
-
 from django.contrib.contenttypes.models import ContentType
 from django.db import DEFAULT_DB_ALIAS
 
@@ -59,12 +57,9 @@ def sort_by_subclass(*classes):
     """
     Sort a series of models by their inheritance order.
     """
-    if sys.version_info[0] == 2:
-        return sorted(classes, cmp=_compare_mro)
-    else:
-        from functools import cmp_to_key
+    from functools import cmp_to_key
 
-        return sorted(classes, key=cmp_to_key(_compare_mro))
+    return sorted(classes, key=cmp_to_key(_compare_mro))
 
 
 def get_base_polymorphic_model(ChildModel, allow_abstract=False):

@@ -4,8 +4,6 @@ The ``extra_views.advanced`` provides a method to combine that with a create/upd
 
 This package provides classes that support both options for polymorphic formsets.
 """
-from __future__ import absolute_import
-
 import extra_views
 from django.core.exceptions import ImproperlyConfigured
 
