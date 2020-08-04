@@ -4,12 +4,10 @@ import re
 from django.db import models
 
 from . import compat
-from .compat import python_2_unicode_compatible
 
 RE_DEFERRED = re.compile("_Deferred_.*")
 
 
-@python_2_unicode_compatible
 class ShowFieldBase(object):
     """ base class for the ShowField... model mixins, does the work """
 
