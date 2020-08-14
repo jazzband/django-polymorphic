@@ -18,7 +18,7 @@ from polymorphic.tests.models import (
 
 
 class MultipleDatabasesTests(TestCase):
-    multi_db = True
+    databases = ["default", "secondary"]
 
     def test_save_to_non_default_database(self):
         Model2A.objects.db_manager("secondary").create(field1="A1")
