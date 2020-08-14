@@ -1,8 +1,6 @@
 """
 The parent admin displays the list view of the base model.
 """
-import sys
-
 from django.contrib import admin
 from django.contrib.admin.helpers import AdminErrorList, AdminForm
 from django.contrib.admin.templatetags.admin_urls import add_preserved_filters
@@ -11,6 +9,7 @@ from django.core.exceptions import ImproperlyConfigured, PermissionDenied
 from django.db import models
 from django.http import Http404, HttpResponseRedirect
 from django.template.response import TemplateResponse
+from django.urls import URLResolver
 from django.utils.encoding import force_text
 from django.utils.http import urlencode
 from django.utils.safestring import mark_safe
@@ -19,17 +18,6 @@ from django.utils.translation import ugettext_lazy as _
 from polymorphic.utils import get_base_polymorphic_model
 
 from .forms import PolymorphicModelChoiceForm
-
-try:
-    # Django 2.0+
-    from django.urls import URLResolver
-except ImportError:
-    # Django < 2.0
-    from django.urls import RegexURLResolver as URLResolver
-
-
-if sys.version_info[0] >= 3:
-    long = int
 
 
 class RegistrationClosed(RuntimeError):
@@ -293,9 +281,9 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
             try:
                 pos = path.find("/")
                 if pos == -1:
-                    object_id = long(path)
+                    object_id = int(path)
                 else:
-                    object_id = long(path[0:pos])
+                    object_id = int(path[0:pos])
             except ValueError:
                 raise Http404(
                     "No ct_id parameter, unable to find admin subclass for path '{0}'.".format(

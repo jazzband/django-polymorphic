@@ -4,12 +4,10 @@ import re
 from django.db import models
 
 from . import compat
-from .compat import python_2_unicode_compatible
 
 RE_DEFERRED = re.compile("_Deferred_.*")
 
 
-@python_2_unicode_compatible
 class ShowFieldBase(object):
     """ base class for the ShowField... model mixins, does the work """
 
@@ -42,7 +40,7 @@ class ShowFieldBase(object):
                 out += content.__class__.__name__
         elif issubclass(field_type, models.ManyToManyField):
             out += "%d" % content.count()
-        elif isinstance(content, compat.integer_types):
+        elif isinstance(content, int):
             out += str(content)
         elif content is None:
             out += "None"

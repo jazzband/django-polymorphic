@@ -2,14 +2,12 @@
 """
 PolymorphicQuerySet support functions
 """
-from __future__ import absolute_import
-
 import copy
 from collections import deque
 
 from django.apps import apps
 from django.contrib.contenttypes.models import ContentType
-from django.core.exceptions import FieldError
+from django.core.exceptions import FieldError, FieldDoesNotExist
 from django.db import models
 from django.db.models import Q
 from django.db.models.fields.related import ForeignObjectRel, RelatedField
@@ -144,7 +142,7 @@ def translate_polymorphic_field_path(queryset_model, field_path):
     into modela__modelb__modelc__field3.
     Returns: translated path (unchanged, if no translation needed)
     """
-    if not isinstance(field_path, compat.string_types):
+    if not isinstance(field_path, str):
         raise ValueError("Expected field name as string: {0}".format(field_path))
 
     classname, sep, pure_field_path = field_path.partition("___")
@@ -189,7 +187,7 @@ def translate_polymorphic_field_path(queryset_model, field_path):
                 # Can also test whether the field exists in the related object to avoid ambiguity between
                 # class names and field names, but that never happens when your class names are in CamelCase.
                 return field_path  # No exception raised, field does exist.
-        except models.FieldDoesNotExist:
+        except FieldDoesNotExist:
             pass
 
         submodels = _get_all_sub_models(queryset_model)

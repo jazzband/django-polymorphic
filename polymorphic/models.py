@@ -2,8 +2,6 @@
 """
 Seamless Polymorphic Inheritance for Django Models
 """
-from __future__ import absolute_import
-
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.db.models.fields.related import (

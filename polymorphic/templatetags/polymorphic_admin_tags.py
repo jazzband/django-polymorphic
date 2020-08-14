@@ -31,7 +31,7 @@ class BreadcrumbScope(Node):
         # Instead, have an assignment tag that inserts that in the template.
         base_opts = self.base_opts.resolve(context)
         new_vars = {}
-        if base_opts and not isinstance(base_opts, compat.string_types):
+        if base_opts and not isinstance(base_opts, str):
             new_vars = {
                 "app_label": base_opts.app_label,  # What this is all about
                 "opts": base_opts,
