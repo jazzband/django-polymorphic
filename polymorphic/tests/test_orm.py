@@ -581,32 +581,18 @@ class PolymorphicTests(TransactionTestCase):
             select={"topic": "tests_modelextraexternal.topic"},
             where=["tests_modelextraa.id = tests_modelextraexternal.id"],
         )
-        if compat.PY3:
-            self.assertEqual(
-                repr(objects[0]),
-                '<ModelExtraA: id 1, field1 (CharField) "A1" - Extra: topic (str) "extra1">',
-            )
-            self.assertEqual(
-                repr(objects[1]),
-                '<ModelExtraB: id 2, field1 (CharField) "B1", field2 (CharField) "B2" - Extra: topic (str) "extra2">',
-            )
-            self.assertEqual(
-                repr(objects[2]),
-                '<ModelExtraC: id 3, field1 (CharField) "C1", field2 (CharField) "C2", field3 (CharField) "C3" - Extra: topic (str) "extra3">',
-            )
-        else:
-            self.assertEqual(
-                repr(objects[0]),
-                '<ModelExtraA: id 1, field1 (CharField) "A1" - Extra: topic (unicode) "extra1">',
-            )
-            self.assertEqual(
-                repr(objects[1]),
-                '<ModelExtraB: id 2, field1 (CharField) "B1", field2 (CharField) "B2" - Extra: topic (unicode) "extra2">',
-            )
-            self.assertEqual(
-                repr(objects[2]),
-                '<ModelExtraC: id 3, field1 (CharField) "C1", field2 (CharField) "C2", field3 (CharField) "C3" - Extra: topic (unicode) "extra3">',
-            )
+        self.assertEqual(
+            repr(objects[0]),
+            '<ModelExtraA: id 1, field1 (CharField) "A1" - Extra: topic (str) "extra1">',
+        )
+        self.assertEqual(
+            repr(objects[1]),
+            '<ModelExtraB: id 2, field1 (CharField) "B1", field2 (CharField) "B2" - Extra: topic (str) "extra2">',
+        )
+        self.assertEqual(
+            repr(objects[2]),
+            '<ModelExtraC: id 3, field1 (CharField) "C1", field2 (CharField) "C2", field3 (CharField) "C3" - Extra: topic (str) "extra3">',
+        )
         self.assertEqual(len(objects), 3)
 
     def test_instance_of_filter(self):
