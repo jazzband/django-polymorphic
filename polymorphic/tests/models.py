@@ -222,6 +222,7 @@ class ParentModelWithManager(PolymorphicModel):
 
 class ChildModelWithManager(PolymorphicModel):
     # Also test whether foreign keys receive the manager:
+    field1 = models.CharField(max_length=10)  # needed as MyManager uses it
     fk = models.ForeignKey(
         ParentModelWithManager, on_delete=models.CASCADE, related_name="childmodel_set"
     )

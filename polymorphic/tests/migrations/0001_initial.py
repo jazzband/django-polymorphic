@@ -1452,6 +1452,13 @@ class Migration(migrations.Migration):
         ),
         migrations.AddField(
             model_name="childmodelwithmanager",
+            name="field1",
+            field=models.CharField(
+                max_length=10,
+            ),
+        ),
+        migrations.AddField(
+            model_name="childmodelwithmanager",
             name="polymorphic_ctype",
             field=models.ForeignKey(
                 editable=False,
