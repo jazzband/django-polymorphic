@@ -19,6 +19,7 @@ Contributors
 * Andrew Dodd
 * Angel Velasquez
 * Austin Matsick
+* Bastien Vallet
 * Ben Konrath
 * Bert Constantin
 * Bertrand Bordage
