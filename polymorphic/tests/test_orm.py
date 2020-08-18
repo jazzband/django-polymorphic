@@ -238,22 +238,12 @@ class PolymorphicTests(TransactionTestCase):
             objects_deferred[0].__dict__,
             "field1 was not deferred (using defer())",
         )
-        self.assertRegex(
-            repr(objects_deferred[0]),
-            r"<Model2A: id \d+, field1 \(CharField\), deferred\[field1\]>",
-        )
-        self.assertRegex(
-            repr(objects_deferred[1]),
-            r"<Model2B: id \d+, field1 \(CharField\), field2 \(CharField\), deferred\[field1\]>",
-        )
-        self.assertRegex(
-            repr(objects_deferred[2]),
-            r"<Model2C: id \d+, field1 \(CharField\), field2 \(CharField\), field3 \(CharField\), deferred\[field1\]>",
-        )
-        self.assertRegex(
-            repr(objects_deferred[3]),
-            r"<Model2D: id \d+, field1 \(CharField\), field2 \(CharField\), field3 \(CharField\), field4 \(CharField\), deferred\[field1\]>",
-        )
+
+        # Check that we have exactly one deferred field ('field1') per resulting object.
+        for obj in objects_deferred:
+            deferred_fields = obj.get_deferred_fields()
+            self.assertEqual(1, len(deferred_fields))
+            self.assertIn("field1", deferred_fields)
 
         objects_only = Model2A.objects.only("pk", "polymorphic_ctype", "field1")
 
@@ -271,48 +261,37 @@ class PolymorphicTests(TransactionTestCase):
         self.assertNotIn(
             "field4", objects_only[3].__dict__, "field4 was not deferred (using only())"
         )
-        self.assertRegex(
-            repr(objects_only[0]), r"<Model2A: id \d+, field1 \(CharField\)>"
-        )
-        self.assertRegex(
-            repr(objects_only[1]),
-            r"<Model2B: id \d+, field1 \(CharField\), field2 \(CharField\), deferred\[field2\]>",
-        )
-        self.assertRegex(
-            repr(objects_only[2]),
-            r"<Model2C: id \d+, field1 \(CharField\), field2 \(CharField\), field3 \(CharField\), "
-            r"deferred\[field2,field3,model2a_ptr_id\]>",
-        )
-        self.assertRegex(
-            repr(objects_only[3]),
-            r"<Model2D: id \d+, field1 \(CharField\), field2 \(CharField\), field3 \(CharField\), field4 \(CharField\), "
-            r"deferred\[field2,field3,field4,model2a_ptr_id,model2b_ptr_id\]>",
-        )
+        self.assertNotIn("field1", objects_only[0].get_deferred_fields())
+
+        self.assertIn("field2", objects_only[1].get_deferred_fields())
+
+        # objects_only[2] has several deferred fields, ensure they are all set as such.
+        model2c_deferred = objects_only[2].get_deferred_fields()
+        self.assertIn("field2", model2c_deferred)
+        self.assertIn("field3", model2c_deferred)
+        self.assertIn("model2a_ptr_id", model2c_deferred)
+
+        # objects_only[3] has a few more fields that should be set as deferred.
+        model2d_deferred = objects_only[3].get_deferred_fields()
+        self.assertIn("field2", model2d_deferred)
+        self.assertIn("field3", model2d_deferred)
+        self.assertIn("field4", model2d_deferred)
+        self.assertIn("model2a_ptr_id", model2d_deferred)
+        self.assertIn("model2b_ptr_id", model2d_deferred)
 
         ModelX.objects.create(field_b="A1", field_x="A2")
         ModelY.objects.create(field_b="B1", field_y="B2")
 
+        # If we defer a field on a descendent, the parent's field is not deferred.
         objects_deferred = Base.objects.defer("ModelY___field_y")
-        self.assertRegex(
-            repr(objects_deferred[0]),
-            r"<ModelX: id \d+, field_b \(CharField\), field_x \(CharField\)>",
-        )
-        self.assertRegex(
-            repr(objects_deferred[1]),
-            r"<ModelY: id \d+, field_b \(CharField\), field_y \(CharField\), deferred\[field_y\]>",
-        )
+        self.assertNotIn("field_y", objects_deferred[0].get_deferred_fields())
+        self.assertIn("field_y", objects_deferred[1].get_deferred_fields())
 
         objects_only = Base.objects.only(
             "polymorphic_ctype", "ModelY___field_y", "ModelX___field_x"
         )
-        self.assertRegex(
-            repr(objects_only[0]),
-            r"<ModelX: id \d+, field_b \(CharField\), field_x \(CharField\), deferred\[field_b\]>",
-        )
-        self.assertRegex(
-            repr(objects_only[1]),
-            r"<ModelY: id \d+, field_b \(CharField\), field_y \(CharField\), deferred\[field_b\]>",
-        )
+        self.assertIn("field_b", objects_only[0].get_deferred_fields())
+        self.assertIn("field_b", objects_only[1].get_deferred_fields())
 
     def test_defer_related_fields(self):
         self.create_model2abcd()
