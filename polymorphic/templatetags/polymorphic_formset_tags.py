@@ -3,7 +3,7 @@ import json
 from django.template import Library
 from django.utils.encoding import force_text
 from django.utils.text import capfirst
-from django.utils.translation import ugettext
+from django.utils.translation import gettext
 
 from polymorphic.formsets import BasePolymorphicModelFormSet
 
@@ -44,10 +44,10 @@ def as_script_options(formset):
         "prefix": formset.prefix,
         "pkFieldName": formset.model._meta.pk.name,
         "addText": getattr(formset, "add_text", None)
-        or ugettext("Add another %(verbose_name)s")
+        or gettext("Add another %(verbose_name)s")
         % {"verbose_name": capfirst(verbose_name)},
         "showAddButton": getattr(formset, "show_add_button", True),
-        "deleteText": ugettext("Delete"),
+        "deleteText": gettext("Delete"),
     }
 
     if isinstance(formset, BasePolymorphicModelFormSet):
