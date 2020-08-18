@@ -1,7 +1,5 @@
 from django.template import Library, Node, TemplateSyntaxError
 
-from polymorphic import compat
-
 register = Library()
 
 

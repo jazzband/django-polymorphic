@@ -9,7 +9,6 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import FieldDoesNotExist
 from django.db.models.query import ModelIterable, Q, QuerySet
 
-from . import compat
 from .query_translate import (
     translate_polymorphic_field_path,
     translate_polymorphic_filter_definitions_in_args,

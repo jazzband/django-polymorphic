@@ -3,8 +3,6 @@ import re
 
 from django.db import models
 
-from . import compat
-
 RE_DEFERRED = re.compile("_Deferred_.*")
 
 
