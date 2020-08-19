@@ -5,6 +5,7 @@ QuerySet for PolymorphicModel
 import copy
 from collections import defaultdict
 
+from django import get_version as get_django_version
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import FieldDoesNotExist
 from django.db.models.query import ModelIterable, Q, QuerySet
@@ -157,7 +158,7 @@ class PolymorphicQuerySet(QuerySet):
         # Implementation in _translate_polymorphic_filter_defnition."""
         return self.filter(not_instance_of=args)
 
-    def _filter_or_exclude(self, negate, args, kwargs):
+    def _filter_or_exclude(self, negate, *args, **kwargs):
         # We override this internal Django functon as it is used for all filter member functions.
         q_objects = translate_polymorphic_filter_definitions_in_args(
             self.model, args, using=self.db
@@ -167,7 +168,7 @@ class PolymorphicQuerySet(QuerySet):
             self.model, kwargs, using=self.db
         )
         return super(PolymorphicQuerySet, self)._filter_or_exclude(
-            negate, (list(q_objects) + additional_args), kwargs
+            negate, *(list(q_objects) + additional_args), **kwargs
         )
 
     def order_by(self, *field_names):
@@ -522,3 +523,20 @@ class PolymorphicQuerySet(QuerySet):
             return olist
         clist = PolymorphicQuerySet._p_list_class(olist)
         return clist
+
+
+if get_django_version() > "3.2":
+    class PolymorphicQuerySet(PolymorphicQuerySet):
+        def _filter_or_exclude(self, negate, args, kwargs):
+            # We override this internal Django functon as it is used for all filter member functions.
+            q_objects = translate_polymorphic_filter_definitions_in_args(
+                queryset_model=self.model, args=args, using=self.db
+            )
+            # filter_field='data'
+            additional_args = translate_polymorphic_filter_definitions_in_kwargs(
+                queryset_model=self.model, kwargs=kwargs, using=self.db
+            )
+            args = list(q_objects) + additional_args
+            return super(PolymorphicQuerySet, self)._filter_or_exclude(
+                negate=negate, args=args, kwargs=kwargs
+            )

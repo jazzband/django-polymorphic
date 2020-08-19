@@ -13,6 +13,7 @@ Contributors
 * Abel Daniel
 * Adam Chainz
 * Adam Wentz
+* Adam Donaghy
 * Andrew Ingram (contributed setup.py)
 * Al Johri
 * Alex Alvarez
