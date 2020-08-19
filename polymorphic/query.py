@@ -159,7 +159,7 @@ class PolymorphicQuerySet(QuerySet):
         return self.filter(not_instance_of=args)
 
     def _filter_or_exclude(self, negate, *args, **kwargs):
-        # We override this internal Django functon as it is used for all filter member functions.
+        # We override this internal Django function as it is used for all filter member functions.
         q_objects = translate_polymorphic_filter_definitions_in_args(
             self.model, args, using=self.db
         )
@@ -525,9 +525,10 @@ class PolymorphicQuerySet(QuerySet):
         return clist
 
 
+# Makes _filter_or_exclude compatible with the change in signature introduced in django at 9c9a3fe
 if get_django_version() >= "3.2":
     def _filter_or_exclude(self, negate, args, kwargs):
-        # We override this internal Django functon as it is used for all filter member functions.
+        # We override this internal Django function as it is used for all filter member functions.
         q_objects = translate_polymorphic_filter_definitions_in_args(
             queryset_model=self.model, args=args, using=self.db
         )
