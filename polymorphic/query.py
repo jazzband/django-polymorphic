@@ -525,18 +525,18 @@ class PolymorphicQuerySet(QuerySet):
         return clist
 
 
-if get_django_version() > "3.2":
-    class PolymorphicQuerySet(PolymorphicQuerySet):
-        def _filter_or_exclude(self, negate, args, kwargs):
-            # We override this internal Django functon as it is used for all filter member functions.
-            q_objects = translate_polymorphic_filter_definitions_in_args(
-                queryset_model=self.model, args=args, using=self.db
-            )
-            # filter_field='data'
-            additional_args = translate_polymorphic_filter_definitions_in_kwargs(
-                queryset_model=self.model, kwargs=kwargs, using=self.db
-            )
-            args = list(q_objects) + additional_args
-            return super(PolymorphicQuerySet, self)._filter_or_exclude(
-                negate=negate, args=args, kwargs=kwargs
-            )
+if get_django_version() >= "3.2":
+    def _filter_or_exclude(self, negate, args, kwargs):
+        # We override this internal Django functon as it is used for all filter member functions.
+        q_objects = translate_polymorphic_filter_definitions_in_args(
+            queryset_model=self.model, args=args, using=self.db
+        )
+        # filter_field='data'
+        additional_args = translate_polymorphic_filter_definitions_in_kwargs(
+            queryset_model=self.model, kwargs=kwargs, using=self.db
+        )
+        args = list(q_objects) + additional_args
+        return super(PolymorphicQuerySet, self)._filter_or_exclude(
+            negate=negate, args=args, kwargs=kwargs
+        )
+    PolymorphicQuerySet._filter_or_exclude = _filter_or_exclude
