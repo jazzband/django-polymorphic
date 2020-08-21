@@ -1,6 +1,13 @@
 Changelog
 =========
 
+Changes in 3.0.0 (2020-08-21)
+-----------------------------
+
+* Support for Django 3.X
+* Dropped support for python 2.X
+* A lot of various fixes and improvements by various authors. Thanks a lot!
+
 Changes in 2.1.2 (2019-07-15)
 -----------------------------
 
