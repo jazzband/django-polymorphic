@@ -1097,6 +1097,14 @@ class PolymorphicTests(TransactionTestCase):
         ).aggregate(count=Count("info_joined"))
         self.assertEqual(result, {"count": 2})
 
+        # We should get a BlogA and a BlogB
+        result = BlogBase.objects.annotate(
+            info_joined=FilteredRelation("bloga", condition=Q(BlogA___info__contains="joined")),
+        ).filter(info_joined__isnull=True)
+        self.assertEqual(result.count(), 2)
+        self.assertIsInstance(result.first(), BlogA)
+        self.assertIsInstance(result.last(), BlogB)
+
     def test_polymorphic__expressions(self):
 
         from django.db.models.functions import Concat
