@@ -8,6 +8,7 @@ from collections import defaultdict
 from django import get_version as get_django_version
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import FieldDoesNotExist
+from django.db.models import FilteredRelation
 from django.db.models.query import ModelIterable, Q, QuerySet
 
 from .query_translate import (
@@ -265,6 +266,8 @@ class PolymorphicQuerySet(QuerySet):
             # stored inside a complex query expression.
             if isinstance(a, Q):
                 translate_polymorphic_Q_object(self.model, a)
+            elif isinstance(a, FilteredRelation):
+                patch_lookup(a.condition)
             elif hasattr(a, "get_source_expressions"):
                 for source_expression in a.get_source_expressions():
                     if source_expression is not None:
@@ -290,6 +293,8 @@ class PolymorphicQuerySet(QuerySet):
                             tree_node_test___lookup(my_model, child)
 
                 tree_node_test___lookup(self.model, a)
+            elif isinstance(a, FilteredRelation):
+                test___lookup(a.condition)
             elif hasattr(a, "get_source_expressions"):
                 for source_expression in a.get_source_expressions():
                     test___lookup(source_expression)
