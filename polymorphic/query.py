@@ -293,8 +293,6 @@ class PolymorphicQuerySet(QuerySet):
                             tree_node_test___lookup(my_model, child)
 
                 tree_node_test___lookup(self.model, a)
-            elif isinstance(a, FilteredRelation):
-                test___lookup(a.condition)
             elif hasattr(a, "get_source_expressions"):
                 for source_expression in a.get_source_expressions():
                     test___lookup(source_expression)
