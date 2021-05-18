@@ -24,7 +24,7 @@ The Python versions need to be installed at your system.
 On Linux, download the versions at http://www.python.org/download/releases/.
 On MacOS X, use Homebrew_ to install other Python versions.
 
-We currently support Python 2.6, 2.7, 3.2 and 3.3.
+We currently support Python 3.5, 3.6, 3.7, and 3.8.
 
 
 Example project
