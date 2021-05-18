@@ -132,11 +132,11 @@ class PolymorphicQuerySet(QuerySet):
     as_manager.queryset_only = True
     as_manager = classmethod(as_manager)
 
-    def bulk_create(self, objs, batch_size=None):
+    def bulk_create(self, objs, **kwargs):
         objs = list(objs)
         for obj in objs:
             obj.pre_save_polymorphic()
-        return super(PolymorphicQuerySet, self).bulk_create(objs, batch_size)
+        return super(PolymorphicQuerySet, self).bulk_create(objs, **kwargs)
 
     def non_polymorphic(self):
         """switch off polymorphic behaviour for this query.
