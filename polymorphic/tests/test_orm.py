@@ -4,6 +4,7 @@ import uuid
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.db.models import Case, Count, Q, When
+from django.db.utils import IntegrityError
 from django.test import TransactionTestCase
 
 from polymorphic import compat, query_translate
@@ -1144,6 +1145,21 @@ class PolymorphicTests(TransactionTestCase):
             MultiTableDerived.objects.bulk_create(
                 [MultiTableDerived(field1="field1", field2="field2")]
             )
+
+    def test_bulk_create_ignore_conflicts(self):
+        ArtProject.objects.bulk_create([
+            ArtProject(topic="Painting with Tim", artist="T. Turner"),
+            ArtProject.objects.create(topic="Sculpture with Tim", artist="T. Turner")
+        ], ignore_conflicts=True)
+        self.assertEqual(ArtProject.objects.count(), 2)
+
+    def test_bulk_create_no_ignore_conflicts(self):
+        with self.assertRaises(IntegrityError):
+            ArtProject.objects.bulk_create([
+                ArtProject(topic="Painting with Tim", artist="T. Turner"),
+                ArtProject.objects.create(topic="Sculpture with Tim", artist="T. Turner")
+            ], ignore_conflicts=False)
+        self.assertEqual(ArtProject.objects.count(), 1)
 
     def test_can_query_using_subclass_selector_on_abstract_model(self):
         obj = SubclassSelectorAbstractConcreteModel.objects.create(concrete_field="abc")
