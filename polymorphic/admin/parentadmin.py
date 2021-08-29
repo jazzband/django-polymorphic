@@ -318,6 +318,8 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
             extra_qs = "&{0}".format(force_text(request.META["QUERY_STRING"]))
 
         choices = self.get_child_type_choices(request, "add")
+        if len(choices) == 0:
+            raise PermissionDenied
         if len(choices) == 1:
             return HttpResponseRedirect("?ct_id={0}{1}".format(choices[0][0], extra_qs))
 
