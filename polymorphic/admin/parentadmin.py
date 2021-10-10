@@ -10,7 +10,7 @@ from django.db import models
 from django.http import Http404, HttpResponseRedirect
 from django.template.response import TemplateResponse
 from django.urls import URLResolver
-from django.utils.encoding import force_text
+from django.utils.encoding import force_str
 from django.utils.http import urlencode
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
@@ -313,9 +313,9 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
 
         extra_qs = ""
         if request.META["QUERY_STRING"]:
-            # QUERY_STRING is bytes in Python 3, using force_text() to decode it as string.
+            # QUERY_STRING is bytes in Python 3, using force_str() to decode it as string.
             # See QueryDict how Django deals with that.
-            extra_qs = "&{0}".format(force_text(request.META["QUERY_STRING"]))
+            extra_qs = "&{0}".format(force_str(request.META["QUERY_STRING"]))
 
         choices = self.get_child_type_choices(request, "add")
         if len(choices) == 0:
@@ -342,7 +342,7 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
         opts = self.model._meta
 
         context = {
-            "title": _("Add %s") % force_text(opts.verbose_name),
+            "title": _("Add %s") % force_str(opts.verbose_name),
             "adminform": adminForm,
             "is_popup": ("_popup" in request.POST or "_popup" in request.GET),
             "media": mark_safe(media),
