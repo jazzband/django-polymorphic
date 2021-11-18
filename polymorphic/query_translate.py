@@ -46,7 +46,7 @@ def translate_polymorphic_filter_definitions_in_kwargs(
             queryset_model, field_path, val, using=using
         )
 
-        if type(new_expr) == tuple:
+        if isinstance(new_expr, tuple):
             # replace kwargs element
             del kwargs[field_path]
             kwargs[new_expr[0]] = new_expr[1]
@@ -66,7 +66,7 @@ def translate_polymorphic_Q_object(
         for i in range(len(node.children)):
             child = node.children[i]
 
-            if type(child) == tuple or type(child) == list:
+            if isinstance(child, (tuple, list)):
                 # this Q object child is a tuple => a kwarg like Q( instance_of=ModelB )
                 key, val = child
                 new_expr = _translate_polymorphic_filter_definition(
