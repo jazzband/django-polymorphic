@@ -1,12 +1,32 @@
 Changelog
 =========
 
+Changes in 3.1 (2021-11-18)
+---------------------------
+
+* Added support for Django 4.0.
+* Fixed crash when the admin "add type" view has no choices; will show a permission denied.
+* Fixed missing ``locale`` folder in sdist.
+* Fixed missing ``QuerySet.bulk_create(.., ignore_conflicts=True)`` parameter support.
+* Fixed ``FilteredRelation`` support.
+* Fixed supporting class keyword arguments in model definitions for ``__init_subclass__()``.
+* Fixed including ``polymorphic.tests.migrations`` in the sdist.
+* Fixed non-polymorphic parent handling, which has no ``_base_objects``.
+* Fixed missing ``widgets`` support for ``modelform_factory()``.
+* Fixed ``has_changed`` handling for ``polymorphic_ctype_id`` due to implicit str to int conversions.
+* Fixed ``Q`` object handling when lists are used (e.g. in django-advanced-filters_).
+* Fixed Django Admin support when using a script-prefix.
+
+Many thanks to everyone providing clear pull requests!
+
+
 Changes in 3.0.0 (2020-08-21)
 -----------------------------
 
 * Support for Django 3.X
 * Dropped support for python 2.X
 * A lot of various fixes and improvements by various authors. Thanks a lot!
+
 
 Changes in 2.1.2 (2019-07-15)
 -----------------------------
@@ -417,6 +437,7 @@ It supports Django 1.1 up till 1.4 and Python 2.4 up till 2.7.
 For a detailed list of it's changes, see the :doc:`archived changelog <changelog_archive>`.
 
 .. _Grappelli: http://grappelliproject.com/
+.. _django-advanced-filters: https://github.com/modlinltd/django-advanced-filters
 .. _django-extra-views: https://github.com/AndrewIngram/django-extra-views
 .. _django-guardian: https://github.com/django-guardian/django-guardian
 .. _django-parler: https://github.com/django-parler/django-parler
