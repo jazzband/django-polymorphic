@@ -136,7 +136,7 @@ class PolymorphicQuerySet(QuerySet):
         objs = list(objs)
         for obj in objs:
             obj.pre_save_polymorphic()
-        return super(PolymorphicQuerySet, self).bulk_create(objs, batch_size, ignore_conflicts)
+        return super(PolymorphicQuerySet, self).bulk_create(objs, batch_size, ignore_conflicts=ignore_conflicts)
 
     def non_polymorphic(self):
         """switch off polymorphic behaviour for this query.
