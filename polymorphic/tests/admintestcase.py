@@ -21,13 +21,13 @@ class AdminTestCase(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        super(AdminTestCase, cls).setUpClass()
+        super().setUpClass()
         cls.admin_user = User.objects.create_superuser(
             "admin", "admin@example.org", password="admin"
         )
 
     def setUp(self):
-        super(AdminTestCase, self).setUp()
+        super().setUp()
 
         # Have a separate site, to avoid dependency on polymorphic wrapping or standard admin configuration
         self.admin_site = AdminSite()
@@ -60,11 +60,11 @@ class AdminTestCase(TestCase):
         try:
             return self.admin_site._registry[model]
         except KeyError:
-            raise ValueError("Model not registered with admin: {}".format(model))
+            raise ValueError(f"Model not registered with admin: {model}")
 
     @classmethod
     def tearDownClass(cls):
-        super(AdminTestCase, cls).tearDownClass()
+        super().tearDownClass()
         clear_url_caches()
         set_urlconf(None)
 
@@ -181,7 +181,7 @@ class AdminTestCase(TestCase):
         )
         response = admin_instance.delete_view(request, str(object_id))
         self.assertEqual(
-            response.status_code, 302, "Form errors in calling {0}".format(request.path)
+            response.status_code, 302, f"Form errors in calling {request.path}"
         )
         return response
 
@@ -229,11 +229,11 @@ class AdminTestCase(TestCase):
             self.assertEqual(
                 response.status_code,
                 302,
-                "Form errors in calling {0}:\n{1}".format(
+                "Form errors in calling {}:\n{}".format(
                     request_url, errors.as_text()
                 ),
             )
         self.assertTrue(
             "/login/?next=" not in response["Location"],
-            "Received login response for {0}".format(request_url),
+            f"Received login response for {request_url}",
         )

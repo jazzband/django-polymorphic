@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import uuid
 
 import django
@@ -166,7 +165,7 @@ class MyManager(PolymorphicManager):
     queryset_class = MyManagerQuerySet
 
     def get_queryset(self):
-        return super(MyManager, self).get_queryset().order_by("-field1")
+        return super().get_queryset().order_by("-field1")
 
     def my_queryset_foo(self):
         return self.all().my_queryset_foo()
@@ -288,7 +287,7 @@ class InitTestModel(ShowFieldType, PolymorphicModel):
 
     def __init__(self, *args, **kwargs):
         kwargs["bar"] = self.x()
-        super(InitTestModel, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
 
 class InitTestModelSubclass(InitTestModel):

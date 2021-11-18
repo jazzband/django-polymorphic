@@ -35,7 +35,7 @@ class PolymorphicInlineAdminFormSet(InlineAdminFormSet):
         # Assigned later via PolymorphicInlineSupportMixin later.
         self.request = kwargs.pop("request", None)
         self.obj = kwargs.pop("obj", None)
-        super(PolymorphicInlineAdminFormSet, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def __iter__(self):
         """
@@ -111,7 +111,7 @@ class PolymorphicInlineAdminFormSet(InlineAdminFormSet):
         )
 
 
-class PolymorphicInlineSupportMixin(object):
+class PolymorphicInlineSupportMixin:
     """
     A Mixin to add to the regular admin, so it can work with our polymorphic inlines.
 
@@ -132,9 +132,7 @@ class PolymorphicInlineSupportMixin(object):
         polymorphic inline formset. This fixes the media and form appearance
         of the inline polymorphic models.
         """
-        inline_admin_formsets = super(
-            PolymorphicInlineSupportMixin, self
-        ).get_inline_formsets(request, formsets, inline_instances, obj=obj)
+        inline_admin_formsets = super().get_inline_formsets(request, formsets, inline_instances, obj=obj)
 
         for admin_formset in inline_admin_formsets:
             if isinstance(admin_formset.formset, BasePolymorphicModelFormSet):

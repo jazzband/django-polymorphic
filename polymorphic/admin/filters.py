@@ -32,7 +32,7 @@ class PolymorphicChildModelFilter(admin.SimpleListFilter):
                 if choice_value == value:
                     return queryset.filter(polymorphic_ctype_id=choice_value)
             raise PermissionDenied(
-                'Invalid ContentType "{0}". It must be registered as child model.'.format(
+                'Invalid ContentType "{}". It must be registered as child model.'.format(
                     value
                 )
             )

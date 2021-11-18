@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 PolymorphicQuerySet support functions
 """
@@ -143,7 +142,7 @@ def translate_polymorphic_field_path(queryset_model, field_path):
     Returns: translated path (unchanged, if no translation needed)
     """
     if not isinstance(field_path, str):
-        raise ValueError("Expected field name as string: {0}".format(field_path))
+        raise ValueError(f"Expected field name as string: {field_path}")
 
     classname, sep, pure_field_path = field_path.partition("___")
     if not sep:
@@ -159,7 +158,7 @@ def translate_polymorphic_field_path(queryset_model, field_path):
         # the user has app label prepended to class name via __ => use Django's get_model function
         appname, sep, classname = classname.partition("__")
         model = apps.get_model(appname, classname)
-        assert model, "PolymorphicModel: model %s (in app %s) not found!" % (
+        assert model, "PolymorphicModel: model {} (in app {}) not found!".format(
             model.__name__,
             appname,
         )
@@ -192,7 +191,7 @@ def translate_polymorphic_field_path(queryset_model, field_path):
 
         submodels = _get_all_sub_models(queryset_model)
         model = submodels.get(classname, None)
-        assert model, "PolymorphicModel: model %s not found (not a subclass of %s)!" % (
+        assert model, "PolymorphicModel: model {} not found (not a subclass of {})!".format(
             classname,
             queryset_model.__name__,
         )

@@ -17,5 +17,5 @@ class PolymorphicModelChoiceForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         # Allow to easily redefine the label (a commonly expected usecase)
-        super(PolymorphicModelChoiceForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.fields["ct_id"].label = self.type_label

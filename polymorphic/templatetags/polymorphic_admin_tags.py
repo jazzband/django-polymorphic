@@ -20,7 +20,7 @@ class BreadcrumbScope(Node):
             return cls(base_opts=base_opts, nodelist=nodelist)
         else:
             raise TemplateSyntaxError(
-                "{0} tag expects 1 argument".format(token.contents[0])
+                f"{token.contents[0]} tag expects 1 argument"
             )
 
     def render(self, context):

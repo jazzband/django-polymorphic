@@ -13,10 +13,10 @@ warnings.simplefilter("always", DeprecationWarning)
 
 # Give feedback on used versions
 sys.stderr.write(
-    "Using Python version {0} from {1}\n".format(sys.version[:5], sys.executable)
+    f"Using Python version {sys.version[:5]} from {sys.executable}\n"
 )
 sys.stderr.write(
-    "Using Django version {0} from {1}\n".format(
+    "Using Django version {} from {}\n".format(
         django.get_version(), dirname(abspath(django.__file__))
     )
 )

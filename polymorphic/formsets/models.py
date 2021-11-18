@@ -22,7 +22,7 @@ class UnsupportedChildType(LookupError):
     pass
 
 
-class PolymorphicFormSetChild(object):
+class PolymorphicFormSetChild:
     """
     Metadata to define the inline of a polymorphic child.
     Provide this information in the :func:'polymorphic_inlineformset_factory' construction.
@@ -130,7 +130,7 @@ class BasePolymorphicModelFormSet(BaseModelFormSet):
     child_forms = OrderedDict()
 
     def __init__(self, *args, **kwargs):
-        super(BasePolymorphicModelFormSet, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.queryset_data = self.get_queryset()
 
     def _construct_form(self, i, **kwargs):
@@ -139,7 +139,7 @@ class BasePolymorphicModelFormSet(BaseModelFormSet):
         """
         # BaseModelFormSet logic
         if self.is_bound and i < self.initial_form_count():
-            pk_key = "%s-%s" % (self.add_prefix(i), self.model._meta.pk.name)
+            pk_key = f"{self.add_prefix(i)}-{self.model._meta.pk.name}"
             pk = self.data[pk_key]
             pk_field = self.model._meta.pk
             to_python = self._get_to_python(pk_field)
@@ -188,10 +188,10 @@ class BasePolymorphicModelFormSet(BaseModelFormSet):
                 # Note this completely tru
                 prefix = defaults["prefix"]
                 try:
-                    ct_id = int(self.data["{0}-polymorphic_ctype".format(prefix)])
+                    ct_id = int(self.data[f"{prefix}-polymorphic_ctype"])
                 except (KeyError, ValueError):
                     raise ValidationError(
-                        "Formset row {0} has no 'polymorphic_ctype' defined!".format(
+                        "Formset row {} has no 'polymorphic_ctype' defined!".format(
                             prefix
                         )
                     )
@@ -200,7 +200,7 @@ class BasePolymorphicModelFormSet(BaseModelFormSet):
                 if model not in self.child_forms:
                     # Perform basic validation, as we skip the ChoiceField here.
                     raise UnsupportedChildType(
-                        "Child model type {0} is not part of the formset".format(model)
+                        f"Child model type {model} is not part of the formset"
                     )
         else:
             if "instance" in defaults:
@@ -232,7 +232,7 @@ class BasePolymorphicModelFormSet(BaseModelFormSet):
         form.fields["polymorphic_ctype"] = forms.TypedChoiceField(
             choices=choices, initial=ct.pk, required=False, widget=forms.HiddenInput, coerce=int,
         )
-        super(BasePolymorphicModelFormSet, self).add_fields(form, index)
+        super().add_fields(form, index)
 
     def get_form_class(self, model):
         """
@@ -240,17 +240,17 @@ class BasePolymorphicModelFormSet(BaseModelFormSet):
         """
         if not self.child_forms:
             raise ImproperlyConfigured(
-                "No 'child_forms' defined in {0}".format(self.__class__.__name__)
+                f"No 'child_forms' defined in {self.__class__.__name__}"
             )
         if not issubclass(model, PolymorphicModel):
-            raise TypeError("Expect polymorphic model type, not {0}".format(model))
+            raise TypeError(f"Expect polymorphic model type, not {model}")
 
         try:
             return self.child_forms[model]
         except KeyError:
             # This may happen when the query returns objects of a type that was not handled by the formset.
             raise UnsupportedChildType(
-                "The '{0}' found a '{1}' model in the queryset, "
+                "The '{}' found a '{}' model in the queryset, "
                 "but no form class is registered to display it.".format(
                     self.__class__.__name__, model.__name__
                 )
@@ -378,7 +378,7 @@ class BasePolymorphicInlineFormSet(BaseInlineFormSet, BasePolymorphicModelFormSe
     """
 
     def _construct_form(self, i, **kwargs):
-        return super(BasePolymorphicInlineFormSet, self)._construct_form(i, **kwargs)
+        return super()._construct_form(i, **kwargs)
 
 
 def polymorphic_inlineformset_factory(

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # django-polymorphic documentation build configuration file, created by
 # sphinx-quickstart on Sun May 19 12:20:47 2013.
@@ -53,8 +52,8 @@ source_suffix = ".rst"
 master_doc = "index"
 
 # General information about the project.
-project = u"django-polymorphic"
-copyright = u"2013, Bert Constantin, Chris Glass, Diederik van der Boor"
+project = "django-polymorphic"
+copyright = "2013, Bert Constantin, Chris Glass, Diederik van der Boor"
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -198,8 +197,8 @@ latex_documents = [
     (
         "index",
         "django-polymorphic.tex",
-        u"django-polymorphic Documentation",
-        u"Bert Constantin, Chris Glass, Diederik van der Boor",
+        "django-polymorphic Documentation",
+        "Bert Constantin, Chris Glass, Diederik van der Boor",
         "manual",
     )
 ]
@@ -233,8 +232,8 @@ man_pages = [
     (
         "index",
         "django-polymorphic",
-        u"django-polymorphic Documentation",
-        [u"Bert Constantin, Chris Glass, Diederik van der Boor"],
+        "django-polymorphic Documentation",
+        ["Bert Constantin, Chris Glass, Diederik van der Boor"],
         1,
     )
 ]
@@ -252,8 +251,8 @@ texinfo_documents = [
     (
         "index",
         "django-polymorphic",
-        u"django-polymorphic Documentation",
-        u"Bert Constantin, Chris Glass, Diederik van der Boor",
+        "django-polymorphic Documentation",
+        "Bert Constantin, Chris Glass, Diederik van der Boor",
         "django-polymorphic",
         "One line description of project.",
         "Miscellaneous",

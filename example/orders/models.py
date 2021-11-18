@@ -35,7 +35,7 @@ class Payment(PolymorphicModel):
         verbose_name_plural = _("Payments")
 
     def __str__(self):
-        return "{0} {1}".format(self.currency, self.amount)
+        return f"{self.currency} {self.amount}"
 
 
 class CreditCardPayment(Payment):

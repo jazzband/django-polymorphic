@@ -57,7 +57,7 @@ class PolymorphicInlineModelAdmin(InlineModelAdmin):
     child_inlines = ()
 
     def __init__(self, parent_model, admin_site):
-        super(PolymorphicInlineModelAdmin, self).__init__(parent_model, admin_site)
+        super().__init__(parent_model, admin_site)
 
         # Extra check to avoid confusion
         # While we could monkeypatch the admin here, better stay explicit.
@@ -97,7 +97,7 @@ class PolymorphicInlineModelAdmin(InlineModelAdmin):
             return self._child_inlines_lookup[model]
         except KeyError:
             raise UnsupportedChildType(
-                "Model '{0}' not found in child_inlines".format(model.__name__)
+                f"Model '{model.__name__}' not found in child_inlines"
             )
 
     def get_formset(self, request, obj=None, **kwargs):
@@ -109,7 +109,7 @@ class PolymorphicInlineModelAdmin(InlineModelAdmin):
         :rtype: type
         """
         # Construct the FormSet class
-        FormSet = super(PolymorphicInlineModelAdmin, self).get_formset(
+        FormSet = super().get_formset(
             request, obj=obj, **kwargs
         )
 
@@ -152,7 +152,7 @@ class PolymorphicInlineModelAdmin(InlineModelAdmin):
         # The media of the inline focuses on the admin settings,
         # whether to expose the scripts for filter_horizontal etc..
         # The admin helper exposes the inline + formset media.
-        base_media = super(PolymorphicInlineModelAdmin, self).media
+        base_media = super().media
         all_media = Media()
         add_media(all_media, base_media)
 

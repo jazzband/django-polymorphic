@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Seamless Polymorphic Inheritance for Django Models
 """
@@ -88,7 +87,7 @@ class PolymorphicModel(with_metaclass(PolymorphicModelBase, models.Model)):
         """Calls :meth:`pre_save_polymorphic` and saves the model."""
         using = kwargs.get("using", self._state.db or DEFAULT_DB_ALIAS)
         self.pre_save_polymorphic(using=using)
-        return super(PolymorphicModel, self).save(*args, **kwargs)
+        return super().save(*args, **kwargs)
 
     save.alters_data = True
 
@@ -131,7 +130,7 @@ class PolymorphicModel(with_metaclass(PolymorphicModelBase, models.Model)):
             )
         ):
             raise PolymorphicTypeInvalid(
-                "ContentType {0} for {1} #{2} does not point to a subclass!".format(
+                "ContentType {} for {} #{} does not point to a subclass!".format(
                     self.polymorphic_ctype_id, model, self.pk
                 )
             )
@@ -195,7 +194,7 @@ class PolymorphicModel(with_metaclass(PolymorphicModelBase, models.Model)):
         But they should not. So we replace them with our own accessors that use
         our appropriate base_objects manager.
         """
-        super(PolymorphicModel, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         if self.__class__.polymorphic_super_sub_accessors_replaced:
             return

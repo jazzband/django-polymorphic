@@ -20,7 +20,7 @@ __all__ = (
 )
 
 
-class PolymorphicFormSetMixin(object):
+class PolymorphicFormSetMixin:
     """
     Internal Mixin, that provides polymorphic integration with the ``extra_views`` package.
     """
@@ -55,7 +55,7 @@ class PolymorphicFormSetMixin(object):
         # Since `polymorphic_modelformset_factory` and `polymorphic_inlineformset_factory` mainly
         # reuse the standard factories, and then add `child_forms`, the same can be done here.
         # This makes sure the base class construction is completely honored.
-        FormSet = super(PolymorphicFormSetMixin, self).get_formset()
+        FormSet = super().get_formset()
         FormSet.child_forms = polymorphic_child_forms_factory(
             self.get_formset_children(), **self.get_formset_child_kwargs()
         )

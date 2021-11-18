@@ -15,13 +15,11 @@ def include_empty_form(formset):
     """
     Make sure the "empty form" is included when displaying a formset (typically table with input rows)
     """
-    for form in formset:
-        yield form
+    yield from formset
 
     if hasattr(formset, "empty_forms"):
         # BasePolymorphicModelFormSet
-        for form in formset.empty_forms:
-            yield form
+        yield from formset.empty_forms
     else:
         # Standard Django formset
         yield formset.empty_form

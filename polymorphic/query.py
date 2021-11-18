@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 QuerySet for PolymorphicModel
 """
@@ -32,7 +31,7 @@ class PolymorphicModelIterable(ModelIterable):
     """
 
     def __iter__(self):
-        base_iter = super(PolymorphicModelIterable, self).__iter__()
+        base_iter = super().__iter__()
         if self.queryset.polymorphic_disabled:
             return base_iter
         return self._polymorphic_iterator(base_iter)
@@ -102,7 +101,7 @@ class PolymorphicQuerySet(QuerySet):
     """
 
     def __init__(self, *args, **kwargs):
-        super(PolymorphicQuerySet, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self._iterable_class = PolymorphicModelIterable
 
         self.polymorphic_disabled = False
@@ -111,11 +110,11 @@ class PolymorphicQuerySet(QuerySet):
         # .defer() and .only() in order to be able to retranslate them when
         # retrieving the real instance (so that the deferred fields apply
         # to that queryset as well).
-        self.polymorphic_deferred_loading = (set([]), True)
+        self.polymorphic_deferred_loading = (set(), True)
 
     def _clone(self, *args, **kwargs):
         # Django's _clone only copies its own variables, so we need to copy ours here
-        new = super(PolymorphicQuerySet, self)._clone(*args, **kwargs)
+        new = super()._clone(*args, **kwargs)
         new.polymorphic_disabled = self.polymorphic_disabled
         new.polymorphic_deferred_loading = (
             copy.copy(self.polymorphic_deferred_loading[0]),
@@ -137,7 +136,7 @@ class PolymorphicQuerySet(QuerySet):
         objs = list(objs)
         for obj in objs:
             obj.pre_save_polymorphic()
-        return super(PolymorphicQuerySet, self).bulk_create(objs, batch_size, ignore_conflicts=ignore_conflicts)
+        return super().bulk_create(objs, batch_size, ignore_conflicts=ignore_conflicts)
 
     def non_polymorphic(self):
         """switch off polymorphic behaviour for this query.
@@ -171,7 +170,7 @@ class PolymorphicQuerySet(QuerySet):
                 queryset_model=self.model, kwargs=kwargs, using=self.db
             )
             args = list(q_objects) + additional_args
-            return super(PolymorphicQuerySet, self)._filter_or_exclude(
+            return super()._filter_or_exclude(
                 negate=negate, args=args, kwargs=kwargs
             )
     else:
@@ -184,7 +183,7 @@ class PolymorphicQuerySet(QuerySet):
             additional_args = translate_polymorphic_filter_definitions_in_kwargs(
                 self.model, kwargs, using=self.db
             )
-            return super(PolymorphicQuerySet, self)._filter_or_exclude(
+            return super()._filter_or_exclude(
                 negate, *(list(q_objects) + additional_args), **kwargs
             )
 
@@ -196,7 +195,7 @@ class PolymorphicQuerySet(QuerySet):
             else a  # allow expressions to pass unchanged
             for a in field_names
         ]
-        return super(PolymorphicQuerySet, self).order_by(*field_names)
+        return super().order_by(*field_names)
 
     def defer(self, *fields):
         """
@@ -207,7 +206,7 @@ class PolymorphicQuerySet(QuerySet):
         them again, as the model will have changed).
         """
         new_fields = [translate_polymorphic_field_path(self.model, a) for a in fields]
-        clone = super(PolymorphicQuerySet, self).defer(*new_fields)
+        clone = super().defer(*new_fields)
         clone._polymorphic_add_deferred_loading(fields)
         return clone
 
@@ -220,7 +219,7 @@ class PolymorphicQuerySet(QuerySet):
         them again, as the model will have changed).
         """
         new_fields = [translate_polymorphic_field_path(self.model, a) for a in fields]
-        clone = super(PolymorphicQuerySet, self).only(*new_fields)
+        clone = super().only(*new_fields)
         clone._polymorphic_add_immediate_loading(fields)
         return clone
 
@@ -308,7 +307,7 @@ class PolymorphicQuerySet(QuerySet):
         """translate the polymorphic field paths in the kwargs, then call vanilla annotate.
         _get_real_instances will do the rest of the job after executing the query."""
         self._process_aggregate_args(args, kwargs)
-        return super(PolymorphicQuerySet, self).annotate(*args, **kwargs)
+        return super().annotate(*args, **kwargs)
 
     def aggregate(self, *args, **kwargs):
         """translate the polymorphic field paths in the kwargs, then call vanilla aggregate.
@@ -321,7 +320,7 @@ class PolymorphicQuerySet(QuerySet):
     # same class as 'qs', so our polymorphic modifications would apply.
     # We want to leave values queries untouched, so we set 'polymorphic_disabled'.
     def _values(self, *args, **kwargs):
-        clone = super(PolymorphicQuerySet, self)._values(*args, **kwargs)
+        clone = super()._values(*args, **kwargs)
         clone.polymorphic_disabled = True
         return clone
 
@@ -515,7 +514,7 @@ class PolymorphicQuerySet(QuerySet):
             result = [repr(o) for o in self.all()]
             return "[ " + ",\n  ".join(result) + " ]"
         else:
-            return super(PolymorphicQuerySet, self).__repr__(*args, **kwargs)
+            return super().__repr__(*args, **kwargs)
 
     class _p_list_class(list):
         def __repr__(self, *args, **kwargs):

@@ -43,13 +43,13 @@ class PolymorphicAdminTests(AdminTestCase):
         # -- add page
         ct_id = ContentType.objects.get_for_model(Model2D).pk
         self.admin_get_add(Model2A)  # shows type page
-        self.admin_get_add(Model2A, qs="?ct_id={}".format(ct_id))  # shows type page
+        self.admin_get_add(Model2A, qs=f"?ct_id={ct_id}")  # shows type page
 
         self.admin_get_add(Model2A)  # shows type page
         self.admin_post_add(
             Model2A,
             {"field1": "A", "field2": "B", "field3": "C", "field4": "D"},
-            qs="?ct_id={}".format(ct_id),
+            qs=f"?ct_id={ct_id}",
         )
 
         d_obj = Model2A.objects.all()[0]

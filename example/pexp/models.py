@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 from django.db import models
 
 from polymorphic.models import PolymorphicModel
@@ -41,7 +39,7 @@ class ProxyBase(PolymorphicModel):
     title = models.CharField(max_length=200)
 
     def __unicode__(self):
-        return u"<ProxyBase[type={0}]: {1}>".format(self.polymorphic_ctype, self.title)
+        return f"<ProxyBase[type={self.polymorphic_ctype}]: {self.title}>"
 
     class Meta:
         ordering = ("title",)
@@ -52,7 +50,7 @@ class ProxyA(ProxyBase):
         proxy = True
 
     def __unicode__(self):
-        return u"<ProxyA: {0}>".format(self.title)
+        return f"<ProxyA: {self.title}>"
 
 
 class ProxyB(ProxyBase):
@@ -60,7 +58,7 @@ class ProxyB(ProxyBase):
         proxy = True
 
     def __unicode__(self):
-        return u"<ProxyB: {0}>".format(self.title)
+        return f"<ProxyB: {self.title}>"
 
 
 # Internals for management command tests

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 This module is a scratchpad for general development, testing & debugging
 Well, even more so than pcmd.py. You best ignore p2cmd.py.

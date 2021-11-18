@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import re
 
 from django.db import models
@@ -6,7 +5,7 @@ from django.db import models
 RE_DEFERRED = re.compile("_Deferred_.*")
 
 
-class ShowFieldBase(object):
+class ShowFieldBase:
     """ base class for the ShowField... model mixins, does the work """
 
     # cause nicer multiline PolymorphicQuery output
@@ -124,7 +123,7 @@ class ShowFieldBase(object):
             fields = self.get_deferred_fields()
             if fields:
                 parts.append(
-                    (False, "deferred[{0}]".format(",".join(sorted(fields))), "")
+                    (False, "deferred[{}]".format(",".join(sorted(fields))), "")
                 )
 
         # format result

@@ -21,7 +21,7 @@ class GenericPolymorphicFormSetChild(PolymorphicFormSetChild):
     def __init__(self, *args, **kwargs):
         self.ct_field = kwargs.pop("ct_field", "content_type")
         self.fk_field = kwargs.pop("fk_field", "object_id")
-        super(GenericPolymorphicFormSetChild, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def get_form(self, ct_field="content_type", fk_field="object_id", **kwargs):
         """
@@ -50,7 +50,7 @@ class GenericPolymorphicFormSetChild(PolymorphicFormSetChild):
         exclude.extend([ct_field.name, fk_field.name])
         kwargs["exclude"] = exclude
 
-        return super(GenericPolymorphicFormSetChild, self).get_form(**kwargs)
+        return super().get_form(**kwargs)
 
 
 class BaseGenericPolymorphicInlineFormSet(

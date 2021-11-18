@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 The manager class for use in the models.
 """
@@ -22,7 +21,7 @@ class PolymorphicManager(models.Manager):
 
     @classmethod
     def from_queryset(cls, queryset_class, class_name=None):
-        manager = super(PolymorphicManager, cls).from_queryset(
+        manager = super().from_queryset(
             queryset_class, class_name=class_name
         )
         # also set our version, Django uses _queryset_class
@@ -36,7 +35,7 @@ class PolymorphicManager(models.Manager):
         return qs
 
     def __str__(self):
-        return "%s (PolymorphicManager) using %s" % (
+        return "{} (PolymorphicManager) using {}".format(
             self.__class__.__name__,
             self.queryset_class.__name__,
         )

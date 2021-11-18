@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Seamless Polymorphic Inheritance for Django Models
 

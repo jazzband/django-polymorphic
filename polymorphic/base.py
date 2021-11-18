@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 PolymorphicModel Meta Class
 """
@@ -62,7 +61,7 @@ class PolymorphicModelBase(ModelBase):
 
         # Workaround compatibility issue with six.with_metaclass() and custom Django model metaclasses:
         if not attrs and model_name == "NewBase":
-            return super(PolymorphicModelBase, self).__new__(
+            return super().__new__(
                 self, model_name, bases, attrs, **kwargs
             )
 
@@ -118,7 +117,7 @@ class PolymorphicModelBase(ModelBase):
 
         if do_app_label_workaround:
             meta.app_label = "poly_dummy_app_label"
-        new_class = super(PolymorphicModelBase, self).__new__(
+        new_class = super().__new__(
             self, model_name, bases, attrs, **kwargs
         )
         if do_app_label_workaround:
@@ -156,7 +155,7 @@ class PolymorphicModelBase(ModelBase):
             manager.queryset_class, PolymorphicQuerySet
         ):
             e = (
-                'PolymorphicModel: "{0}.{1}" has been instantiated with a queryset class '
+                'PolymorphicModel: "{}.{}" has been instantiated with a queryset class '
                 "which is not a subclass of PolymorphicQuerySet (which is required)".format(
                     model_name, manager_name
                 )
@@ -168,7 +167,7 @@ class PolymorphicModelBase(ModelBase):
     def base_objects(self):
         warnings.warn(
             "Using PolymorphicModel.base_objects is deprecated.\n"
-            "Use {0}.objects.non_polymorphic() instead.".format(
+            "Use {}.objects.non_polymorphic() instead.".format(
                 self.__class__.__name__
             ),
             DeprecationWarning,
@@ -205,10 +204,10 @@ class PolymorphicModelBase(ModelBase):
             if DUMPDATA_COMMAND in frm[1]:
                 return self._base_objects
 
-        manager = super(PolymorphicModelBase, self)._default_manager
+        manager = super()._default_manager
         if not isinstance(manager, PolymorphicManager):
             warnings.warn(
-                "{0}._default_manager is not a PolymorphicManager".format(
+                "{}._default_manager is not a PolymorphicManager".format(
                     self.__class__.__name__
                 ),
                 ManagerInheritanceWarning,

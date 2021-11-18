@@ -408,10 +408,10 @@ class PolymorphicTests(TransactionTestCase):
     def test_create_instanceof_q(self):
         q = query_translate.create_instanceof_q([Model2B])
         expected = sorted(
-            [
+            
                 ContentType.objects.get_for_model(m).pk
                 for m in [Model2B, Model2C, Model2D]
-            ]
+            
         )
         self.assertEqual(dict(q.children), dict(polymorphic_ctype__in=expected))
 
@@ -538,7 +538,7 @@ class PolymorphicTests(TransactionTestCase):
     def test_extra_method(self):
         a, b, c, d = self.create_model2abcd()
 
-        objects = Model2A.objects.extra(where=["id IN ({}, {})".format(b.id, c.id)])
+        objects = Model2A.objects.extra(where=[f"id IN ({b.id}, {c.id})"])
         self.assertQuerysetEqual(
             objects, [Model2B, Model2C], transform=lambda o: o.__class__, ordered=False
         )
