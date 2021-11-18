@@ -42,9 +42,7 @@ class GenericPolymorphicFormSetChild(PolymorphicFormSetChild):
             not isinstance(ct_field, models.ForeignKey)
             or ct_field.remote_field.model != ContentType
         ):
-            raise Exception(
-                "fk_name '%s' is not a ForeignKey to ContentType" % ct_field
-            )
+            raise Exception("fk_name '%s' is not a ForeignKey to ContentType" % ct_field)
 
         fk_field = opts.get_field(self.fk_field)  # let the exception propagate
         exclude.extend([ct_field.name, fk_field.name])
@@ -53,9 +51,7 @@ class GenericPolymorphicFormSetChild(PolymorphicFormSetChild):
         return super().get_form(**kwargs)
 
 
-class BaseGenericPolymorphicInlineFormSet(
-    BaseGenericInlineFormSet, BasePolymorphicModelFormSet
-):
+class BaseGenericPolymorphicInlineFormSet(BaseGenericInlineFormSet, BasePolymorphicModelFormSet):
     """
     Polymorphic formset variation for inline generic formsets
     """
@@ -130,7 +126,5 @@ def generic_polymorphic_inlineformset_factory(
         child_kwargs.update(child_form_kwargs)
 
     FormSet = generic_inlineformset_factory(**kwargs)
-    FormSet.child_forms = polymorphic_child_forms_factory(
-        formset_children, **child_kwargs
-    )
+    FormSet.child_forms = polymorphic_child_forms_factory(formset_children, **child_kwargs)
     return FormSet

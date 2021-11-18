@@ -8,7 +8,6 @@ from pprint import pprint
 
 from django.core.management import BaseCommand
 from django.db import connection
-
 from pexp.models import *
 
 num_objects = 1000

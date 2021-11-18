@@ -62,9 +62,7 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
     pk_regex = r"(\d+|__fk__)"
 
     def __init__(self, model, admin_site, *args, **kwargs):
-        super().__init__(
-            model, admin_site, *args, **kwargs
-        )
+        super().__init__(model, admin_site, *args, **kwargs)
         self._is_setup = False
 
         if self.base_model is None:
@@ -96,15 +94,11 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
         # After the get_urls() is called, the URLs of the child model can't be exposed anymore to the Django URLconf,
         # which also means that a "Save and continue editing" button won't work.
         if self._is_setup:
-            raise RegistrationClosed(
-                "The admin model can't be registered anymore at this point."
-            )
+            raise RegistrationClosed("The admin model can't be registered anymore at this point.")
 
         if not issubclass(model, self.base_model):
             raise TypeError(
-                "{} should be a subclass of {}".format(
-                    model.__name__, self.base_model.__name__
-                )
+                "{} should be a subclass of {}".format(model.__name__, self.base_model.__name__)
             )
         if not issubclass(model_admin, admin.ModelAdmin):
             raise TypeError(
@@ -134,7 +128,9 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
         """
         self._lazy_setup()
         choices = []
-        content_types = ContentType.objects.get_for_models(*self.get_child_models(), for_concrete_models=False)
+        content_types = ContentType.objects.get_for_models(
+            *self.get_child_models(), for_concrete_models=False
+        )
 
         for model, ct in content_types.items():
             perm_function_name = f"has_{action}_permission"
@@ -148,15 +144,11 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
     def _get_real_admin(self, object_id, super_if_self=True):
         try:
             obj = (
-                self.model.objects.non_polymorphic()
-                .values("polymorphic_ctype")
-                .get(pk=object_id)
+                self.model.objects.non_polymorphic().values("polymorphic_ctype").get(pk=object_id)
             )
         except self.model.DoesNotExist:
             raise Http404
-        return self._get_real_admin_by_ct(
-            obj["polymorphic_ctype"], super_if_self=super_if_self
-        )
+        return self._get_real_admin_by_ct(obj["polymorphic_ctype"], super_if_self=super_if_self)
 
     def _get_real_admin_by_ct(self, ct_id, super_if_self=True):
         try:
@@ -176,9 +168,7 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
         # Hence, make sure this is a derived object, or risk exposing other admin interfaces.
         if model_class not in self._child_models:
             raise PermissionDenied(
-                "Invalid model '{}', it must be registered as child model.".format(
-                    model_class
-                )
+                "Invalid model '{}', it must be registered as child model.".format(model_class)
             )
 
         try:
@@ -187,9 +177,7 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
             real_admin = self._child_admin_site._registry[model_class]
         except KeyError:
             raise ChildAdminNotRegistered(
-                "No child admin site was registered for a '{}' model.".format(
-                    model_class
-                )
+                "No child admin site was registered for a '{}' model.".format(model_class)
             )
 
         if super_if_self and real_admin is self:
@@ -236,9 +224,7 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
             return real_admin.changeform_view(request, object_id, *args, **kwargs)
         else:
             # Add view. As it should already be handled via `add_view`, this means something custom is done here!
-            return super().changeform_view(
-                request, object_id, *args, **kwargs
-            )
+            return super().changeform_view(request, object_id, *args, **kwargs)
 
     def history_view(self, request, object_id, extra_context=None):
         """Redirect the history view to the real admin."""
@@ -287,14 +273,12 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
                     object_id = int(path[0:pos])
             except ValueError:
                 raise Http404(
-                    "No ct_id parameter, unable to find admin subclass for path '{}'.".format(
-                        path
-                    )
+                    "No ct_id parameter, unable to find admin subclass for path '{}'.".format(path)
                 )
 
-            ct_id = self.model.objects.values_list(
-                "polymorphic_ctype_id", flat=True
-            ).get(pk=object_id)
+            ct_id = self.model.objects.values_list("polymorphic_ctype_id", flat=True).get(
+                pk=object_id
+            )
 
         real_admin = self._get_real_admin_by_ct(ct_id)
         resolver = URLResolver("^", real_admin.urls)
@@ -331,9 +315,7 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
         form.fields["ct_id"].choices = choices
 
         if form.is_valid():
-            return HttpResponseRedirect(
-                "?ct_id={}{}".format(form.cleaned_data["ct_id"], extra_qs)
-            )
+            return HttpResponseRedirect("?ct_id={}{}".format(form.cleaned_data["ct_id"], extra_qs))
 
         # Wrap in all admin layout
         fieldsets = ((None, {"fields": ("ct_id",)}),)
@@ -390,8 +372,7 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
             f"admin/{app_label}/{opts.object_name.lower()}/change_list.html",
             "admin/%s/change_list.html" % app_label,
             # Added base class:
-            "admin/%s/%s/change_list.html"
-            % (base_app_label, base_opts.object_name.lower()),
+            "admin/%s/%s/change_list.html" % (base_app_label, base_opts.object_name.lower()),
             "admin/%s/change_list.html" % base_app_label,
             "admin/change_list.html",
         ]

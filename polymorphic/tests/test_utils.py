@@ -9,11 +9,7 @@ from polymorphic.tests.models import (
     Model2C,
     Model2D,
 )
-from polymorphic.utils import (
-    get_base_polymorphic_model,
-    reset_polymorphic_ctype,
-    sort_by_subclass,
-)
+from polymorphic.utils import get_base_polymorphic_model, reset_polymorphic_ctype, sort_by_subclass
 
 
 class UtilsTests(TransactionTestCase):

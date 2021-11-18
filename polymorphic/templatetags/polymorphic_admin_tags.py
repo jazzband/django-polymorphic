@@ -19,9 +19,7 @@ class BreadcrumbScope(Node):
 
             return cls(base_opts=base_opts, nodelist=nodelist)
         else:
-            raise TemplateSyntaxError(
-                f"{token.contents[0]} tag expects 1 argument"
-            )
+            raise TemplateSyntaxError(f"{token.contents[0]} tag expects 1 argument")
 
     def render(self, context):
         # app_label is really hard to overwrite in the standard Django ModelAdmin.

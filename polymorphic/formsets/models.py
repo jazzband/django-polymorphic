@@ -180,9 +180,7 @@ class BasePolymorphicModelFormSet(BaseModelFormSet):
         if self.is_bound:
             if "instance" in defaults:
                 # Object is already bound to a model, won't change the content type
-                model = defaults[
-                    "instance"
-                ].get_real_instance_class()  # allow proxy models
+                model = defaults["instance"].get_real_instance_class()  # allow proxy models
             else:
                 # Extra or empty form, use the provided type.
                 # Note this completely tru
@@ -191,9 +189,7 @@ class BasePolymorphicModelFormSet(BaseModelFormSet):
                     ct_id = int(self.data[f"{prefix}-polymorphic_ctype"])
                 except (KeyError, ValueError):
                     raise ValidationError(
-                        "Formset row {} has no 'polymorphic_ctype' defined!".format(
-                            prefix
-                        )
+                        "Formset row {} has no 'polymorphic_ctype' defined!".format(prefix)
                     )
 
                 model = ContentType.objects.get_for_id(ct_id).model_class()
@@ -204,9 +200,7 @@ class BasePolymorphicModelFormSet(BaseModelFormSet):
                     )
         else:
             if "instance" in defaults:
-                model = defaults[
-                    "instance"
-                ].get_real_instance_class()  # allow proxy models
+                model = defaults["instance"].get_real_instance_class()  # allow proxy models
             elif "polymorphic_ctype" in defaults.get("initial", {}):
                 model = defaults["initial"]["polymorphic_ctype"].model_class()
             elif i < len(self.queryset_data):
@@ -225,12 +219,14 @@ class BasePolymorphicModelFormSet(BaseModelFormSet):
 
     def add_fields(self, form, index):
         """Add a hidden field for the content type."""
-        ct = ContentType.objects.get_for_model(
-            form._meta.model, for_concrete_model=False
-        )
+        ct = ContentType.objects.get_for_model(form._meta.model, for_concrete_model=False)
         choices = [(ct.pk, ct)]  # Single choice, existing forms can't change the value.
         form.fields["polymorphic_ctype"] = forms.TypedChoiceField(
-            choices=choices, initial=ct.pk, required=False, widget=forms.HiddenInput, coerce=int,
+            choices=choices,
+            initial=ct.pk,
+            required=False,
+            widget=forms.HiddenInput,
+            coerce=int,
         )
         super().add_fields(form, index)
 
@@ -239,9 +235,7 @@ class BasePolymorphicModelFormSet(BaseModelFormSet):
         Return the proper form class for the given model.
         """
         if not self.child_forms:
-            raise ImproperlyConfigured(
-                f"No 'child_forms' defined in {self.__class__.__name__}"
-            )
+            raise ImproperlyConfigured(f"No 'child_forms' defined in {self.__class__.__name__}")
         if not issubclass(model, PolymorphicModel):
             raise TypeError(f"Expect polymorphic model type, not {model}")
 
@@ -286,7 +280,7 @@ class BasePolymorphicModelFormSet(BaseModelFormSet):
                 prefix=self.add_prefix("__prefix__"),
                 empty_permitted=True,
                 use_required_attribute=False,
-                **kwargs
+                **kwargs,
             )
             self.add_fields(form, None)
             forms.append(form)
@@ -366,9 +360,7 @@ def polymorphic_modelformset_factory(
     if child_form_kwargs:
         child_kwargs.update(child_form_kwargs)
 
-    FormSet.child_forms = polymorphic_child_forms_factory(
-        formset_children, **child_kwargs
-    )
+    FormSet.child_forms = polymorphic_child_forms_factory(formset_children, **child_kwargs)
     return FormSet
 
 
@@ -451,7 +443,5 @@ def polymorphic_inlineformset_factory(
     if child_form_kwargs:
         child_kwargs.update(child_form_kwargs)
 
-    FormSet.child_forms = polymorphic_child_forms_factory(
-        formset_children, **child_kwargs
-    )
+    FormSet.child_forms = polymorphic_child_forms_factory(formset_children, **child_kwargs)
     return FormSet

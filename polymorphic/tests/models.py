@@ -9,11 +9,7 @@ from django.db.models.query import QuerySet
 from polymorphic.managers import PolymorphicManager
 from polymorphic.models import PolymorphicModel
 from polymorphic.query import PolymorphicQuerySet
-from polymorphic.showfields import (
-    ShowFieldContent,
-    ShowFieldType,
-    ShowFieldTypeAndContent,
-)
+from polymorphic.showfields import ShowFieldContent, ShowFieldType, ShowFieldTypeAndContent
 
 
 class PlainA(models.Model):
@@ -380,9 +376,7 @@ class ProxyModelB(ProxyModelBase):
 # with related field 'ContentType.relatednameclash_set'." (reported by Andrew Ingram)
 # fixed with related_name
 class RelatedNameClash(ShowFieldType, PolymorphicModel):
-    ctype = models.ForeignKey(
-        ContentType, on_delete=models.CASCADE, null=True, editable=False
-    )
+    ctype = models.ForeignKey(ContentType, on_delete=models.CASCADE, null=True, editable=False)
 
 
 # class with a parent_link to superclass, and a related_name back to subclass

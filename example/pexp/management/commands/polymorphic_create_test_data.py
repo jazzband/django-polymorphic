@@ -3,7 +3,6 @@ This module is a scratchpad for general development, testing & debugging
 """
 
 from django.core.management import BaseCommand
-
 from pexp.models import *
 
 
@@ -14,7 +13,5 @@ class Command(BaseCommand):
         Project.objects.all().delete()
         o = Project.objects.create(topic="John's gathering")
         o = ArtProject.objects.create(topic="Sculpting with Tim", artist="T. Turner")
-        o = ResearchProject.objects.create(
-            topic="Swallow Aerodynamics", supervisor="Dr. Winter"
-        )
+        o = ResearchProject.objects.create(topic="Swallow Aerodynamics", supervisor="Dr. Winter")
         print(Project.objects.all())

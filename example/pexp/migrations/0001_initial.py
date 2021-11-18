@@ -263,9 +263,7 @@ class Migration(migrations.Migration):
                 ("field3", models.CharField(max_length=10)),
                 (
                     "field4",
-                    models.ManyToManyField(
-                        related_name="related_c", to="pexp.TestModelB"
-                    ),
+                    models.ManyToManyField(related_name="related_c", to="pexp.TestModelB"),
                 ),
             ],
             options={"abstract": False},

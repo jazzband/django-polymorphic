@@ -6,7 +6,7 @@ from collections import deque
 
 from django.apps import apps
 from django.contrib.contenttypes.models import ContentType
-from django.core.exceptions import FieldError, FieldDoesNotExist
+from django.core.exceptions import FieldDoesNotExist, FieldError
 from django.db import models
 from django.db.models import Q
 from django.db.models.fields.related import ForeignObjectRel, RelatedField
@@ -57,11 +57,9 @@ def translate_polymorphic_filter_definitions_in_kwargs(
     return additional_args
 
 
-def translate_polymorphic_Q_object(
-    queryset_model, potential_q_object, using=DEFAULT_DB_ALIAS
-):
+def translate_polymorphic_Q_object(queryset_model, potential_q_object, using=DEFAULT_DB_ALIAS):
     def tree_node_correct_field_specs(my_model, node):
-        " process all children of this Q node "
+        "process all children of this Q node"
         for i in range(len(node.children)):
             child = node.children[i]
 
@@ -83,9 +81,7 @@ def translate_polymorphic_Q_object(
     return potential_q_object
 
 
-def translate_polymorphic_filter_definitions_in_args(
-    queryset_model, args, using=DEFAULT_DB_ALIAS
-):
+def translate_polymorphic_filter_definitions_in_args(queryset_model, args, using=DEFAULT_DB_ALIAS):
     """
     Translate the non-keyword argument list for PolymorphicQuerySet.filter()
 
@@ -97,8 +93,7 @@ def translate_polymorphic_filter_definitions_in_args(
     Returns: modified Q objects
     """
     return [
-        translate_polymorphic_Q_object(queryset_model, copy.deepcopy(q), using=using)
-        for q in args
+        translate_polymorphic_Q_object(queryset_model, copy.deepcopy(q), using=using) for q in args
     ]
 
 
@@ -300,9 +295,7 @@ def create_instanceof_q(modellist, not_instance_of=False, using=DEFAULT_DB_ALIAS
 def _get_mro_content_type_ids(models, using):
     contenttype_ids = set()
     for model in models:
-        ct = ContentType.objects.db_manager(using).get_for_model(
-            model, for_concrete_model=False
-        )
+        ct = ContentType.objects.db_manager(using).get_for_model(model, for_concrete_model=False)
         contenttype_ids.add(ct.pk)
         subclasses = model.__subclasses__()
         if subclasses:

@@ -47,9 +47,7 @@ class PolymorphicChildModelAdmin(admin.ModelAdmin):
     show_in_index = False
 
     def __init__(self, model, admin_site, *args, **kwargs):
-        super().__init__(
-            model, admin_site, *args, **kwargs
-        )
+        super().__init__(model, admin_site, *args, **kwargs)
 
         if self.base_model is None:
             self.base_model = get_base_polymorphic_model(model)
@@ -94,8 +92,7 @@ class PolymorphicChildModelAdmin(admin.ModelAdmin):
             f"admin/{app_label}/{opts.object_name.lower()}/change_form.html",
             "admin/%s/change_form.html" % app_label,
             # Added:
-            "admin/%s/%s/change_form.html"
-            % (base_app_label, base_opts.object_name.lower()),
+            "admin/%s/%s/change_form.html" % (base_app_label, base_opts.object_name.lower()),
             "admin/%s/change_form.html" % base_app_label,
             "admin/polymorphic/change_form.html",
             "admin/change_form.html",
@@ -111,8 +108,7 @@ class PolymorphicChildModelAdmin(admin.ModelAdmin):
         base_app_label = base_opts.app_label
 
         return [
-            "admin/%s/%s/delete_confirmation.html"
-            % (app_label, opts.object_name.lower()),
+            "admin/%s/%s/delete_confirmation.html" % (app_label, opts.object_name.lower()),
             "admin/%s/delete_confirmation.html" % app_label,
             # Added:
             "admin/%s/%s/delete_confirmation.html"
@@ -135,8 +131,7 @@ class PolymorphicChildModelAdmin(admin.ModelAdmin):
             f"admin/{app_label}/{opts.object_name.lower()}/object_history.html",
             "admin/%s/object_history.html" % app_label,
             # Added:
-            "admin/%s/%s/object_history.html"
-            % (base_app_label, base_opts.object_name.lower()),
+            "admin/%s/%s/object_history.html" % (base_app_label, base_opts.object_name.lower()),
             "admin/%s/object_history.html" % base_app_label,
             "admin/polymorphic/object_history.html",
             "admin/object_history.html",
@@ -176,9 +171,7 @@ class PolymorphicChildModelAdmin(admin.ModelAdmin):
     def response_post_save_change(self, request, obj):
         return self._get_parent_admin().response_post_save_change(request, obj)
 
-    def render_change_form(
-        self, request, context, add=False, change=False, form_url="", obj=None
-    ):
+    def render_change_form(self, request, context, add=False, change=False, form_url="", obj=None):
         context.update({"base_opts": self.base_model._meta})
         return super().render_change_form(
             request, context, add=add, change=change, form_url=form_url, obj=obj
@@ -186,18 +179,14 @@ class PolymorphicChildModelAdmin(admin.ModelAdmin):
 
     def delete_view(self, request, object_id, context=None):
         extra_context = {"base_opts": self.base_model._meta}
-        return super().delete_view(
-            request, object_id, extra_context
-        )
+        return super().delete_view(request, object_id, extra_context)
 
     def history_view(self, request, object_id, extra_context=None):
         # Make sure the history view can also display polymorphic breadcrumbs
         context = {"base_opts": self.base_model._meta}
         if extra_context:
             context.update(extra_context)
-        return super().history_view(
-            request, object_id, extra_context=context
-        )
+        return super().history_view(request, object_id, extra_context=context)
 
     # ---- Extra: improving the form/fieldset default display ----
 

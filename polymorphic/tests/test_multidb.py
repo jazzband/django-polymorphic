@@ -74,12 +74,8 @@ class MultipleDatabasesTests(TestCase):
 
     def test_forward_many_to_one_descriptor_on_non_default_database(self):
         def func():
-            blog = BlogA.objects.db_manager("secondary").create(
-                name="Blog", info="Info"
-            )
-            entry = BlogEntry.objects.db_manager("secondary").create(
-                blog=blog, text="Text"
-            )
+            blog = BlogA.objects.db_manager("secondary").create(name="Blog", info="Info")
+            entry = BlogEntry.objects.db_manager("secondary").create(blog=blog, text="Text")
             ContentType.objects.clear_cache()
             entry = BlogEntry.objects.db_manager("secondary").get(pk=entry.id)
             self.assertEqual(blog, entry.blog)
@@ -89,12 +85,8 @@ class MultipleDatabasesTests(TestCase):
 
     def test_reverse_many_to_one_descriptor_on_non_default_database(self):
         def func():
-            blog = BlogA.objects.db_manager("secondary").create(
-                name="Blog", info="Info"
-            )
-            entry = BlogEntry.objects.db_manager("secondary").create(
-                blog=blog, text="Text"
-            )
+            blog = BlogA.objects.db_manager("secondary").create(name="Blog", info="Info")
+            entry = BlogEntry.objects.db_manager("secondary").create(blog=blog, text="Text")
             ContentType.objects.clear_cache()
             blog = BlogA.objects.db_manager("secondary").get(pk=blog.id)
             self.assertEqual(entry, blog.blogentry_set.using("secondary").get())

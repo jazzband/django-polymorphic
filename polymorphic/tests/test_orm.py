@@ -180,9 +180,7 @@ class PolymorphicTests(TransactionTestCase):
         """
         UUIDProject.objects.create(topic="John's gathering")
         UUIDArtProject.objects.create(topic="Sculpting with Tim", artist="T. Turner")
-        UUIDResearchProject.objects.create(
-            topic="Swallow Aerodynamics", supervisor="Dr. Winter"
-        )
+        UUIDResearchProject.objects.create(topic="Swallow Aerodynamics", supervisor="Dr. Winter")
 
         qs = UUIDProject.objects.all()
         ol = list(qs)
@@ -257,8 +255,7 @@ class PolymorphicTests(TransactionTestCase):
         self.assertIn(
             "field1",
             objects_only[3].__dict__,
-            'qs.only("field1") was used, but field1 was incorrectly deferred'
-            " on a child model",
+            'qs.only("field1") was used, but field1 was incorrectly deferred' " on a child model",
         )
         self.assertNotIn(
             "field4", objects_only[3].__dict__, "field4 was not deferred (using only())"
@@ -408,10 +405,7 @@ class PolymorphicTests(TransactionTestCase):
     def test_create_instanceof_q(self):
         q = query_translate.create_instanceof_q([Model2B])
         expected = sorted(
-            
-                ContentType.objects.get_for_model(m).pk
-                for m in [Model2B, Model2C, Model2D]
-            
+            ContentType.objects.get_for_model(m).pk for m in [Model2B, Model2C, Model2D]
         )
         self.assertEqual(dict(q.children), dict(polymorphic_ctype__in=expected))
 
@@ -473,9 +467,7 @@ class PolymorphicTests(TransactionTestCase):
 
         # FIXME: We should not use base_objects here.
         a = Model2A.base_objects.get(field1="C1")
-        b = One2OneRelatingModelDerived.objects.create(
-            one2one=a, field1="f1", field2="f2"
-        )
+        b = One2OneRelatingModelDerived.objects.create(one2one=a, field1="f1", field2="f2")
 
         # FIXME: this result is basically wrong, probably due to Django cacheing (we used base_objects), but should not be a problem
         self.assertEqual(b.one2one.__class__, Model2A)
@@ -548,9 +540,7 @@ class PolymorphicTests(TransactionTestCase):
             where=["field1 = 'A1' OR field1 = 'B1'"],
             order_by=["-id"],
         )
-        self.assertQuerysetEqual(
-            objects, [Model2B, Model2A], transform=lambda o: o.__class__
-        )
+        self.assertQuerysetEqual(objects, [Model2B, Model2A], transform=lambda o: o.__class__)
 
         ModelExtraA.objects.create(field1="A1")
         ModelExtraB.objects.create(field1="B1", field2="B2")
@@ -612,9 +602,7 @@ class PolymorphicTests(TransactionTestCase):
     def test_polymorphic___filter(self):
         self.create_model2abcd()
 
-        objects = Model2A.objects.filter(
-            Q(Model2B___field2="B2") | Q(Model2C___field3="C3")
-        )
+        objects = Model2A.objects.filter(Q(Model2B___field2="B2") | Q(Model2C___field3="C3"))
         self.assertQuerysetEqual(
             objects, [Model2B, Model2C], transform=lambda o: o.__class__, ordered=False
         )
@@ -685,12 +673,8 @@ class PolymorphicTests(TransactionTestCase):
 
         qs = Base.objects.instance_of(ModelX) | Base.objects.instance_of(ModelY)
         qs = qs.order_by("field_b")
-        self.assertEqual(
-            repr(qs[0]), "<ModelX: id 1, field_b (CharField), field_x (CharField)>"
-        )
-        self.assertEqual(
-            repr(qs[1]), "<ModelY: id 2, field_b (CharField), field_y (CharField)>"
-        )
+        self.assertEqual(repr(qs[0]), "<ModelX: id 1, field_b (CharField), field_x (CharField)>")
+        self.assertEqual(repr(qs[1]), "<ModelY: id 2, field_b (CharField), field_y (CharField)>")
         self.assertEqual(len(qs), 2)
 
     def test_multiple_inheritance(self):
@@ -715,9 +699,7 @@ class PolymorphicTests(TransactionTestCase):
         obase = RelationBase.objects.create(field_base="base")
         oa = RelationA.objects.create(field_base="A1", field_a="A2", fk=obase)
         ob = RelationB.objects.create(field_base="B1", field_b="B2", fk=oa)
-        oc = RelationBC.objects.create(
-            field_base="C1", field_b="C2", field_c="C3", fk=oa
-        )
+        oc = RelationBC.objects.create(field_base="C1", field_b="C2", field_c="C3", fk=oa)
         oa.m2m.add(oa)
         oa.m2m.add(ob)
 
@@ -809,9 +791,7 @@ class PolymorphicTests(TransactionTestCase):
 
         self.assertIs(type(ModelWithMyManagerNoDefault.my_objects), MyManager)
         self.assertIs(type(ModelWithMyManagerNoDefault.objects), PolymorphicManager)
-        self.assertIs(
-            type(ModelWithMyManagerNoDefault._default_manager), PolymorphicManager
-        )
+        self.assertIs(type(ModelWithMyManagerNoDefault._default_manager), PolymorphicManager)
 
     def test_user_objects_manager_as_secondary(self):
         self.create_model2abcd()
@@ -852,19 +832,13 @@ class PolymorphicTests(TransactionTestCase):
         # This is just a consistency check for now, testing standard Django behavior.
         parent = PlainParentModelWithManager.objects.create()
         child = PlainChildModelWithManager.objects.create(fk=parent)
-        self.assertIs(
-            type(PlainParentModelWithManager._default_manager), models.Manager
-        )
+        self.assertIs(type(PlainParentModelWithManager._default_manager), models.Manager)
         self.assertIs(type(PlainChildModelWithManager._default_manager), PlainMyManager)
         self.assertIs(type(PlainChildModelWithManager.objects), PlainMyManager)
-        self.assertIs(
-            type(PlainChildModelWithManager.objects.all()), PlainMyManagerQuerySet
-        )
+        self.assertIs(type(PlainChildModelWithManager.objects.all()), PlainMyManagerQuerySet)
 
         # A related set is created using the model's _default_manager, so does gain extra methods.
-        self.assertIs(
-            type(parent.childmodel_set.my_queryset_foo()), PlainMyManagerQuerySet
-        )
+        self.assertIs(type(parent.childmodel_set.my_queryset_foo()), PlainMyManagerQuerySet)
 
         # For polymorphic models, the same should happen.
         parent = ParentModelWithManager.objects.create()
@@ -872,9 +846,7 @@ class PolymorphicTests(TransactionTestCase):
         self.assertIs(type(ParentModelWithManager._default_manager), PolymorphicManager)
         self.assertIs(type(ChildModelWithManager._default_manager), MyManager)
         self.assertIs(type(ChildModelWithManager.objects), MyManager)
-        self.assertIs(
-            type(ChildModelWithManager.objects.my_queryset_foo()), MyManagerQuerySet
-        )
+        self.assertIs(type(ChildModelWithManager.objects.my_queryset_foo()), MyManagerQuerySet)
 
         # A related set is created using the model's _default_manager, so does gain extra methods.
         self.assertIs(type(parent.childmodel_set.my_queryset_foo()), MyManagerQuerySet)
@@ -949,8 +921,7 @@ class PolymorphicTests(TransactionTestCase):
         object2 = ProxyModelBase.objects.get(name="object2")
         self.assertEqual(
             repr(object1),
-            '<ProxyModelA: id %i, name (CharField) "object1", field1 (CharField) "">'
-            % object1_pk,
+            '<ProxyModelA: id %i, name (CharField) "object1", field1 (CharField) "">' % object1_pk,
         )
         self.assertEqual(
             repr(object2),
@@ -964,8 +935,7 @@ class PolymorphicTests(TransactionTestCase):
         objects = list(ProxyModelBase.objects.all().order_by("name"))
         self.assertEqual(
             repr(objects[0]),
-            '<ProxyModelA: id %i, name (CharField) "object1", field1 (CharField) "">'
-            % object1_pk,
+            '<ProxyModelA: id %i, name (CharField) "object1", field1 (CharField) "">' % object1_pk,
         )
         self.assertEqual(
             repr(objects[1]),
@@ -989,9 +959,7 @@ class PolymorphicTests(TransactionTestCase):
     def test_fix_getattribute(self):
         # fixed issue in PolymorphicModel.__getattribute__: field name same as model name
         o = ModelFieldNameTest.objects.create(modelfieldnametest="1")
-        self.assertEqual(
-            repr(o), "<ModelFieldNameTest: id 1, modelfieldnametest (CharField)>"
-        )
+        self.assertEqual(repr(o), "<ModelFieldNameTest: id 1, modelfieldnametest (CharField)>")
 
         # if subclass defined __init__ and accessed class members,
         # __getattribute__ had a problem: "...has no attribute 'sub_and_superclass_dict'"
@@ -1008,9 +976,7 @@ class PolymorphicTests(TransactionTestCase):
         self.assertEqual(p, t)
 
         # check that the accessors to parent and sublass work correctly and return the right object
-        p = ModelShow1_plain.objects.non_polymorphic().get(
-            field1="TestParentLinkAndRelatedName"
-        )
+        p = ModelShow1_plain.objects.non_polymorphic().get(field1="TestParentLinkAndRelatedName")
         # p should be Plain1 and t TestParentLinkAndRelatedName, so not equal
         self.assertNotEqual(p, t)
         self.assertEqual(p, t.superclass)
@@ -1020,7 +986,7 @@ class PolymorphicTests(TransactionTestCase):
         t.delete()
 
     def test_polymorphic__aggregate(self):
-        """ test ModelX___field syntax on aggregate (should work for annotate either) """
+        """test ModelX___field syntax on aggregate (should work for annotate either)"""
 
         Model2A.objects.create(field1="A1")
         Model2B.objects.create(field1="A1", field2="B2")
@@ -1038,7 +1004,7 @@ class PolymorphicTests(TransactionTestCase):
         )
 
     def test_polymorphic__complex_aggregate(self):
-        """ test (complex expression on) aggregate (should work for annotate either) """
+        """test (complex expression on) aggregate (should work for annotate either)"""
 
         Model2A.objects.create(field1="A1")
         Model2B.objects.create(field1="A1", field2="B2")
@@ -1066,7 +1032,7 @@ class PolymorphicTests(TransactionTestCase):
             Model2A.objects.aggregate(ComplexAgg("Model2B___field2"))
 
     def test_polymorphic__filtered_relation(self):
-        """ test annotation using FilteredRelation """
+        """test annotation using FilteredRelation"""
 
         blog = BlogA.objects.create(name="Ba1", info="i1 joined")
         blog.blogentry_set.create(text="bla1 joined")
@@ -1079,12 +1045,16 @@ class PolymorphicTests(TransactionTestCase):
         BlogB.objects.create(name="Bb3")
 
         result = BlogA.objects.annotate(
-            text_joined=FilteredRelation("blogentry", condition=Q(blogentry__text__contains="joined")),
+            text_joined=FilteredRelation(
+                "blogentry", condition=Q(blogentry__text__contains="joined")
+            ),
         ).aggregate(Count("text_joined"))
         self.assertEqual(result, {"text_joined__count": 3})
 
         result = BlogA.objects.annotate(
-            text_joined=FilteredRelation("blogentry", condition=Q(blogentry__text__contains="joined")),
+            text_joined=FilteredRelation(
+                "blogentry", condition=Q(blogentry__text__contains="joined")
+            ),
         ).aggregate(count=Count("text_joined"))
         self.assertEqual(result, {"count": 3})
 
@@ -1189,18 +1159,24 @@ class PolymorphicTests(TransactionTestCase):
             )
 
     def test_bulk_create_ignore_conflicts(self):
-        ArtProject.objects.bulk_create([
-            ArtProject(topic="Painting with Tim", artist="T. Turner"),
-            ArtProject.objects.create(topic="Sculpture with Tim", artist="T. Turner")
-        ], ignore_conflicts=True)
+        ArtProject.objects.bulk_create(
+            [
+                ArtProject(topic="Painting with Tim", artist="T. Turner"),
+                ArtProject.objects.create(topic="Sculpture with Tim", artist="T. Turner"),
+            ],
+            ignore_conflicts=True,
+        )
         self.assertEqual(ArtProject.objects.count(), 2)
 
     def test_bulk_create_no_ignore_conflicts(self):
         with self.assertRaises(IntegrityError):
-            ArtProject.objects.bulk_create([
-                ArtProject(topic="Painting with Tim", artist="T. Turner"),
-                ArtProject.objects.create(topic="Sculpture with Tim", artist="T. Turner")
-            ], ignore_conflicts=False)
+            ArtProject.objects.bulk_create(
+                [
+                    ArtProject(topic="Painting with Tim", artist="T. Turner"),
+                    ArtProject.objects.create(topic="Sculpture with Tim", artist="T. Turner"),
+                ],
+                ignore_conflicts=False,
+            )
         self.assertEqual(ArtProject.objects.count(), 1)
 
     def test_can_query_using_subclass_selector_on_abstract_model(self):

@@ -160,6 +160,7 @@ class PolymorphicQuerySet(QuerySet):
 
     # Makes _filter_or_exclude compatible with the change in signature introduced in django at 9c9a3fe
     if get_django_version() >= "3.2":
+
         def _filter_or_exclude(self, negate, args, kwargs):
             # We override this internal Django function as it is used for all filter member functions.
             q_objects = translate_polymorphic_filter_definitions_in_args(
@@ -170,10 +171,10 @@ class PolymorphicQuerySet(QuerySet):
                 queryset_model=self.model, kwargs=kwargs, using=self.db
             )
             args = list(q_objects) + additional_args
-            return super()._filter_or_exclude(
-                negate=negate, args=args, kwargs=kwargs
-            )
+            return super()._filter_or_exclude(negate=negate, args=args, kwargs=kwargs)
+
     else:
+
         def _filter_or_exclude(self, negate, *args, **kwargs):
             # We override this internal Django function as it is used for all filter member functions.
             q_objects = translate_polymorphic_filter_definitions_in_args(
@@ -275,12 +276,12 @@ class PolymorphicQuerySet(QuerySet):
                 a.name = translate_polymorphic_field_path(self.model, a.name)
 
         def test___lookup(a):
-            """ *args might be complex expressions too in django 1.8 so
-            the testing for a '___' is rather complex on this one """
+            """*args might be complex expressions too in django 1.8 so
+            the testing for a '___' is rather complex on this one"""
             if isinstance(a, Q):
 
                 def tree_node_test___lookup(my_model, node):
-                    " process all children of this Q node "
+                    "process all children of this Q node"
                     for i in range(len(node.children)):
                         child = node.children[i]
 
@@ -391,9 +392,7 @@ class PolymorphicQuerySet(QuerySet):
                 resultlist.append(base_object)
             else:
                 real_concrete_class = base_object.get_real_instance_class()
-                real_concrete_class_id = (
-                    base_object.get_real_concrete_instance_class_id()
-                )
+                real_concrete_class_id = base_object.get_real_concrete_instance_class_id()
 
                 if real_concrete_class_id is None:
                     # Dealing with a stale content type
@@ -407,12 +406,8 @@ class PolymorphicQuerySet(QuerySet):
                     real_concrete_class = content_type_manager.get_for_id(
                         real_concrete_class_id
                     ).model_class()
-                    idlist_per_model[real_concrete_class].append(
-                        getattr(base_object, pk_name)
-                    )
-                    indexlist_per_model[real_concrete_class].append(
-                        (i, len(resultlist))
-                    )
+                    idlist_per_model[real_concrete_class].append(getattr(base_object, pk_name))
+                    indexlist_per_model[real_concrete_class].append((i, len(resultlist)))
                     resultlist.append(None)
 
         # For each model in "idlist_per_model" request its objects (the real model)
@@ -460,8 +455,7 @@ class PolymorphicQuerySet(QuerySet):
             )
 
             real_objects_dict = {
-                getattr(real_object, pk_name): real_object
-                for real_object in real_objects
+                getattr(real_object, pk_name): real_object for real_object in real_objects
             }
 
             for i, j in indices:

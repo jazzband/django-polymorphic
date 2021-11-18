@@ -42,8 +42,7 @@ def as_script_options(formset):
         "prefix": formset.prefix,
         "pkFieldName": formset.model._meta.pk.name,
         "addText": getattr(formset, "add_text", None)
-        or gettext("Add another %(verbose_name)s")
-        % {"verbose_name": capfirst(verbose_name)},
+        or gettext("Add another %(verbose_name)s") % {"verbose_name": capfirst(verbose_name)},
         "showAddButton": getattr(formset, "show_add_button", True),
         "deleteText": gettext("Delete"),
     }

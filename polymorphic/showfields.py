@@ -6,7 +6,7 @@ RE_DEFERRED = re.compile("_Deferred_.*")
 
 
 class ShowFieldBase:
-    """ base class for the ShowField... model mixins, does the work """
+    """base class for the ShowField... model mixins, does the work"""
 
     # cause nicer multiline PolymorphicQuery output
     polymorphic_query_multiline_output = True
@@ -52,10 +52,7 @@ class ShowFieldBase:
         "helper for __unicode__"
         done_fields = set()
         for field in self._meta.fields + self._meta.many_to_many:
-            if (
-                field.name in self.polymorphic_internal_model_fields
-                or "_ptr" in field.name
-            ):
+            if field.name in self.polymorphic_internal_model_fields or "_ptr" in field.name:
                 continue
             if field.name in done_fields:
                 continue  # work around django diamond inheritance problem
@@ -64,11 +61,7 @@ class ShowFieldBase:
             out = field.name
 
             # if this is the standard primary key named "id", print it as we did with older versions of django_polymorphic
-            if (
-                field.primary_key
-                and field.name == "id"
-                and type(field) == models.AutoField
-            ):
+            if field.primary_key and field.name == "id" and type(field) == models.AutoField:
                 out += " " + str(getattr(self, field.name))
 
             # otherwise, display it just like all other fields (with correct type, shortened content etc.)
@@ -109,9 +102,7 @@ class ShowFieldBase:
 
         # add annotate fields
         if hasattr(self, "polymorphic_annotate_names"):
-            self._showfields_add_dynamic_fields(
-                self.polymorphic_annotate_names, "Ann", parts
-            )
+            self._showfields_add_dynamic_fields(self.polymorphic_annotate_names, "Ann", parts)
 
         # add extra() select fields
         if hasattr(self, "polymorphic_extra_select_names"):
@@ -122,9 +113,7 @@ class ShowFieldBase:
         if self.polymorphic_showfield_deferred:
             fields = self.get_deferred_fields()
             if fields:
-                parts.append(
-                    (False, "deferred[{}]".format(",".join(sorted(fields))), "")
-                )
+                parts.append((False, "deferred[{}]".format(",".join(sorted(fields))), ""))
 
         # format result
 
@@ -167,19 +156,19 @@ class ShowFieldBase:
 
 
 class ShowFieldType(ShowFieldBase):
-    """ model mixin that shows the object's class and it's field types """
+    """model mixin that shows the object's class and it's field types"""
 
     polymorphic_showfield_type = True
 
 
 class ShowFieldContent(ShowFieldBase):
-    """ model mixin that shows the object's class, it's fields and field contents """
+    """model mixin that shows the object's class, it's fields and field contents"""
 
     polymorphic_showfield_content = True
 
 
 class ShowFieldTypeAndContent(ShowFieldBase):
-    """ model mixin, like ShowFieldContent, but also show field types """
+    """model mixin, like ShowFieldContent, but also show field types"""
 
     polymorphic_showfield_type = True
     polymorphic_showfield_content = True

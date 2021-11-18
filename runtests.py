@@ -12,9 +12,7 @@ from django.core.management import execute_from_command_line
 warnings.simplefilter("always", DeprecationWarning)
 
 # Give feedback on used versions
-sys.stderr.write(
-    f"Using Python version {sys.version[:5]} from {sys.executable}\n"
-)
+sys.stderr.write(f"Using Python version {sys.version[:5]} from {sys.executable}\n")
 sys.stderr.write(
     "Using Django version {} from {}\n".format(
         django.get_version(), dirname(abspath(django.__file__))
@@ -25,9 +23,7 @@ if not settings.configured:
     settings.configure(
         DEBUG=False,
         DATABASES={
-            "default": dj_database_url.config(
-                env="PRIMARY_DATABASE", default="sqlite://:memory:"
-            ),
+            "default": dj_database_url.config(env="PRIMARY_DATABASE", default="sqlite://:memory:"),
             "secondary": dj_database_url.config(
                 env="SECONDARY_DATABASE", default="sqlite://:memory:"
             ),
@@ -75,7 +71,7 @@ if not settings.configured:
         ],
         POLYMORPHIC_TEST_SWAPPABLE="polymorphic.swappedmodel",
         ROOT_URLCONF=None,
-        SECRET_KEY="supersecret"
+        SECRET_KEY="supersecret",
     )
 
 
@@ -85,8 +81,7 @@ DEFAULT_TEST_APPS = ["polymorphic"]
 def runtests():
     other_args = list(filter(lambda arg: arg.startswith("-"), sys.argv[1:]))
     test_apps = (
-        list(filter(lambda arg: not arg.startswith("-"), sys.argv[1:]))
-        or DEFAULT_TEST_APPS
+        list(filter(lambda arg: not arg.startswith("-"), sys.argv[1:])) or DEFAULT_TEST_APPS
     )
     argv = sys.argv[:1] + ["test", "--traceback"] + other_args + test_apps
     execute_from_command_line(argv)

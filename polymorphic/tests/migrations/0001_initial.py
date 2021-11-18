@@ -726,9 +726,7 @@ class Migration(migrations.Migration):
             fields=[
                 (
                     "uuid_primary_key",
-                    models.UUIDField(
-                        default=uuid.uuid1, primary_key=True, serialize=False
-                    ),
+                    models.UUIDField(default=uuid.uuid1, primary_key=True, serialize=False),
                 ),
                 ("field1", models.CharField(max_length=10)),
             ],
@@ -738,9 +736,7 @@ class Migration(migrations.Migration):
             fields=[
                 (
                     "uuid_primary_key",
-                    models.UUIDField(
-                        default=uuid.uuid1, primary_key=True, serialize=False
-                    ),
+                    models.UUIDField(default=uuid.uuid1, primary_key=True, serialize=False),
                 ),
                 ("topic", models.CharField(max_length=30)),
             ],
@@ -1721,9 +1717,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="blogentry",
             name="blog",
-            field=models.ForeignKey(
-                on_delete=django.db.models.deletion.CASCADE, to="tests.BlogA"
-            ),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to="tests.BlogA"),
         ),
         migrations.CreateModel(
             name="Model2D",
@@ -2061,12 +2055,13 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "test",
-                    models.CharField(
-                        max_length=255, default="test_non_polymorphic_parent"
-                    ),
+                    models.CharField(max_length=255, default="test_non_polymorphic_parent"),
                 ),
             ],
-            options={"abstract": False, "base_manager_name": "objects",},
+            options={
+                "abstract": False,
+                "base_manager_name": "objects",
+            },
             bases=("auth.group", models.Model),
         ),
     ]

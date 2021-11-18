@@ -3,10 +3,7 @@ Seamless Polymorphic Inheritance for Django Models
 """
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
-from django.db.models.fields.related import (
-    ForwardManyToOneDescriptor,
-    ReverseOneToOneDescriptor,
-)
+from django.db.models.fields.related import ForwardManyToOneDescriptor, ReverseOneToOneDescriptor
 from django.db.utils import DEFAULT_DB_ALIAS
 
 from polymorphic.compat import with_metaclass
@@ -77,9 +74,9 @@ class PolymorphicModel(with_metaclass(PolymorphicModelBase, models.Model)):
         # field to figure out the real class of this object
         # (used by PolymorphicQuerySet._get_real_instances)
         if not self.polymorphic_ctype_id:
-            self.polymorphic_ctype = ContentType.objects.db_manager(
-                using
-            ).get_for_model(self, for_concrete_model=False)
+            self.polymorphic_ctype = ContentType.objects.db_manager(using).get_for_model(
+                self, for_concrete_model=False
+            )
 
     pre_save_polymorphic.alters_data = True
 
@@ -208,9 +205,7 @@ class PolymorphicModel(with_metaclass(PolymorphicModelBase, models.Model)):
 
             return accessor_function
 
-        subclasses_and_superclasses_accessors = (
-            self._get_inheritance_relation_fields_and_models()
-        )
+        subclasses_and_superclasses_accessors = self._get_inheritance_relation_fields_and_models()
 
         for name, model in subclasses_and_superclasses_accessors.items():
             # Here be dragons.
@@ -266,9 +261,7 @@ class PolymorphicModel(with_metaclass(PolymorphicModelBase, models.Model)):
                             to_subclass_fieldname = sub_cls.__name__.lower()
                         else:
                             # otherwise use the given related name
-                            to_subclass_fieldname = (
-                                super_to_sub_related_field.related_name
-                            )
+                            to_subclass_fieldname = super_to_sub_related_field.related_name
 
                         add_model_if_regular(sub_cls, to_subclass_fieldname, result)
 

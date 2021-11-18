@@ -41,9 +41,7 @@ class PolymorphicInlineAdminFormSet(InlineAdminFormSet):
         """
         Output all forms using the proper subtype settings.
         """
-        for form, original in zip(
-            self.formset.initial_forms, self.formset.get_queryset()
-        ):
+        for form, original in zip(self.formset.initial_forms, self.formset.get_queryset()):
             # Output the form
             model = original.get_real_instance_class()
             child_inline = self.opts.get_child_inline_instance(model)
@@ -124,15 +122,15 @@ class PolymorphicInlineSupportMixin:
     :class:`~django.contrib.admin.helpers.InlineAdminFormSet` for the polymorphic formsets.
     """
 
-    def get_inline_formsets(
-        self, request, formsets, inline_instances, obj=None, *args, **kwargs
-    ):
+    def get_inline_formsets(self, request, formsets, inline_instances, obj=None, *args, **kwargs):
         """
         Overwritten version to produce the proper admin wrapping for the
         polymorphic inline formset. This fixes the media and form appearance
         of the inline polymorphic models.
         """
-        inline_admin_formsets = super().get_inline_formsets(request, formsets, inline_instances, obj=obj)
+        inline_admin_formsets = super().get_inline_formsets(
+            request, formsets, inline_instances, obj=obj
+        )
 
         for admin_formset in inline_admin_formsets:
             if isinstance(admin_formset.formset, BasePolymorphicModelFormSet):

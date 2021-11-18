@@ -83,9 +83,7 @@ class PolymorphicFormSetView(PolymorphicFormSetMixin, extra_views.ModelFormSetVi
     formset_class = BasePolymorphicModelFormSet
 
 
-class PolymorphicInlineFormSetView(
-    PolymorphicFormSetMixin, extra_views.InlineFormSetView
-):
+class PolymorphicInlineFormSetView(PolymorphicFormSetMixin, extra_views.InlineFormSetView):
     """
     A view that displays a single polymorphic formset - with one parent object.
     This is a variation of the :mod:`extra_views` package classes for django-polymorphic.
@@ -107,9 +105,7 @@ class PolymorphicInlineFormSetView(
     formset_class = BasePolymorphicInlineFormSet
 
 
-class PolymorphicInlineFormSet(
-    PolymorphicFormSetMixin, extra_views.InlineFormSetFactory
-):
+class PolymorphicInlineFormSet(PolymorphicFormSetMixin, extra_views.InlineFormSetFactory):
     """
     An inline to add to the ``inlines`` of
     the :class:`~extra_views.advanced.CreateWithInlinesView`

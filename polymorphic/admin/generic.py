@@ -11,9 +11,7 @@ from polymorphic.formsets import (
 from .inlines import PolymorphicInlineModelAdmin
 
 
-class GenericPolymorphicInlineModelAdmin(
-    PolymorphicInlineModelAdmin, GenericInlineModelAdmin
-):
+class GenericPolymorphicInlineModelAdmin(PolymorphicInlineModelAdmin, GenericInlineModelAdmin):
     """
     Base class for variation of inlines based on generic foreign keys.
     """
@@ -51,18 +49,16 @@ class GenericPolymorphicInlineModelAdmin(
             Expose the ContentType that the child relates to.
             This can be used for the ``polymorphic_ctype`` field.
             """
-            return ContentType.objects.get_for_model(
-                self.model, for_concrete_model=False
-            )
+            return ContentType.objects.get_for_model(self.model, for_concrete_model=False)
 
         def get_formset_child(self, request, obj=None, **kwargs):
             # Similar to GenericInlineModelAdmin.get_formset(),
             # make sure the GFK is automatically excluded from the form
             defaults = {"ct_field": self.ct_field, "fk_field": self.ct_fk_field}
             defaults.update(kwargs)
-            return super(
-                GenericPolymorphicInlineModelAdmin.Child, self
-            ).get_formset_child(request, obj=obj, **defaults)
+            return super(GenericPolymorphicInlineModelAdmin.Child, self).get_formset_child(
+                request, obj=obj, **defaults
+            )
 
 
 class GenericStackedPolymorphicInline(GenericPolymorphicInlineModelAdmin):

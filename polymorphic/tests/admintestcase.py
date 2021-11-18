@@ -1,12 +1,11 @@
 from django.conf import settings
-from django.urls import include, path
 from django.contrib.admin import AdminSite
 from django.contrib.admin.templatetags.admin_urls import admin_urlname
 from django.contrib.auth.models import User
 from django.contrib.messages.middleware import MessageMiddleware
 from django.http.response import HttpResponse
 from django.test import RequestFactory, TestCase
-from django.urls import clear_url_caches, reverse, set_urlconf
+from django.urls import clear_url_caches, include, path, reverse, set_urlconf
 
 
 class AdminTestCase(TestCase):
@@ -54,7 +53,7 @@ class AdminTestCase(TestCase):
 
         # Make sure the URLs are reachable by reverse()
         clear_url_caches()
-        set_urlconf(tuple([path('tmp-admin/', self.admin_site.urls)]))
+        set_urlconf(tuple([path("tmp-admin/", self.admin_site.urls)]))
 
     def get_admin_instance(self, model):
         try:
@@ -103,9 +102,7 @@ class AdminTestCase(TestCase):
         Make a direct "add" call to the admin page, circumvening login checks.
         """
         admin_instance = self.get_admin_instance(model)
-        request = self.create_admin_request(
-            "post", self.get_add_url(model) + qs, data=formdata
-        )
+        request = self.create_admin_request("post", self.get_add_url(model) + qs, data=formdata)
         response = admin_instance.add_view(request)
         self.assertFormSuccess(request.path, response)
         return response
@@ -176,13 +173,9 @@ class AdminTestCase(TestCase):
             extra = {"data": {"post": "yes"}}
 
         admin_instance = self.get_admin_instance(model)
-        request = self.create_admin_request(
-            "post", self.get_delete_url(model, object_id), **extra
-        )
+        request = self.create_admin_request("post", self.get_delete_url(model, object_id), **extra)
         response = admin_instance.delete_view(request, str(object_id))
-        self.assertEqual(
-            response.status_code, 302, f"Form errors in calling {request.path}"
-        )
+        self.assertEqual(response.status_code, 302, f"Form errors in calling {request.path}")
         return response
 
     def create_admin_request(self, method, url, data=None, **extra):
@@ -229,9 +222,7 @@ class AdminTestCase(TestCase):
             self.assertEqual(
                 response.status_code,
                 302,
-                "Form errors in calling {}:\n{}".format(
-                    request_url, errors.as_text()
-                ),
+                "Form errors in calling {}:\n{}".format(request_url, errors.as_text()),
             )
         self.assertTrue(
             "/login/?next=" not in response["Location"],

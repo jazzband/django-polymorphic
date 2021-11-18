@@ -38,9 +38,7 @@ class PolymorphicInlineModelAdmin(InlineModelAdmin):
     #: This can be redefined for subclasses.
     polymorphic_media = Media(
         js=(
-            "admin/js/vendor/jquery/jquery{}.js".format(
-                "" if settings.DEBUG else ".min"
-            ),
+            "admin/js/vendor/jquery/jquery{}.js".format("" if settings.DEBUG else ".min"),
             "admin/js/jquery.init.js",
             "polymorphic/js/polymorphic_inlines.js",
         ),
@@ -96,9 +94,7 @@ class PolymorphicInlineModelAdmin(InlineModelAdmin):
         try:
             return self._child_inlines_lookup[model]
         except KeyError:
-            raise UnsupportedChildType(
-                f"Model '{model.__name__}' not found in child_inlines"
-            )
+            raise UnsupportedChildType(f"Model '{model.__name__}' not found in child_inlines")
 
     def get_formset(self, request, obj=None, **kwargs):
         """
@@ -109,9 +105,7 @@ class PolymorphicInlineModelAdmin(InlineModelAdmin):
         :rtype: type
         """
         # Construct the FormSet class
-        FormSet = super().get_formset(
-            request, obj=obj, **kwargs
-        )
+        FormSet = super().get_formset(request, obj=obj, **kwargs)
 
         # Instead of completely redefining super().get_formset(), we use
         # the regular inlineformset_factory(), and amend that with our extra bits.
@@ -161,10 +155,7 @@ class PolymorphicInlineModelAdmin(InlineModelAdmin):
             child_media = child_instance.media
 
             # Avoid adding the same media object again and again
-            if (
-                child_media._css != base_media._css
-                and child_media._js != base_media._js
-            ):
+            if child_media._css != base_media._css and child_media._js != base_media._js:
                 add_media(all_media, child_media)
 
         add_media(all_media, self.polymorphic_media)
@@ -239,11 +230,7 @@ class PolymorphicInlineModelAdmin(InlineModelAdmin):
             # Add forcefully, as Django 1.10 doesn't include readonly fields.
             exclude.append("polymorphic_ctype")
 
-            if (
-                self.exclude is None
-                and hasattr(self.form, "_meta")
-                and self.form._meta.exclude
-            ):
+            if self.exclude is None and hasattr(self.form, "_meta") and self.form._meta.exclude:
                 # Take the custom ModelForm's Meta.exclude into account only if the
                 # InlineModelAdmin doesn't define its own.
                 exclude.extend(self.form._meta.exclude)
@@ -253,9 +240,7 @@ class PolymorphicInlineModelAdmin(InlineModelAdmin):
                 "form": self.form,
                 "fields": fields,
                 "exclude": exclude or None,
-                "formfield_callback": partial(
-                    self.formfield_for_dbfield, request=request
-                ),
+                "formfield_callback": partial(self.formfield_for_dbfield, request=request),
             }
             defaults.update(kwargs)
 
