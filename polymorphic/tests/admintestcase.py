@@ -1,5 +1,5 @@
 from django.conf import settings
-from django.conf.urls import include, url
+from django.urls import include, path
 from django.contrib.admin import AdminSite
 from django.contrib.admin.templatetags.admin_urls import admin_urlname
 from django.contrib.auth.models import User
@@ -53,7 +53,7 @@ class AdminTestCase(TestCase):
 
         # Make sure the URLs are reachable by reverse()
         clear_url_caches()
-        set_urlconf(tuple([url("^tmp-admin/", self.admin_site.urls)]))
+        set_urlconf(tuple([path('tmp-admin/', self.admin_site.urls)]))
 
     def get_admin_instance(self, model):
         try:

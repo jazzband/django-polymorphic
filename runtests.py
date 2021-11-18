@@ -32,6 +32,7 @@ if not settings.configured:
                 env="SECONDARY_DATABASE", default="sqlite://:memory:"
             ),
         },
+        DEFAULT_AUTO_FIELD="django.db.models.AutoField",
         TEST_RUNNER="django.test.runner.DiscoverRunner",
         INSTALLED_APPS=(
             "django.contrib.auth",
