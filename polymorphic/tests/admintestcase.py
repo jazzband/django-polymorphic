@@ -4,6 +4,7 @@ from django.contrib.admin import AdminSite
 from django.contrib.admin.templatetags.admin_urls import admin_urlname
 from django.contrib.auth.models import User
 from django.contrib.messages.middleware import MessageMiddleware
+from django.http.response import HttpResponse
 from django.test import RequestFactory, TestCase
 from django.urls import clear_url_caches, reverse, set_urlconf
 
@@ -208,7 +209,7 @@ class AdminTestCase(TestCase):
         # Add properties which middleware would typically do
         request.session = {}
         request.user = self.admin_user
-        MessageMiddleware().process_request(request)
+        MessageMiddleware(lambda r: HttpResponse("OK?")).process_request(request)
         return request
 
     def assertFormSuccess(self, request_url, response):
