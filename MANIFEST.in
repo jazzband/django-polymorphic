@@ -2,5 +2,6 @@ include README.rst
 include LICENSE
 include DOCS.rst
 include CHANGES.rst
+recursive-include polymorphic/locale *.mo *.po
 recursive-include polymorphic/static *.js *.css
 recursive-include polymorphic/templates *.html
