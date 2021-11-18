@@ -56,15 +56,14 @@ Features
 * Uses the minumum amount of queries needed to fetch the inherited models.
 * Disabling polymorphic behavior when needed.
 
-While *django-polymorphic* makes subclassed models easy to use in Django,
+
+**Note:** While *django-polymorphic* makes subclassed models easy to use in Django,
 we still encourage to use them with caution. Each subclassed model will require
 Django to perform an ``INNER JOIN`` to fetch the model fields from the database.
 While taking this in mind, there are valid reasons for using subclassed models.
 That's what this library is designed for!
 
-The current release of *django-polymorphic* supports Django 2.1, 2.2, 3.0, 3.1
-and Python 3.5+ is supported.
-For older Django versions, install *django-polymorphic==1.3*.
+The current release of *django-polymorphic* supports Django 2.2 - 4.0 on Python 3.6+.
 
 For more information, see the `documentation at Read the Docs <https://django-polymorphic.readthedocs.io/>`_.
 
