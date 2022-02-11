@@ -32,3 +32,10 @@
   /* needed for grapelli, which uses grp-empty-form */
   display: none;
 }
+
+@media (prefers-color-scheme: dark) {
+  .polymorphic-type-menu {
+    border: 1px solid #121212;
+    background-color: #212121;
+  }
+}
