@@ -62,8 +62,12 @@ class PolymorphicSerializer(serializers.Serializer):
         return ret
 
     def to_internal_value(self, data):
-        resource_type = self._get_resource_type_from_mapping(data)
-        serializer = self._get_serializer_from_resource_type(resource_type)
+        if self.partial and self.instance:
+            resource_type = self.to_resource_type(self.instance)
+            serializer = self._get_serializer_from_model_or_instance(self.instance)
+        else:
+            resource_type = self._get_resource_type_from_mapping(data)
+            serializer = self._get_serializer_from_resource_type(resource_type)
 
         ret = serializer.to_internal_value(data)
         ret[self.resource_type_field_name] = resource_type
@@ -82,22 +86,31 @@ class PolymorphicSerializer(serializers.Serializer):
     def is_valid(self, *args, **kwargs):
         valid = super(PolymorphicSerializer, self).is_valid(*args, **kwargs)
         try:
-            resource_type = self._get_resource_type_from_mapping(self.validated_data)
-            serializer = self._get_serializer_from_resource_type(resource_type)
+            if self.partial and self.instance:
+                resource_type = self.to_resource_type(self.instance)
+                serializer = self._get_serializer_from_model_or_instance(self.instance)
+            else:
+                resource_type = self._get_resource_type_from_mapping(self.initial_data)
+                serializer = self._get_serializer_from_resource_type(resource_type)
+
         except serializers.ValidationError:
             child_valid = False
         else:
             child_valid = serializer.is_valid(*args, **kwargs)
             self._errors.update(serializer.errors)
         return valid and child_valid
-    
+
     def run_validation(self, data=empty):
-        resource_type = self._get_resource_type_from_mapping(data)
-        serializer = self._get_serializer_from_resource_type(resource_type)
+        if self.partial and self.instance:
+            resource_type = self.to_resource_type(self.instance)
+            serializer = self._get_serializer_from_model_or_instance(self.instance)
+        else:
+            resource_type = self._get_resource_type_from_mapping(data)
+            serializer = self._get_serializer_from_resource_type(resource_type)
+
         validated_data = serializer.run_validation(data)
         validated_data[self.resource_type_field_name] = resource_type
         return validated_data
-
 
     # --------------
     # Implementation

@@ -133,6 +133,19 @@ class TestPolymorphicSerializer:
         assert instance.name == 'new-blog'
         assert instance.slug == 'blog'
 
+    def test_partial_update_without_resourcetype(self):
+        instance = BlogBase.objects.create(name='blog', slug='blog')
+        data = {'name': 'new-blog'}
+
+        serializer = BlogPolymorphicSerializer(
+            instance, data=data, partial=True
+        )
+        assert serializer.is_valid()
+
+        serializer.save()
+        assert instance.name == 'new-blog'
+        assert instance.slug == 'blog'
+
     def test_object_validators_are_applied(self):
         data = {
             'name': 'test-blog',
@@ -147,7 +160,7 @@ class TestPolymorphicSerializer:
 
         data['slug'] = 'test-blog-slug-new'
         duplicate = BlogPolymorphicSerializer(data=data)
-        
+
         assert not duplicate.is_valid()
         assert 'non_field_errors' in duplicate.errors
         err = duplicate.errors['non_field_errors']
