@@ -3,6 +3,11 @@
 History
 -------
 
+0.1.10 (2022-07-17)
+++++++++++++++++++
+
+* Allow partial updates without resourcetype.
+
 0.1.9 (2020-04-02)
 ++++++++++++++++++
 
