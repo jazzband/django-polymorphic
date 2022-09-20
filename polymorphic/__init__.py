@@ -6,9 +6,5 @@ This code and affiliated files are (C) by Bert Constantin and individual contrib
 Please see LICENSE and AUTHORS for more information.
 """
 
-import pkg_resources
 
-try:
-    __version__ = pkg_resources.require("django-polymorphic")[0].version
-except pkg_resources.DistributionNotFound:
-    __version__ = None  # for RTD among others
+__version__ = "3.1.0"
