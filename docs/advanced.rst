@@ -267,7 +267,7 @@ Restrictions & Caveats
 *   When using the ``dumpdata`` management command on polymorphic tables
     (or any table that has a reference to
     :class:`~django.contrib.contenttypes.models.ContentType`),
-    include the ``--natural`` flag in the arguments.
+    include the ``--natural-foreign`` and ``--natural-primary`` flags in the arguments.
 
 
 
