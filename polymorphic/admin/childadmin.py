@@ -227,7 +227,15 @@ class PolymorphicChildModelAdmin(admin.ModelAdmin):
 
         # Find which fields are not part of the common fields.
         for fieldset in self.get_base_fieldsets(request, obj):
-            for field in fieldset[1]["fields"]:
+            # multiple elements in single line
+            if isinstance(field, tuple):
+                for line_field in field:
+                    try:
+                        subclass_fields.remove(line_field)
+                    except ValueError:
+                        pass  # field not found in form, Django will raise exception later.
+            else:
+                # regular one-element-per-line
                 try:
                     subclass_fields.remove(field)
                 except ValueError:
