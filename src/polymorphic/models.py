@@ -207,7 +207,7 @@ class PolymorphicModel(models.Model, metaclass=PolymorphicModelBase):
                     rel_obj = field.get_cached_value(self)
                 except KeyError:
                     objects = getattr(model, "_base_objects", model.objects)
-                    rel_obj = objects.get(pk=self.pk)
+                    rel_obj = objects.using(self._state.db or DEFAULT_DB_ALIAS).get(pk=self.pk)
                     field.set_cached_value(self, rel_obj)
                 return rel_obj
 

@@ -14,6 +14,9 @@ from polymorphic.tests.models import (
     ModelY,
     One2OneRelatingModel,
     RelatingModel,
+    RelationA,
+    RelationB,
+    RelationBase,
 )
 
 
@@ -118,3 +121,19 @@ class MultipleDatabasesTests(TestCase):
 
         # Ensure no queries are made using the default database.
         self.assertNumQueries(0, func)
+
+    def test_deletion_cascade_on_non_default_db(self):
+        def run():
+            base_db1 = RelationA.objects.db_manager("secondary").create(field_a="Base DB1")
+            base_db2 = RelationB.objects.db_manager("secondary").create(
+                field_b="Base DB2", fk=base_db1
+            )
+
+            ContentType.objects.clear_cache()
+
+            RelationBase.objects.db_manager("secondary").filter(pk=base_db2.pk).delete()
+
+            self.assertEqual(RelationB.objects.db_manager("secondary").count(), 0)
+
+        # Ensure no queries are made using the default database.
+        self.assertNumQueries(0, run)
