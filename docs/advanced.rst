@@ -183,7 +183,7 @@ About Queryset Methods
     queryset or list  of base model objects efficiently into the real objects.
     For example, you could do ``base_objects_queryset=ModelA.extra(...).non_polymorphic()``
     and then call ``real_objects=base_objects_queryset.get_real_instances()``. Or alternatively
-    .``real_objects=ModelA.objects.get_real_instances(base_objects_queryset_or_object_list)``
+    ``real_objects=ModelA.objects.get_real_instances(base_objects_queryset_or_object_list)``
 
 *   ``values()`` & ``values_list()`` currently do not return polymorphic
     results. This may change in the future however. If you want to use these
