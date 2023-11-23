@@ -40,7 +40,6 @@ def translate_polymorphic_filter_definitions_in_kwargs(
     """
     additional_args = []
     for field_path, val in kwargs.copy().items():  # Python 3 needs copy
-
         new_expr = _translate_polymorphic_filter_definition(
             queryset_model, field_path, val, using=using
         )

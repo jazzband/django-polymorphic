@@ -1077,7 +1077,6 @@ class PolymorphicTests(TransactionTestCase):
         self.assertIsInstance(result.last(), BlogB)
 
     def test_polymorphic__expressions(self):
-
         from django.db.models.functions import Concat
 
         # no exception raised
@@ -1240,6 +1239,5 @@ class PolymorphicTests(TransactionTestCase):
         assert obj.field1 == "aa1"
 
     def test_non_polymorphic_parent(self):
-
         obj = NonPolymorphicParent.objects.create()
         assert obj.delete()
