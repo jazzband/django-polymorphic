@@ -1,9 +1,9 @@
-.. image::  https://travis-ci.org/django-polymorphic/django-polymorphic.svg?branch=master
-    :target: http://travis-ci.org/django-polymorphic/django-polymorphic
+.. image::  https://travis-ci.org/jazzband/django-polymorphic.svg?branch=master
+    :target: http://travis-ci.org/jazzband/django-polymorphic
 .. image:: https://img.shields.io/pypi/v/django-polymorphic.svg
     :target: https://pypi.python.org/pypi/django-polymorphic/
-.. image:: https://img.shields.io/codecov/c/github/django-polymorphic/django-polymorphic/master.svg
-    :target: https://codecov.io/github/django-polymorphic/django-polymorphic?branch=master
+.. image:: https://img.shields.io/codecov/c/github/jazzband/django-polymorphic/master.svg
+    :target: https://codecov.io/github/jazzband/django-polymorphic?branch=master
 .. image:: https://readthedocs.org/projects/django-polymorphic/badge/?version=stable
     :target: https://django-polymorphic.readthedocs.io/en/stable/
 .. image:: https://jazzband.co/static/img/badge.svg
