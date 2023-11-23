@@ -197,11 +197,15 @@ class PolymorphicModel(with_metaclass(PolymorphicModelBase, models.Model)):
             return
         self.__class__.polymorphic_super_sub_accessors_replaced = True
 
-        def create_accessor_function_for_model(model, accessor_name):
+        def create_accessor_function_for_model(model, field):
             def accessor_function(self):
-                objects = getattr(model, "_base_objects", model.objects)
-                attr = objects.get(pk=self.pk)
-                return attr
+                try:
+                    rel_obj = field.get_cached_value(self)
+                except KeyError:
+                    objects = getattr(model, "_base_objects", model.objects)
+                    rel_obj = objects.get(pk=self.pk)
+                    field.set_cached_value(self, rel_obj)
+                return rel_obj
 
             return accessor_function
 
@@ -214,10 +218,14 @@ class PolymorphicModel(with_metaclass(PolymorphicModelBase, models.Model)):
                 type(orig_accessor),
                 (ReverseOneToOneDescriptor, ForwardManyToOneDescriptor),
             ):
+
+                field = orig_accessor.related \
+                    if isinstance(orig_accessor, ReverseOneToOneDescriptor) else orig_accessor.field
+
                 setattr(
                     self.__class__,
                     name,
-                    property(create_accessor_function_for_model(model, name)),
+                    property(create_accessor_function_for_model(model, field)),
                 )
 
     def _get_inheritance_relation_fields_and_models(self):
