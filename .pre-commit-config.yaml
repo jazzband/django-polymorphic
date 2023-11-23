@@ -9,3 +9,4 @@ repos:
     rev: 23.11.0
     hooks:
     -   id: black
+        exclude: '.*migrations.*'
