@@ -1,38 +1,38 @@
 [
     {
-        "pk": 1, 
-        "model": "pexp.project", 
+        "pk": 1,
+        "model": "pexp.project",
         "fields": {
-            "topic": "John's gathering", 
+            "topic": "John's gathering",
             "polymorphic_ctype": 2
         }
-    }, 
+    },
     {
-        "pk": 2, 
-        "model": "pexp.project", 
+        "pk": 2,
+        "model": "pexp.project",
         "fields": {
-            "topic": "Sculpting with Tim", 
+            "topic": "Sculpting with Tim",
             "polymorphic_ctype": 3
         }
-    }, 
+    },
     {
-        "pk": 3, 
-        "model": "pexp.project", 
+        "pk": 3,
+        "model": "pexp.project",
         "fields": {
-            "topic": "Swallow Aerodynamics", 
+            "topic": "Swallow Aerodynamics",
             "polymorphic_ctype": 4
         }
-    }, 
+    },
     {
-        "pk": 2, 
-        "model": "pexp.artproject", 
+        "pk": 2,
+        "model": "pexp.artproject",
         "fields": {
             "artist": "T. Turner"
         }
-    }, 
+    },
     {
-        "pk": 3, 
-        "model": "pexp.researchproject", 
+        "pk": 3,
+        "model": "pexp.researchproject",
         "fields": {
             "supervisor": "Dr. Winter"
         }
