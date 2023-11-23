@@ -6,6 +6,9 @@
     :target: https://codecov.io/github/django-polymorphic/django-polymorphic?branch=master
 .. image:: https://readthedocs.org/projects/django-polymorphic/badge/?version=stable
     :target: https://django-polymorphic.readthedocs.io/en/stable/
+.. image:: https://jazzband.co/static/img/badge.svg
+   :target: https://jazzband.co/
+   :alt: Jazzband
 
 Polymorphic Models for Django
 =============================
