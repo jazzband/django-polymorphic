@@ -41,7 +41,6 @@ class PolymorphicFormSetChild:
         help_texts=None,
         error_messages=None,
     ):
-
         self.model = model
 
         # Instead of initializing the form here right away,

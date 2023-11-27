@@ -90,4 +90,3 @@ These classes are useful when existing parts of the admin classes.
 
 .. autoclass:: polymorphic.admin.PolymorphicInlineAdminFormSet
     :show-inheritance:
-

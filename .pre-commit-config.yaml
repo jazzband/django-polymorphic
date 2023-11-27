@@ -1,0 +1,12 @@
+repos:
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+    -   id: check-yaml
+    -   id: end-of-file-fixer
+    -   id: trailing-whitespace
+-   repo: https://github.com/psf/black-pre-commit-mirror
+    rev: 23.11.0
+    hooks:
+    -   id: black
+        exclude: '.*migrations.*'

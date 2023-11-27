@@ -136,7 +136,7 @@ If you insert ``.non_polymorphic()`` anywhere into the query chain, then
 django_polymorphic will simply leave out the final step of retrieving the
 real objects, and the manager/queryset will return objects of the type of
 the base class you used for the query, like vanilla Django would
-(``ModelA`` in this example). 
+(``ModelA`` in this example).
 
 >>> qs=ModelA.objects.non_polymorphic().all()
 >>> qs
@@ -188,7 +188,7 @@ About Queryset Methods
 *   ``values()`` & ``values_list()`` currently do not return polymorphic
     results. This may change in the future however. If you want to use these
     methods now, it's best if you use ``Model.base_objects.values...`` as
-    this is guaranteed to not change. 
+    this is guaranteed to not change.
 
 *   ``defer()`` and ``only()`` work as expected. On Django 1.5+ they support
     the ``ModelX___field`` syntax, but on Django 1.4 it is only possible to
@@ -252,7 +252,7 @@ Restrictions & Caveats
     the resulting objects are required to have a unique primary key within
     the result set.
 
-*   Diamond shaped inheritance: There seems to be a general problem 
+*   Diamond shaped inheritance: There seems to be a general problem
     with diamond shaped multiple model inheritance with Django models
     (tested with V1.1 - V1.3).
     An example is here: http://code.djangoproject.com/ticket/10808.
@@ -288,4 +288,3 @@ Restrictions & Caveats
     - http://groups.google.com/group/django-users/browse_thread/thread/52f72cffebb705e/bc18c18b2e83881e?lnk=gst&q=model+inheritance#bc18c18b2e83881e
     - http://code.djangoproject.com/ticket/10808
     - http://code.djangoproject.com/ticket/7270
-
