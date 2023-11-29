@@ -19,6 +19,7 @@ sys.stderr.write(
     )
 )
 
+
 if not settings.configured:
     settings.configure(
         DEBUG=False,

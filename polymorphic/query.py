@@ -53,7 +53,6 @@ class PolymorphicModelIterable(ModelIterable):
             # Make sure the base iterator is read in chunks instead of
             # reading it completely, in case our caller read only a few objects.
             for i in range(Polymorphic_QuerySet_objects_per_request):
-
                 try:
                     o = next(base_iter)
                     base_result_objects.append(o)
@@ -258,7 +257,8 @@ class PolymorphicQuerySet(QuerySet):
 
     def _process_aggregate_args(self, args, kwargs):
         """for aggregate and annotate kwargs: allow ModelX___field syntax for kwargs, forbid it for args.
-        Modifies kwargs if needed (these are Aggregate objects, we translate the lookup member variable)"""
+        Modifies kwargs if needed (these are Aggregate objects, we translate the lookup member variable)
+        """
         ___lookup_assert_msg = "PolymorphicModel: annotate()/aggregate(): ___ model lookup supported for keyword arguments only"
 
         def patch_lookup(a):
@@ -285,7 +285,7 @@ class PolymorphicQuerySet(QuerySet):
                     for i in range(len(node.children)):
                         child = node.children[i]
 
-                        if type(child) == tuple:
+                        if isinstance(child, tuple):
                             # this Q object child is a tuple => a kwarg like Q( instance_of=ModelB )
                             assert "___" not in child[0], ___lookup_assert_msg
                         else:
@@ -386,7 +386,6 @@ class PolymorphicQuerySet(QuerySet):
         ).pk
 
         for i, base_object in enumerate(base_result_objects):
-
             if base_object.polymorphic_ctype_id == self_model_class_id:
                 # Real class is exactly the same as base class, go straight to results
                 resultlist.append(base_object)

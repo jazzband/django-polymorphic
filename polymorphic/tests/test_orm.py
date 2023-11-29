@@ -7,7 +7,7 @@ from django.db.models import Case, Count, FilteredRelation, Q, When
 from django.db.utils import IntegrityError
 from django.test import TransactionTestCase
 
-from polymorphic import compat, query_translate
+from polymorphic import query_translate
 from polymorphic.managers import PolymorphicManager
 from polymorphic.models import PolymorphicTypeInvalid, PolymorphicTypeUndefined
 from polymorphic.tests.models import (
@@ -168,11 +168,11 @@ class PolymorphicTests(TransactionTestCase):
         this is not really a testcase, as limit_choices_to only affects the Django admin
         """
         # create a blog of type BlogA
-        blog_a = BlogA.objects.create(name="aa", info="aa")
+        _ = BlogA.objects.create(name="aa", info="aa")
         blog_b = BlogB.objects.create(name="bb")
         # create two blog entries
-        entry1 = BlogEntry_limit_choices_to.objects.create(blog=blog_b, text="bla2")
-        entry2 = BlogEntry_limit_choices_to.objects.create(blog=blog_b, text="bla2")
+        _ = BlogEntry_limit_choices_to.objects.create(blog=blog_b, text="bla2")
+        _ = BlogEntry_limit_choices_to.objects.create(blog=blog_b, text="bla2")
 
     def test_primary_key_custom_field_problem(self):
         """
@@ -183,9 +183,9 @@ class PolymorphicTests(TransactionTestCase):
         UUIDResearchProject.objects.create(topic="Swallow Aerodynamics", supervisor="Dr. Winter")
 
         qs = UUIDProject.objects.all()
-        ol = list(qs)
+        _ = list(qs)
         a = qs[0]
-        b = qs[1]
+        _ = qs[1]
         c = qs[2]
         self.assertEqual(len(qs), 3)
         self.assertIsInstance(a.uuid_primary_key, uuid.UUID)
@@ -198,7 +198,7 @@ class PolymorphicTests(TransactionTestCase):
         self.assertEqual(res, res_exp)
 
         a = UUIDPlainA.objects.create(field1="A1")
-        b = UUIDPlainB.objects.create(field1="B1", field2="B2")
+        _ = UUIDPlainB.objects.create(field1="B1", field2="B2")
         c = UUIDPlainC.objects.create(field1="C1", field2="C2", field3="C3")
         qs = UUIDPlainA.objects.all()
         # Test that primary key values are valid UUIDs
@@ -699,7 +699,7 @@ class PolymorphicTests(TransactionTestCase):
         obase = RelationBase.objects.create(field_base="base")
         oa = RelationA.objects.create(field_base="A1", field_a="A2", fk=obase)
         ob = RelationB.objects.create(field_base="B1", field_b="B2", fk=oa)
-        oc = RelationBC.objects.create(field_base="C1", field_b="C2", field_c="C3", fk=oa)
+        _ = RelationBC.objects.create(field_base="C1", field_b="C2", field_c="C3", fk=oa)
         oa.m2m.add(oa)
         oa.m2m.add(ob)
 
@@ -831,7 +831,7 @@ class PolymorphicTests(TransactionTestCase):
     def test_queryset_assignment(self):
         # This is just a consistency check for now, testing standard Django behavior.
         parent = PlainParentModelWithManager.objects.create()
-        child = PlainChildModelWithManager.objects.create(fk=parent)
+        _ = PlainChildModelWithManager.objects.create(fk=parent)
         self.assertIs(type(PlainParentModelWithManager._default_manager), models.Manager)
         self.assertIs(type(PlainChildModelWithManager._default_manager), PlainMyManager)
         self.assertIs(type(PlainChildModelWithManager.objects), PlainMyManager)
@@ -842,7 +842,7 @@ class PolymorphicTests(TransactionTestCase):
 
         # For polymorphic models, the same should happen.
         parent = ParentModelWithManager.objects.create()
-        child = ChildModelWithManager.objects.create(fk=parent)
+        _ = ChildModelWithManager.objects.create(fk=parent)
         self.assertIs(type(ParentModelWithManager._default_manager), PolymorphicManager)
         self.assertIs(type(ChildModelWithManager._default_manager), MyManager)
         self.assertIs(type(ChildModelWithManager.objects), MyManager)
@@ -1077,7 +1077,6 @@ class PolymorphicTests(TransactionTestCase):
         self.assertIsInstance(result.last(), BlogB)
 
     def test_polymorphic__expressions(self):
-
         from django.db.models.functions import Concat
 
         # no exception raised
@@ -1240,6 +1239,5 @@ class PolymorphicTests(TransactionTestCase):
         assert obj.field1 == "aa1"
 
     def test_non_polymorphic_parent(self):
-
         obj = NonPolymorphicParent.objects.create()
         assert obj.delete()

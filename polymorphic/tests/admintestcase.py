@@ -5,7 +5,7 @@ from django.contrib.auth.models import User
 from django.contrib.messages.middleware import MessageMiddleware
 from django.http.response import HttpResponse
 from django.test import RequestFactory, TestCase
-from django.urls import clear_url_caches, include, path, reverse, set_urlconf
+from django.urls import clear_url_caches, path, reverse, set_urlconf
 
 
 class AdminTestCase(TestCase):

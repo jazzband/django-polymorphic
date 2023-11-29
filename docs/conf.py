@@ -184,11 +184,11 @@ htmlhelp_basename = "django-polymorphicdoc"
 
 latex_elements = {
     # The paper size ('letterpaper' or 'a4paper').
-    #'papersize': 'letterpaper',
+    # 'papersize': 'letterpaper',
     # The font size ('10pt', '11pt' or '12pt').
-    #'pointsize': '10pt',
+    # 'pointsize': '10pt',
     # Additional stuff for the LaTeX preamble.
-    #'preamble': '',
+    # 'preamble': '',
 }
 
 # Grouping the document tree into LaTeX files. List of tuples
@@ -271,7 +271,7 @@ texinfo_documents = [
 
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {
-    #'http://docs.python.org/': None,
+    # 'http://docs.python.org/': None,
     "https://docs.djangoproject.com/en/stable": "https://docs.djangoproject.com/en/stable/_objects"
 }
 

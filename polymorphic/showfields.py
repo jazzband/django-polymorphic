@@ -61,7 +61,7 @@ class ShowFieldBase:
             out = field.name
 
             # if this is the standard primary key named "id", print it as we did with older versions of django_polymorphic
-            if field.primary_key and field.name == "id" and type(field) == models.AutoField:
+            if field.primary_key and field.name == "id" and isinstance(field, models.AutoField):
                 out += " " + str(getattr(self, field.name))
 
             # otherwise, display it just like all other fields (with correct type, shortened content etc.)

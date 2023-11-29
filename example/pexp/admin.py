@@ -1,5 +1,15 @@
 from django.contrib import admin
-from pexp.models import *
+from pexp.models import (
+    Project,
+    ArtProject,
+    ResearchProject,
+    UUIDModelA,
+    UUIDModelB,
+    UUIDModelC,
+    ProxyA,
+    ProxyB,
+    ProxyBase,
+)
 
 from polymorphic.admin import (
     PolymorphicChildModelAdmin,

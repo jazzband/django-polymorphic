@@ -9,7 +9,14 @@ from random import Random
 
 from django.core.management import BaseCommand
 from django.db import connection
-from pexp.models import *
+from pexp.models import (
+    TestModelA,
+    TestModelB,
+    TestModelC,
+    NormalModelA,
+    NormalModelB,
+    NormalModelC,
+)
 
 rnd = Random()
 
@@ -28,7 +35,7 @@ def print_timing(func, message="", iterations=1):
         connection.queries_log.clear()
         for i in range(iterations):
             t1 = time.time()
-            x = func(*arg)
+            _ = func(*arg)
             t2 = time.time()
             results.append((t2 - t1) * 1000.0)
         res_sum = 0
@@ -49,9 +56,9 @@ class Command(BaseCommand):
     def handle_noargs(self, **options):
         if False:
             TestModelA.objects.all().delete()
-            a = TestModelA.objects.create(field1="A1")
-            b = TestModelB.objects.create(field1="B1", field2="B2")
-            c = TestModelC.objects.create(field1="C1", field2="C2", field3="C3")
+            _ = TestModelA.objects.create(field1="A1")
+            _ = TestModelB.objects.create(field1="B1", field2="B2")
+            _ = TestModelC.objects.create(field1="C1", field2="C2", field3="C3")
             connection.queries_log.clear()
             print(TestModelC.base_objects.all())
             show_queries()
@@ -59,9 +66,9 @@ class Command(BaseCommand):
         if False:
             TestModelA.objects.all().delete()
             for i in range(1000):
-                a = TestModelA.objects.create(field1=str(i % 100))
-                b = TestModelB.objects.create(field1=str(i % 100), field2=str(i % 200))
-                c = TestModelC.objects.create(
+                _ = TestModelA.objects.create(field1=str(i % 100))
+                _ = TestModelB.objects.create(field1=str(i % 100), field2=str(i % 200))
+                _ = TestModelC.objects.create(
                     field1=str(i % 100), field2=str(i % 200), field3=str(i % 300)
                 )
                 if i % 100 == 0:
@@ -76,9 +83,9 @@ class Command(BaseCommand):
         return
 
         NormalModelA.objects.all().delete()
-        a = NormalModelA.objects.create(field1="A1")
-        b = NormalModelB.objects.create(field1="B1", field2="B2")
-        c = NormalModelC.objects.create(field1="C1", field2="C2", field3="C3")
+        _ = NormalModelA.objects.create(field1="A1")
+        _ = NormalModelB.objects.create(field1="B1", field2="B2")
+        _ = NormalModelC.objects.create(field1="C1", field2="C2", field3="C3")
         qs = TestModelA.objects.raw("SELECT * from pexp_testmodela")
         for o in list(qs):
             print(o)

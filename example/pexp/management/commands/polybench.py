@@ -8,7 +8,7 @@ from pprint import pprint
 
 from django.core.management import BaseCommand
 from django.db import connection
-from pexp.models import *
+from pexp.models import TestModelC, NormalModelC
 
 num_objects = 1000
 
@@ -31,7 +31,7 @@ def print_timing(func, message="", iterations=1):
         connection.queries_log.clear()
         for i in range(iterations):
             t1 = time.time()
-            x = func(*arg)
+            _ = func(*arg)
             t2 = time.time()
             results.append((t2 - t1) * 1000.0)
         res_sum = 0
@@ -79,17 +79,17 @@ def bench_load1_short(model):
 
 def bench_load2(model):
     for o in model.objects.all():
-        f1 = o.field1
-        f2 = o.field2
-        f3 = o.field3
+        _ = o.field1
+        _ = o.field2
+        _ = o.field3
 
 
 def bench_load2_short(model):
     for i in range(num_objects / 100):
         for o in model.objects.all()[:100]:
-            f1 = o.field1
-            f2 = o.field2
-            f3 = o.field3
+            _ = o.field1
+            _ = o.field2
+            _ = o.field3
 
 
 def bench_delete(model):
