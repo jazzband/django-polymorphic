@@ -1,0 +1,19 @@
+[flake8]
+ignore = F401,
+         W504,
+         E501,
+         E722,
+         W605,
+         E203
+exclude =
+    .git,
+    __pycache__,
+    .env,
+    *.pyc,
+    *.pyo,
+    *migrations*,
+
+per-file-ignores =
+    __init__.py:F401,
+    settings.py:F405,
+    models.py:F403,
