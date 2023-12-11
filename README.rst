@@ -1,5 +1,5 @@
-.. image::  https://travis-ci.org/jazzband/django-polymorphic.svg?branch=master
-    :target: http://travis-ci.org/jazzband/django-polymorphic
+.. image::  https://github.com/jazzband/django-polymorphic/actions/workflows/ci.yml/badge.svg
+    :target: https://github.com/jazzband/django-polymorphic/actions/workflows/ci.yml
 .. image:: https://img.shields.io/pypi/v/django-polymorphic.svg
     :target: https://pypi.python.org/pypi/django-polymorphic/
 .. image:: https://img.shields.io/codecov/c/github/jazzband/django-polymorphic/master.svg

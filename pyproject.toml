@@ -1,3 +1,10 @@
+[build-system]
+requires = [
+    "setuptools",
+    # TODO: look into using python-babel instead of requiring django at build time
+    "django>=2.1",  # for makemessages
+]
+
 [tool.isort]
 profile = "black"
 line_length = 99
