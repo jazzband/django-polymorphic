@@ -7,10 +7,8 @@ import sys
 import warnings
 
 import django
-from django.core.exceptions import ImproperlyConfigured
 from django.db import models
 from django.db.models.base import ModelBase
-from django.db.models.manager import ManagerDescriptor
 
 from .managers import PolymorphicManager
 from .query import PolymorphicQuerySet

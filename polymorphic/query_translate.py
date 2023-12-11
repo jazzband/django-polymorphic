@@ -16,7 +16,6 @@ from django.db.utils import DEFAULT_DB_ALIAS
 # They form a kind of small framework for easily adding more
 # functionality to filters and Q objects.
 # Probably a more general queryset enhancement class could be made out of them.
-from polymorphic import compat
 
 ###################################################################################
 # PolymorphicQuerySet support functions
