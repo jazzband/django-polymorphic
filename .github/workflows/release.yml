@@ -1,0 +1,26 @@
+name: Release
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - '*'
+
+jobs:
+  Build:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3"
+          cache: pip
+          cache-dependency-path: setup.cfg
+      # TODO: look into using python-babel instead of requiring gettext as system dependency
+      - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends gettext
+      - run: pip install -U build
+      - run: python -m build
+      - uses: actions/upload-artifact@v3
+        with:
+          name: dist
+          path: dist/
