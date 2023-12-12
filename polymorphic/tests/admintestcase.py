@@ -94,7 +94,7 @@ class AdminTestCase(TestCase):
         admin_instance = self.get_admin_instance(model)
         request = self.create_admin_request("get", self.get_add_url(model) + qs)
         response = admin_instance.add_view(request)
-        self.assertEqual(response.status_code, 200)
+        assert response.status_code == 200
         return response
 
     def admin_post_add(self, model, formdata, qs=""):
@@ -114,7 +114,7 @@ class AdminTestCase(TestCase):
         admin_instance = self.get_admin_instance(model)
         request = self.create_admin_request("get", self.get_changelist_url(model))
         response = admin_instance.changelist_view(request)
-        self.assertEqual(response.status_code, 200)
+        assert response.status_code == 200
         return response
 
     def admin_get_change(self, model, object_id, query=None, **extra):
@@ -126,7 +126,7 @@ class AdminTestCase(TestCase):
             "get", self.get_change_url(model, object_id), data=query, **extra
         )
         response = admin_instance.change_view(request, str(object_id))
-        self.assertEqual(response.status_code, 200)
+        assert response.status_code == 200
         return response
 
     def admin_post_change(self, model, object_id, formdata, **extra):
@@ -150,7 +150,7 @@ class AdminTestCase(TestCase):
             "get", self.get_history_url(model, object_id), data=query, **extra
         )
         response = admin_instance.history_view(request, str(object_id))
-        self.assertEqual(response.status_code, 200)
+        assert response.status_code == 200
         return response
 
     def admin_get_delete(self, model, object_id, query=None, **extra):
@@ -162,7 +162,7 @@ class AdminTestCase(TestCase):
             "get", self.get_delete_url(model, object_id), data=query, **extra
         )
         response = admin_instance.delete_view(request, str(object_id))
-        self.assertEqual(response.status_code, 200)
+        assert response.status_code == 200
         return response
 
     def admin_post_delete(self, model, object_id, **extra):
@@ -175,7 +175,7 @@ class AdminTestCase(TestCase):
         admin_instance = self.get_admin_instance(model)
         request = self.create_admin_request("post", self.get_delete_url(model, object_id), **extra)
         response = admin_instance.delete_view(request, str(object_id))
-        self.assertEqual(response.status_code, 302, f"Form errors in calling {request.path}")
+        assert response.status_code == 302, f"Form errors in calling {request.path}"
         return response
 
     def create_admin_request(self, method, url, data=None, **extra):
@@ -209,7 +209,7 @@ class AdminTestCase(TestCase):
         """
         Assert that the response was a redirect, not a form error.
         """
-        self.assertIn(response.status_code, [200, 302])
+        assert response.status_code in [200, 302]
         if response.status_code != 302:
             context_data = response.context_data
             if "errors" in context_data:
@@ -219,12 +219,9 @@ class AdminTestCase(TestCase):
             else:
                 raise KeyError("Unknown field for errors in the TemplateResponse!")
 
-            self.assertEqual(
-                response.status_code,
-                302,
-                "Form errors in calling {}:\n{}".format(request_url, errors.as_text()),
+            assert response.status_code == 302, "Form errors in calling {}:\n{}".format(
+                request_url, errors.as_text()
             )
-        self.assertTrue(
-            "/login/?next=" not in response["Location"],
-            f"Received login response for {request_url}",
-        )
+        assert (
+            "/login/?next=" not in response["Location"]
+        ), f"Received login response for {request_url}"

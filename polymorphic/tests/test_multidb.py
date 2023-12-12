@@ -78,7 +78,7 @@ class MultipleDatabasesTests(TestCase):
             entry = BlogEntry.objects.db_manager("secondary").create(blog=blog, text="Text")
             ContentType.objects.clear_cache()
             entry = BlogEntry.objects.db_manager("secondary").get(pk=entry.id)
-            self.assertEqual(blog, entry.blog)
+            assert blog == entry.blog
 
         # Ensure no queries are made using the default database.
         self.assertNumQueries(0, func)
@@ -89,7 +89,7 @@ class MultipleDatabasesTests(TestCase):
             entry = BlogEntry.objects.db_manager("secondary").create(blog=blog, text="Text")
             ContentType.objects.clear_cache()
             blog = BlogA.objects.db_manager("secondary").get(pk=blog.id)
-            self.assertEqual(entry, blog.blogentry_set.using("secondary").get())
+            assert entry == blog.blogentry_set.using("secondary").get()
 
         # Ensure no queries are made using the default database.
         self.assertNumQueries(0, func)
@@ -102,7 +102,7 @@ class MultipleDatabasesTests(TestCase):
             )
             ContentType.objects.clear_cache()
             m2a = Model2A.objects.db_manager("secondary").get(pk=m2a.id)
-            self.assertEqual(one2one, m2a.one2onerelatingmodel)
+            assert one2one == m2a.one2onerelatingmodel
 
         # Ensure no queries are made using the default database.
         self.assertNumQueries(0, func)
@@ -114,7 +114,7 @@ class MultipleDatabasesTests(TestCase):
             rm.many2many.add(m2a)
             ContentType.objects.clear_cache()
             m2a = Model2A.objects.db_manager("secondary").get(pk=m2a.id)
-            self.assertEqual(rm, m2a.relatingmodel_set.using("secondary").get())
+            assert rm == m2a.relatingmodel_set.using("secondary").get()
 
         # Ensure no queries are made using the default database.
         self.assertNumQueries(0, func)
