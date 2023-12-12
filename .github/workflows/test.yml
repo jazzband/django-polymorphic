@@ -1,0 +1,60 @@
+name: Test
+on:
+  - pull_request
+  - push
+  - workflow_dispatch
+jobs:
+  Build:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3"
+          cache: pip
+          cache-dependency-path: setup.cfg
+      # TODO: look into using python-babel instead of requiring gettext as system dependency
+      - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends gettext
+      - run: pip install -U build
+      - run: python -m build
+      - uses: actions/upload-artifact@v3
+        with:
+          name: dist
+          path: dist/
+  Test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - os: ubuntu-20.04
+            python-version: "3.6"
+          - os: ubuntu-20.04
+            python-version: "3.7"
+          - os: ubuntu-22.04
+            python-version: "3.8"
+          - os: ubuntu-22.04
+            python-version: "3.9"
+          - os: ubuntu-22.04
+            python-version: "3.10"
+    steps:
+      - uses: actions/checkout@v4
+      - name: "Set up Python ${{ matrix.python-version }}"
+        uses: actions/setup-python@v5
+        with:
+          python-version: "${{ matrix.python-version }}"
+          cache: pip
+          cache-dependency-path: setup.cfg
+      # TODO: look into using python-babel instead of requiring gettext as system dependency
+      - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends gettext
+      # TODO: look into using python-babel instead of requiring django to be ambiently installed
+      #       so tox can build messages
+      - run: pip install -U tox tox-gh-actions django
+      # TODO: postgres setup and proper djangomain testing
+      - run: python -m tox
+      - run: |
+          mkdir /tmp/coverage
+          find .tox -type f -name 'coverage*xml' -exec mv '{}' /tmp/coverage ';'
+      - uses: codecov/codecov-action@v3
+        with:
+          directory: /tmp/coverage
