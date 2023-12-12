@@ -13,7 +13,7 @@ We require features to be backed by a unit test.
 This way, we can test *django-polymorphic* against new Django versions.
 To run the included test suite, execute::
 
-    ./runtests.py
+    py.test
 
 To test support for multiple Python and Django versions, run tox from the repository root::
 

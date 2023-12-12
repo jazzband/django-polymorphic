@@ -33,3 +33,6 @@ select = [
     "F841",
     "I",
 ]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "polymorphic_test_settings"
