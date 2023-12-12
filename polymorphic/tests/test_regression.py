@@ -18,16 +18,16 @@ class RegressionTests(TestCase):
         bottom.save()
 
         expected_queryset = [top, middle, bottom]
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             Top.objects.order_by("pk"), [repr(r) for r in expected_queryset], **transform_arg
         )
 
         expected_queryset = [middle, bottom]
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             Middle.objects.order_by("pk"), [repr(r) for r in expected_queryset], **transform_arg
         )
 
         expected_queryset = [bottom]
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             Bottom.objects.order_by("pk"), [repr(r) for r in expected_queryset], **transform_arg
         )

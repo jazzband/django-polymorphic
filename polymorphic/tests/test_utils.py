@@ -38,7 +38,7 @@ class UtilsTests(TransactionTestCase):
 
         reset_polymorphic_ctype(Model2D, Model2B, Model2D, Model2A, Model2C)
 
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             Model2A.objects.order_by("pk"),
             [Model2A, Model2D, Model2B, Model2B],
             transform=lambda o: o.__class__,

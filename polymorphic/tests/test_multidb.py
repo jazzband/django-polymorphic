@@ -26,13 +26,13 @@ class MultipleDatabasesTests(TestCase):
         Model2B.objects.create(field1="B1", field2="B2")
         Model2D(field1="D1", field2="D2", field3="D3", field4="D4").save()
 
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             Model2A.objects.order_by("id"),
             [Model2B, Model2D],
             transform=lambda o: o.__class__,
         )
 
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             Model2A.objects.db_manager("secondary").order_by("id"),
             [Model2A, Model2C],
             transform=lambda o: o.__class__,
@@ -44,26 +44,26 @@ class MultipleDatabasesTests(TestCase):
         ModelY.objects.db_manager("secondary").create(field_b="Y", field_y="Y")
 
         objects = Base.objects.db_manager("secondary").filter(instance_of=Base)
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             objects,
             [Base, ModelX, ModelY],
             transform=lambda o: o.__class__,
             ordered=False,
         )
 
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             Base.objects.db_manager("secondary").filter(instance_of=ModelX),
             [ModelX],
             transform=lambda o: o.__class__,
         )
 
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             Base.objects.db_manager("secondary").filter(instance_of=ModelY),
             [ModelY],
             transform=lambda o: o.__class__,
         )
 
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             Base.objects.db_manager("secondary").filter(
                 Q(instance_of=ModelX) | Q(instance_of=ModelY)
             ),
