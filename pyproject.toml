@@ -5,17 +5,31 @@ requires = [
     "django>=2.1",  # for makemessages
 ]
 
-[tool.isort]
-profile = "black"
-line_length = 99
-
-[tool.black]
+[tool.ruff]
 line-length = 99
-exclude = '''
-/(
-    \.git
-  | \.tox
-  | \.venv
-  | dist
-)/
-'''
+
+extend-ignore = [
+    "E501",
+]
+select = [
+    "E",
+    "F",
+    "I",
+    "W",
+]
+
+[tool.ruff.per-file-ignores]
+"example/**" = [
+    "F401",
+    "F403",
+    "F405",
+    "F841",
+    "I",
+]
+"polymorphic/tests/**" = [
+    "F401",
+    "F403",
+    "F405",
+    "F841",
+    "I",
+]
