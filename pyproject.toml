@@ -2,7 +2,7 @@
 requires = [
     "setuptools",
     # TODO: look into using python-babel instead of requiring django at build time
-    "django>=2.1",  # for makemessages
+    "django>=3.2",  # for makemessages
 ]
 
 [tool.ruff]
