@@ -8,7 +8,7 @@ from django.db.models import Case, Count, FilteredRelation, Q, When
 from django.db.utils import IntegrityError
 from django.test import TransactionTestCase
 
-from polymorphic import compat, query_translate
+from polymorphic import query_translate
 from polymorphic.managers import PolymorphicManager
 from polymorphic.models import PolymorphicTypeInvalid, PolymorphicTypeUndefined
 from polymorphic.tests.models import (

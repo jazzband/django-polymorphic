@@ -52,8 +52,6 @@ class PolymorphicModelBase(ModelBase):
     """
 
     def __new__(self, model_name, bases, attrs, **kwargs):
-        # print; print '###', model_name, '- bases:', bases
-
         # Workaround compatibility issue with six.with_metaclass() and custom Django model metaclasses:
         if not attrs and model_name == "NewBase":
             return super().__new__(self, model_name, bases, attrs, **kwargs)
