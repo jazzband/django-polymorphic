@@ -6,7 +6,6 @@ import os
 import sys
 import warnings
 
-import django
 from django.db import models
 from django.db.models.base import ModelBase
 
@@ -58,15 +57,6 @@ class PolymorphicModelBase(ModelBase):
         # Workaround compatibility issue with six.with_metaclass() and custom Django model metaclasses:
         if not attrs and model_name == "NewBase":
             return super().__new__(self, model_name, bases, attrs, **kwargs)
-
-        # Make sure that manager_inheritance_from_future is set, since django-polymorphic 1.x already
-        # simulated that behavior on the polymorphic manager to all subclasses behave like polymorphics
-        if django.VERSION < (2, 0):
-            if "Meta" in attrs:
-                if not hasattr(attrs["Meta"], "manager_inheritance_from_future"):
-                    attrs["Meta"].manager_inheritance_from_future = True
-            else:
-                attrs["Meta"] = type("Meta", (object,), {"manager_inheritance_from_future": True})
 
         # create new model
         new_class = self.call_superclass_new_method(model_name, bases, attrs, **kwargs)
@@ -128,10 +118,7 @@ class PolymorphicModelBase(ModelBase):
         and its querysets from PolymorphicQuerySet - throw AssertionError if not"""
 
         if not issubclass(type(manager), PolymorphicManager):
-            if django.VERSION < (2, 0):
-                extra = "\nConsider using Meta.manager_inheritance_from_future = True for Django 1.x projects"
-            else:
-                extra = ""
+            extra = ""
             e = (
                 'PolymorphicModel: "{0}.{1}" manager is of type "{2}", but must be a subclass of'
                 " PolymorphicManager.{extra} to support retrieving subclasses".format(

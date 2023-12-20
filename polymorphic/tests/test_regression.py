@@ -1,9 +1,6 @@
-import django
 from django.test import TestCase
 
 from polymorphic.tests.models import Bottom, Middle, Top
-
-transform_arg = {"transform": repr} if django.VERSION >= (3, 2) else {}
 
 
 class RegressionTests(TestCase):
@@ -19,15 +16,21 @@ class RegressionTests(TestCase):
 
         expected_queryset = [top, middle, bottom]
         self.assertQuerySetEqual(
-            Top.objects.order_by("pk"), [repr(r) for r in expected_queryset], **transform_arg
+            Top.objects.order_by("pk"),
+            [repr(r) for r in expected_queryset],
+            transform=repr,
         )
 
         expected_queryset = [middle, bottom]
         self.assertQuerySetEqual(
-            Middle.objects.order_by("pk"), [repr(r) for r in expected_queryset], **transform_arg
+            Middle.objects.order_by("pk"),
+            [repr(r) for r in expected_queryset],
+            transform=repr,
         )
 
         expected_queryset = [bottom]
         self.assertQuerySetEqual(
-            Bottom.objects.order_by("pk"), [repr(r) for r in expected_queryset], **transform_arg
+            Bottom.objects.order_by("pk"),
+            [repr(r) for r in expected_queryset],
+            transform=repr,
         )
