@@ -1,3 +1,4 @@
+import pytest
 from django.test import TransactionTestCase
 
 from polymorphic.models import PolymorphicModel, PolymorphicTypeUndefined
@@ -14,10 +15,13 @@ from polymorphic.utils import get_base_polymorphic_model, reset_polymorphic_ctyp
 
 class UtilsTests(TransactionTestCase):
     def test_sort_by_subclass(self):
-        self.assertEqual(
-            sort_by_subclass(Model2D, Model2B, Model2D, Model2A, Model2C),
-            [Model2A, Model2B, Model2C, Model2D, Model2D],
-        )
+        assert sort_by_subclass(Model2D, Model2B, Model2D, Model2A, Model2C) == [
+            Model2A,
+            Model2B,
+            Model2C,
+            Model2D,
+            Model2D,
+        ]
 
     def test_reset_polymorphic_ctype(self):
         """
@@ -29,12 +33,12 @@ class UtilsTests(TransactionTestCase):
         Model2B.objects.create(field1="A1", field2="B2")
         Model2A.objects.all().update(polymorphic_ctype_id=None)
 
-        with self.assertRaises(PolymorphicTypeUndefined):
+        with pytest.raises(PolymorphicTypeUndefined):
             list(Model2A.objects.all())
 
         reset_polymorphic_ctype(Model2D, Model2B, Model2D, Model2A, Model2C)
 
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             Model2A.objects.order_by("pk"),
             [Model2A, Model2D, Model2B, Model2B],
             transform=lambda o: o.__class__,
@@ -45,16 +49,16 @@ class UtilsTests(TransactionTestCase):
         Test that finding the base polymorphic model works.
         """
         # Finds the base from every level (including lowest)
-        self.assertIs(get_base_polymorphic_model(Model2D), Model2A)
-        self.assertIs(get_base_polymorphic_model(Model2C), Model2A)
-        self.assertIs(get_base_polymorphic_model(Model2B), Model2A)
-        self.assertIs(get_base_polymorphic_model(Model2A), Model2A)
+        assert get_base_polymorphic_model(Model2D) is Model2A
+        assert get_base_polymorphic_model(Model2C) is Model2A
+        assert get_base_polymorphic_model(Model2B) is Model2A
+        assert get_base_polymorphic_model(Model2A) is Model2A
 
         # Properly handles multiple inheritance
-        self.assertIs(get_base_polymorphic_model(Enhance_Inherit), Enhance_Base)
+        assert get_base_polymorphic_model(Enhance_Inherit) is Enhance_Base
 
         # Ignores PolymorphicModel itself.
-        self.assertIs(get_base_polymorphic_model(PolymorphicModel), None)
+        assert get_base_polymorphic_model(PolymorphicModel) is None
 
     def test_get_base_polymorphic_model_skip_abstract(self):
         """
@@ -71,8 +75,8 @@ class UtilsTests(TransactionTestCase):
         class C(B):
             pass
 
-        self.assertIs(get_base_polymorphic_model(A), None)
-        self.assertIs(get_base_polymorphic_model(B), B)
-        self.assertIs(get_base_polymorphic_model(C), B)
+        assert get_base_polymorphic_model(A) is None
+        assert get_base_polymorphic_model(B) is B
+        assert get_base_polymorphic_model(C) is B
 
-        self.assertIs(get_base_polymorphic_model(C, allow_abstract=True), A)
+        assert get_base_polymorphic_model(C, allow_abstract=True) is A

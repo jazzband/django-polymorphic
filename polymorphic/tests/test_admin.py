@@ -1,3 +1,4 @@
+import pytest
 from django.contrib import admin
 from django.contrib.contenttypes.models import ContentType
 from django.utils.html import escape
@@ -53,9 +54,9 @@ class PolymorphicAdminTests(AdminTestCase):
         )
 
         d_obj = Model2A.objects.all()[0]
-        self.assertEqual(d_obj.__class__, Model2D)
-        self.assertEqual(d_obj.field1, "A")
-        self.assertEqual(d_obj.field2, "B")
+        assert d_obj.__class__ == Model2D
+        assert d_obj.field1 == "A"
+        assert d_obj.field2 == "B"
 
         # -- list page
         self.admin_get_changelist(Model2A)  # asserts 200
@@ -70,10 +71,10 @@ class PolymorphicAdminTests(AdminTestCase):
         )
 
         d_obj.refresh_from_db()
-        self.assertEqual(d_obj.field1, "A2")
-        self.assertEqual(d_obj.field2, "B2")
-        self.assertEqual(d_obj.field3, "C2")
-        self.assertEqual(d_obj.field4, "D2")
+        assert d_obj.field1 == "A2"
+        assert d_obj.field2 == "B2"
+        assert d_obj.field3 == "C2"
+        assert d_obj.field4 == "D2"
 
         # -- history
         self.admin_get_history(Model2A, d_obj.pk)
@@ -81,7 +82,7 @@ class PolymorphicAdminTests(AdminTestCase):
         # -- delete
         self.admin_get_delete(Model2A, d_obj.pk)
         self.admin_post_delete(Model2A, d_obj.pk)
-        self.assertRaises(Model2A.DoesNotExist, lambda: d_obj.refresh_from_db())
+        pytest.raises(Model2A.DoesNotExist, (lambda: d_obj.refresh_from_db()))
 
     def test_admin_inlines(self):
         """
@@ -103,7 +104,7 @@ class PolymorphicAdminTests(AdminTestCase):
             inlines = (Inline,)
 
         parent = InlineParent.objects.create(title="FOO")
-        self.assertEqual(parent.inline_children.count(), 0)
+        assert parent.inline_children.count() == 0
 
         # -- get edit page
         response = self.admin_get_change(InlineParent, parent.pk)
@@ -133,9 +134,9 @@ class PolymorphicAdminTests(AdminTestCase):
         )
 
         parent.refresh_from_db()
-        self.assertEqual(parent.title, "FOO2")
-        self.assertEqual(parent.inline_children.count(), 1)
+        assert parent.title == "FOO2"
+        assert parent.inline_children.count() == 1
         child = parent.inline_children.all()[0]
-        self.assertEqual(child.__class__, InlineModelB)
-        self.assertEqual(child.field1, "A2")
-        self.assertEqual(child.field2, "B2")
+        assert child.__class__ == InlineModelB
+        assert child.field1 == "A2"
+        assert child.field2 == "B2"
