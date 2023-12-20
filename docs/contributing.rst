@@ -13,7 +13,7 @@ We require features to be backed by a unit test.
 This way, we can test *django-polymorphic* against new Django versions.
 To run the included test suite, execute::
 
-    py.test
+    pytest
 
 To test support for multiple Python and Django versions, run tox from the repository root::
 
@@ -23,8 +23,6 @@ To test support for multiple Python and Django versions, run tox from the reposi
 The Python versions need to be installed at your system.
 On Linux, download the versions at http://www.python.org/download/releases/.
 On MacOS X, use Homebrew_ to install other Python versions.
-
-We currently support Python 3.5, 3.6, 3.7, and 3.8.
 
 
 Example project
