@@ -140,7 +140,7 @@ def translate_polymorphic_field_path(queryset_model, field_path):
     classname, sep, pure_field_path = field_path.partition("___")
     if not sep:
         return field_path
-    assert classname, "PolymorphicModel: %s: bad field specification" % field_path
+    assert classname, f"PolymorphicModel: {field_path}: bad field specification"
 
     negated = False
     if classname[0] == "-":
@@ -151,10 +151,7 @@ def translate_polymorphic_field_path(queryset_model, field_path):
         # the user has app label prepended to class name via __ => use Django's get_model function
         appname, sep, classname = classname.partition("__")
         model = apps.get_model(appname, classname)
-        assert model, "PolymorphicModel: model {} (in app {}) not found!".format(
-            model.__name__,
-            appname,
-        )
+        assert model, f"PolymorphicModel: model {model.__name__} (in app {appname}) not found!"
         if not issubclass(model, queryset_model):
             e = (
                 'PolymorphicModel: queryset filter error: "'
@@ -184,10 +181,7 @@ def translate_polymorphic_field_path(queryset_model, field_path):
 
         submodels = _get_all_sub_models(queryset_model)
         model = submodels.get(classname, None)
-        assert model, "PolymorphicModel: model {} not found (not a subclass of {})!".format(
-            classname,
-            queryset_model.__name__,
-        )
+        assert model, f"PolymorphicModel: model {classname} not found (not a subclass of {queryset_model.__name__})!"
 
     basepath = _create_base_path(queryset_model, model)
 
@@ -214,15 +208,13 @@ def _get_all_sub_models(base_model):
         if issubclass(model, models.Model) and model != models.Model:
             # model name is occurring twice in submodel inheritance tree => Error
             if model.__name__ in result and model != result[model.__name__]:
+                name1 = f"{model._meta.app_label}.{model.__name__}"
+                name2 = (
+                    f"{result[model.__name__]._meta.app_label}.{result[model.__name__].__name__}"
+                )
                 raise FieldError(
-                    "PolymorphicModel: model name alone is ambiguous: %s.%s and %s.%s match!\n"
-                    "In this case, please use the syntax: applabel__ModelName___field"
-                    % (
-                        model._meta.app_label,
-                        model.__name__,
-                        result[model.__name__]._meta.app_label,
-                        result[model.__name__].__name__,
-                    )
+                    f"PolymorphicModel: model name alone is ambiguous: {name1} and {name2} match!\n"
+                    f"In this case, please use the syntax: applabel__ModelName___field"
                 )
 
             result[model.__name__] = model
@@ -243,7 +235,7 @@ def _create_base_path(baseclass, myclass):
             if b._meta.abstract or b._meta.proxy:
                 return _get_query_related_name(myclass)
             else:
-                return path + "__" + _get_query_related_name(myclass)
+                return f"{path}__{_get_query_related_name(myclass)}"
     return ""
 
 

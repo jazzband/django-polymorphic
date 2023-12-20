@@ -188,7 +188,7 @@ class BasePolymorphicModelFormSet(BaseModelFormSet):
                     ct_id = int(self.data[f"{prefix}-polymorphic_ctype"])
                 except (KeyError, ValueError):
                     raise ValidationError(
-                        "Formset row {} has no 'polymorphic_ctype' defined!".format(prefix)
+                        f"Formset row {prefix} has no 'polymorphic_ctype' defined!"
                     )
 
                 model = ContentType.objects.get_for_id(ct_id).model_class()
@@ -243,10 +243,8 @@ class BasePolymorphicModelFormSet(BaseModelFormSet):
         except KeyError:
             # This may happen when the query returns objects of a type that was not handled by the formset.
             raise UnsupportedChildType(
-                "The '{}' found a '{}' model in the queryset, "
-                "but no form class is registered to display it.".format(
-                    self.__class__.__name__, model.__name__
-                )
+                f"The '{self.__class__.__name__}' found a '{model.__name__}' model in the queryset, "
+                f"but no form class is registered to display it."
             )
 
     def is_multipart(self):

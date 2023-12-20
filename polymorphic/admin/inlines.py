@@ -38,7 +38,7 @@ class PolymorphicInlineModelAdmin(InlineModelAdmin):
     #: This can be redefined for subclasses.
     polymorphic_media = Media(
         js=(
-            "admin/js/vendor/jquery/jquery{}.js".format("" if settings.DEBUG else ".min"),
+            f"admin/js/vendor/jquery/{'jquery' if settings.DEBUG else 'jquery.min'}.js",
             "admin/js/jquery.init.js",
             "polymorphic/js/polymorphic_inlines.js",
         ),

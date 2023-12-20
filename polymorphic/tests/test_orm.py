@@ -135,8 +135,7 @@ class PolymorphicTests(TransactionTestCase):
   <BlogA: id 6, name (CharField) "B3", info (CharField) "i3">,
   <BlogA: id 5, name (CharField) "B2", info (CharField) "i2">,
   <BlogA: id 1, name (CharField) "B1", info (CharField) "i1"> ]"""
-        x = "\n" + repr(BlogBase.objects.order_by("-name"))
-        assert x == expected
+        assert repr(BlogBase.objects.order_by("-name")).strip() == expected.strip()
 
         # test ordering for field in one subclass only
         # MySQL and SQLite return this order
@@ -161,8 +160,10 @@ class PolymorphicTests(TransactionTestCase):
   <BlogA: id 5, name (CharField) "B2", info (CharField) "i2">,
   <BlogA: id 1, name (CharField) "B1", info (CharField) "i1"> ]"""
 
-        x = "\n" + repr(BlogBase.objects.order_by("-BlogA___info"))
-        assert (x == expected1) or (x == expected2)
+        assert repr(BlogBase.objects.order_by("-BlogA___info")).strip() in (
+            expected1.strip(),
+            expected2.strip(),
+        )
 
     def test_limit_choices_to(self):
         """
@@ -203,8 +204,8 @@ class PolymorphicTests(TransactionTestCase):
         c = UUIDPlainC.objects.create(field1="C1", field2="C2", field3="C3")
         qs = UUIDPlainA.objects.all()
         # Test that primary key values are valid UUIDs
-        assert uuid.UUID(("urn:uuid:%s" % a.pk), version=1) == a.pk
-        assert uuid.UUID(("urn:uuid:%s" % c.pk), version=1) == c.pk
+        assert uuid.UUID(f"urn:uuid:{a.pk}", version=1) == a.pk
+        assert uuid.UUID(f"urn:uuid:{c.pk}", version=1) == c.pk
 
     def create_model2abcd(self):
         """
@@ -903,7 +904,7 @@ class PolymorphicTests(TransactionTestCase):
         object1 = ProxyModelBase.objects.get(name="object1")
         object2 = ProxyModelBase.objects.get(name="object2")
         assert repr(object1) == (
-            '<ProxyModelA: id %i, name (CharField) "object1", field1 (CharField) "">' % object1_pk
+            f'<ProxyModelA: id {object1_pk}, name (CharField) "object1", field1 (CharField) "">'
         )
         assert repr(object2) == (
             '<ProxyModelB: id %i, name (CharField) "object2", field2 (CharField) "bb">'
@@ -915,7 +916,7 @@ class PolymorphicTests(TransactionTestCase):
         # Same for lists
         objects = list(ProxyModelBase.objects.all().order_by("name"))
         assert repr(objects[0]) == (
-            '<ProxyModelA: id %i, name (CharField) "object1", field1 (CharField) "">' % object1_pk
+            f'<ProxyModelA: id {object1_pk}, name (CharField) "object1", field1 (CharField) "">'
         )
         assert repr(objects[1]) == (
             '<ProxyModelB: id %i, name (CharField) "object2", field2 (CharField) "bb">'
