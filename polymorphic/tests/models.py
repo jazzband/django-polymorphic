@@ -206,10 +206,7 @@ class MROBase3(models.Model):
 
 
 class MRODerived(MROBase2, MROBase3):
-    if django.VERSION < (3, 0):
-
-        class Meta:
-            manager_inheritance_from_future = True
+    pass
 
 
 class ParentModelWithManager(PolymorphicModel):

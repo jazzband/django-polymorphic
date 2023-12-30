@@ -6,8 +6,6 @@ from django.db import models
 from django.db.models.fields.related import ForwardManyToOneDescriptor, ReverseOneToOneDescriptor
 from django.db.utils import DEFAULT_DB_ALIAS
 
-from polymorphic.compat import with_metaclass
-
 from .base import PolymorphicModelBase
 from .managers import PolymorphicManager
 from .query_translate import translate_polymorphic_Q_object
@@ -24,7 +22,7 @@ class PolymorphicTypeInvalid(RuntimeError):
     pass
 
 
-class PolymorphicModel(with_metaclass(PolymorphicModelBase, models.Model)):
+class PolymorphicModel(models.Model, metaclass=PolymorphicModelBase):
     """
     Abstract base class that provides polymorphic behaviour
     for any model directly or indirectly derived from it.
