@@ -42,7 +42,7 @@ class GenericPolymorphicFormSetChild(PolymorphicFormSetChild):
             not isinstance(ct_field, models.ForeignKey)
             or ct_field.remote_field.model != ContentType
         ):
-            raise Exception("fk_name '%s' is not a ForeignKey to ContentType" % ct_field)
+            raise Exception(f"fk_name '{ct_field}' is not a ForeignKey to ContentType")
 
         fk_field = opts.get_field(self.fk_field)  # let the exception propagate
         exclude.extend([ct_field.name, fk_field.name])

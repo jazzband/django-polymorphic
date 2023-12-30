@@ -35,8 +35,8 @@ def print_timing(func, message="", iterations=1):
         for r in results:
             res_sum += r
         print(
-            "%s%-19s: %.4f ms, %i queries (%i times)"
-            % (message, func.func_name, res_sum, len(connection.queries), iterations)
+            f"{message}{func.func_name:<19}: {res_sum:.4f} ms, "
+            f"{len(connection.queries)} queries ({iterations} times)"
         )
         sys.stdout.flush()
 
@@ -106,13 +106,12 @@ def poly_sql_query():
 def poly_sql_query2():
     cursor = connection.cursor()
     cursor.execute(
-        """
+        f"""
         SELECT id, pexp_testmodela.field1
         FROM pexp_testmodela
-        WHERE pexp_testmodela.field1=%i
+        WHERE pexp_testmodela.field1={rnd.randint(0, 100)}
         ORDER BY pexp_testmodela.id
         """
-        % rnd.randint(0, 100)
     )
     # row=cursor.fetchone()
     return

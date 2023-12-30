@@ -39,8 +39,8 @@ def print_timing(func, message="", iterations=1):
             res_sum += r
         median = res_sum / len(results)
         print(
-            "%s%-19s: %.0f ms, %i queries"
-            % (message, func.func_name, median, len(connection.queries) / len(results))
+            f"{message}{func.func_name:<19}: {median:.0f} ms, "
+            f"{len(connection.queries) / len(results):d} queries"
         )
         sys.stdout.flush()
 
@@ -61,7 +61,9 @@ def run_vanilla_any_poly(func, iterations=1):
 def bench_create(model):
     for i in range(num_objects):
         model.objects.create(
-            field1="abc" + str(i), field2="abcd" + str(i), field3="abcde" + str(i)
+            field1=f"abc{i}",
+            field2=f"abcd{i}",
+            field3=f"abcde{i}",
         )
     # print 'count:',model.objects.count()
 

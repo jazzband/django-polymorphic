@@ -417,7 +417,7 @@ class PolymorphicQuerySet(QuerySet):
         for real_concrete_class, idlist in idlist_per_model.items():
             indices = indexlist_per_model[real_concrete_class]
             real_objects = real_concrete_class._base_objects.db_manager(self.db).filter(
-                **{("%s__in" % pk_name): idlist}
+                **{(f"{pk_name}__in"): idlist}
             )
             # copy select related configuration to new qs
             real_objects.query.select_related = self.query.select_related
@@ -504,15 +504,15 @@ class PolymorphicQuerySet(QuerySet):
 
     def __repr__(self, *args, **kwargs):
         if self.model.polymorphic_query_multiline_output:
-            result = [repr(o) for o in self.all()]
-            return "[ " + ",\n  ".join(result) + " ]"
+            result = ",\n  ".join(repr(o) for o in self.all())
+            return f"[ {result} ]"
         else:
             return super().__repr__(*args, **kwargs)
 
     class _p_list_class(list):
         def __repr__(self, *args, **kwargs):
-            result = [repr(o) for o in self]
-            return "[ " + ",\n  ".join(result) + " ]"
+            result = ",\n  ".join(repr(o) for o in self)
+            return f"[ {result} ]"
 
     def get_real_instances(self, base_result_objects=None):
         """
