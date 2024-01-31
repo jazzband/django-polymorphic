@@ -47,9 +47,4 @@ jobs:
       - run: pip install -U tox tox-gh-actions django
       # TODO: postgres setup and proper djangomain testing
       - run: python -m tox
-      - run: |
-          mkdir /tmp/coverage
-          find .tox -type f -name 'coverage*xml' -exec mv '{}' /tmp/coverage ';'
       - uses: codecov/codecov-action@v3
-        with:
-          directory: /tmp/coverage
