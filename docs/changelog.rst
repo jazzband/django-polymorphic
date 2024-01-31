@@ -1,6 +1,10 @@
 Changelog
 =========
 
+v4.3.0 (202X-XX-XX)
+-------------------
+* Fixed `Support Q expressions that contain subquery expressions <https://github.com/jazzband/django-polymorphic/pull/572>`_
+
 v4.2.0 (2025-12-04)
 -------------------
 

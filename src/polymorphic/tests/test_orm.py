@@ -4,7 +4,7 @@ import uuid
 
 from django.contrib.contenttypes.models import ContentType
 from django.db import models, connection
-from django.db.models import Case, Count, FilteredRelation, Q, Sum, When, F
+from django.db.models import Case, Count, FilteredRelation, Q, Sum, When, Exists, OuterRef
 from django.db.utils import IntegrityError, NotSupportedError
 from django.test import TransactionTestCase
 from django.test.utils import CaptureQueriesContext
@@ -25,6 +25,9 @@ from polymorphic.tests.models import (
     CustomPkInherit,
     Enhance_Base,
     Enhance_Inherit,
+    InlineParent,
+    InlineModelA,
+    InlineModelB,
     InitTestModelSubclass,
     Model2A,
     Model2B,
@@ -1422,3 +1425,76 @@ class PolymorphicTests(TransactionTestCase):
         assert pur.color == "blue"
         # issues/615 fixes following line:
         assert pur.home == "Duckburg"
+
+    def test_subqueries(self):
+        PlainA.objects.all().delete()
+        InlineParent.objects.all().delete()
+        InlineModelA.objects.all().delete()
+        InlineModelB.objects.all().delete()
+
+        pa1 = PlainA.objects.create(field1="plain1")
+        PlainA.objects.create(field1="plain2")
+
+        ip1 = InlineParent.objects.create(title="parent1")
+        ip2 = InlineParent.objects.create(title="parent2")
+
+        ima1 = InlineModelA.objects.create(parent=ip1, field1="ima1")
+        ima2 = InlineModelA.objects.create(parent=ip2, field1="ima2")
+        imb1 = InlineModelB.objects.create(parent=ip1, field1="imab1", field2="imb1", plain_a=pa1)
+        imb2 = InlineModelB.objects.create(parent=ip2, field1="imab2", field2="imb2")
+
+        results = InlineModelA.objects.filter(
+            Exists(PlainA.objects.filter(inline_bs=OuterRef("pk")))
+            | Exists(InlineParent.objects.filter(inline_children=OuterRef("pk")))
+        )
+
+        assert ima1 in results
+        assert ima2 in results
+        assert imb1 in results
+        assert imb2 in results
+
+        results = InlineModelA.objects.filter(
+            Exists(PlainA.objects.filter(inline_bs=OuterRef("pk"), field1="plain1"))
+            | Exists(InlineParent.objects.filter(inline_children=OuterRef("pk"), title="parent2"))
+        )
+
+        assert ima1 not in results
+        assert ima2 in results
+        assert imb1 in results
+        assert imb2 in results
+
+        results = InlineModelA.objects.filter(
+            Exists(PlainA.objects.filter(inline_bs=OuterRef("pk")))
+        )
+
+        assert ima1 not in results
+        assert ima2 not in results
+        assert imb1 in results
+        assert imb2 not in results
+
+        results = InlineModelA.objects.filter(
+            Exists(PlainA.objects.filter(inline_bs=OuterRef("pk"))), field1="imab1"
+        )
+
+        assert ima1 not in results
+        assert ima2 not in results
+        assert imb1 in results
+        assert imb2 not in results
+
+        results = InlineModelA.objects.filter(
+            Exists(PlainA.objects.filter(inline_bs=OuterRef("pk"))), InlineModelB___field2="imb2"
+        )
+
+        assert not results
+
+        results = InlineModelA.objects.filter(
+            ~Exists(PlainA.objects.filter(inline_bs=OuterRef("pk"))), InlineModelB___field2="imb2"
+        )
+
+        assert len(results) == 1
+        assert imb2 in results
+
+        PlainA.objects.all().delete()
+        InlineParent.objects.all().delete()
+        InlineModelA.objects.all().delete()
+        InlineModelB.objects.all().delete()
