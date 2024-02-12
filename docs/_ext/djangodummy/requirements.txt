@@ -1,5 +1,5 @@
 # for readthedocs
 # Remaining requirements are picked up from setup.py
-Django == 3.2.23
+Django == 3.2.24
 django-extra-views == 0.14.0
 sphinxcontrib-django == 0.5.1
