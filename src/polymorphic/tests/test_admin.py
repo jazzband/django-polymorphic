@@ -93,6 +93,15 @@ class PolymorphicAdminTests(AdminTestCase):
         self.admin_post_delete(Model2A, d_obj.pk)
         pytest.raises(Model2A.DoesNotExist, (lambda: d_obj.refresh_from_db()))
 
+    def test_get_child_inlines(self):
+        from .admin import Inline
+
+        inline = Inline(parent_model=InlineParent, admin_site=admin.site)
+        child_inlines = inline.get_child_inlines()
+        self.assertEqual(len(child_inlines), 2)
+        self.assertEqual(child_inlines[0], Inline.InlineModelAChild)
+        self.assertEqual(child_inlines[1], Inline.InlineModelBChild)
+
     def test_admin_inlines(self):
         """
         Test the registration of inline models.
@@ -205,9 +214,6 @@ class _GenericAdminFormTest(StaticLiveServerTestCase):
 
     def setUp(self):
         """Create an admin user before running tests."""
-        self.admin_username = "admin"
-        self.admin_password = "password"
-
         self.page = self.browser.new_page()
         # Log in to the Django admin
         self.page.goto(f"{self.live_server_url}/admin/login/")
