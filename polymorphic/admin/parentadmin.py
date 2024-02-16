@@ -123,9 +123,14 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
         Return a list of polymorphic types for which the user has the permission to perform the given action.
         """
         self._lazy_setup()
+
+        child_models = self.get_child_models()
+        if not child_models:
+            raise ImproperlyConfigured("No child models are available.")
+
         choices = []
         content_types = ContentType.objects.get_for_models(
-            *self.get_child_models(), for_concrete_models=False
+            *child_models, for_concrete_models=False
         )
 
         for model, ct in content_types.items():
