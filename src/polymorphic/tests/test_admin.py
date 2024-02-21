@@ -278,3 +278,88 @@ class StackedInlineTests(_GenericAdminFormTest):
 
         suggestions = self.page.locator("ul.select2-results__options > li").all_inner_texts()
         assert suggestions == ["Brian"]
+
+
+class PolymorphicFormTests(_GenericAdminFormTest):
+    def setUp(self):
+        Model2A.objects.all().delete()
+        super().setUp()
+
+    def tearDown(self):
+        Model2A.objects.all().delete()
+        super().tearDown()
+
+    def test_admin_polymorphic_add(self):
+        model2b_ct = ContentType.objects.get_for_model(Model2B)
+        model2c_ct = ContentType.objects.get_for_model(Model2C)
+        model2d_ct = ContentType.objects.get_for_model(Model2D)
+
+        for model_type, fields in [
+            (
+                model2b_ct,
+                {
+                    "field1": "2B1",
+                    "field2": "2B2",
+                },
+            ),
+            (
+                model2c_ct,
+                {
+                    "field1": "2C1",
+                    "field2": "2C2",
+                    "field3": "2C3",
+                },
+            ),
+            (
+                model2d_ct,
+                {
+                    "field1": "2D1",
+                    "field2": "2D2",
+                    "field3": "2D3",
+                    "field4": "2D4",
+                },
+            ),
+        ]:
+            self.page.goto(self.add_url(Model2A))
+
+            # https://github.com/jazzband/django-polymorphic/pull/580
+            expect(self.page.locator("div.breadcrumbs")).to_have_count(1)
+            expect(self.page.locator("form#logout-form")).to_have_count(1)
+
+            self.page.locator(f"input[type=radio][value='{model_type.pk}']").check()
+            with self.page.expect_navigation(timeout=10000) as nav_info:
+                self.page.click("input[name='_save']")
+
+            response = nav_info.value
+            assert response.status < 400
+
+            for field, value in fields.items():
+                self.page.fill(f"input[name='{field}']", value)
+
+            with self.page.expect_navigation(timeout=10000) as nav_info:
+                self.page.click("input[name='_save']")
+
+            response = nav_info.value
+            assert response.status < 400
+
+        assert Model2A.objects.count() == 3
+
+        object_ids = [int(oid) for oid in self.get_object_ids(Model2A)]
+
+        assert len(object_ids) == 3
+
+        assert Model2B.objects.first().pk in object_ids
+        assert Model2C.objects.first().pk in object_ids
+        assert Model2D.objects.first().pk in object_ids
+
+        assert Model2B.objects.first().field1 == "2B1"
+        assert Model2B.objects.first().field2 == "2B2"
+
+        assert Model2C.objects.first().field1 == "2C1"
+        assert Model2C.objects.first().field2 == "2C2"
+        assert Model2C.objects.first().field3 == "2C3"
+
+        assert Model2D.objects.first().field1 == "2D1"
+        assert Model2D.objects.first().field2 == "2D2"
+        assert Model2D.objects.first().field3 == "2D3"
+        assert Model2D.objects.first().field4 == "2D4"
