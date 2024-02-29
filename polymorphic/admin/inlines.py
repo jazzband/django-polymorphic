@@ -19,7 +19,7 @@ from polymorphic.formsets import (
 )
 from polymorphic.formsets.utils import add_media
 
-from .helpers import PolymorphicInlineSupportMixin
+from .helpers import PolymorphicInlineSupportMixin, get_leaf_subclasses
 
 
 class PolymorphicInlineModelAdmin(InlineModelAdmin):
@@ -52,7 +52,7 @@ class PolymorphicInlineModelAdmin(InlineModelAdmin):
 
     #: Inlines for all model sub types that can be displayed in this inline.
     #: Each row is a :class:`PolymorphicInlineModelAdmin.Child`
-    child_inlines = ()
+    child_inlines = None
 
     def __init__(self, parent_model, admin_site):
         super().__init__(parent_model, admin_site)
@@ -76,12 +76,42 @@ class PolymorphicInlineModelAdmin(InlineModelAdmin):
         for child_inline in self.child_inline_instances:
             self._child_inlines_lookup[child_inline.model] = child_inline
 
+    def get_child_inlines(self):
+        """
+        Return the derived inline classes which this admin should handle.
+        This should return a list of tuples, exactly like :attr:`child_inlines` is.
+
+        The inline classes can be retrieved as ``base_inline.__subclasses__()``,
+        a setting in a config file, or a query of a plugin registration system at your option
+        """
+        if self.child_inlines is not None:
+            return self.child_inlines
+
+        child_inlines = get_leaf_subclasses(PolymorphicInlineModelAdmin.Child)
+        child_inlines = tuple(
+            inline
+            for inline in child_inlines
+            if (
+                inline.model is not None and
+                issubclass(inline.model, self.model)
+            )
+        )
+
+        if child_inlines:
+            return child_inlines
+
+        raise ImproperlyConfigured(
+            "No child inlines found for '{self.model.__name__}', please "
+            "define the 'child_inlines' attribute or overwrite the "
+            "'get_child_inlines()' method."
+        )
+
     def get_child_inline_instances(self):
         """
         :rtype List[PolymorphicInlineModelAdmin.Child]
         """
         instances = []
-        for ChildInlineType in self.child_inlines:
+        for ChildInlineType in self.get_child_inlines():
             instances.append(ChildInlineType(parent_inline=self))
         return instances
 
