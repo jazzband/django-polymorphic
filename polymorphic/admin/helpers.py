@@ -62,6 +62,7 @@ class PolymorphicInlineAdminFormSet(InlineAdminFormSet):
         for form in self.formset.extra_forms + self.formset.empty_forms:
             model = form._meta.model
             child_inline = self.opts.get_child_inline_instance(model)
+
             yield PolymorphicInlineAdminForm(
                 formset=self.formset,
                 form=form,
@@ -140,3 +141,19 @@ class PolymorphicInlineSupportMixin:
                 admin_formset.request = request
                 admin_formset.obj = obj
         return inline_admin_formsets
+
+
+def get_leaf_subclasses(cls):
+    "Get leaf subclasses of `cls` class"
+
+    result = []
+
+    subclasses = cls.__subclasses__()
+
+    if not subclasses:
+        result.append(cls)
+    else:
+        for subclass in subclasses:
+            result.extend(get_leaf_subclasses(subclass))
+
+    return result

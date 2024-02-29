@@ -18,6 +18,7 @@ from django.utils.translation import gettext_lazy as _
 from polymorphic.utils import get_base_polymorphic_model
 
 from .forms import PolymorphicModelChoiceForm
+from .helpers import get_leaf_subclasses
 
 
 class RegistrationClosed(RuntimeError):
@@ -113,10 +114,19 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
         The model classes can be retrieved as ``base_model.__subclasses__()``,
         a setting in a config file, or a query of a plugin registration system at your option
         """
-        if self.child_models is None:
-            raise NotImplementedError("Implement get_child_models() or child_models")
+        if self.child_models is not None:
+            return self.child_models
 
-        return self.child_models
+        child_models = get_leaf_subclasses(self.base_model)
+
+        if child_models:
+            return child_models
+
+        raise ImproperlyConfigured(
+            "No child models found for '{self.base_model.__name__}', please "
+            "define the 'child_models' attribute or overwrite the "
+            "'get_child_models' method."
+        )
 
     def get_child_type_choices(self, request, action):
         """
