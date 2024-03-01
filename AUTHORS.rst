@@ -30,6 +30,7 @@ Contributors
 * Chris Brantley
 * Christopher Glass
 * David Sanders
+* Emad Rad
 * Éric Araujo
 * Evan Borgstrom
 * Frankie Dintino
