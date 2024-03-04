@@ -239,7 +239,7 @@ This class implements the following features:
 * It allows to set :attr:`~polymorphic.admin.PolymorphicChildModelAdmin.base_form` so the derived class will automatically include other fields in the form.
 * It allows to set :attr:`~polymorphic.admin.PolymorphicChildModelAdmin.base_fieldsets` so the derived class will automatically display any extra fields.
 * Although it must be registered with admin site, by default it's hidden from admin site index page.
-  This can be overriden by adding :attr:`~polymorphic.admin.PolymorphicChildModelAdmin.show_in_index` = ``True`` in admin class.
+  This can be overridden by adding :attr:`~polymorphic.admin.PolymorphicChildModelAdmin.show_in_index` = ``True`` in admin class.
 
 
 .. _django-reversion: https://github.com/etianen/django-reversion
