@@ -101,9 +101,9 @@ class PolymorphicInlineModelAdmin(InlineModelAdmin):
             return child_inlines
 
         raise ImproperlyConfigured(
-            "No child inlines found for '{self.model.__name__}', please "
-            "define the 'child_inlines' attribute or overwrite the "
-            "'get_child_inlines()' method."
+            "No child inlines found for '{}', please define the "
+            "'child_inlines' attribute or overwrite the 'get_child_inlines()' "
+            "method.".format(self.model.__name__)
         )
 
     def get_child_inline_instances(self):
