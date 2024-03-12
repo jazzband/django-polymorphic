@@ -1,6 +1,7 @@
 """
 Seamless Polymorphic Inheritance for Django Models
 """
+
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.db.models.fields.related import ForwardManyToOneDescriptor, ReverseOneToOneDescriptor

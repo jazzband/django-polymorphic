@@ -1,6 +1,7 @@
 """
 The child admin displays the change/delete view of the subclass model.
 """
+
 import inspect
 
 from django.contrib import admin
