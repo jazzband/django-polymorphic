@@ -1,6 +1,7 @@
 """
 The parent admin displays the list view of the base model.
 """
+
 from django.contrib import admin
 from django.contrib.admin.helpers import AdminErrorList, AdminForm
 from django.contrib.admin.templatetags.admin_urls import add_preserved_filters

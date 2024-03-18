@@ -3,6 +3,7 @@ Rendering utils for admin forms;
 
 This makes sure that admin fieldsets/layout settings are exported to the template.
 """
+
 import json
 
 from django.contrib.admin.helpers import AdminField, InlineAdminForm, InlineAdminFormSet

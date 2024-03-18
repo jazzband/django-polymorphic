@@ -8,6 +8,7 @@ For every child type, there is an :class:`PolymorphicFormSetChild` instance
 that describes how to display and construct the child.
 It's parameters are very similar to the parent's factory method.
 """
+
 from .generic import (  # Can import generic here, as polymorphic already depends on the 'contenttypes' app.
     BaseGenericPolymorphicInlineFormSet,
     GenericPolymorphicFormSetChild,
