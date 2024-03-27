@@ -124,7 +124,7 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
             return child_models
 
         raise ImproperlyConfigured(
-            "No child models found for '{self.base_model.__name__}', please "
+            f"No child models found for '{self.base_model.__name__}', please "
             "define the 'child_models' attribute or overwrite the "
             "'get_child_models' method."
         )
