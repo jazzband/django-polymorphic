@@ -79,11 +79,14 @@ class PolymorphicInlineModelAdmin(InlineModelAdmin):
 
     def get_child_inlines(self):
         """
-        Return the derived inline classes which this admin should handle.
-        This should return a list of tuples, exactly like :attr:`child_inlines` is.
+        Return the derived inline classes which this admin should handle
 
-        The inline classes can be retrieved as ``base_inline.__subclasses__()``,
-        a setting in a config file, or a query of a plugin registration system at your option
+        This should return a list of tuples, exactly like
+        :attr:`child_inlines` is.
+
+        The inline classes can be retrieved as
+        ``base_inline.__subclasses__()``, a setting in a config file, or
+        a query of a plugin registration system at your option
         """
         if self.child_inlines is not None:
             return self.child_inlines

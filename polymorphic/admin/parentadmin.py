@@ -110,10 +110,13 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
     def get_child_models(self):
         """
         Return the derived model classes which this admin should handle.
-        This should return a list of tuples, exactly like :attr:`child_models` is.
 
-        The model classes can be retrieved as ``base_model.__subclasses__()``,
-        a setting in a config file, or a query of a plugin registration system at your option
+        This should return a list of tuples, exactly like
+        :attr:`child_models` is.
+
+        The model classes can be retrieved as
+        ``base_model.__subclasses__()``, a setting in a config file, or
+        a query of a plugin registration system at your option
         """
         if self.child_models is not None:
             return self.child_models
