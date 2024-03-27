@@ -1,6 +1,7 @@
 """
 QuerySet for PolymorphicModel
 """
+
 import copy
 from collections import defaultdict
 

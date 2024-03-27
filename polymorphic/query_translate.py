@@ -1,6 +1,7 @@
 """
 PolymorphicQuerySet support functions
 """
+
 import copy
 from collections import deque
 

@@ -4,6 +4,7 @@ ModelAdmin code to display polymorphic models.
 The admin consists of a parent admin (which shows in the admin with a list),
 and a child admin (which is used internally to show the edit/delete dialog).
 """
+
 # Admins for the regular models
 from .parentadmin import PolymorphicParentModelAdmin  # noqa
 from .childadmin import PolymorphicChildModelAdmin
