@@ -1,0 +1,15 @@
+version: 2
+
+sphinx:
+  builder: html
+  configuration: docs/conf.py
+
+python:
+  version: 3.7
+  install:
+    - requirements: docs/_ext/djangodummy/requirements.txt
+
+formats: all
+
+build:
+  image: latest
