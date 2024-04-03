@@ -7,7 +7,7 @@ build:
   os: ubuntu-22.04
   python:
     version: 3.12
-      install:
-        - requirements: docs/_ext/djangodummy/requirements.txt
+    install:
+      - requirements: docs/_ext/djangodummy/requirements.txt
 sphinx:
   configuration: docs/conf.py
