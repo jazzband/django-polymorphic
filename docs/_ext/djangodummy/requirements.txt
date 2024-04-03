@@ -3,3 +3,4 @@
 Django == 3.2.25
 django-extra-views == 0.14.0
 sphinxcontrib-django == 0.5.1
+sphinx_rtd_theme==2.0.0
