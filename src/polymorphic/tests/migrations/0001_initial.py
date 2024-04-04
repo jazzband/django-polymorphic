@@ -986,6 +986,17 @@ class Migration(migrations.Migration):
             },
         ),
         migrations.CreateModel(
+            name='AliasProxyChild',
+            fields=[
+            ],
+            options={
+                'proxy': True,
+                'indexes': [],
+                'constraints': [],
+            },
+            bases=('tests.proxybase',),
+        ),
+        migrations.CreateModel(
             name='ProxyChild',
             fields=[
             ],
@@ -1039,6 +1050,17 @@ class Migration(migrations.Migration):
                 'constraints': [],
             },
             bases=('tests.subclassselectorproxybasemodel',),
+        ),
+        migrations.CreateModel(
+            name='TradProxyChild',
+            fields=[
+            ],
+            options={
+                'proxy': True,
+                'indexes': [],
+                'constraints': [],
+            },
+            bases=('tests.proxybase',),
         ),
         migrations.CreateModel(
             name='Bottom',
@@ -1199,6 +1221,39 @@ class Migration(migrations.Migration):
             bases=(polymorphic.showfields.ShowFieldTypeAndContent, models.Model),
         ),
         migrations.CreateModel(
+            name='AliasOfNonProxyChild',
+            fields=[
+            ],
+            options={
+                'proxy': True,
+                'indexes': [],
+                'constraints': [],
+            },
+            bases=('tests.nonproxychild',),
+        ),
+        migrations.CreateModel(
+            name='NonAliasNonProxyChild',
+            fields=[
+            ],
+            options={
+                'proxy': True,
+                'indexes': [],
+                'constraints': [],
+            },
+            bases=('tests.nonproxychild',),
+        ),
+        migrations.CreateModel(
+            name='ProxyChildAliasProxy',
+            fields=[
+            ],
+            options={
+                'proxy': True,
+                'indexes': [],
+                'constraints': [],
+            },
+            bases=('tests.tradproxychild',),
+        ),
+        migrations.CreateModel(
             name='PurpleHeadDuck',
             fields=[
             ],
@@ -1208,6 +1263,17 @@ class Migration(migrations.Migration):
                 'constraints': [],
             },
             bases=('tests.blueheadduck', models.Model),
+        ),
+        migrations.CreateModel(
+            name='TradProxyOnProxyChild',
+            fields=[
+            ],
+            options={
+                'proxy': True,
+                'indexes': [],
+                'constraints': [],
+            },
+            bases=('tests.proxychild',),
         ),
         migrations.CreateModel(
             name='Model2D',
