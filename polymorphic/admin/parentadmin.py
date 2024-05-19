@@ -138,7 +138,7 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
         """
         self._lazy_setup()
 
-        child_models = self.get_child_models()
+        child_models = self._child_models
         if not child_models:
             raise ImproperlyConfigured("No child models are available.")
 
