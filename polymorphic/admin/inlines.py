@@ -54,6 +54,7 @@ class PolymorphicInlineModelAdmin(InlineModelAdmin):
     #: Inlines for all model sub types that can be displayed in this inline.
     #: Each row is a :class:`PolymorphicInlineModelAdmin.Child`
     child_inlines = None
+    exclude_childs = None
 
     def __init__(self, parent_model, admin_site):
         super().__init__(parent_model, admin_site)
@@ -91,7 +92,9 @@ class PolymorphicInlineModelAdmin(InlineModelAdmin):
         if self.child_inlines is not None:
             return self.child_inlines
 
-        child_inlines = get_leaf_subclasses(PolymorphicInlineModelAdmin.Child)
+        child_inlines = get_leaf_subclasses(
+            PolymorphicInlineModelAdmin.Child, self.exclude_childs
+        )
         child_inlines = tuple(
             inline
             for inline in child_inlines

@@ -144,17 +144,17 @@ class PolymorphicInlineSupportMixin:
         return inline_admin_formsets
 
 
-def get_leaf_subclasses(cls):
+def get_leaf_subclasses(cls, exclude=None):
     "Get leaf subclasses of `cls` class"
 
     result = []
 
     subclasses = cls.__subclasses__()
 
-    if not subclasses:
-        result.append(cls)
-    else:
+    if subclasses:
         for subclass in subclasses:
-            result.extend(get_leaf_subclasses(subclass))
+            result.extend(get_leaf_subclasses(subclass, exclude))
+    elif not (exclude and cls in exclude):
+        result.append(cls)
 
     return result
