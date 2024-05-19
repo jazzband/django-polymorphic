@@ -79,6 +79,11 @@ Install using ``pip``\ ...
 
     $ pip install django-polymorphic
 
+At the moment we have an unnofical version (4.0.0a). While we wait to gain access to pip. If you want to use the latest version (which works for Django >4.0.0). You can install it using
+```
+pip install git+https://github.com/jazzband/django-polymorphic.git@v4.0.0a#egg=django-polymorphic
+```
+
 License
 =======
 
