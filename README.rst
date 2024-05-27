@@ -1,4 +1,4 @@
-.. list-table:: 
+.. list-table::
     :header-rows: 0
     :widths: auto
 
