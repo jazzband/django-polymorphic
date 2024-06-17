@@ -154,7 +154,10 @@ def get_leaf_subclasses(cls, exclude=None):
     if subclasses:
         for subclass in subclasses:
             result.extend(get_leaf_subclasses(subclass, exclude))
-    elif not (exclude and cls in exclude):
+    elif not (
+        (hasattr(cls, '_meta') and cls._meta.abstract) or
+        (exclude and cls in exclude)
+    ):
         result.append(cls)
 
     return result
