@@ -1,4 +1,4 @@
-.. list-table:: 
+.. list-table::
     :header-rows: 0
     :widths: auto
 
@@ -86,7 +86,7 @@ Install using ``pip``\ ...
     $ pip install django-polymorphic
 
 
-At the moment we have an unnofical version (4.0.0a). While we wait to gain access to pip. If you want to use the latest version (which works for Django >4.0.0). You can install it using
+At the moment we have an unoffical version (4.0.0a). While we wait to gain access to pip. If you want to use the latest version (which works for Django >4.0.0). You can install it using
 
 .. code:: bash
 
