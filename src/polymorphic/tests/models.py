@@ -535,3 +535,23 @@ class UserProfile(Participant):
 class Team(models.Model):
     team_name = models.CharField(max_length=100)
     user_profiles = models.ManyToManyField(UserProfile, related_name="user_teams")
+
+
+class BlueHeadDuck(Duck):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.color = "blue"
+
+
+class HomeDuck(models.Model):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.home = "Duckburg"
+
+    class Meta:
+        abstract = True
+
+
+class PurpleHeadDuck(HomeDuck, BlueHeadDuck):
+    class Meta:
+        proxy = True
