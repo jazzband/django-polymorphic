@@ -54,6 +54,12 @@ class PolymorphicInlineModelAdmin(InlineModelAdmin):
     #: Inlines for all model sub types that can be displayed in this inline.
     #: Each row is a :class:`PolymorphicInlineModelAdmin.Child`
     child_inlines = None
+
+    #: The models that should be excluded from the auto-discovered leaf
+    #: model sub types that can be displayed in this inline. This can be
+    #: a list of models or a single model. It's useful to exclude
+    #: non-abstract base models (abstract models are always excluded)
+    #: when they don't have defined any child models.
     exclude_children = None
 
     def __init__(self, parent_model, admin_site):

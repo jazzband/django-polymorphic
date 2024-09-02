@@ -51,6 +51,12 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
 
     #: The child models that should be displayed
     child_models = None
+
+    #: The models that should be excluded from the auto-discovered child
+    #: leaf models that should be displayed. This can be a list of
+    #: models or a single model. It's useful to exclude non-abstract
+    #: base models (abstract models are always excluded) when they don't
+    #: have defined any child models.
     exclude_children = None
 
     #: Whether the list should be polymorphic too, leave to ``False`` to optimize
