@@ -128,9 +128,7 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
         if self.child_models is not None:
             return self.child_models
 
-        child_models = get_leaf_subclasses(
-            self.base_model, self.exclude_children
-        )
+        child_models = get_leaf_subclasses(self.base_model, self.exclude_children)
 
         if child_models:
             return child_models

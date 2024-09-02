@@ -104,10 +104,7 @@ class PolymorphicInlineModelAdmin(InlineModelAdmin):
         child_inlines = tuple(
             inline
             for inline in child_inlines
-            if (
-                inline.model is not None and
-                issubclass(inline.model, self.model)
-            )
+            if (inline.model is not None and issubclass(inline.model, self.model))
         )
 
         if child_inlines:
