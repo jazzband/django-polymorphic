@@ -51,7 +51,7 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
 
     #: The child models that should be displayed
     child_models = None
-    exclude_childs = None
+    exclude_children = None
 
     #: Whether the list should be polymorphic too, leave to ``False`` to optimize
     polymorphic_list = False
@@ -123,7 +123,7 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
             return self.child_models
 
         child_models = get_leaf_subclasses(
-            self.base_model, self.exclude_childs
+            self.base_model, self.exclude_children
         )
 
         if child_models:
