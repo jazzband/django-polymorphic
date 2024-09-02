@@ -147,6 +147,13 @@ class PolymorphicInlineSupportMixin:
 def get_leaf_subclasses(cls, exclude=None):
     "Get leaf subclasses of `cls` class"
 
+    if exclude is None:
+        exclude = ()
+
+    elif not isinstance(exclude, (list, tuple)):
+        # Accept single instance in `exclude`
+        exclude = (exclude,)
+
     result = []
 
     subclasses = cls.__subclasses__()
@@ -155,8 +162,7 @@ def get_leaf_subclasses(cls, exclude=None):
         for subclass in subclasses:
             result.extend(get_leaf_subclasses(subclass, exclude))
     elif not (
-        (hasattr(cls, '_meta') and cls._meta.abstract) or
-        (exclude and cls in exclude)
+        cls in exclude or (hasattr(cls, '_meta') and cls._meta.abstract)
     ):
         result.append(cls)
 
