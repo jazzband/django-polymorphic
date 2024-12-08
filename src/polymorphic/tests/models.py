@@ -2,6 +2,7 @@ import uuid
 
 import django
 from django.contrib.auth.models import Group
+from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.db.models.query import QuerySet
@@ -565,3 +566,21 @@ class HomeDuck(models.Model):
 class PurpleHeadDuck(HomeDuck, BlueHeadDuck):
     class Meta:
         proxy = True
+
+
+class Account(PolymorphicModel):
+    user = models.OneToOneField(
+        get_user_model(), primary_key=True, on_delete=models.CASCADE, related_name="account"
+    )
+
+
+class SpecialAccount1(Account):
+    extra1 = models.IntegerField(null=True, default=None, blank=True)
+
+
+class SpecialAccount1_1(SpecialAccount1):
+    extra2 = models.IntegerField(null=True, default=None, blank=True)
+
+
+class SpecialAccount2(Account):
+    extra1 = models.CharField(default="", blank=True, max_length=30)

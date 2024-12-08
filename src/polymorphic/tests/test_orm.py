@@ -2,6 +2,7 @@ import pytest
 import re
 import uuid
 
+from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
 from django.db import models, connection
 from django.db.models import Case, Count, FilteredRelation, Q, Sum, When, Exists, OuterRef
@@ -94,6 +95,10 @@ from polymorphic.tests.models import (
     UUIDResearchProject,
     Duck,
     PurpleHeadDuck,
+    Account,
+    SpecialAccount1,
+    SpecialAccount1_1,
+    SpecialAccount2,
 )
 
 
@@ -1521,3 +1526,94 @@ class PolymorphicTests(TransactionTestCase):
         InlineParent.objects.all().delete()
         InlineModelA.objects.all().delete()
         InlineModelB.objects.all().delete()
+
+    def test_one_to_one_primary_key(self):
+        # check pk name resolution
+        for mdl in [Account, SpecialAccount1, SpecialAccount1_1, SpecialAccount2]:
+            assert mdl.polymorphic_primary_key_name == mdl._meta.pk.name
+
+        user1 = get_user_model().objects.create(
+            username="user1", email="user1@example.com", password="password"
+        )
+        user2 = get_user_model().objects.create(
+            username="user2", email="user2@example.com", password="password"
+        )
+        user3 = get_user_model().objects.create(
+            username="user3", email="user3@example.com", password="password"
+        )
+        user4 = get_user_model().objects.create(
+            username="user4", email="user4@example.com", password="password"
+        )
+
+        user1_profile = SpecialAccount1_1.objects.create(user=user1, extra1=5, extra2=6)
+
+        user2_profile = SpecialAccount1.objects.create(user=user2, extra1=5)
+
+        user3_profile = SpecialAccount2.objects.create(user=user3, extra1="test")
+
+        user4_profile = SpecialAccount1_1.objects.create(user=user4, extra1=7, extra2=8)
+
+        user1.refresh_from_db()
+        assert user1.account.__class__ is SpecialAccount1_1
+        assert user1.account.extra1 == 5
+        assert user1.account.extra2 == 6
+        assert user1_profile.pk == user1.account.pk
+
+        user2.refresh_from_db()
+        assert user2.account.__class__ is SpecialAccount1
+        assert user2.account.extra1 == 5
+        assert user2_profile.pk == user2.account.pk
+        assert not hasattr(user2.account, "extra2")
+
+        user3.refresh_from_db()
+        assert user3.account.__class__ is SpecialAccount2
+        assert user3.account.extra1 == "test"
+        assert user3_profile.pk == user3.account.pk
+        assert not hasattr(user3.account, "extra2")
+
+        user4.refresh_from_db()
+        assert user4.account.__class__ is SpecialAccount1_1
+        assert user4.account.extra1 == 7
+        assert user4.account.extra2 == 8
+        assert user4_profile.pk == user4.account.pk
+
+        assert get_user_model().objects.filter(pk=user2.pk).delete() == (
+            3,
+            {"tests.SpecialAccount1": 1, "tests.Account": 1, "auth.User": 1},
+        )
+
+        assert SpecialAccount1.objects.count() == 2
+        assert Account.objects.count() == 3
+
+        remaining = get_user_model().objects.filter(
+            pk__in=[user1.pk, user2.pk, user3.pk, user4.pk]
+        )
+        assert remaining.count() == 3
+        for usr, expected in zip(
+            remaining.order_by("pk"), (user1_profile, user3_profile, user4_profile)
+        ):
+            assert usr.account == expected
+
+        assert get_user_model().objects.filter(pk__in=[user3.pk]).delete() == (
+            3,
+            {"tests.SpecialAccount2": 1, "tests.Account": 1, "auth.User": 1},
+        )
+
+        assert Account.objects.count() == 2
+
+        assert SpecialAccount1_1.objects.all().delete() == (
+            6,
+            {"tests.SpecialAccount1_1": 2, "tests.SpecialAccount1": 2, "tests.Account": 2},
+        )
+
+        assert Account.objects.count() == 0
+
+        remaining = get_user_model().objects.filter(pk__gte=user1.pk)
+        assert remaining.count() == 2
+        for usr in remaining:
+            assert not hasattr(usr, "account")
+
+        assert get_user_model().objects.filter(pk__in=[user1.pk, user4.pk]).delete() == (
+            2,
+            {"auth.User": 2},
+        )
