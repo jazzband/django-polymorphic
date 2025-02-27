@@ -277,7 +277,8 @@ class PolymorphicQuerySet(QuerySet):
                 tree_node_test___lookup(self.model, a)
             elif hasattr(a, "get_source_expressions"):
                 for source_expression in a.get_source_expressions():
-                    test___lookup(source_expression)
+                    if source_expression is not None:
+                        test___lookup(source_expression)
             else:
                 assert "___" not in a.name, ___lookup_assert_msg
 
