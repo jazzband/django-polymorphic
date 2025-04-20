@@ -267,7 +267,7 @@ class PolymorphicQuerySet(QuerySet):
                     for i in range(len(node.children)):
                         child = node.children[i]
 
-                        if type(child) == tuple:
+                        if type(child) is tuple:
                             # this Q object child is a tuple => a kwarg like Q( instance_of=ModelB )
                             assert "___" not in child[0], ___lookup_assert_msg
                         else:
