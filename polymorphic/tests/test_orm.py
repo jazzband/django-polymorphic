@@ -321,6 +321,13 @@ class PolymorphicTests(TransactionTestCase):
         o = Model2A.objects.non_polymorphic().get(field1="C1")
         assert o.get_real_instance().__class__ == Model2C
 
+    def test_get_real_instance_with_no_model_class(self):
+        ctype = ContentType.objects.create(app_label="tests", model="nonexisting")
+        o = Model2A.objects.create(field1="A1", polymorphic_ctype=ctype)
+
+        assert o.get_real_instance_class() is None
+        assert o.get_real_instance().__class__ == Model2A
+
     def test_non_polymorphic(self):
         self.create_model2abcd()
 
