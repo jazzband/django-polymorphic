@@ -14,7 +14,6 @@ import os
 import sys
 
 import django
-import sphinx_rtd_theme
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -273,7 +272,7 @@ intersphinx_mapping = {
         "https://docs.djangoproject.com/en/stable",
         "https://docs.djangoproject.com/en/stable/_objects/",
     ),
-    "python": ('https://docs.python.org/3', None)
+    "python": ("https://docs.python.org/3", None),
 }
 
 # autodoc settings
