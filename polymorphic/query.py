@@ -260,7 +260,6 @@ class PolymorphicQuerySet(QuerySet):
         def test___lookup(a):
             """*args might be complex expressions too in django 1.8 so
             the testing for a '___' is rather complex on this one"""
-
             if isinstance(a, Q):
 
                 def tree_node_test___lookup(my_model, node):
