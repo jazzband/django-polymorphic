@@ -4,7 +4,7 @@ import uuid
 
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
-from django.db.models import Case, Count, FilteredRelation, Q, When
+from django.db.models import Case, Count, FilteredRelation, Q, Sum, When
 from django.db.utils import IntegrityError
 from django.test import TransactionTestCase
 
@@ -35,6 +35,7 @@ from polymorphic.tests.models import (
     ModelExtraC,
     ModelExtraExternal,
     ModelFieldNameTest,
+    ModelOrderLine,
     ModelShow1,
     ModelShow1_plain,
     ModelShow2,
@@ -982,6 +983,12 @@ class PolymorphicTests(TransactionTestCase):
             match="model lookup supported for keyword arguments only",
         ):
             Model2A.objects.aggregate(Count("Model2B___field2"))
+
+    def test_polymorphic__aggregate_empty_queryset(self):
+        """test the fix for test___lookup in Django 5.1+"""
+        line = ModelOrderLine.objects.create()
+        result = line.articles.aggregate(Sum("sales_points"))
+        assert result == {"sales_points__sum": None}
 
     def test_polymorphic__complex_aggregate(self):
         """test (complex expression on) aggregate (should work for annotate either)"""
