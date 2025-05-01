@@ -260,8 +260,6 @@ class PolymorphicQuerySet(QuerySet):
         def test___lookup(a):
             """*args might be complex expressions too in django 1.8 so
             the testing for a '___' is rather complex on this one"""
-            if a is None:
-                return  # since Django v5.1, get_source_expressions() return can have None in its items
 
             if isinstance(a, Q):
 
