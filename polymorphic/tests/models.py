@@ -189,6 +189,22 @@ class ModelWithMyManager2(ShowFieldTypeAndContent, Model2A):
     field4 = models.CharField(max_length=10)
 
 
+class ModelArticle(PolymorphicModel):
+    sales_points = models.IntegerField()
+
+
+class ModelPackage(ModelArticle):
+    name = models.CharField(max_length=100)
+
+
+class ModelComponent(ModelArticle):
+    name = models.CharField(max_length=100)
+
+
+class ModelOrderLine(models.Model):
+    articles = models.ManyToManyField(ModelArticle, related_name="orderline")
+
+
 class MROBase1(ShowFieldType, PolymorphicModel):
     objects = MyManager()
     field1 = models.CharField(max_length=10)  # needed as MyManager uses it

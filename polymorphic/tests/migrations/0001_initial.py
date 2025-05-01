@@ -2064,4 +2064,86 @@ class Migration(migrations.Migration):
             },
             bases=("auth.group", models.Model),
         ),
+        migrations.CreateModel(
+            name="ModelArticle",
+            fields=[
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "polymorphic_ctype",
+                    models.ForeignKey(
+                        editable=False,
+                        null=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="polymorphic_oms.article_set+",
+                        to="contenttypes.contenttype",
+                    ),
+                ),
+                (
+                    "sales_points",
+                    models.IntegerField(null=True),
+                ),
+            ],
+        ),
+        migrations.CreateModel(
+            name="ModelPackage",
+            fields=[
+                (
+                    "modelarticle_ptr",
+                    models.OneToOneField(
+                        auto_created=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        parent_link=True,
+                        primary_key=True,
+                        serialize=False,
+                        to="tests.modelarticle",
+                    ),
+                ),
+                ("name", models.CharField(max_length=100)),
+            ],
+            bases=("tests.modelarticle", models.Model),
+        ),
+        migrations.CreateModel(
+            name="ModelComponent",
+            fields=[
+                (
+                    "modelarticle_ptr",
+                    models.OneToOneField(
+                        auto_created=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        parent_link=True,
+                        primary_key=True,
+                        serialize=False,
+                        to="tests.modelarticle",
+                    ),
+                ),
+                ("name", models.CharField(max_length=100)),
+            ],
+            bases=("tests.modelarticle", models.Model),
+        ),
+        migrations.CreateModel(
+            name="ModelOrderLine",
+            fields=[
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "articles",
+                    models.ManyToManyField(related_name="modelorderline", to="tests.ModelArticle"),
+                ),
+            ]
+        )
     ]
