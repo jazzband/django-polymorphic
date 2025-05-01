@@ -157,8 +157,9 @@ class PolymorphicModel(models.Model, metaclass=PolymorphicModelBase):
         retrieve objects, then the complete object with it's real class/type
         and all fields may be retrieved with this method.
 
-        If the model of the object's actual type does not exist (e.g. it was
-        removed but its ContentType still exists), this method returns self.
+        If the model of the object's actual type does not exist (i.e. its
+        ContentType is stale), this method raises a
+        :class:`~polymorphic.models.PolymorphicTypeInvalid` exception.
 
         .. note::
             Each method call executes one db query (if necessary).
@@ -166,8 +167,13 @@ class PolymorphicModel(models.Model, metaclass=PolymorphicModelBase):
             to upcast a complete list in a single efficient query.
         """
         real_model = self.get_real_instance_class()
-        if real_model == self.__class__ or real_model is None:
+        if real_model == self.__class__:
             return self
+        if real_model is None:
+            raise PolymorphicTypeInvalid(
+                f"ContentType {self.polymorphic_ctype_id} for {self.__class__} "
+                f"#{self.pk} does not have a corresponding model!"
+            )
         return real_model.objects.db_manager(self._state.db).get(pk=self.pk)
 
     def __init__(self, *args, **kwargs):
