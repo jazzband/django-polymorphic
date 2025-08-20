@@ -1,9 +1,89 @@
 [build-system]
-requires = [
-    "setuptools",
-    # TODO: look into using python-babel instead of requiring django at build time
-    "django>=3.2",  # for makemessages
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "django-polymorphic"
+dynamic = ["version"]
+description = "Seamless polymorphic inheritance for Django models."
+readme = "README.rst"
+license = "BSD-3-Clause"
+license-files = [ "LICENSE" ]
+requires-python = ">=3.9,<4.0"
+repository = "https://github.com/jazzband/django-polymorphic"
+homepage = "https://django-polymorphic.rtfd.io"
+authors = [
+  {name = "Bert Constantin", email = "bert.constantin@gmx.de"},
+  {name = "Diederik van der Boor", email = "vdboor@edoburu.nl"},
+  {name = "Christopher Glass", email = "tribaal@ubuntu.com"},
 ]
+maintainers = [
+  {name = "Brian Kohan", email = "bckohan@gmail.com"}
+]
+keywords = [
+    "django", "polymorphic", "polymorphism", "django-admin", "django-orm", "django-formsets", "model"
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Web Environment",
+    "Framework :: Django",
+    "Framework :: Django :: 3.2",
+    "Framework :: Django :: 4.0",
+    "Framework :: Django :: 4.1",
+    "Framework :: Django :: 4.2",
+    "Framework :: Django :: 5.0",
+    "Framework :: Django :: 5.1",
+    "Framework :: Django :: 5.2",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: BSD License",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Database",
+    "Topic :: Internet :: WWW/HTTP",
+    "Topic :: Internet :: WWW/HTTP :: Site Management",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Software Development :: Libraries :: Python Modules"
+]
+dependencies = [
+    "Django >= 3.2",
+]
+
+[project.urls]
+"Download" = "https://github.com/jazzband/django-polymorphic/tarball/master"
+"Documentation" = "https://django-polymorphic.readthedocs.io"
+"Homepage" = "https://github.com/jazzband/django-polymorphic"
+"Repository" = "https://github.com/jazzband/django-polymorphic"
+"Issues" = "https://github.com/jazzband/django-polymorphic/issues"
+"Changelog" = "https://django-polymorphic.readthedocs.io/en/stable/changelog.html"
+"Code_of_Conduct" = "https://github.com/django-commons/membership/blob/main/CODE_OF_CONDUCT.md"
+
+[tool.uv]
+package = true
+
+[tool.hatch.version]
+path = "src/polymorphic/__init__.py"
+
+[tool.hatch.build.targets.sdist]
+include = ["src/polymorphic"]
+exclude = ["src/polymorphic/tests"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/polymorphic"]
+artifacts = ["*.mo"]
+
+[tool.hatch.build.targets.wheel.hooks.custom]
+require-runtime-dependencies = true  # We need Django so we have compilemessages
+
+[tool.doc8]
+max-line-length = 100
+sphinx = true
 
 [tool.ruff]
 line-length = 99
@@ -28,7 +108,7 @@ select = [
     "F841",
     "I",
 ]
-"polymorphic/tests/**" = [
+"src/polymorphic/tests/**" = [
     "F401",
     "F403",
     "F405",
@@ -37,4 +117,58 @@ select = [
 ]
 
 [tool.pytest.ini_options]
-DJANGO_SETTINGS_MODULE = "polymorphic_test_settings"
+DJANGO_SETTINGS_MODULE = "polymorphic.tests.settings"
+pythonpath = ["src"]
+django_find_project = false
+testpaths = ["src/polymorphic/tests"]
+python_files = "test_*.py"
+python_classes = "Test*"
+python_functions = "test_*"
+norecursedirs = "*.egg .eggs dist build docs .tox .git __pycache__"
+addopts = [
+    "--strict-markers",
+    "--cov"
+]
+
+[tool.coverage.run]
+source = [
+    "polymorphic"
+]
+omit = ["*/tests/*", "src/polymorphic/tests/*"]
+branch = true
+relative_files = true
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+
+[dependency-groups]
+dev = [
+    "coverage>=7.6.1",
+    "dj-database-url>=3.0.1",
+    "ipdb>=0.13.13",
+    "ipython>=8.18.1",
+    "mypy>=1.14.1",
+    "pre-commit>=3.5.0",
+    "pytest>=8.3.4",
+    "pytest-cov>=5.0.0",
+    "pytest-django>=4.10.0",
+    "ruff>=0.9.8",
+    "tox>=4.24.1",
+    "tox-uv>=1.13.1",
+]
+docs = [
+    "django-extra-views>=0.15.0",
+    "doc8>=1.1.2",
+    "readme-renderer[md]>=43.0",
+    "sphinx>=7.1.2",
+    "sphinx-autobuild>=2021.3.14",
+    "sphinx-rtd-theme>=3.0.2",
+    "sphinxcontrib-django>=2.5",
+]
+psycopg2 = [
+    "psycopg2>=2.9.10",
+]
+psycopg3 = [
+    "psycopg>=3.2.5",
+]
