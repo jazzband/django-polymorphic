@@ -1,9 +1,66 @@
 [build-system]
-requires = [
-    "setuptools",
-    # TODO: look into using python-babel instead of requiring django at build time
-    "django>=3.2",  # for makemessages
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "django-polymorphic"
+dynamic = ["version"]
+description = "Seamless polymorphic inheritance for Django models"
+readme = "README.rst"
+license = "BSD-3-Clause"
+requires-python = ">=3.8"
+authors = [
+    { name = "Bert Constantin", email = "bert.constantin@gmx.de" },
 ]
+keywords = [
+    "django",
+    "polymorphic",
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Web Environment",
+    "Framework :: Django",
+    "Framework :: Django :: 3.2",
+    "Framework :: Django :: 4.0",
+    "Framework :: Django :: 4.1",
+    "Framework :: Django :: 4.2",
+    "Framework :: Django :: 5.0",
+    "Framework :: Django :: 5.1",
+    "Framework :: Django :: 5.2",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: BSD License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Database",
+]
+dependencies = [
+    "Django >= 3.2",
+]
+
+[project.urls]
+Download = "https://github.com/jazzband/django-polymorphic/tarball/master"
+Homepage = "https://github.com/jazzband/django-polymorphic"
+
+[tool.hatch.version]
+path = "polymorphic/__init__.py"
+
+[tool.hatch.build.targets.sdist]
+include = ["polymorphic"]
+exclude = ["polymorphic/tests"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["polymorphic"]
+artifacts = ["*.mo"]
+
+[tool.hatch.build.targets.wheel.hooks.custom]
+require-runtime-dependencies = true  # We need Django so we have compilemessages
 
 [tool.ruff]
 line-length = 99
@@ -36,3 +93,8 @@ select = [
 
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "polymorphic_test_settings"
+
+[dependency-groups]
+dev = [
+    "tox>=4.25.0",
+]
