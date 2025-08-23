@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 name = "django-polymorphic"
 dynamic = ["version"]
 description = "Seamless polymorphic inheritance for Django models."
-readme = "README.rst"
+readme = "README.md"
 license = "BSD-3-Clause"
 license-files = [ "LICENSE" ]
 requires-python = ">=3.9,<4.0"
@@ -62,7 +62,7 @@ dependencies = [
 "Repository" = "https://github.com/jazzband/django-polymorphic"
 "Issues" = "https://github.com/jazzband/django-polymorphic/issues"
 "Changelog" = "https://django-polymorphic.readthedocs.io/en/stable/changelog.html"
-"Code_of_Conduct" = "https://github.com/django-commons/membership/blob/main/CODE_OF_CONDUCT.md"
+"Code_of_Conduct" = "https://jazzband.co/about/conduct"
 
 [tool.uv]
 package = true

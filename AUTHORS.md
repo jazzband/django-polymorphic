@@ -1,14 +1,8 @@
-Main authors (commit rights to the main repository)
-===================================================
+# Current Maintainer(s)
 
-* Chris Glass
-* Diederik van der Boor
-* Charlie Denton
-* Jerome Leclanche
+* Brian Kohan
 
-
-Contributors
-=============
+## Contributors
 
 * Abel Daniel
 * Adam Chainz
@@ -70,8 +64,10 @@ Contributors
 * Vail Gold
 
 
-
-Former authors / maintainers
-============================
+## Former authors / maintainers
 
 * Bert Constantin 2009/2010 (Original author, disappeared from the internet :( )
+* Chris Glass
+* Diederik van der Boor
+* Charlie Denton
+* Jerome Leclanche
