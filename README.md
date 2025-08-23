@@ -8,8 +8,8 @@
 [![PyPI status](https://img.shields.io/pypi/status/django-polymorphic.svg)](https://pypi.python.org/pypi/django-polymorphic)
 [![Documentation Status](https://readthedocs.org/projects/django-polymorphic/badge/?version=latest)](http://django-polymorphic.readthedocs.io/?badge=latest/)
 [![Code Cov](https://img.shields.io/codecov/c/github/jazzband/django-polymorphic/master.svg)](https://codecov.io/github/jazzband/django-polymorphic?branch=master)
-[![Test Status](https://github.com/jazzband/django-polymorphic/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/jazzband/django-polymorphic/actions/workflows/test.yml?query=branch:main)
-[![Lint Status](https://github.com/jazzband/django-polymorphic/actions/workflows/lint.yml/badge.svg?branch=main)](https://github.com/jazzband/django-polymorphic/actions/workflows/lint.yml?query=branch:main)
+[![Test Status](https://github.com/jazzband/django-polymorphic/actions/workflows/test.yml/badge.svg?branch=master)](https://github.com/jazzband/django-polymorphic/actions/workflows/test.yml?query=branch:master)
+[![Lint Status](https://github.com/jazzband/django-polymorphic/actions/workflows/lint.yml/badge.svg?branch=master)](https://github.com/jazzband/django-polymorphic/actions/workflows/lint.yml?query=branch:master)
 [![Published on Django Packages](https://img.shields.io/badge/Published%20on-Django%20Packages-0c3c26)](https://djangopackages.org/packages/p/django-polymorphic/)
 [![Jazzband](https://jazzband.co/static/img/badge.svg)](https://jazzband.co/)
 
@@ -70,8 +70,6 @@ The current release of [django-polymorphic](https://pypi.python.org/pypi/django-
 For more information, see the [documentation at Read the Docs](https://django-polymorphic.readthedocs.io).
 
 ### Installation
-
-Install using ``pip``\ ...
 
 ```bash
     $ pip install django-polymorphic
