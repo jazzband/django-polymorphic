@@ -158,6 +158,7 @@ dev = [
     "pytest-cov>=5.0.0",
     "pytest-django>=4.10.0",
     "ruff>=0.9.8",
+    "tomlkit>=0.13.3",
     "tox>=4.24.1",
     "tox-uv>=1.13.1",
 ]
