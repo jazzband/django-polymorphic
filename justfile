@@ -162,6 +162,19 @@ fix: lint format
 # run all static checks
 check: check-lint check-format check-types check-package check-docs check-docs-links _check-readme-quiet
 
+[script]
+_lock-python:
+    import tomlkit
+    import sys
+    f='pyproject.toml'
+    d=tomlkit.parse(open(f).read())
+    d['project']['requires-python']='=={}'.format(sys.version.split()[0])
+    open(f,'w').write(tomlkit.dumps(d))
+
+# lock to specific python and versions of given dependencies
+test-lock +PACKAGES: _lock-python
+    uv add {{ PACKAGES }}
+
 # run tests
 test *TESTS:
     @just run pytest --cov-append {{ TESTS }}
