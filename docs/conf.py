@@ -52,7 +52,7 @@ master_doc = "index"
 
 # General information about the project.
 project = "django-polymorphic"
-copyright = "2013, Bert Constantin, Chris Glass, Diederik van der Boor"
+copyright = "2013, Bert Constantin, Chris Glass, Diederik van der Boor, Brian Kohan"
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -196,7 +196,7 @@ latex_documents = [
         "index",
         "django-polymorphic.tex",
         "django-polymorphic Documentation",
-        "Bert Constantin, Chris Glass, Diederik van der Boor",
+        "Bert Constantin, Chris Glass, Diederik van der Boor, Brian Kohan",
         "manual",
     )
 ]
@@ -231,7 +231,7 @@ man_pages = [
         "index",
         "django-polymorphic",
         "django-polymorphic Documentation",
-        ["Bert Constantin, Chris Glass, Diederik van der Boor"],
+        ["Bert Constantin, Chris Glass, Diederik van der Boor", "Brian Kohan"],
         1,
     )
 ]
@@ -250,7 +250,7 @@ texinfo_documents = [
         "index",
         "django-polymorphic",
         "django-polymorphic Documentation",
-        "Bert Constantin, Chris Glass, Diederik van der Boor",
+        "Bert Constantin, Chris Glass, Diederik van der Boor, Brian Kohan",
         "django-polymorphic",
         "One line description of project.",
         "Miscellaneous",

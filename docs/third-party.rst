@@ -14,14 +14,16 @@ Add this option to your settings:
 
     GUARDIAN_GET_CONTENT_TYPE = 'polymorphic.contrib.guardian.get_polymorphic_base_content_type'
 
-This option requires django-guardian_ >= 1.4.6. Details about how this option works are available in the
-`django-guardian documentation <https://django-guardian.readthedocs.io/en/latest/configuration.html#guardian-get-content-type>`_.
+This option requires django-guardian_ >= 1.4.6. Details about how this option works are available in
+the `django-guardian documentation
+<https://django-guardian.readthedocs.io/en/latest/configuration>`_.
 
 
 django-rest-framework support
 -----------------------------
 
-The django-rest-polymorphic_ package provides polymorphic serializers that help you integrate your polymorphic models with `django-rest-framework`.
+The django-rest-polymorphic_ package provides polymorphic serializers that help you integrate your
+polymorphic models with `django-rest-framework`.
 
 
 Example
@@ -104,9 +106,12 @@ django-reversion support
 Support for django-reversion_ works as expected with polymorphic models.
 However, they require more setup than standard models. That's become:
 
-* Manually register the child models with django-reversion_, so their ``follow`` parameter can be set.
-* Polymorphic models use `multi-table inheritance <https://docs.djangoproject.com/en/dev/topics/db/models/#multi-table-inheritance>`_.
-  See the `reversion documentation <https://django-reversion.readthedocs.io/en/latest/api.html#multi-table-inheritance>`_
+* Manually register the child models with django-reversion_, so their ``follow`` parameter can be
+  set.
+* Polymorphic models use `multi-table inheritance
+  <https://docs.djangoproject.com/en/dev/topics/db/models/#multi-table-inheritance>`_.
+  See the `reversion documentation
+  <https://django-reversion.readthedocs.io/en/latest/api.html#registration-api>`_
   how to deal with this by adding a ``follow`` field for the primary key.
 * Both admin classes redefine ``object_history_template``.
 
@@ -161,7 +166,8 @@ Redefine a :file:`admin/polymorphic/object_history.html` template, so it combine
         {% breadcrumb_scope base_opts %}{{ block.super }}{% endbreadcrumb_scope %}
     {% endblock %}
 
-This makes sure both the reversion template is used, and the breadcrumb is corrected for the polymorphic model.
+This makes sure both the reversion template is used, and the breadcrumb is corrected for the
+polymorphic model.
 
 .. _django-reversion-compare-support:
 
@@ -180,7 +186,8 @@ In your parent admin, include the following method:
 
 As the compare view resolves the the parent admin, it uses it's base model to find revisions.
 This doesn't work, since it needs to look for revisions of the child model. Using this tweak,
-the view of the actual child model is used, similar to the way the regular change and delete views are redirected.
+the view of the actual child model is used, similar to the way the regular change and delete views
+are redirected.
 
 
 .. _django-extra-views: https://github.com/AndrewIngram/django-extra-views

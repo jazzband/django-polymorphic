@@ -60,9 +60,11 @@ Use ``instance_of`` or ``not_instance_of`` for narrowing the result to specific 
 Polymorphic filtering: Get all projects where Mr. Turner is involved as an artist
 or supervisor (note the three underscores):
 
->>> Project.objects.filter(Q(ArtProject___artist='T. Turner') | Q(ResearchProject___supervisor='T. Turner'))
-[ <ArtProject:      id 2, topic "Painting with Tim", artist "T. Turner">,
-  <ResearchProject: id 4, topic "Color Use in Late Cubism", supervisor "T. Turner"> ]
+.. code-block:: python
+
+    >>> Project.objects.filter(Q(ArtProject___artist='T. Turner') | Q(ResearchProject___supervisor='T. Turner'))
+    [ <ArtProject:      id 2, topic "Painting with Tim", artist "T. Turner">,
+    <ResearchProject: id 4, topic "Color Use in Late Cubism", supervisor "T. Turner"> ]
 
 This is basically all you need to know, as *django-polymorphic* mostly
 works fully automatic and just delivers the expected results.

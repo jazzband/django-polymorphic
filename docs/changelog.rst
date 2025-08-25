@@ -44,7 +44,8 @@ v3.1.0 (2021-11-18)
 * Fixed including ``polymorphic.tests.migrations`` in the sdist.
 * Fixed non-polymorphic parent handling, which has no ``_base_objects``.
 * Fixed missing ``widgets`` support for ``modelform_factory()``.
-* Fixed ``has_changed`` handling for ``polymorphic_ctype_id`` due to implicit str to int conversions.
+* Fixed ``has_changed`` handling for ``polymorphic_ctype_id`` due to implicit str to int
+  conversions.
 * Fixed ``Q`` object handling when lists are used (e.g. in django-advanced-filters_).
 * Fixed Django Admin support when using a script-prefix.
 
@@ -75,14 +76,16 @@ v2.1 (2019-07-15)
 -----------------
 
 * Added Django 2.2 support.
-* Changed ``.non_polymorphic()``, to use a different iterable class that completely cirvumvent polymorphic.
+* Changed ``.non_polymorphic()``, to use a different iterable class that completely circumvent
+  polymorphic.
 * Changed SQL for ``instance_of`` filter: use ``IN`` statement instead of ``OR`` clauses.
 * Changed queryset iteration to implement ``prefetch_related()`` support.
 * Fixed Django 3.0 alpha compatibility.
 * Fixed compatibility with current django-extra-views_ in ``polymorphic.contrib.extra_views``.
 * Fixed ``prefetch_related()`` support on polymorphic M2M relations.
 * Fixed model subclass ``___`` selector for abstract/proxy models.
-* Fixed model subclass ``___`` selector for models with a custom ``OneToOneField(parent_link=True)``.
+* Fixed model subclass ``___`` selector for models with a custom
+  ``OneToOneField(parent_link=True)``.
 * Fixed unwanted results on calling ``queryset.get_real_instances([])``.
 * Fixed unwanted ``TypeError`` exception when ``PolymorphicTypeInvalid`` should have raised.
 * Fixed hiding the add-button of polymorphic lines in the Django admin.
@@ -98,8 +101,9 @@ v2.0.3 (2018-08-24)
 v2.0.2 (2018-02-05)
 -------------------
 
-* Fixed manager inheritance behavior for Django 1.11, by automatically enabling ``Meta.manager_inheritance_from_future`` if it's not defined.
-  This restores the manager inheritance behavior that *django-polymorphic 1.3* provided for Django 1.x projects.
+* Fixed manager inheritance behavior for Django 1.11, by automatically enabling
+  ``Meta.manager_inheritance_from_future`` if it's not defined. This restores the manager
+  inheritance behavior that *django-polymorphic 1.3* provided for Django 1.x projects.
 * Fixed internal ``base_objects`` usage.
 
 
@@ -123,8 +127,8 @@ v2.0.0 (2018-01-22)
 * **BACKWARDS INCOMPATIBILITY:** Removed old deprecated code from 1.0, thus:
 
  * Import managers from ``polymorphic.managers`` (plural), not ``polymorphic.manager``.
- * Register child models to the admin as well using ``@admin.register()`` or ``admin.site.register()``,
-   as this is no longer done automatically.
+ * Register child models to the admin as well using ``@admin.register()`` or
+   ``admin.site.register()``, as this is no longer done automatically.
 
 * Added Django 2.0 support.
 
@@ -177,7 +181,8 @@ v1.3.0 (2017-08-01)
 * **BACKWARDS INCOMPATIBILITY:** Dropped Django 1.4, 1.5, 1.6, 1.7, 1.9 and Python 2.6 support.
   Only official Django releases (1.8, 1.10, 1.11) are supported now.
 * Allow expressions to pass unchanged in ``.order_by()``
-* Fixed Django 1.11 accessor checks (to support subclasses of ``ForwardManyToOneDescriptor``, like ``ForwardOneToOneDescriptor``)
+* Fixed Django 1.11 accessor checks (to support subclasses of ``ForwardManyToOneDescriptor``, like
+  ``ForwardOneToOneDescriptor``)
 * Fixed polib syntax error messages in translations.
 
 
@@ -210,7 +215,8 @@ v1.0.2 (2016-10-14)
 * Fixed ``polymorphic_modelformset_factory()`` usage.
 * Fixed Python 3 bug for inline formsets.
 * Fixed CSS for Grappelli, so model choice menu properly overlaps.
-* Fixed ``ParentAdminNotRegistered`` exception for models that are registered via a proxy model instead of the real base model.
+* Fixed ``ParentAdminNotRegistered`` exception for models that are registered via a proxy model
+  instead of the real base model.
 
 
 v1.0.1 (2016-09-11)
@@ -226,7 +232,8 @@ v1.0.0 (2016-09-02)
 * Added **admin inline** support for polymorphic models.
 * Added **formset** support for polymorphic models.
 * Added support for polymorphic queryset limiting effects on *proxy models*.
-* Added support for multiple databases with the ``.using()`` method and ``using=..`` keyword argument.
+* Added support for multiple databases with the ``.using()`` method and ``using=..`` keyword
+  argument.
 * Fixed modifying passed ``Q()`` objects in place.
 
 .. note::
@@ -235,8 +242,8 @@ v1.0.0 (2016-09-02)
    The new registration style improves the compatibility in the Django admin.
 
    * Register each ``PolymorphicChildModelAdmin`` with the admin site too.
-   * The ``child_models`` attribute of the ``PolymorphicParentModelAdmin`` should be a flat list of all child models.
-     The ``(model, admin)`` tuple is obsolete.
+   * The ``child_models`` attribute of the ``PolymorphicParentModelAdmin`` should be a flat list of
+     all child models. The ``(model, admin)`` tuple is obsolete.
 
    Also note that proxy models will now limit the queryset too.
 
@@ -260,8 +267,9 @@ v0.9.1 (2016-02-18)
 -------------------
 
 * Fixed support for ``PolymorphicManager.from_queryset()`` for custom query sets.
-* Fixed Django 1.7 ``changeform_view()`` redirection to the child admin site.
-  This fixes custom admin code that uses these views, such as django-reversion_'s ``revision_view()`` / ``recover_view()``.
+* Fixed Django 1.7 ``changeform_view()`` redirection to the child admin site. This fixes custom
+  admin code that uses these views, such as django-reversion_'s ``revision_view()`` /
+  ``recover_view()``.
 * Fixed ``.only('pk')`` field support.
 * Fixed ``object_history_template`` breadcrumb.
   **NOTE:** when using django-reversion_ / django-reversion-compare_, make sure to implement
@@ -278,15 +286,16 @@ v0.9.0 (2016-02-17)
   The new change-URL redirect overlapped any custom URLs defined in the child admin.
 * Fix Django 1.9 support in the admin.
 * Fix setting an extra custom manager without overriding the ``_default_manager``.
-* Fix missing ``history_view()`` redirection to the child admin, which is important for django-reversion_ support.
-  See the documentation for hints for :ref:`django-reversion-compare support <django-reversion-compare-support>`.
+* Fix missing ``history_view()`` redirection to the child admin, which is important for
+  django-reversion_ support. See the documentation for hints for
+  :ref:`django-reversion-compare support <django-reversion-compare-support>`.
 
 
 v0.8.1 (2015-12-29)
 -------------------
 
-* Fixed support for reverse relations for ``relname___field`` when the field starts with an ``_`` character.
-  Otherwise, the query will be interpreted as subclass lookup (``ClassName___field``).
+* Fixed support for reverse relations for ``relname___field`` when the field starts with an ``_``
+  character. Otherwise, the query will be interpreted as subclass lookup (``ClassName___field``).
 
 
 v0.8.0 (2015-12-28)
@@ -304,7 +313,8 @@ v0.8.0 (2015-12-28)
     from polymorphic.managers import PolymorphicManager, PolymorphicQuerySet
     from polymorphic.showfields import ShowFieldContent, ShowFieldType, ShowFieldTypeAndContent
 
-* **BACKWARDS INCOMPATIBILITY:** Removed ``__version__.py`` in favor of a standard ``__version__`` in ``polymorphic/__init__.py``.
+* **BACKWARDS INCOMPATIBILITY:** Removed ``__version__.py`` in favor of a standard ``__version__``
+  in ``polymorphic/__init__.py``.
 * **BACKWARDS INCOMPATIBILITY:** Removed automatic proxying of method calls to the queryset class.
   Use the standard Django methods instead:
 
@@ -322,7 +332,8 @@ v0.7.2 (2015-10-01)
 -------------------
 
 * Added ``queryset.as_manager()`` support for Django 1.7/1.8
-* Optimize model access for non-dumpdata usage; avoid ``__getattribute__()`` call each time to access the manager.
+* Optimize model access for non-dumpdata usage; avoid ``__getattribute__()`` call each time to
+  access the manager.
 * Fixed 500 error when using invalid PK's in the admin URL, return 404 instead.
 * Fixed possible issues when using an custom ``AdminSite`` class for the parent object.
 * Fixed Pickle exception when polymorphic model is cached.
@@ -338,9 +349,11 @@ v0.7.0 (2015-04-08)
 -------------------
 
 * Added Django 1.8 support
-* Added support for custom primary key defined using ``mybase_ptr = models.OneToOneField(BaseClass, parent_link=True, related_name="...")``.
+* Added support for custom primary key defined using
+  ``mybase_ptr = models.OneToOneField(BaseClass, parent_link=True, related_name="...")``.
 * Fixed Python 3 issue in the admin
-* Fixed ``_default_manager`` to be consistent with Django, it's now assigned directly instead of using ``add_to_class()``
+* Fixed ``_default_manager`` to be consistent with Django, it's now assigned directly instead of
+  using ``add_to_class()``
 * Fixed 500 error for admin URLs without a '/', e.g. ``admin/app/parentmodel/id``.
 * Fixed preserved filter for Django admin in delete views
 * Removed test noise for diamond inheritance problem (which Django 1.7 detects)
@@ -350,8 +363,8 @@ v0.6.1 (2014-12-30)
 -------------------
 
 * Remove Django 1.7 warnings
-* Fix Django 1.4/1.5 queryset calls on related objects for unknown methods.
-  The ``RelatedManager`` code overrides ``get_query_set()`` while ``__getattr__()`` used the new-style ``get_queryset()``.
+* Fix Django 1.4/1.5 queryset calls on related objects for unknown methods. The ``RelatedManager``
+  code overrides ``get_query_set()`` while ``__getattr__()`` used the new-style ``get_queryset()``.
 * Fix validate_model_fields(), caused errors when metaclass raises errors
 
 
@@ -360,15 +373,17 @@ v0.6.0 (2014-10-14)
 
 * Added Django 1.7 support.
 * Added permission check for all child types.
-* **BACKWARDS INCOMPATIBILITY:** the ``get_child_type_choices()`` method receives 2 arguments now (request, action).
-  If you have overwritten this method in your code, make sure the method signature is updated accordingly.
+* **BACKWARDS INCOMPATIBILITY:** the ``get_child_type_choices()`` method receives 2 arguments now
+  (request, action). If you have overwritten this method in your code, make sure the method
+  signature is updated accordingly.
 
 
 v0.5.6 (2014-07-21)
 -------------------
 
 * Added ``pk_regex`` to the ``PolymorphicParentModelAdmin`` to support non-integer primary keys.
-* Fixed passing ``?ct_id=`` to the add view for Django 1.6 (fixes compatibility with django-parler_).
+* Fixed passing ``?ct_id=`` to the add view for Django 1.6 (fixes compatibility with
+  django-parler_).
 
 
 v0.5.5 (2014-04-29)
@@ -380,7 +395,8 @@ v0.5.5 (2014-04-29)
 v0.5.4 (2014-04-09)
 -------------------
 
-* Fix ``.non_polymorphic()`` to returns a clone of the queryset, instead of effecting the existing queryset.
+* Fix ``.non_polymorphic()`` to returns a clone of the queryset, instead of effecting the existing
+  queryset.
 * Fix missing ``alters_data = True`` annotations on the overwritten ``save()`` methods.
 * Fix infinite recursion bug in the admin with Django 1.6+
 * Added detection of bad ``ContentType`` table data.
@@ -432,7 +448,8 @@ v0.4.1 (2013-04-10)
 * Add default admin ``list_filter`` for polymorphic model type.
 * Fix queryset support of related objects.
 * Performed an overall cleanup of the project
-* **Deprecated** the ``queryset_class`` argument of the ``PolymorphicManager`` constructor, use the class attribute instead.
+* **Deprecated** the ``queryset_class`` argument of the ``PolymorphicManager`` constructor, use the
+  class attribute instead.
 * **Dropped** Django 1.1, 1.2 and 1.3 support
 
 

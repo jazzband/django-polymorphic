@@ -88,6 +88,10 @@ sphinx = true
 [tool.ruff]
 line-length = 99
 
+exclude = [
+    "**/migrations/*.py",
+    "**/migrations/**",
+]
 
 [tool.ruff.lint]
 extend-ignore = [
@@ -132,9 +136,9 @@ addopts = [
 
 [tool.coverage.run]
 source = [
-    "polymorphic"
+    "src/polymorphic"
 ]
-omit = ["*/tests/*", "src/polymorphic/tests/*"]
+omit = ["*/migrations/*", "*/tests/*", "src/polymorphic/tests/*"]
 branch = true
 relative_files = true
 
@@ -145,7 +149,7 @@ skip_covered = true
 [dependency-groups]
 dev = [
     "coverage>=7.6.1",
-    "dj-database-url>=3.0.1",
+    "dj-database-url>=2.2.0",
     "ipdb>=0.13.13",
     "ipython>=8.18.1",
     "mypy>=1.14.1",
@@ -154,6 +158,7 @@ dev = [
     "pytest-cov>=5.0.0",
     "pytest-django>=4.10.0",
     "ruff>=0.9.8",
+    "tomlkit>=0.13.3",
     "tox>=4.24.1",
     "tox-uv>=1.13.1",
 ]

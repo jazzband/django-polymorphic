@@ -1,4 +1,0 @@
-[run]
-source = polymorphic/
-omit =
-    */migrations/*

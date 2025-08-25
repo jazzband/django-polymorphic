@@ -1,15 +1,13 @@
 repos:
-  - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v6.0.0
+  - repo: local
     hooks:
-      - id: check-yaml
-      - id: end-of-file-fixer
-      - id: trailing-whitespace
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.12.9
-    hooks:
-      - id: ruff
-        args:
-          - --fix
-      - id: ruff-format
-        exclude: '.*migrations.*'
+    - id: lint
+      name: Lint
+      entry: just lint
+      language: system
+      pass_filenames: false
+    - id: format
+      name: Format
+      entry: just format
+      language: system
+      pass_filenames: false
