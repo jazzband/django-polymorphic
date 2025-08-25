@@ -33,7 +33,8 @@ Like standard Django formsets, there are 3 factory methods available:
 
 * :func:`~polymorphic.formsets.polymorphic_modelformset_factory` - create a regular model formset.
 * :func:`~polymorphic.formsets.polymorphic_inlineformset_factory` - create a inline model formset.
-* :func:`~polymorphic.formsets.generic_polymorphic_inlineformset_factory` - create an inline formset for a generic foreign key.
+* :func:`~polymorphic.formsets.generic_polymorphic_inlineformset_factory` - create an inline formset
+  for a generic foreign key.
 
 Each one uses a different base class:
 
@@ -41,4 +42,5 @@ Each one uses a different base class:
 * :class:`~polymorphic.formsets.BasePolymorphicInlineFormSet`
 * :class:`~polymorphic.formsets.BaseGenericPolymorphicInlineFormSet`
 
-When needed, the base class can be overwritten and provided to the factory via the ``formset`` parameter.
+When needed, the base class can be overwritten and provided to the factory via the ``formset``
+parameter.

@@ -1,19 +1,88 @@
 name: Lint
+
+permissions:
+  contents: read
+
 on:
   push:
+    tags-ignore:
+      - '*'
     branches:
-      - master
-    tags:
-      - 'v*'
+      - '*'
   pull_request:
-    branches:
-      - master
+  workflow_call:
+  workflow_dispatch:
+    inputs:
+      debug:
+        description: 'Open ssh debug session.'
+        required: true
+        default: false
+        type: boolean
+
 jobs:
-  Lint:
+
+  linting:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # run static analysis on bleeding and trailing edges
+        python-version: [ '3.9', '3.10', '3.13' ]
+        django-version:
+          - '3.2' # LTS April 2024
+          - '4.2' # LTS April 2026
+          - '5.2' # December 2025
+        exclude:
+          - python-version: '3.9'
+            django-version: '4.2'
+          - python-version: '3.13'
+            django-version: '4.2'
+          - python-version: '3.13'
+            django-version: '3.2'
+          - python-version: '3.10'
+            django-version: '3.2'
+          - python-version: '3.9'
+            django-version: '5.2'
+          - python-version: '3.10'
+            django-version: '5.2'
+
+    env:
+      TEST_PYTHON_VERSION: ${{ matrix.python-version }}
+      TEST_DJANGO_VERSION: ${{ matrix.django-version }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v5
         with:
-          python-version: "3.13"
-      - uses: pre-commit/action@v3.0.1
+          persist-credentials: false
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        id: sp
+        with:
+          python-version: ${{ matrix.python-version }}
+      
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - name: Install Just
+        uses: extractions/setup-just@v3
+      - name: Install Dependencies
+        run: |
+          just setup ${{ steps.sp.outputs.python-path }}
+          uv add Django~=${{ matrix.django-version }}.0
+          just install-docs
+      - name: Install Emacs
+        if: ${{ github.event.inputs.debug == 'true' }}
+        run: |
+          sudo apt install emacs
+      - name: Setup tmate session
+        if: ${{ github.event.inputs.debug == 'true' }}
+        uses: mxschmitt/action-tmate@v3.22
+        with:
+          detached: true
+        timeout-minutes: 60
+      - name: Run Static Analysis
+        run: |
+          just check-lint
+          just check-format
+          just check-types
+          just check-package
+          just check-readme

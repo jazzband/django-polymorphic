@@ -3,12 +3,12 @@ from django.contrib.contenttypes.models import ContentType
 
 def get_polymorphic_base_content_type(obj):
     """
-    Helper function to return the base polymorphic content type id. This should used with django-guardian and the
-    GUARDIAN_GET_CONTENT_TYPE option.
+    Helper function to return the base polymorphic content type id. This should used
+    with django-guardian and the ``GUARDIAN_GET_CONTENT_TYPE`` option.
 
     See the django-guardian documentation for more information:
 
-    https://django-guardian.readthedocs.io/en/latest/configuration.html#guardian-get-content-type
+    https://django-guardian.readthedocs.io/en/latest/configuration
     """
     if hasattr(obj, "polymorphic_model_marker"):
         try:

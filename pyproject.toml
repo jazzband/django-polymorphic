@@ -88,6 +88,10 @@ sphinx = true
 [tool.ruff]
 line-length = 99
 
+exclude = [
+    "**/migrations/*.py",
+    "**/migrations/**",
+]
 
 [tool.ruff.lint]
 extend-ignore = [
@@ -132,9 +136,9 @@ addopts = [
 
 [tool.coverage.run]
 source = [
-    "polymorphic"
+    "src/polymorphic"
 ]
-omit = ["*/tests/*", "src/polymorphic/tests/*"]
+omit = ["*/migrations/*", "*/tests/*", "src/polymorphic/tests/*"]
 branch = true
 relative_files = true
 
