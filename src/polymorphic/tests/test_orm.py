@@ -4,8 +4,8 @@ import uuid
 
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
-from django.db.models import Case, Count, FilteredRelation, Q, Sum, When
-from django.db.utils import IntegrityError
+from django.db.models import Case, Count, FilteredRelation, Q, Sum, When, F
+from django.db.utils import IntegrityError, NotSupportedError
 from django.test import TransactionTestCase
 
 from polymorphic import query_translate
@@ -138,33 +138,17 @@ class PolymorphicTests(TransactionTestCase):
   <BlogA: id 1, name (CharField) "B1", info (CharField) "i1"> ]"""
         assert repr(BlogBase.objects.order_by("-name")).strip() == expected.strip()
 
-        # test ordering for field in one subclass only
-        # MySQL and SQLite return this order
-        expected1 = """
-[ <BlogA: id 8, name (CharField) "B5", info (CharField) "i5">,
-  <BlogA: id 7, name (CharField) "B4", info (CharField) "i4">,
-  <BlogA: id 6, name (CharField) "B3", info (CharField) "i3">,
-  <BlogA: id 5, name (CharField) "B2", info (CharField) "i2">,
-  <BlogA: id 1, name (CharField) "B1", info (CharField) "i1">,
-  <BlogB: id 2, name (CharField) "Bb1">,
-  <BlogB: id 3, name (CharField) "Bb2">,
-  <BlogB: id 4, name (CharField) "Bb3"> ]"""
-
-        # PostgreSQL returns this order
-        expected2 = """
-[ <BlogB: id 2, name (CharField) "Bb1">,
-  <BlogB: id 3, name (CharField) "Bb2">,
-  <BlogB: id 4, name (CharField) "Bb3">,
-  <BlogA: id 8, name (CharField) "B5", info (CharField) "i5">,
-  <BlogA: id 7, name (CharField) "B4", info (CharField) "i4">,
-  <BlogA: id 6, name (CharField) "B3", info (CharField) "i3">,
-  <BlogA: id 5, name (CharField) "B2", info (CharField) "i2">,
-  <BlogA: id 1, name (CharField) "B1", info (CharField) "i1"> ]"""
-
-        assert repr(BlogBase.objects.order_by("-BlogA___info")).strip() in (
-            expected1.strip(),
-            expected2.strip(),
-        )
+        # different RDBMS return different orders for the nulls, and we can't use F
+        # and nulls_first or nulls_last here to standardize it, so our test is
+        # conditional
+        blog_names = [blg.name for blg in BlogBase.objects.order_by("-BlogA___info")]
+        ordered = blog_names[:3]
+        if all([name.startswith("Bb") for name in ordered]):
+            ordered = blog_names[3:]
+        else:
+            assert all([name.startswith("Bb") for name in blog_names[-3:]])
+            ordered = blog_names[:-3]
+        assert ordered == ["B5", "B4", "B3", "B2", "B1"]
 
     def test_limit_choices_to(self):
         """
@@ -524,6 +508,8 @@ class PolymorphicTests(TransactionTestCase):
         )
 
     def test_extra_method(self):
+        from django.db import connection
+
         a, b, c, d = self.create_model2abcd()
 
         objects = Model2A.objects.extra(where=[f"id IN ({b.id}, {c.id})"])
@@ -531,11 +517,18 @@ class PolymorphicTests(TransactionTestCase):
             objects, [Model2B, Model2C], transform=lambda o: o.__class__, ordered=False
         )
 
-        objects = Model2A.objects.extra(
-            select={"select_test": "field1 = 'A1'"},
-            where=["field1 = 'A1' OR field1 = 'B1'"],
-            order_by=["-id"],
-        )
+        if connection.vendor == "oracle":
+            objects = Model2A.objects.extra(
+                select={"select_test": "CASE WHEN field1 = 'A1' THEN 1 ELSE 0 END"},
+                where=["field1 = 'A1' OR field1 = 'B1'"],
+                order_by=["-id"],
+            )
+        else:
+            objects = Model2A.objects.extra(
+                select={"select_test": "field1 = 'A1'"},
+                where=["field1 = 'A1' OR field1 = 'B1'"],
+                order_by=["-id"],
+            )
         self.assertQuerySetEqual(objects, [Model2B, Model2A], transform=lambda o: o.__class__)
 
         ModelExtraA.objects.create(field1="A1")
@@ -723,7 +716,7 @@ class PolymorphicTests(TransactionTestCase):
             == '<RelationBase: id 1, field_base (CharField) "base", fk (ForeignKey) None, m2m (ManyToManyField) 0>'
         )
 
-        objects = oa.relationbase_set.all()
+        objects = oa.relationbase_set.order_by("pk").all()
         assert (
             repr(objects[0])
             == '<RelationB: id 3, field_base (CharField) "B1", fk (ForeignKey) RelationA, field_b (CharField) "B2", m2m (ManyToManyField) 1>'
@@ -741,7 +734,7 @@ class PolymorphicTests(TransactionTestCase):
         )
 
         oa = RelationA.objects.get()
-        objects = oa.m2m.all()
+        objects = oa.m2m.order_by("pk").all()
         assert (
             repr(objects[0])
             == '<RelationA: id 2, field_base (CharField) "A1", fk (ForeignKey) RelationBase, field_a (CharField) "A2", m2m (ManyToManyField) 2>'
@@ -1151,14 +1144,21 @@ class PolymorphicTests(TransactionTestCase):
             )
 
     def test_bulk_create_ignore_conflicts(self):
-        ArtProject.objects.bulk_create(
-            [
-                ArtProject(topic="Painting with Tim", artist="T. Turner"),
-                ArtProject.objects.create(topic="Sculpture with Tim", artist="T. Turner"),
-            ],
-            ignore_conflicts=True,
-        )
-        assert ArtProject.objects.count() == 2
+        try:
+            ArtProject.objects.bulk_create(
+                [
+                    ArtProject(topic="Painting with Tim", artist="T. Turner"),
+                    ArtProject.objects.create(topic="Sculpture with Tim", artist="T. Turner"),
+                ],
+                ignore_conflicts=True,
+            )
+            assert ArtProject.objects.count() == 2
+        except NotSupportedError:
+            from django.db import connection
+
+            assert connection.vendor in ("oracle"), (
+                f"{connection.vendor} should support ignore_conflicts"
+            )
 
     def test_bulk_create_no_ignore_conflicts(self):
         with pytest.raises(IntegrityError):
