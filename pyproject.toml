@@ -149,7 +149,7 @@ skip_covered = true
 [dependency-groups]
 dev = [
     "coverage>=7.6.1",
-    "dj-database-url>=3.0.1",
+    "dj-database-url>=2.2.0",
     "ipdb>=0.13.13",
     "ipython>=8.18.1",
     "mypy>=1.14.1",

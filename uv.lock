@@ -578,7 +578,7 @@ requires-dist = [{ name = "django", specifier = ">=3.2" }]
 [package.metadata.requires-dev]
 dev = [
     { name = "coverage", specifier = ">=7.6.1" },
-    { name = "dj-database-url", specifier = ">=3.0.1" },
+    { name = "dj-database-url", specifier = ">=2.2.0" },
     { name = "ipdb", specifier = ">=0.13.13" },
     { name = "ipython", specifier = ">=8.18.1" },
     { name = "mypy", specifier = ">=1.14.1" },
