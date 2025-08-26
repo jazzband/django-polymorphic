@@ -1,6 +1,12 @@
 Changelog
 =========
 
+v4.2.0 (2025-XX-XX)
+-------------------
+
+* `Modernized package management with new build, test, docs tooling and improved CI 
+  <https://github.com/jazzband/django-polymorphic/issues/651>`_.
+
 v4.1.0 (2025-05-20)
 -------------------
 
