@@ -1,8 +1,8 @@
-Migrating existing models to polymorphic
-========================================
+Migrating Existing Models
+=========================
 
-Existing models can be migrated to become polymorphic models.
-During the migrating, the ``polymorphic_ctype`` field needs to be filled in.
+Existing models can be migrated to become polymorphic models. During migration, the
+:attr:`~polymorphic.models.PolymorphicModel.polymorphic_ctype` field needs to be populated.
 
 This can be done in the following steps:
 
@@ -13,7 +13,7 @@ This can be done in the following steps:
 Filling the content type value
 ------------------------------
 
-The following Python code can be used to fill the value of a model:
+The following code can be used to fill the value of a model:
 
 .. code-block:: python
 
@@ -23,8 +23,8 @@ The following Python code can be used to fill the value of a model:
     new_ct = ContentType.objects.get_for_model(MyModel)
     MyModel.objects.filter(polymorphic_ctype__isnull=True).update(polymorphic_ctype=new_ct)
 
-The creation and update of the ``polymorphic_ctype_id`` column
-can be included in a single Django migration. For example:
+The creation and update of the ``polymorphic_ctype_id`` column can be included in a single Django
+migration. For example:
 
 .. code-block:: python
 
@@ -37,7 +37,9 @@ can be included in a single Django migration. For example:
         ContentType = apps.get_model('contenttypes', 'ContentType')
 
         new_ct = ContentType.objects.get_for_model(MyModel)
-        MyModel.objects.filter(polymorphic_ctype__isnull=True).update(polymorphic_ctype=new_ct)
+        MyModel.objects.filter(polymorphic_ctype__isnull=True).update(
+            polymorphic_ctype=new_ct
+        )
 
 
     class Migration(migrations.Migration):
@@ -51,18 +53,23 @@ can be included in a single Django migration. For example:
             migrations.AddField(
                 model_name='mymodel',
                 name='polymorphic_ctype',
-                field=models.ForeignKey(related_name='polymorphic_myapp.mymodel_set+', editable=False, to='contenttypes.ContentType', null=True),
+                field=models.ForeignKey(
+                    related_name='polymorphic_myapp.mymodel_set+',
+                    editable=False,
+                    to='contenttypes.ContentType',
+                    null=True
+                ),
             ),
             migrations.RunPython(forwards_func, migrations.RunPython.noop),
         ]
 
-It's recommended to let ``makemigrations`` create the migration file,
-and include the ``RunPython`` manually before running the migration.
+It's recommended to let :django-admin:`makemigrations` create the migration file, and include the
+:class:`~django.db.migrations.operations.RunPython` manually before running the migration.
 
 .. versionadded:: 1.1
 
-When the model is created elsewhere, you can also use
-the :func:`polymorphic.utils.reset_polymorphic_ctype` function:
+When the model is created elsewhere, you can also use the
+:func:`~polymorphic.utils.reset_polymorphic_ctype` function:
 
 .. code-block:: python
 

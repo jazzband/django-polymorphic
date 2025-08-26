@@ -1,26 +1,27 @@
-Django admin integration
-========================
+Admin Integration
+=================
 
-Of course, it's possible to register individual polymorphic models in the Django admin interface.
-However, to use these models in a single cohesive interface, some extra base classes are available.
+Of course, it's possible to register individual polymorphic models in the
+:doc:`Django admin interface <django:ref/contrib/admin/index>`. However, to use these models in a single
+cohesive interface, some extra base classes are available.
 
 Setup
 -----
 
-Both the parent model and child model need to have a ``ModelAdmin`` class.
+Both the parent model and child model need to have a :class:`~django.contrib.admin.ModelAdmin` class.
 
 The shared base model should use the :class:`~polymorphic.admin.PolymorphicParentModelAdmin` as base
 class.
 
- * :attr:`~polymorphic.admin.PolymorphicParentModelAdmin.base_model` should be set
- * :attr:`~polymorphic.admin.PolymorphicParentModelAdmin.child_models` or
-   :meth:`~polymorphic.admin.PolymorphicParentModelAdmin.get_child_models` should return an iterable
-   of Model classes.
+* :attr:`~polymorphic.admin.PolymorphicParentModelAdmin.base_model` should be set
+* :attr:`~polymorphic.admin.PolymorphicParentModelAdmin.child_models` or
+  :meth:`~polymorphic.admin.PolymorphicParentModelAdmin.get_child_models` should return an iterable
+  of Model classes.
 
 The admin class for every child model should inherit from
 :class:`~polymorphic.admin.PolymorphicChildModelAdmin`
 
- * :attr:`~polymorphic.admin.PolymorphicChildModelAdmin.base_model` should be set.
+* :attr:`~polymorphic.admin.PolymorphicChildModelAdmin.base_model` should be set.
 
 Although the child models are registered too, they won't be shown in the admin index page.
 This only happens when :attr:`~polymorphic.admin.PolymorphicChildModelAdmin.show_in_index` is set to
@@ -29,27 +30,31 @@ This only happens when :attr:`~polymorphic.admin.PolymorphicChildModelAdmin.show
 Fieldset configuration
 ~~~~~~~~~~~~~~~~~~~~~~
 
-The parent admin is only used for the list display of models,
-and for the edit/delete view of non-subclassed models.
+The parent admin is only used for the list display of models, and for the edit/delete view of
+non-subclassed models.
 
 All other model types are redirected to the edit/delete/history view of the child model admin.
 Hence, the fieldset configuration should be placed on the child admin.
 
 .. tip::
+
     When the child admin is used as base class for various derived classes, avoid using
     the standard ``ModelAdmin`` attributes ``form`` and ``fieldsets``.
     Instead, use the ``base_form`` and ``base_fieldsets`` attributes.
     This allows the :class:`~polymorphic.admin.PolymorphicChildModelAdmin` class
     to detect any additional fields in case the child model is overwritten.
 
-.. versionchanged:: 1.0
+.. versionchanged:: 1.0    
+    
     It's now needed to register the child model classes too.
 
-    In *django-polymorphic* 0.9 and below, the ``child_models`` was a tuple of a
-    ``(Model, ChildModelAdmin)``. The admin classes were registered in an internal class, and kept
-    away from the main admin site. This caused various subtle problems with the ``ManyToManyField``
-    and related field wrappers, which are fixed by registering the child admin classes too. Note
-    that they are hidden from the main view, unless
+    In :pypi:`django-polymorphic` 0.9 and below, the
+    :meth:`~polymorphic.admin.PolymorphicParentModelAdmin.child_models` was a tuple of a
+    (:class:`~django.db.models.Model`, :class:`~polymorphic.admin.PolymorphicChildModelAdmin`). The
+    admin classes were registered in an internal class, and kept away from the main admin site. This
+    caused various subtle problems with the :class:`~django.db.models.ManyToManyField` and related
+    field wrappers, which are fixed by registering the child admin classes too. Note that they are
+    hidden from the main view, unless
     :attr:`~polymorphic.admin.PolymorphicChildModelAdmin.show_in_index` is set.
 
 .. _admin-example:
@@ -104,8 +109,8 @@ Filtering child types
 ---------------------
 
 Child model types can be filtered by adding a
-:class:`~polymorphic.admin.PolymorphicChildModelFilter` to the ``list_filter`` attribute. See the
-example above.
+:class:`~polymorphic.admin.PolymorphicChildModelFilter` to the
+:attr:`~django.contrib.admin.ModelAdmin.list_filter` attribute. See the example above.
 
 
 Inline models
@@ -118,15 +123,13 @@ Inline models are handled via a special :class:`~polymorphic.admin.StackedPolymo
 For models with a generic foreign key, there is a
 :class:`~polymorphic.admin.GenericStackedPolymorphicInline` class available.
 
-When the inline is included to a normal :class:`~django.contrib.admin.ModelAdmin`,
-make sure the :class:`~polymorphic.admin.PolymorphicInlineSupportMixin` is included.
-This is not needed when the admin inherits from the
-:class:`~polymorphic.admin.PolymorphicParentModelAdmin` /
+When the inline is included to a normal :class:`~django.contrib.admin.ModelAdmin`, make sure the
+:class:`~polymorphic.admin.PolymorphicInlineSupportMixin` is included. This is not needed when the
+admin inherits from the :class:`~polymorphic.admin.PolymorphicParentModelAdmin` or
 :class:`~polymorphic.admin.PolymorphicChildModelAdmin` classes.
 
-In the following example, the ``PaymentInline`` supports several types.
-These are defined as separate inline classes.
-The child classes can be nested for clarity, but this is not a requirement.
+In the following example, the ``PaymentInline`` supports several types. These are defined as
+separate inline classes. The child classes can be nested for clarity, but this is not a requirement.
 
 .. code-block:: python
 
@@ -170,15 +173,13 @@ The child classes can be nested for clarity, but this is not a requirement.
         inlines = (PaymentInline,)
 
 
-
-
 Using polymorphic models in standard inlines
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 To add a polymorphic child model as an Inline for another model, add a field to the inline's
-``readonly_fields`` list formed by the lowercased name of the polymorphic parent model with the
-string ``_ptr`` appended to it. Otherwise, trying to save that model in the admin will raise an
-AttributeError with the message "can't set attribute".
+:attr:`~django.contrib.admin.ModelAdmin.readonly_fields` list formed by the lowercased name of the
+polymorphic parent model with the string ``_ptr`` appended to it. Otherwise, trying to save that
+model in the admin will raise an :exc:`AttributeError` with the message "can't set attribute".
 
 .. code-block:: python
 
@@ -207,9 +208,9 @@ The polymorphic admin interface works in a simple way:
 * The edit screen displays the admin interface of the child model.
 * The list screen still displays all objects of the base class.
 
-The polymorphic admin is implemented via a parent admin that redirects the *edit* and *delete* views
-to the ``ModelAdmin`` of the derived child model. The *list* page is still implemented by the parent
-model admin.
+The polymorphic admin is implemented via a parent admin that redirects the ``edit`` and ``delete``
+views to the :class:`~django.contrib.admin.ModelAdmin` of the derived child model. The ``list`` page
+is still implemented by the parent model admin.
 
 The parent model
 ~~~~~~~~~~~~~~~~
@@ -217,27 +218,32 @@ The parent model
 The parent model needs to inherit :class:`~polymorphic.admin.PolymorphicParentModelAdmin`, and
 implement the following:
 
- * :attr:`~polymorphic.admin.PolymorphicParentModelAdmin.base_model` should be set
- * :attr:`~polymorphic.admin.PolymorphicParentModelAdmin.child_models` or
-   :meth:`~polymorphic.admin.PolymorphicParentModelAdmin.get_child_models` should return an iterable
-   of Model classes.
+* :attr:`~polymorphic.admin.PolymorphicParentModelAdmin.base_model` should be set
+* :attr:`~polymorphic.admin.PolymorphicParentModelAdmin.child_models` or
+  :meth:`~polymorphic.admin.PolymorphicParentModelAdmin.get_child_models` should return an iterable
+  of Model classes.
 
-The exact implementation can depend on the way your module is structured.
-For simple inheritance situations, ``child_models`` is the best solution.
-For large applications, ``get_child_models()`` can be used to query a plugin registration system.
+The exact implementation can depend on the way your module is structured. For simple inheritance
+situations, :meth:`~polymorphic.admin.PolymorphicParentModelAdmin.child_models` is the best
+solution. For large applications,
+:meth:`~polymorphic.admin.PolymorphicParentModelAdmin.get_child_models` can be used to query a
+plugin registration system.
 
-By default, the non_polymorphic() method will be called on the queryset, so
-only the Parent model will be provided to the list template.  This is to avoid
-the performance hit of retrieving child models.
+By default, the :meth:`~polymorphic.managers.PolymorphicQuerySet.non_polymorphic` method will be
+called on the queryset, so only the Parent model will be provided to the list template. This is to
+avoid the performance hit of retrieving child models.
 
-This can be controlled by setting the ``polymorphic_list`` property on the
-parent admin.  Setting it to True will provide child models to the list template.
+This can be controlled by setting the
+:attr:`~polymorphic.admin.PolymorphicParentModelAdmin.polymorphic_list` property on the parent
+admin. Setting it to True will provide child models to the list template.
 
 If you use other applications such as django-reversion_ or django-mptt_, please check
-+:ref:`third-party`.
+:ref:`integrations`.
 
-Note: If you are using non-integer primary keys in your model, you have to edit ``pk_regex``,
-for example ``pk_regex = '([\w-]+)'`` if you use UUIDs. Otherwise you cannot change model entries.
+Note: If you are using non-integer primary keys in your model, you have to edit
+:attr:`~polymorphic.admin.PolymorphicParentModelAdmin.pk_regex`, for example
+``pk_regex = '([\w-]+)'`` if you use :class:`~uuid.UUID` primary keys. Otherwise you cannot change
+model entries.
 
 The child models
 ~~~~~~~~~~~~~~~~

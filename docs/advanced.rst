@@ -1,9 +1,11 @@
 .. _advanced-features:
 
-Advanced features
+Advanced Features
 =================
 
-In the examples below, these models are being used::
+In the examples below, these models are being used:
+
+.. code-block:: python
 
     from django.db import models
     from polymorphic.models import PolymorphicModel
@@ -17,35 +19,41 @@ In the examples below, these models are being used::
     class ModelC(ModelB):
         field3 = models.CharField(max_length=10)
 
-Filtering for classes (equivalent to python's isinstance() ):
--------------------------------------------------------------
 
->>> ModelA.objects.instance_of(ModelB)
-.
-[ <ModelB: id 2, field1 (CharField), field2 (CharField)>,
-  <ModelC: id 3, field1 (CharField), field2 (CharField), field3 (CharField)> ]
+Filtering for classes (equivalent to python's :func:`isinstance`):
+------------------------------------------------------------------
 
-In general, including or excluding parts of the inheritance tree::
+.. code-block:: python
+
+    >>> ModelA.objects.instance_of(ModelB)
+    [ <ModelB: id 2, field1 (CharField), field2 (CharField)>,
+      <ModelC: id 3, field1 (CharField), field2 (CharField), field3 (CharField)> ]
+
+In general, including or excluding parts of the inheritance tree:
+
+.. code-block:: python
 
     ModelA.objects.instance_of(ModelB [, ModelC ...])
     ModelA.objects.not_instance_of(ModelB [, ModelC ...])
 
 You can also use this feature in Q-objects (with the same result as above):
 
->>> ModelA.objects.filter( Q(instance_of=ModelB) )
+.. code-block:: python
+
+    >>> ModelA.objects.filter( Q(instance_of=ModelB) )
 
 
 Polymorphic filtering (for fields in inherited classes)
 -------------------------------------------------------
 
-For example, cherrypicking objects from multiple derived classes
-anywhere in the inheritance tree, using Q objects (with the
-syntax: ``exact model name + three _ + field name``):
+For example, cherry-picking objects from multiple derived classes anywhere in the inheritance tree,
+using Q objects (with the syntax: ``exact model name + three _ + field name``):
 
->>> ModelA.objects.filter(  Q(ModelB___field2 = 'B2') | Q(ModelC___field3 = 'C3')  )
-.
-[ <ModelB: id 2, field1 (CharField), field2 (CharField)>,
-  <ModelC: id 3, field1 (CharField), field2 (CharField), field3 (CharField)> ]
+.. code-block:: python
+
+    >>> ModelA.objects.filter(  Q(ModelB___field2 = 'B2') | Q(ModelC___field3 = 'C3')  )
+    [ <ModelB: id 2, field1 (CharField), field2 (CharField)>,
+      <ModelC: id 3, field1 (CharField), field2 (CharField), field3 (CharField)> ]
 
 
 Combining Querysets
@@ -56,10 +64,12 @@ aggregation of different object types, very similar to python
 lists - as long as the objects are accessed through the manager of
 a common base class:
 
->>> Base.objects.instance_of(ModelX) | Base.objects.instance_of(ModelY)
-.
-[ <ModelX: id 1, field_x (CharField)>,
-  <ModelY: id 2, field_y (CharField)> ]
+.. code-block:: python
+
+    >>> Base.objects.instance_of(ModelX) | Base.objects.instance_of(ModelY)
+
+    [ <ModelX: id 1, field_x (CharField)>,
+      <ModelY: id 2, field_y (CharField)> ]
 
 
 ManyToManyField, ForeignKey, OneToOneField
@@ -70,17 +80,23 @@ expected: like polymorphic querysets they now always return the
 referred objects with the same type/class these were created and
 saved as.
 
-E.g., if in your model you define::
+E.g., if in your model you define:
+
+.. code-block:: python
 
     field1 = OneToOneField(ModelA)
 
 then field1 may now also refer to objects of type ``ModelB`` or ``ModelC``.
 
-A ManyToManyField example::
+A :class:`~django.db.models.ManyToManyField` example:
+
+.. code-block:: python
 
     # The model holding the relation may be any kind of model, polymorphic or not
     class RelatingModel(models.Model):
-        many2many = models.ManyToManyField('ModelA')  # ManyToMany relation to a polymorphic model
+    
+        # ManyToMany relation to a polymorphic model
+        many2many = models.ManyToManyField('ModelA')
 
     >>> o=RelatingModel.objects.create()
     >>> o.many2many.add(ModelA.objects.get(id=1))
@@ -96,9 +112,11 @@ Copying Polymorphic objects
 ---------------------------
 
 When creating a copy of a polymorphic object, both the
-``.id`` and the ``.pk`` of the object need to be set
-to ``None`` before saving so that both the base table
-and the derived table will be updated to the new object::
+:attr:`~django.db.models.Model.id` and the :attr:`~django.db.models.Model.pk` of the object need to
+be set to ``None`` before saving so that both the base table and the derived table will be updated
+to the new object:
+
+.. code-block:: python
 
     >>> o = ModelB.objects.first()
     >>> o.field1 = 'new val' # leave field2 unchanged
@@ -112,7 +130,9 @@ Using Third Party Models (without modifying them)
 
 Third party models can be used as polymorphic models without
 restrictions by subclassing them. E.g. using a third party
-model as the root of a polymorphic inheritance tree::
+model as the root of a polymorphic inheritance tree:
+
+.. code-block:: python
 
     from thirdparty import ThirdPartyModel
 
@@ -120,7 +140,9 @@ model as the root of a polymorphic inheritance tree::
         pass    # or add fields
 
 Or instead integrating the third party model anywhere into an
-existing polymorphic inheritance tree::
+existing polymorphic inheritance tree:
+
+.. code-block:: python
 
     class MyBaseModel(SomePolymorphicModel):
         my_field = models.CharField(max_length=10)
@@ -132,90 +154,96 @@ existing polymorphic inheritance tree::
 Non-Polymorphic Queries
 -----------------------
 
-If you insert ``.non_polymorphic()`` anywhere into the query chain, then
-django_polymorphic will simply leave out the final step of retrieving the
-real objects, and the manager/queryset will return objects of the type of
-the base class you used for the query, like vanilla Django would
-(``ModelA`` in this example).
+If you insert :meth:`~polymorphic.managers.PolymorphicQuerySet.non_polymorphic` anywhere into the
+query chain, then :pypi:`django-polymorphic` will simply leave out the final step of retrieving the
+real objects, and the manager/queryset will return objects of the type of the base class you used
+for the query, like vanilla Django would (``ModelA`` in this example).
 
->>> qs=ModelA.objects.non_polymorphic().all()
->>> qs
-[ <ModelA: id 1, field1 (CharField)>,
-  <ModelA: id 2, field1 (CharField)>,
-  <ModelA: id 3, field1 (CharField)> ]
+.. code-block:: python
+
+    >>> qs=ModelA.objects.non_polymorphic().all()
+    >>> qs
+    [ <ModelA: id 1, field1 (CharField)>,
+      <ModelA: id 2, field1 (CharField)>,
+      <ModelA: id 3, field1 (CharField)> ]
 
 There are no other changes in the behaviour of the queryset. For example,
 enhancements for ``filter()`` or ``instance_of()`` etc. still work as expected.
 If you do the final step yourself, you get the usual polymorphic result:
 
->>> ModelA.objects.get_real_instances(qs)
-[ <ModelA: id 1, field1 (CharField)>,
-  <ModelB: id 2, field1 (CharField), field2 (CharField)>,
-  <ModelC: id 3, field1 (CharField), field2 (CharField), field3 (CharField)> ]
+.. code-block:: python
+    
+    >>> ModelA.objects.get_real_instances(qs)
+    [ <ModelA: id 1, field1 (CharField)>,
+      <ModelB: id 2, field1 (CharField), field2 (CharField)>,
+      <ModelC: id 3, field1 (CharField), field2 (CharField), field3 (CharField)> ]
 
 
 About Queryset Methods
 ----------------------
 
-*   ``annotate()`` and ``aggregate()`` work just as usual, with the
-    addition that the ``ModelX___field`` syntax can be used for the
-    keyword arguments (but not for the non-keyword arguments).
+*   :meth:`~django.db.models.query.QuerySet.annotate` and
+    :meth:`~django.db.models.query.QuerySet.aggregate` work just as usual, with the addition that
+    the ``ModelX___field`` syntax can be used for the keyword arguments (but not for the non-keyword
+    arguments).
 
-*   ``order_by()`` similarly supports the ``ModelX___field`` syntax
-    for specifying ordering through a field in a submodel.
+*   :meth:`~django.db.models.query.QuerySet.order_by` similarly supports the ``ModelX___field``
+    syntax for specifying ordering through a field in a submodel.
 
-*   ``distinct()`` works as expected. It only regards the fields of
-    the base class, but this should never make a difference.
+*   :meth:`~django.db.models.query.QuerySet.distinct` works as expected. It only regards the fields
+    of the base class, but this should never make a difference.
 
-*   ``select_related()`` works just as usual, but it can not (yet) be used
-    to select relations in inherited models
-    (like ``ModelA.objects.select_related('ModelC___fieldxy')`` )
+*   :meth:`~django.db.models.query.QuerySet.select_related` works just as usual, but it can not
+    (yet) be used to select relations in inherited models (like
+    ``ModelA.objects.select_related('ModelC___fieldxy')`` )
 
-*   ``extra()`` works as expected (it returns polymorphic results) but
-    currently has one restriction: The resulting objects are required to have
-    a unique primary key within the result set - otherwise an error is thrown
-    (this case could be made to work, however it may be mostly unneeded)..
-    The keyword-argument "polymorphic" is no longer supported.
-    You can get back the old non-polymorphic behaviour
-    by using ``ModelA.objects.non_polymorphic().extra(...)``.
+*   :meth:`~django.db.models.query.QuerySet.extra` works as expected (it returns polymorphic
+    results) but currently has one restriction: The resulting objects are required to have a unique
+    primary key within the result set - otherwise an error is thrown (this case could be made to
+    work, however it may be mostly unneeded).. The keyword-argument "polymorphic" is no longer
+    supported. You can get back the old non-polymorphic behaviour by using
+    ``ModelA.objects.non_polymorphic().extra(...)``.
 
-*   ``get_real_instances()`` allows you to turn a
+*   :meth:`~polymorphic.managers.PolymorphicQuerySet.get_real_instances` allows you to turn a
     queryset or list  of base model objects efficiently into the real objects.
     For example, you could do ``base_objects_queryset=ModelA.extra(...).non_polymorphic()``
     and then call ``real_objects=base_objects_queryset.get_real_instances()``. Or alternatively
     ``real_objects=ModelA.objects.get_real_instances(base_objects_queryset_or_object_list)``
 
-*   ``values()`` & ``values_list()`` currently do not return polymorphic
-    results. This may change in the future however. If you want to use these
-    methods now, it's best if you use ``Model.base_objects.values...`` as
-    this is guaranteed to not change.
+*   :meth:`~django.db.models.query.QuerySet.values` &
+    :meth:`~django.db.models.query.QuerySet.values_list` currently do not return polymorphic
+    results. This may change in the future however. If you want to use these methods now, it's best
+    if you use ``Model.base_objects.values...`` as this is guaranteed to not change.
 
-*   ``defer()`` and ``only()`` work as expected. On Django 1.5+ they support
-    the ``ModelX___field`` syntax, but on Django 1.4 it is only possible to
-    pass fields on the base model into these methods.
+*   :meth:`~django.db.models.query.QuerySet.defer` and :meth:`~django.db.models.query.QuerySet.only`
+    work as expected. On Django 1.5+ they support the ``ModelX___field`` syntax, but on Django 1.4
+    it is only possible to pass fields on the base model into these methods.
 
 
 Using enhanced Q-objects in any Places
 --------------------------------------
 
-The queryset enhancements (e.g. ``instance_of``) only work as arguments
-to the member functions of a polymorphic queryset.  Occasionally it may
-be useful to be able to use Q objects with these enhancements in other places.
-As Django doesn't understand these enhanced Q objects, you need to
-transform them manually into normal Q objects before you can feed them
-to a Django queryset or function::
+The queryset enhancements (e.g. :meth:`~polymorphic.managers.PolymorphicQuerySet.instance_of`)
+only work as arguments to the member functions of a polymorphic queryset.  Occasionally it may
+be useful to be able to use Q objects with these enhancements in other places. As Django doesn't
+understand these enhanced Q objects, you need to transform them manually into normal Q objects
+before you can feed them to a Django queryset or function:
+
+.. code-block:: python
 
     normal_q_object = ModelA.translate_polymorphic_Q_object( Q(instance_of=Model2B) )
 
-This function cannot be used at model creation time however (in models.py),
-as it may need to access the ContentTypes database table.
+This function cannot be used at model creation time however (in models.py), as it may need to access
+the ContentTypes database table.
 
 
 Nicely Displaying Polymorphic Querysets
 ---------------------------------------
 
 In order to get the output as seen in all examples here, you need to use the
-:class:`~polymorphic.showfields.ShowFieldType` class mixin::
+:class:`~polymorphic.showfields.ShowFieldType` class mixin:
+
+.. code-block:: python
 
     from polymorphic.models import PolymorphicModel
     from polymorphic.showfields import ShowFieldType
@@ -223,12 +251,14 @@ In order to get the output as seen in all examples here, you need to use the
     class ModelA(ShowFieldType, PolymorphicModel):
         field1 = models.CharField(max_length=10)
 
-You may also use :class:`~polymorphic.showfields.ShowFieldContent`
-or :class:`~polymorphic.showfields.ShowFieldTypeAndContent` to display
-additional information when printing querysets (or converting them to text).
+You may also use :class:`~polymorphic.showfields.ShowFieldContent` or
+:class:`~polymorphic.showfields.ShowFieldTypeAndContent` to display additional information when
+printing querysets (or converting them to text).
 
-When showing field contents, they will be truncated to 20 characters. You can
-modify this behaviour by setting a class variable in your model like this::
+When showing field contents, they will be truncated to 20 characters. You can modify this behavior
+by setting a class variable in your model like this:
+
+.. code-block:: python
 
     class ModelA(ShowFieldType, PolymorphicModel):
         polymorphic_showfield_max_field_width = 20
@@ -238,36 +268,33 @@ Similarly, pre-V1.0 output formatting can be re-estated by using
 ``polymorphic_showfield_old_format = True``.
 
 
-
 .. _restrictions:
 
 Restrictions & Caveats
 ----------------------
 
-*   Database Performance regarding concrete Model inheritance in general.
-    Please see the :ref:`performance`.
+*   Database Performance regarding concrete Model inheritance in general. Please see
+    :ref:`performance`.
 
-*   Queryset methods ``values()``, ``values_list()``, and ``select_related()``
-    are not yet fully supported (see above). ``extra()`` has one restriction:
-    the resulting objects are required to have a unique primary key within
-    the result set.
+*   Queryset methods :meth:`~django.db.models.query.QuerySet.values`,
+    :meth:`~django.db.models.query.QuerySet.values_list`, and
+    :meth:`~django.db.models.query.QuerySet.select_related` are not yet fully supported (see above).
+    :meth:`~django.db.models.query.QuerySet.extra` has one restriction: the resulting objects are
+    required to have a unique primary key within the result set.
 
-*   Diamond shaped inheritance: There seems to be a general problem
-    with diamond shaped multiple model inheritance with Django models
-    (tested with V1.1 - V1.3).
-    An example is here: http://code.djangoproject.com/ticket/10808.
-    This problem is aggravated when trying to enhance models.Model
-    by subclassing it instead of modifying Django core (as we do here
-    with PolymorphicModel).
+*   Diamond shaped inheritance: There seems to be a general problem with diamond shaped multiple
+    model inheritance with Django models (tested with V1.1 - V1.3). An example
+    `is here <http://code.djangoproject.com/ticket/10808>`_. This problem is aggravated when trying
+    to enhance :class:`~django.db.models.Model` by subclassing it instead of modifying Django core
+    (as we do here with :class:`~polymorphic.models.PolymorphicModel`).
 
-*   The enhanced filter-definitions/Q-objects only work as arguments
-    for the methods of the polymorphic querysets. Please see above
-    for ``translate_polymorphic_Q_object``.
+*   The enhanced filter-definitions/Q-objects only work as arguments for the methods of the
+    polymorphic querysets. Please see above for ``translate_polymorphic_Q_object``.
 
-*   When using the ``dumpdata`` management command on polymorphic tables
-    (or any table that has a reference to
-    :class:`~django.contrib.contenttypes.models.ContentType`),
-    include the ``--natural-foreign`` and ``--natural-primary`` flags in the arguments.
+*   When using the :django-admin:`dumpdata` management command on polymorphic tables
+    (or any table that has a reference to :class:`~django.contrib.contenttypes.models.ContentType`),
+    include the :option:`--natural-primary <dumpdata.--natural-primary>` and
+    :option:`--natural-foreign <dumpdata.--natural-foreign>` flags in the arguments.
 
 
 

@@ -1,12 +1,30 @@
-"""
-Seamless Polymorphic Inheritance for Django Models
+r"""
+::
 
-Copyright:
-This code and affiliated files are (C) by Bert Constantin and individual contributors.
-Please see LICENSE and AUTHORS for more information.
+                    ██████╗      ██╗ █████╗ ███╗   ██╗ ██████╗  ██████╗
+                    ██╔══██╗     ██║██╔══██╗████╗  ██║██╔════╝ ██╔═══██╗
+                    ██║  ██║     ██║███████║██╔██╗ ██║██║  ███╗██║   ██║
+                    ██║  ██║██   ██║██╔══██║██║╚██╗██║██║   ██║██║   ██║
+                    ██████╔╝╚█████╔╝██║  ██║██║ ╚████║╚██████╔╝╚██████╔╝
+                    ╚═════╝  ╚════╝ ╚═╝  ╚═╝╚═╝  ╚═══╝ ╚═════╝  ╚═════╝
+
+    ██████╗  ██████╗ ██╗  ██╗   ██╗███╗   ███╗ ██████╗ ██████╗ ██████╗ ██╗  ██╗██╗ ██████╗
+    ██╔══██╗██╔═══██╗██║  ╚██╗ ██╔╝████╗ ████║██╔═══██╗██╔══██╗██╔══██╗██║  ██║██║██╔════╝
+    ██████╔╝██║   ██║██║   ╚████╔╝ ██╔████╔██║██║   ██║██████╔╝██████╔╝███████║██║██║
+    ██╔═══╝ ██║   ██║██║    ╚██╔╝  ██║╚██╔╝██║██║   ██║██╔══██╗██╔═══╝ ██╔══██║██║██║
+    ██║     ╚██████╔╝███████╗██║   ██║ ╚═╝ ██║╚██████╔╝██║  ██║██║     ██║  ██║██║╚██████╗
+    ╚═╝      ╚═════╝ ╚══════╝╚═╝   ╚═╝     ╚═╝ ╚═════╝ ╚═╝  ╚═╝╚═╝     ╚═╝  ╚═╝╚═╝ ╚═════╝
+
+
+Seamless Polymorphic Inheritance for Django Models
 """
 
 VERSION = "4.2.0"
 
-# version synonym for backwards compatibility
-__version__ = VERSION
+__title__ = "Django Polymorphic"
+__version__ = VERSION  # version synonym for backwards compatibility
+__author__ = "Brian Kohan"
+__license__ = "BSD-3-Clause"
+__copyright__ = (
+    "Copyright 2010-2025, Bert Constantin, Chris Glass, Diederik van der Boor, Brian Kohan"
+)

@@ -162,10 +162,10 @@ dev = [
 docs = [
     "django-extra-views>=0.15.0",
     "doc8>=1.1.2",
+    "furo>=2025.7.19",
     "readme-renderer[md]>=43.0",
     "sphinx>=7.1.2",
-    "sphinx-autobuild>=2021.3.14",
-    "sphinx-rtd-theme>=3.0.2",
+    "sphinx-autobuild>=2024.10.3",
     "sphinxcontrib-django>=2.5",
 ]
 psycopg2 = [

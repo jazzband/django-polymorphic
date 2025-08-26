@@ -1,6 +1,13 @@
 API Documentation
 =================
 
+.. _base:
+
+.. automodule:: polymorphic
+   :members:
+   :show-inheritance:
+   :inherited-members:
+
 .. toctree::
 
    polymorphic.admin
@@ -9,5 +16,6 @@ API Documentation
    polymorphic.formsets
    polymorphic.managers
    polymorphic.models
+   polymorphic.showfields
    polymorphic.templatetags
    polymorphic.utils

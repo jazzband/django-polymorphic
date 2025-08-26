@@ -5,7 +5,7 @@ Formsets
 
 Polymorphic models can be used in formsets.
 
-The implementation is almost identical to the regular Django formsets.
+The implementation is almost identical to the regular Django :doc:`django:topics/forms/formsets`.
 As extra parameter, the factory needs to know how to display the child models.
 Provide a list of :class:`~polymorphic.formsets.PolymorphicFormSetChild` objects for this.
 
@@ -29,7 +29,7 @@ The formset can be used just like all other formsets:
     else:
         formset = ModelAFormSet(queryset=ModelA.objects.all())
 
-Like standard Django formsets, there are 3 factory methods available:
+Like standard Django :doc:`django:topics/forms/formsets`, there are 3 factory methods available:
 
 * :func:`~polymorphic.formsets.polymorphic_modelformset_factory` - create a regular model formset.
 * :func:`~polymorphic.formsets.polymorphic_inlineformset_factory` - create a inline model formset.
