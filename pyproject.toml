@@ -78,9 +78,6 @@ exclude = ["src/polymorphic/tests"]
 packages = ["src/polymorphic"]
 artifacts = ["*.mo"]
 
-[tool.hatch.build.targets.wheel.hooks.custom]
-require-runtime-dependencies = true  # We need Django so we have compilemessages
-
 [tool.doc8]
 max-line-length = 100
 sphinx = true
@@ -175,5 +172,11 @@ psycopg2 = [
     "psycopg2>=2.9.10",
 ]
 psycopg3 = [
-    "psycopg>=3.2.5",
+    "psycopg",
+]
+mysql = [
+    "mysqlclient>=1.4.0",
+]
+oracle = [
+    "cx-oracle>=8.3.0",
 ]

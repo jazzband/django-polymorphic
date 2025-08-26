@@ -64,8 +64,6 @@ jobs:
           enable-cache: true
       - name: Install Just
         uses: extractions/setup-just@v3
-      - name: Install gettext
-        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends gettext
       - name: Install Dependencies
         run: |
           just setup ${{ steps.sp.outputs.python-path }}

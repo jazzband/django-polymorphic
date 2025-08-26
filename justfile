@@ -89,6 +89,7 @@ build-docs: build-docs-html
 
 # build docs and package
 build: build-docs-html
+    @just manage compilemessages
     uv build
 
 # open the html documentation
@@ -178,6 +179,12 @@ test-lock +PACKAGES: _lock-python
 # run tests
 test *TESTS:
     @just run pytest --cov-append {{ TESTS }}
+
+test-db DB_CLIENT="dev":
+    # No Optional Dependency Unit Tests
+    # todo clean this up, rerunning a lot of tests
+    uv sync --group {{ DB_CLIENT }}
+    @just run pytest --cov-append
 
 # run the pre-commit checks
 precommit:
