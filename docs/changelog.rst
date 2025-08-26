@@ -17,10 +17,10 @@ v4.0.0 (2025-05-20)
 
 There were many updates modernizing the package and incorporating Jazzband standards:
 
-  * Updates to documentation
-  * Formatting and linting with ruff
-  * Moving to GHA from Travis CI
-  * Switch to pytest
+* Updates to documentation
+* Formatting and linting with ruff
+* Moving to GHA from Travis CI
+* Switch to pytest
 
 Changes that touched the core package code were:
 

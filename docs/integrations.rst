@@ -1,29 +1,35 @@
-Third-party applications support
-================================
+.. _integrations:
 
+Integrations
+============
 
-django-guardian support
------------------------
+.. _django-django-guardian-support:
+
+django-guardian
+---------------
 
 .. versionadded:: 1.0.2
 
-You can configure django-guardian_ to use the base model for object level permissions.
+You can configure :pypi:`django-guardian` to use the base model for object level permissions.
 Add this option to your settings:
 
 .. code-block:: python
 
-    GUARDIAN_GET_CONTENT_TYPE = 'polymorphic.contrib.guardian.get_polymorphic_base_content_type'
+    GUARDIAN_GET_CONTENT_TYPE = \
+        'polymorphic.contrib.guardian.get_polymorphic_base_content_type'
 
-This option requires django-guardian_ >= 1.4.6. Details about how this option works are available in
-the `django-guardian documentation
-<https://django-guardian.readthedocs.io/en/latest/configuration>`_.
+This option requires :pypi:`django-guardian` >= 1.4.6. Details about how this option works are
+available in the `django-guardian documentation
+<https://django-guardian.readthedocs.io/en/stable/configuration>`_.
 
 
-django-rest-framework support
------------------------------
+.. _django-rest-framework-support:
 
-The django-rest-polymorphic_ package provides polymorphic serializers that help you integrate your
-polymorphic models with `django-rest-framework`.
+djangorestframework
+-------------------
+
+The :pypi:`django-rest-polymorphic` package provides polymorphic serializers that help you integrate
+your polymorphic models with :pypi:`djangorestframework`.
 
 
 Example
@@ -77,42 +83,46 @@ Create viewset with serializer_class equals to your polymorphic serializer:
         serializer_class = ProjectPolymorphicSerializer
 
 
+.. _django-extra-views-support:
+
 django-extra-views
 ------------------
 
 .. versionadded:: 1.1
 
 The :mod:`polymorphic.contrib.extra_views` package provides classes to display polymorphic formsets
-using the classes from django-extra-views_. See the documentation of:
+using the classes from :pypi:`django-extra-views`. See the documentation of:
 
 * :class:`~polymorphic.contrib.extra_views.PolymorphicFormSetView`
 * :class:`~polymorphic.contrib.extra_views.PolymorphicInlineFormSetView`
 * :class:`~polymorphic.contrib.extra_views.PolymorphicInlineFormSet`
 
 
-django-mptt support
--------------------
+.. _django-mptt-support:
 
-Combining polymorphic with django-mptt_ is certainly possible, but not straightforward.
+django-mptt
+-----------
+
+Combining polymorphic with :pypi:`django-mptt` is certainly possible, but not straightforward.
 It involves combining both managers, querysets, models, meta-classes and admin classes
 using multiple inheritance.
 
-The django-polymorphic-tree_ package provides this out of the box.
+The :pypi:`django-polymorphic-tree` package provides this out of the box.
 
 
-django-reversion support
-------------------------
+.. _django-reversion-support:
 
-Support for django-reversion_ works as expected with polymorphic models.
+django-reversion
+----------------
+
+Support for :pypi:`django-reversion` works as expected with polymorphic models.
 However, they require more setup than standard models. That's become:
 
-* Manually register the child models with django-reversion_, so their ``follow`` parameter can be
-  set.
-* Polymorphic models use `multi-table inheritance
-  <https://docs.djangoproject.com/en/dev/topics/db/models/#multi-table-inheritance>`_.
-  See the `reversion documentation
-  <https://django-reversion.readthedocs.io/en/latest/api.html#registration-api>`_
-  how to deal with this by adding a ``follow`` field for the primary key.
+* Manually register the child models with :pypi:`django-reversion`, so their ``follow`` parameter
+  can be set.
+* Polymorphic models use :ref:`django:multi-table-inheritance`.
+  See the :doc:`django-reversion:api` for how to deal with this by adding a ``follow`` field for the
+  primary key.
 * Both admin classes redefine ``object_history_template``.
 
 
@@ -171,10 +181,10 @@ polymorphic model.
 
 .. _django-reversion-compare-support:
 
-django-reversion-compare support
---------------------------------
+django-reversion-compare
+------------------------
 
-The django-reversion-compare_ views work as expected, the admin requires a little tweak.
+The :pypi:`django-reversion-compare` views work as expected, the admin requires a little tweak.
 In your parent admin, include the following method:
 
 .. code-block:: python
@@ -188,12 +198,3 @@ As the compare view resolves the the parent admin, it uses it's base model to fi
 This doesn't work, since it needs to look for revisions of the child model. Using this tweak,
 the view of the actual child model is used, similar to the way the regular change and delete views
 are redirected.
-
-
-.. _django-extra-views: https://github.com/AndrewIngram/django-extra-views
-.. _django-guardian: https://github.com/django-guardian/django-guardian
-.. _django-mptt: https://github.com/django-mptt/django-mptt
-.. _django-polymorphic-tree: https://github.com/django-polymorphic/django-polymorphic-tree
-.. _django-rest-polymorphic: https://github.com/apirobot/django-rest-polymorphic
-.. _django-reversion-compare: https://github.com/jedie/django-reversion-compare
-.. _django-reversion: https://github.com/etianen/django-reversion
