@@ -33,41 +33,61 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
-        postgres-version: ['9.6', '12', 'latest']
+        python-version: ['3.10', '3.11', '3.12', '3.13', '3.14']
+        postgres-version: ['12', '14', 'latest']
         psycopg-version: ['psycopg2', 'psycopg3']
         django-version:
           - '4.2' # LTS April 2026
           - '5.1' # December 2025
           - '5.2' # LTS April 2028
+          - '6.0rc1' # 
         exclude:
-          - django-version: '4.2'
-            postgres-version: '9.6'
-          - postgres-version: '12'
-            psycopg-version: 'psycopg3'
-          
-          - postgres-version: '12'
-            django-version: '5.1'
 
-          - postgres-version: '9.6'
-            django-version: '5.1'
-
-          - postgres-version: '9.6'
-            django-version: '5.2'
-
-          - postgres-version: '12'
-            django-version: '5.2'
-
-          - python-version: '3.9'
-            django-version: '5.1'
-          - python-version: '3.9'
-            django-version: '5.2'
+          - python-version: '3.10'
+            django-version: '6.0rc1'
+          - python-version: '3.11'
+            django-version: '6.0rc1'
+            
           - python-version: '3.13'
             django-version: '4.2'
+
+          - python-version: '3.14'
+            django-version: '4.2'
+          - python-version: '3.14'
+            django-version: '5.1'
+          - python-version: '3.14'
+            django-version: '5.2'
+
+          - postgres-version: '12'
+            django-version: '5.1'
+          - postgres-version: '12'
+            django-version: '5.2'
+          - postgres-version: '12'
+            django-version: '6.0rc1'
+
+          - postgres-version: '14'
+            django-version: '4.2'
+          - postgres-version: '14'
+            django-version: '5.2'
+          - postgres-version: '14'
+            django-version: '6.0rc1'
+
+          - postgres-version: 'latest'
+            django-version: '4.2'
+          - postgres-version: 'latest'
+            django-version: '5.1'
+
+          - postgres-version: '12'
+            psycopg-version: 'psycopg3'
+          - postgres-version: 'latest'
+            psycopg-version: 'psycopg2'
           
           # https://github.com/psycopg/psycopg2/pull/1695
           - python-version: '3.13'
             psycopg-version: 'psycopg2'
+          - python-version: '3.14'
+            psycopg-version: 'psycopg2'
+
     env:
       RDBMS: postgres
       POSTGRES_PASSWORD: postgres
@@ -130,7 +150,11 @@ jobs:
     - name: Install Release Dependencies
       run: |
         just setup ${{ steps.sp.outputs.python-path }}
-        just test-lock "Django~=${{ matrix.django-version }}.0"
+        if [[ "${{ matrix.django-version }}" =~ (a|b|rc) ]]; then
+          just test-lock Django==${{ matrix.django-version }}
+        else
+          just test-lock Django~=${{ matrix.django-version }}.0
+        fi
     - name: Run Unit Tests
       run: |
         just test-db ${{ matrix.psycopg-version }}
@@ -155,12 +179,25 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [ '3.9', '3.13']
+        python-version: [ '3.10', '3.12', '3.14']
         django-version:
           - '4.2' # LTS April 2026
           - '5.2' # LTS April 2028
+          - '6.0rc1' # LTS April 2028
         exclude:
-          - python-version: '3.9'
+          - python-version: '3.10'
+            django-version: '5.2'
+          - python-version: '3.10'
+            django-version: '6.0rc1'
+
+          - python-version: '3.12'
+            django-version: '4.2'
+          - python-version: '3.12'
+            django-version: '6.0rc1'
+
+          - python-version: '3.14'
+            django-version: '4.2'
+          - python-version: '3.14'
             django-version: '5.2'
 
     steps:
@@ -190,7 +227,11 @@ jobs:
         run: |
           just setup ${{ steps.sp.outputs.python-path }}
           just install
-          just test-lock Django~=${{ matrix.django-version }}.0
+          if [[ "${{ matrix.django-version }}" =~ (a|b|rc) ]]; then
+            just test-lock Django==${{ matrix.django-version }}
+          else
+            just test-lock Django~=${{ matrix.django-version }}.0
+          fi
       - name: Run Unit Tests
         run: |
           just test-db
@@ -209,25 +250,39 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [ '3.9', '3.13']
-        mysql-version: ['5.7', 'latest']
+        python-version: ['3.10', '3.12', '3.14']
+        mysql-version: ['8.0', 'latest']
         mysqlclient-version: ['1.4.3', '']
         django-version:
-          - '4.2' # LTS April 2026
-          - '5.2' # LTS April 2028
+          - '4.2'    # LTS April 2024
+          - '5.2'    # LTS April 2028
+          - '6.0rc1' # April 2027
         exclude:
-          - python-version: '3.9'
-            django-version: '5.2'
-
           - django-version: '4.2'
-            mysql-version: '5.7'
-          - django-version: '5.2'
-            mysql-version: '5.7'
+            mysql-version: 'latest'
 
-          - mysql-version: '5.7'
-            mysqlclient-version: ''
+          - django-version: '6.0rc1'
+            mysql-version: '8.0'
+
           - mysql-version: 'latest'
             mysqlclient-version: '1.4.3'
+
+          - python-version: '3.12'
+            django-version: '4.2'
+          - python-version: '3.14'
+            django-version: '4.2'
+
+          - python-version: '3.10'
+            django-version: '5.2'
+          - python-version: '3.14'
+            django-version: '5.2'
+          - django-version: '5.2'
+            mysqlclient-version: '1.4.3'
+
+          - python-version: '3.10'
+            django-version: '6.0rc1'
+          - python-version: '3.12'
+            django-version: '6.0rc1'
   
     env:
       RDBMS: mysql
@@ -282,7 +337,11 @@ jobs:
       - name: Install Release Dependencies
         run: |
           just setup ${{ steps.sp.outputs.python-path }}
-          just test-lock Django~=${{ matrix.django-version }}.0
+          if [[ "${{ matrix.django-version }}" =~ (a|b|rc) ]]; then
+            just test-lock Django==${{ matrix.django-version }}
+          else
+            just test-lock Django~=${{ matrix.django-version }}.0
+          fi
       
       - name: Install mysqlclient if needed
         if: ${{ matrix.mysqlclient-version != '' }}
@@ -312,30 +371,49 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [ '3.9', '3.13']
+        python-version: ['3.10', '3.12', '3.14']
         mysqlclient-version: ['1.4.3', '']
-        mariadb-version: ['10.2', 'latest']
+        mariadb-version: ['10.4', 'latest']
         mariadb-healthcheck: ["mysqladmin ping", "healthcheck.sh --connect --innodb_initialized"]
         django-version:
-          - '4.2' # LTS April 2026
-          - '5.2' # LTS April 2028
+          - '4.2'    # LTS April 2024
+          - '5.2'    # LTS April 2028
+          - '6.0rc1' # April 2027
         exclude:
-          - python-version: '3.9'
-            django-version: '5.2'
-
           - django-version: '4.2'
-            mariadb-version: '10.2'
-          - django-version: '5.2'
-            mariadb-version: '10.2'
+            mariadb-version: 'latest'
 
-          - mariadb-version: '10.2'
-            mysqlclient-version: ''
+          - django-version: '5.2'
+            mariadb-version: '10.4'
+          - django-version: '6.0rc1'
+            mariadb-version: '10.4'
+
           - mariadb-version: 'latest'
             mysqlclient-version: '1.4.3'
 
+          - python-version: '3.12'
+            django-version: '4.2'
+          - python-version: '3.14'
+            django-version: '4.2'
+
+          - python-version: '3.10'
+            django-version: '5.2'
+          - python-version: '3.14'
+            django-version: '5.2'
+          - django-version: '5.2'
+            mysqlclient-version: '1.4.3'
+
+          - python-version: '3.10'
+            django-version: '6.0rc1'
+          - python-version: '3.12'
+            django-version: '6.0rc1'
+
+          - mariadb-version: '10.4'
+            mysqlclient-version: ''
+
           - mariadb-version: 'latest'
             mariadb-healthcheck: "mysqladmin ping"
-          - mariadb-version: '10.2'
+          - mariadb-version: '10.4'
             mariadb-healthcheck: "healthcheck.sh --connect --innodb_initialized"
 
     services:
@@ -382,7 +460,11 @@ jobs:
       - name: Install Release Dependencies
         run: |
           just setup ${{ steps.sp.outputs.python-path }}
-          just test-lock Django~=${{ matrix.django-version }}.0
+          if [[ "${{ matrix.django-version }}" =~ (a|b|rc) ]]; then
+            just test-lock Django==${{ matrix.django-version }}
+          else
+            just test-lock Django~=${{ matrix.django-version }}.0
+          fi
       
       - name: Install mysqlclient if needed
         if: ${{ matrix.mysqlclient-version != '' }}
@@ -410,32 +492,43 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.9', '3.10', '3.12']
+        python-version: [ '3.10', '3.12', '3.14']
         django-version:
           - '4.2' # LTS April 2026
           - '5.2' # LTS April 2028
+          - '6.0rc1' # LTS April 2028
         oracle-version:
-          - '18'
-          - 'latest'
+          - 'oracle-xe:21'
+          - 'oracle-free:latest'
         exclude:
-          - python-version: '3.9'
-            django-version: '5.2'
+
+          - django-version: '4.2'
+            oracle-version: 'oracle-free:latest'
+
+          - django-version: '5.2'
+            oracle-version: 'oracle-free:latest'
+
+          - django-version: '6.0rc1'
+            oracle-version: 'oracle-xe:21'
+
           - python-version: '3.10'
             django-version: '5.2'
+          - python-version: '3.10'
+            django-version: '6.0rc1'
+
           - python-version: '3.12'
             django-version: '4.2'
-          - python-version: '3.9'
+          - python-version: '3.12'
+            django-version: '6.0rc1'
+
+          - python-version: '3.14'
             django-version: '4.2'
-          - django-version: '3.2'
-            oracle-version: 'latest'
-          - django-version: '4.2'
-            oracle-version: '18'
-          - django-version: '5.2'
-            oracle-version: '18'
+          - python-version: '3.14'
+            django-version: '5.2'
 
     services:
       oracle1:
-        image: gvenzl/oracle-xe:${{ matrix.oracle-version }}
+        image: gvenzl/${{ matrix.oracle-version }}
         env:
           ORACLE_PASSWORD: password
           ORACLE_DATABASE: test1
@@ -450,7 +543,7 @@ jobs:
           --health-retries 10
 
       oracle2:
-        image: gvenzl/oracle-xe:${{ matrix.oracle-version }}
+        image: gvenzl/${{ matrix.oracle-version }}
         env:
           ORACLE_PASSWORD: password
           ORACLE_DATABASE: test2
@@ -465,6 +558,10 @@ jobs:
           --health-retries 10
 
     steps:
+      - name: Set coverage file
+        run: |
+          ORACLE_TAG=$(echo "${{ matrix.oracle-version }}" | cut -d':' -f2)
+          echo "COVERAGE_FILE=linux-py${{ matrix.python-version }}-dj${{ matrix.django-version }}-oracle${ORACLE_TAG}.coverage" >> $GITHUB_ENV
       - uses: actions/checkout@v5
       - name: Set up Python ${{ matrix.python-version }}
         id: sp
@@ -490,19 +587,33 @@ jobs:
       - name: Install Oracle Client
         # https://askubuntu.com/questions/1512196/libaio1-on-noble
         run: |
-          curl --output oracle-client.rpm https://download.oracle.com/otn_software/linux/instantclient/2116000/oracle-instantclient-basiclite-21.16.0.0.0-1.el8.x86_64.rpm
           sudo apt install alien libaio1t64
-          sudo alien -i oracle-client.rpm
-          sudo sh -c "echo /usr/lib/oracle/21/client64/lib/ > /etc/ld.so.conf.d/oracle.conf"
           sudo ln -s /usr/lib/x86_64-linux-gnu/libaio.so.1t64 /usr/lib/x86_64-linux-gnu/libaio.so.1
+          if [[ "${{ matrix.oracle-version }}" == oracle-xe* ]]; then
+            curl --output oracle-client.rpm https://download.oracle.com/otn_software/linux/instantclient/2116000/oracle-instantclient-basiclite-21.16.0.0.0-1.el8.x86_64.rpm
+            sudo alien -i oracle-client.rpm
+            sudo sh -c "echo /usr/lib/oracle/21/client64/lib/ > /etc/ld.so.conf.d/oracle.conf"
+          else
+            curl --output oracle-client.rpm https://download.oracle.com/otn_software/linux/instantclient/2326000/oracle-instantclient-basiclite-23.26.0.0.0-1.el9.x86_64.rpm
+            sudo alien -i oracle-client.rpm
+            sudo sh -c "echo /usr/lib/oracle/23/client64/lib/ > /etc/ld.so.conf.d/oracle.conf"
+          fi
           sudo ldconfig
       - name: Install Release Dependencies
         run: |
           just setup ${{ steps.sp.outputs.python-path }}
-          just test-lock Django~=${{ matrix.django-version }}.0
+          if [[ "${{ matrix.django-version }}" =~ (a|b|rc) ]]; then
+            just test-lock Django==${{ matrix.django-version }}
+          else
+            just test-lock Django~=${{ matrix.django-version }}.0
+          fi
       - name: Run Full Unit Tests
         run: |
-          just test-db oracle
+          if [[ "${{ matrix.oracle-version }}" == oracle-xe* ]]; then
+            just test-db cx_oracle
+          else
+            just test-db oracledb
+          fi
 
       - name: Store coverage files
         uses: actions/upload-artifact@v4
@@ -525,11 +636,25 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [ '3.9', '3.13']
+        python-version: [ '3.10', '3.12', '3.14']
         django-version:
+          - '4.2' # LTS April 2026
           - '5.2' # LTS April 2028
+          - '6.0rc1' # LTS April 2028
         exclude:
-          - python-version: '3.9'
+          - python-version: '3.10'
+            django-version: '5.2'
+          - python-version: '3.10'
+            django-version: '6.0rc1'
+
+          - python-version: '3.12'
+            django-version: '4.2'
+          - python-version: '3.12'
+            django-version: '6.0rc1'
+
+          - python-version: '3.14'
+            django-version: '4.2'
+          - python-version: '3.14'
             django-version: '5.2'
 
     steps:
@@ -558,7 +683,12 @@ jobs:
         run: |
           just setup ${{ steps.sp.outputs.python-path }}
           just install
-          just test-lock Django~=${{ matrix.django-version }}.0
+          $version = "${{ matrix.django-version }}"
+          if ($version -match "(a|b|rc)") {
+            just test-lock "Django==$version"
+          } else {
+            just test-lock "Django~=$version.0"
+          }
       - name: Run Unit Tests
         run: |
           just test
@@ -583,11 +713,25 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [ '3.9', '3.13']
+        python-version: [ '3.10', '3.12', '3.14']
         django-version:
+          - '4.2' # LTS April 2026
           - '5.2' # LTS April 2028
+          - '6.0rc1' # LTS April 2028
         exclude:
-          - python-version: '3.9'
+          - python-version: '3.10'
+            django-version: '5.2'
+          - python-version: '3.10'
+            django-version: '6.0rc1'
+
+          - python-version: '3.12'
+            django-version: '4.2'
+          - python-version: '3.12'
+            django-version: '6.0rc1'
+
+          - python-version: '3.14'
+            django-version: '4.2'
+          - python-version: '3.14'
             django-version: '5.2'
 
     steps:
@@ -617,7 +761,11 @@ jobs:
         run: |
           just setup ${{ steps.sp.outputs.python-path }}
           just install
-          just test-lock Django~=${{ matrix.django-version }}.0
+          if [[ "${{ matrix.django-version }}" =~ (a|b|rc) ]]; then
+            just test-lock Django==${{ matrix.django-version }}
+          else
+            just test-lock Django~=${{ matrix.django-version }}.0
+          fi
       - name: Run Unit Tests
         run: |
           just test
