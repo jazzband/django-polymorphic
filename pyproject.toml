@@ -9,7 +9,7 @@ description = "Seamless polymorphic inheritance for Django models."
 readme = "README.md"
 license = "BSD-3-Clause"
 license-files = [ "LICENSE" ]
-requires-python = ">=3.9,<4.0"
+requires-python = ">=3.10,<4.0"
 repository = "https://github.com/jazzband/django-polymorphic"
 homepage = "https://django-polymorphic.rtfd.io"
 authors = [
@@ -30,17 +30,18 @@ classifiers = [
     "Framework :: Django :: 4.2",
     "Framework :: Django :: 5.1",
     "Framework :: Django :: 5.2",
+    "Framework :: Django :: 6.0",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: BSD License",
     "Natural Language :: English",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Database",
     "Topic :: Internet :: WWW/HTTP",
     "Topic :: Internet :: WWW/HTTP :: Site Management",
@@ -173,6 +174,10 @@ psycopg3 = [
 mysql = [
     "mysqlclient>=1.4.0",
 ]
-oracle = [
+
+cx_oracle = [
     "cx-oracle>=8.3.0",
+]
+oracledb = [
+    "oracledb>=2.3.0",
 ]

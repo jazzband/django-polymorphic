@@ -13,6 +13,16 @@
 [![Published on Django Packages](https://img.shields.io/badge/Published%20on-Django%20Packages-0c3c26)](https://djangopackages.org/packages/p/django-polymorphic/)
 [![Jazzband](https://jazzband.co/static/img/badge.svg)](https://jazzband.co/)
 
+---------------------------------------------------------------------------------------------------
+
+[![Postgres](https://img.shields.io/badge/Postgres-12%2B-blue)](https://www.postgresql.org/)
+[![MySQL](https://img.shields.io/badge/MySQL-8.0%2B-blue)](https://www.mysql.com/)
+[![MariaDB](https://img.shields.io/badge/MariaDB-10.4%2B-blue)](https://mariadb.org/)
+[![SQLite](https://img.shields.io/badge/SQLite-3.8%2B-blue)](https://www.sqlite.org/)
+[![Oracle](https://img.shields.io/badge/Oracle-21c%2B-blue)](https://www.oracle.com/database/)
+
+---------------------------------------------------------------------------------------------------
+
 ## Polymorphic Models for Django
 
 [django-polymorphic](https://pypi.python.org/pypi/django-polymorphic) simplifies using inherited models in [Django](https://djangoproject.com) projects. When a query is made at the base model, the inherited model classes are returned.

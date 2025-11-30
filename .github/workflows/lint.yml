@@ -26,19 +26,26 @@ jobs:
     strategy:
       matrix:
         # run static analysis on bleeding and trailing edges
-        python-version: [ '3.9', '3.10', '3.13' ]
+        python-version: [ '3.10', '3.12', '3.14' ]
         django-version:
           - '4.2' # LTS April 2026
-          - '5.2' # December 2025
+          - '5.2' # LTS April December 2027
+          - '6.0rc1' # 
         exclude:
-          - python-version: '3.9'
+          - python-version: '3.12'
             django-version: '4.2'
-          - python-version: '3.13'
+          - python-version: '3.14'
             django-version: '4.2'
-          - python-version: '3.9'
-            django-version: '5.2'
+            
           - python-version: '3.10'
             django-version: '5.2'
+          - python-version: '3.14'
+            django-version: '5.2'
+
+          - python-version: '3.10'
+            django-version: '6.0rc1'
+          - python-version: '3.12'
+            django-version: '6.0rc1'
 
     env:
       TEST_PYTHON_VERSION: ${{ matrix.python-version }}
@@ -62,7 +69,11 @@ jobs:
       - name: Install Dependencies
         run: |
           just setup ${{ steps.sp.outputs.python-path }}
-          just test-lock Django~=${{ matrix.django-version }}.0
+          if [[ "${{ matrix.django-version }}" =~ (a|b|rc) ]]; then
+            just test-lock Django==${{ matrix.django-version }}
+          else
+            just test-lock Django~=${{ matrix.django-version }}.0
+          fi
           just install-docs
       - name: Install Emacs
         if: ${{ github.event.inputs.debug == 'true' }}

@@ -4,10 +4,9 @@ Changelog
 v4.2.0 (2025-XX-XX)
 -------------------
 
+* Support Python 3.14 and Django 6.0, drop support for EOL python 3.9, Django 3.2, 4.0, 4.1 and 5.0.
 * `Modernized package management with new build, test, docs tooling and improved CI 
   <https://github.com/jazzband/django-polymorphic/issues/651>`_.
-* Drop support for Django versions past EOL. Django 4.2 or newer is now
-  required.
 
 v4.1.0 (2025-05-20)
 -------------------
