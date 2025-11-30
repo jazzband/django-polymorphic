@@ -28,7 +28,6 @@ jobs:
         # run static analysis on bleeding and trailing edges
         python-version: [ '3.9', '3.10', '3.13' ]
         django-version:
-          - '3.2' # LTS April 2024
           - '4.2' # LTS April 2026
           - '5.2' # December 2025
         exclude:
@@ -36,10 +35,6 @@ jobs:
             django-version: '4.2'
           - python-version: '3.13'
             django-version: '4.2'
-          - python-version: '3.13'
-            django-version: '3.2'
-          - python-version: '3.10'
-            django-version: '3.2'
           - python-version: '3.9'
             django-version: '5.2'
           - python-version: '3.10'

@@ -37,23 +37,14 @@ jobs:
         postgres-version: ['9.6', '12', 'latest']
         psycopg-version: ['psycopg2', 'psycopg3']
         django-version:
-          - '3.2' # LTS April 2024
           - '4.2' # LTS April 2026
           - '5.1' # December 2025
           - '5.2' # LTS April 2028
         exclude:
           - django-version: '4.2'
             postgres-version: '9.6'
-          - python-version: '3.11'
-            django-version: '3.2'
-          - python-version: '3.12'
-            django-version: '3.2'
           - postgres-version: '12'
             psycopg-version: 'psycopg3'
-          - django-version: '3.2'
-            psycopg-version: 'psycopg3'
-          - django-version: '3.2'
-            postgres-version: 'latest'
           
           - postgres-version: '12'
             django-version: '5.1'
@@ -71,8 +62,6 @@ jobs:
             django-version: '5.1'
           - python-version: '3.9'
             django-version: '5.2'
-          - python-version: '3.13'
-            django-version: '3.2'
           - python-version: '3.13'
             django-version: '4.2'
           
@@ -168,14 +157,11 @@ jobs:
       matrix:
         python-version: [ '3.9', '3.13']
         django-version:
-          - '3.2' # LTS April 2024
           - '4.2' # LTS April 2026
           - '5.2' # LTS April 2028
         exclude:
           - python-version: '3.9'
             django-version: '5.2'
-          - python-version: '3.13'
-            django-version: '3.2'
 
     steps:
       - uses: actions/checkout@v5
@@ -227,18 +213,12 @@ jobs:
         mysql-version: ['5.7', 'latest']
         mysqlclient-version: ['1.4.3', '']
         django-version:
-          - '3.2' # LTS April 2024
           - '4.2' # LTS April 2026
           - '5.2' # LTS April 2028
         exclude:
-          - python-version: '3.13'
-            django-version: '3.2'
           - python-version: '3.9'
             django-version: '5.2'
 
-
-          - django-version: '3.2'
-            mysql-version: 'latest'
           - django-version: '4.2'
             mysql-version: '5.7'
           - django-version: '5.2'
@@ -337,17 +317,12 @@ jobs:
         mariadb-version: ['10.2', 'latest']
         mariadb-healthcheck: ["mysqladmin ping", "healthcheck.sh --connect --innodb_initialized"]
         django-version:
-          - '3.2' # LTS April 2024
           - '4.2' # LTS April 2026
           - '5.2' # LTS April 2028
         exclude:
-          - python-version: '3.13'
-            django-version: '3.2'
           - python-version: '3.9'
             django-version: '5.2'
 
-          - django-version: '3.2'
-            mariadb-version: 'latest'
           - django-version: '4.2'
             mariadb-version: '10.2'
           - django-version: '5.2'
@@ -437,7 +412,6 @@ jobs:
       matrix:
         python-version: ['3.9', '3.10', '3.12']
         django-version:
-          - '3.2' # LTS April 2024
           - '4.2' # LTS April 2026
           - '5.2' # LTS April 2028
         oracle-version:
@@ -448,10 +422,6 @@ jobs:
             django-version: '5.2'
           - python-version: '3.10'
             django-version: '5.2'
-          - python-version: '3.10'
-            django-version: '3.2'
-          - python-version: '3.12'
-            django-version: '3.2'
           - python-version: '3.12'
             django-version: '4.2'
           - python-version: '3.9'
@@ -557,13 +527,10 @@ jobs:
       matrix:
         python-version: [ '3.9', '3.13']
         django-version:
-          - '3.2' # LTS April 2024
           - '5.2' # LTS April 2028
         exclude:
           - python-version: '3.9'
             django-version: '5.2'
-          - python-version: '3.13'
-            django-version: '3.2'
 
     steps:
       - uses: actions/checkout@v5
@@ -618,13 +585,10 @@ jobs:
       matrix:
         python-version: [ '3.9', '3.13']
         django-version:
-          - '3.2' # LTS April 2024
           - '5.2' # LTS April 2028
         exclude:
           - python-version: '3.9'
             django-version: '5.2'
-          - python-version: '3.13'
-            django-version: '3.2'
 
     steps:
       - uses: actions/checkout@v5
