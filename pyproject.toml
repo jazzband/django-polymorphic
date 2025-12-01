@@ -151,6 +151,7 @@ dev = [
     "pytest>=8.3.4",
     "pytest-cov>=5.0.0",
     "pytest-django>=4.10.0",
+    "pytest-playwright>=0.7.2",
     "ruff>=0.9.8",
     "tomlkit>=0.13.3",
     "tox>=4.24.1",

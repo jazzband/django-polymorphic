@@ -1,7 +1,12 @@
+import os
 import pytest
+from django.urls import reverse
+from django.contrib.auth import get_user_model
 from django.contrib import admin
 from django.contrib.contenttypes.models import ContentType
 from django.utils.html import escape
+
+from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 
 from polymorphic.admin import (
     PolymorphicChildModelAdmin,
@@ -10,8 +15,10 @@ from polymorphic.admin import (
     PolymorphicParentModelAdmin,
     StackedPolymorphicInline,
 )
+from polymorphic import tests
 from polymorphic.tests.admintestcase import AdminTestCase
 from polymorphic.tests.models import (
+    PlainA,
     InlineModelA,
     InlineModelB,
     InlineParent,
@@ -20,6 +27,8 @@ from polymorphic.tests.models import (
     Model2C,
     Model2D,
 )
+
+from playwright.sync_api import sync_playwright, expect
 
 
 class PolymorphicAdminTests(AdminTestCase):
@@ -140,3 +149,132 @@ class PolymorphicAdminTests(AdminTestCase):
         assert child.__class__ == InlineModelB
         assert child.field1 == "A2"
         assert child.field2 == "B2"
+
+
+class _GenericAdminFormTest(StaticLiveServerTestCase):
+    """Generic admin form test using Playwright."""
+
+    HEADLESS = tests.HEADLESS
+
+    admin_username = "admin"
+    admin_password = "password"
+    admin = None
+
+    def add_url(self, model):
+        path = reverse(f"admin:{model._meta.label_lower.replace('.', '_')}_add")
+        return f"{self.live_server_url}{path}"
+
+    def change_url(self, model, id):
+        path = reverse(
+            f"admin:{model._meta.label_lower.replace('.', '_')}_change",
+            args=[id],
+        )
+        return f"{self.live_server_url}{path}"
+
+    def list_url(self, model):
+        path = reverse(f"admin:{model._meta.label_lower.replace('.', '_')}_changelist")
+        return f"{self.live_server_url}{path}"
+
+    def get_object_ids(self, model):
+        self.page.goto(self.list_url(model))
+        return self.page.eval_on_selector_all(
+            "input[name='_selected_action']", "elements => elements.map(e => e.value)"
+        )
+
+    @classmethod
+    def setUpClass(cls):
+        """Set up the test class with a live server and Playwright instance."""
+        os.environ["DJANGO_ALLOW_ASYNC_UNSAFE"] = "1"
+        super().setUpClass()
+        cls.playwright = sync_playwright().start()
+        cls.browser = cls.playwright.chromium.launch(headless=cls.HEADLESS)
+
+        cls.admin = get_user_model().objects.create_superuser(
+            username=cls.admin_username, email="admin@example.com", password=cls.admin_password
+        )
+
+    @classmethod
+    def tearDownClass(cls):
+        """Clean up Playwright instance after tests."""
+        cls.browser.close()
+        cls.playwright.stop()
+        if cls.admin:
+            cls.admin.delete()
+        super().tearDownClass()
+        del os.environ["DJANGO_ALLOW_ASYNC_UNSAFE"]
+
+    def setUp(self):
+        """Create an admin user before running tests."""
+        self.admin_username = "admin"
+        self.admin_password = "password"
+
+        self.page = self.browser.new_page()
+        # Log in to the Django admin
+        self.page.goto(f"{self.live_server_url}/admin/login/")
+        self.page.fill("input[name='username']", self.admin_username)
+        self.page.fill("input[name='password']", self.admin_password)
+        self.page.click("input[type='submit']")
+
+        # Ensure login is successful
+        expect(self.page).to_have_url(f"{self.live_server_url}/admin/")
+
+    def tearDown(self):
+        if self.page:
+            self.page.close()
+
+
+class StackedInlineTests(_GenericAdminFormTest):
+    def setUp(self):
+        PlainA.objects.all().delete()
+        InlineParent.objects.all().delete()
+        super().setUp()
+        for name in ["Brian", "Alice", "Emma", "Anna"]:
+            PlainA.objects.create(field1=name)
+
+    def tearDown(self):
+        PlainA.objects.all().delete()
+        InlineParent.objects.all().delete()
+        super().tearDown()
+
+    def test_admin_inline_add_autocomplete(self):
+        # https://github.com/jazzband/django-polymorphic/issues/546
+        self.page.goto(self.add_url(InlineParent))
+        self.page.fill("input[name='title']", "Parent 1")
+        with self.page.expect_navigation(timeout=10000) as nav_info:
+            self.page.click("input[name='_save']")
+
+        response = nav_info.value
+        assert response.status < 400
+
+        # verify the add
+        added = InlineParent.objects.get(title="Parent 1")
+        self.page.goto(self.change_url(InlineParent, added.pk))
+        polymorphic_menu = self.page.locator(
+            "div.polymorphic-add-choice div.polymorphic-type-menu"
+        )
+        expect(polymorphic_menu).to_be_hidden()
+
+        self.page.click("div.polymorphic-add-choice a")
+
+        expect(polymorphic_menu).to_be_visible()
+
+        self.page.click("div.polymorphic-type-menu a[data-type='inlinemodelb']")
+
+        selector_menu = self.page.locator("span.select2-dropdown.select2-dropdown--below")
+        expect(selector_menu).to_be_hidden()
+        with self.page.expect_response("**autocomplete**", timeout=10000):
+            self.page.click("span.select2-selection__arrow b[role='presentation']")
+
+        expect(selector_menu).to_be_visible()
+
+        suggestions = self.page.locator("ul.select2-results__options > li").all_inner_texts()
+        assert "Alice" in suggestions
+        assert "Anna" in suggestions
+        assert "Brian" in suggestions
+        assert "Emma" in suggestions
+
+        with self.page.expect_response("**autocomplete**", timeout=10000):
+            self.page.locator("input.select2-search__field[type='search']").type("B")
+
+        suggestions = self.page.locator("ul.select2-results__options > li").all_inner_texts()
+        assert suggestions == ["Brian"]
