@@ -16,6 +16,7 @@ manage *COMMAND:
     from django.core import management
     sys.path.append(os.getcwd())
     os.environ["DJANGO_SETTINGS_MODULE"] = "polymorphic.tests.settings"
+    os.environ["SQLITE_DATABASES"] = "test1.db,test2.db"
     management.execute_from_command_line(sys.argv + "{{ COMMAND }}".split(" "))
 
 # install the uv package manager
@@ -29,10 +30,11 @@ install_uv:
 install_uv:
     powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
 
-# setup the venv and pre-commit hooks
+# setup the venv, pre-commit hooks and playwright dependencies
 setup python="python":
     uv venv -p {{ python }}
     @just run pre-commit install
+    @just run playwright install
 
 # install git pre-commit hooks
 install-precommit:

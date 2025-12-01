@@ -140,7 +140,11 @@
                     if (options.removed) {
                         options.removed(row);
                     }
-                    $(document).trigger('formset:removed', [row, options.prefix]);
+                    document.dispatchEvent(new CustomEvent("formset:removed", {
+                        detail: {
+                            formsetName: options.prefix
+                        }
+                    }));
                     // Update the TOTAL_FORMS form count.
                     var forms = $("." + options.formCssClass);
                     $("#id_" + options.prefix + "-TOTAL_FORMS").val(forms.length);
@@ -163,7 +167,12 @@
                 if (options.added) {
                     options.added(row);
                 }
-                $(document).trigger('formset:added', [row, options.prefix]);
+                row.get(0).dispatchEvent(new CustomEvent("formset:added", {
+                    bubbles: true,
+                    detail: {
+                        formsetName: options.prefix
+                    }
+                }));
             });
         }
         return this;

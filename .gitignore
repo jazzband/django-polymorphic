@@ -218,3 +218,6 @@ __marimo__/
 .DS_Store
 
 .python-version
+
+test1.db
+test2.db

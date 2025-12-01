@@ -15,6 +15,9 @@ from polymorphic.showfields import ShowFieldContent, ShowFieldType, ShowFieldTyp
 class PlainA(models.Model):
     field1 = models.CharField(max_length=30)
 
+    def __str__(self):
+        return self.field1
+
 
 class PlainB(PlainA):
     field2 = models.CharField(max_length=30)
@@ -447,6 +450,10 @@ class InlineModelA(PolymorphicModel):
 
 class InlineModelB(InlineModelA):
     field2 = models.CharField(max_length=30)
+
+    plain_a = models.ForeignKey(
+        PlainA, null=True, blank=True, default=None, on_delete=models.SET_NULL
+    )
 
 
 class AbstractProject(PolymorphicModel):

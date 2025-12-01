@@ -5,9 +5,10 @@ DEBUG = False
 rdbms = os.environ.get("RDBMS", "sqlite")
 
 if rdbms == "sqlite":  # pragma: no cover
+    sqlite_dbs = os.environ.get("SQLITE_DATABASES", ":memory:,:memory:").split(",")
     DATABASES = {
-        "default": {"ENGINE": "django.db.backends.sqlite3", "NAME": ":memory:"},
-        "secondary": {"ENGINE": "django.db.backends.sqlite3", "NAME": ":memory:"},
+        "default": {"ENGINE": "django.db.backends.sqlite3", "NAME": sqlite_dbs[0]},
+        "secondary": {"ENGINE": "django.db.backends.sqlite3", "NAME": sqlite_dbs[1]},
     }
 elif rdbms == "postgres":  # pragma: no cover
     creds = {
@@ -90,6 +91,7 @@ elif rdbms == "oracle":  # pragma: no cover
 
 DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 INSTALLED_APPS = (
+    "django.contrib.staticfiles",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.messages",
@@ -129,5 +131,9 @@ TEMPLATES = [
     }
 ]
 POLYMORPHIC_TEST_SWAPPABLE = "polymorphic.swappedmodel"
-ROOT_URLCONF = None
 SECRET_KEY = "supersecret"
+STATIC_URL = "/static/"
+
+ALLOWED_HOSTS = ["*"]
+
+ROOT_URLCONF = "polymorphic.tests.urls"
