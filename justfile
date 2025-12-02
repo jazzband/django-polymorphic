@@ -91,7 +91,7 @@ build-docs: build-docs-html
 
 # build docs and package
 build: build-docs-html
-    @just manage compilemessages
+    @just manage compilemessages --ignore ".venv/*"
     uv build
 
 # open the html documentation
