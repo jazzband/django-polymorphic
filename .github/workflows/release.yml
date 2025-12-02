@@ -90,7 +90,7 @@ jobs:
         echo "PACKAGE_NAME=${PACKAGE_NAME}" >> $GITHUB_ENV
 
   publish-to-pypi:
-    name: Publish to PyPI
+    name: Publish to Jazzband
     needs:
       - lint
       - test
@@ -107,7 +107,9 @@ jobs:
       with:
         user: jazzband
         password: ${{ secrets.JAZZBAND_RELEASE_KEY }}
+        attestations: false
         repository-url: https://jazzband.co/projects/django-polymorphic/upload
+        verbose: true
 
   github-release:
     name: Publish GitHub Release
