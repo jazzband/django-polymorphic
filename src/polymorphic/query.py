@@ -415,7 +415,9 @@ class PolymorphicQuerySet(QuerySet):
                     self.query.select_related.pop(sub_name, None)
 
                 if concrete_model_name in self.query.select_related:
-                    real_objects.query.select_related = self.query.select_related[concrete_model_name]
+                    real_objects.query.select_related = self.query.select_related[
+                        concrete_model_name
+                    ]
                 else:
                     real_objects.query.select_related = self.query.select_related
 
