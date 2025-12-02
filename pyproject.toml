@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "django-polymorphic"
-dynamic = ["version"]
+version = "4.2.0"
 description = "Seamless polymorphic inheritance for Django models."
 readme = "README.md"
 license = "BSD-3-Clause"

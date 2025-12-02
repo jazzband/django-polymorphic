@@ -238,4 +238,4 @@ validate_version VERSION:
 release VERSION:
     @just validate_version v{{ VERSION }}
     git tag -s v{{ VERSION }} -m "{{ VERSION }} Release"
-    git push origin v{{ VERSION }}
+    git push upstream v{{ VERSION }}
