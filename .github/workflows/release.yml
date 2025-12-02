@@ -89,7 +89,7 @@ jobs:
         PACKAGE_NAME=$(python -c "import tomllib; print(tomllib.load(open('pyproject.toml', 'rb'))['project']['name'])")
         echo "PACKAGE_NAME=${PACKAGE_NAME}" >> $GITHUB_ENV
 
-  publish-to-pypi:
+  publish-to-jazzband:
     name: Publish to Jazzband
     needs:
       - lint
