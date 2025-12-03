@@ -16,6 +16,7 @@ API Documentation
    polymorphic.formsets
    polymorphic.managers
    polymorphic.models
+   polymorphic.query
    polymorphic.showfields
    polymorphic.templatetags
    polymorphic.utils

@@ -7,6 +7,7 @@ from collections import defaultdict
 
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import FieldDoesNotExist
+from django.db import connections
 from django.db.models import FilteredRelation
 from django.db.models.query import ModelIterable, Q, QuerySet
 
@@ -17,9 +18,11 @@ from .query_translate import (
     translate_polymorphic_Q_object,
 )
 
-# chunk-size: maximum number of objects requested per db-request
-# by the polymorphic queryset.iterator() implementation
-Polymorphic_QuerySet_objects_per_request = 100
+Polymorphic_QuerySet_objects_per_request = 2000
+"""
+The maximum number of objects requested per db-request by the polymorphic
+queryset.iterator() implementation
+"""
 
 
 class PolymorphicModelIterable(ModelIterable):
@@ -44,15 +47,29 @@ class PolymorphicModelIterable(ModelIterable):
             for o in real_results: yield o
 
         but it requests the objects in chunks from the database,
-        with Polymorphic_QuerySet_objects_per_request per chunk
+        with QuerySet.iterator(chunk_size) per chunk
         """
+
+        # some databases have a limit on the number of query parameters, we must
+        # respect this for generating get_real_instances queries because those
+        # queries do a large WHERE IN clause with primary keys
+        max_chunk = connections[self.queryset.db].features.max_query_params
+        sql_chunk = self.chunk_size if self.chunked_fetch else None
+        if max_chunk:
+            sql_chunk = (
+                max_chunk
+                if not self.chunked_fetch  # chunk_size was not provided
+                else min(max_chunk, self.chunk_size or max_chunk)
+            )
+
+        sql_chunk = sql_chunk or Polymorphic_QuerySet_objects_per_request
+
         while True:
             base_result_objects = []
             reached_end = False
 
-            # Make sure the base iterator is read in chunks instead of
-            # reading it completely, in case our caller read only a few objects.
-            for i in range(Polymorphic_QuerySet_objects_per_request):
+            # Fetch in chunks
+            for _ in range(sql_chunk):
                 try:
                     o = next(base_iter)
                     base_result_objects.append(o)
@@ -60,10 +77,7 @@ class PolymorphicModelIterable(ModelIterable):
                     reached_end = True
                     break
 
-            real_results = self.queryset._get_real_instances(base_result_objects)
-
-            for o in real_results:
-                yield o
+            yield from self.queryset._get_real_instances(base_result_objects)
 
             if reached_end:
                 return
