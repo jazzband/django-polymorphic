@@ -519,3 +519,19 @@ class SubclassSelectorProxyConcreteModel(SubclassSelectorProxyModel):
 
 class NonPolymorphicParent(PolymorphicModel, Group):
     test = models.CharField(max_length=30, default="test_non_polymorphic_parent")
+
+
+class Participant(PolymorphicModel):
+    pass
+
+
+class UserProfile(Participant):
+    name = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.name
+
+
+class Team(models.Model):
+    team_name = models.CharField(max_length=100)
+    user_profiles = models.ManyToManyField(UserProfile, related_name="user_teams")
