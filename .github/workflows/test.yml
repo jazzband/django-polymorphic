@@ -40,13 +40,13 @@ jobs:
           - '4.2' # LTS April 2026
           - '5.1' # December 2025
           - '5.2' # LTS April 2028
-          - '6.0rc1' # 
+          - '6.0' # 
         exclude:
 
           - python-version: '3.10'
-            django-version: '6.0rc1'
+            django-version: '6.0'
           - python-version: '3.11'
-            django-version: '6.0rc1'
+            django-version: '6.0'
             
           - python-version: '3.13'
             django-version: '4.2'
@@ -63,14 +63,14 @@ jobs:
           - postgres-version: '12'
             django-version: '5.2'
           - postgres-version: '12'
-            django-version: '6.0rc1'
+            django-version: '6.0'
 
           - postgres-version: '14'
             django-version: '4.2'
           - postgres-version: '14'
             django-version: '5.2'
           - postgres-version: '14'
-            django-version: '6.0rc1'
+            django-version: '6.0'
 
           - postgres-version: 'latest'
             django-version: '4.2'
@@ -183,17 +183,17 @@ jobs:
         django-version:
           - '4.2' # LTS April 2026
           - '5.2' # LTS April 2028
-          - '6.0rc1' # LTS April 2028
+          - '6.0' # LTS April 2028
         exclude:
           - python-version: '3.10'
             django-version: '5.2'
           - python-version: '3.10'
-            django-version: '6.0rc1'
+            django-version: '6.0'
 
           - python-version: '3.12'
             django-version: '4.2'
           - python-version: '3.12'
-            django-version: '6.0rc1'
+            django-version: '6.0'
 
           - python-version: '3.14'
             django-version: '4.2'
@@ -256,12 +256,12 @@ jobs:
         django-version:
           - '4.2'    # LTS April 2024
           - '5.2'    # LTS April 2028
-          - '6.0rc1' # April 2027
+          - '6.0' # April 2027
         exclude:
           - django-version: '4.2'
             mysql-version: 'latest'
 
-          - django-version: '6.0rc1'
+          - django-version: '6.0'
             mysql-version: '8.0'
 
           - mysql-version: 'latest'
@@ -280,9 +280,9 @@ jobs:
             mysqlclient-version: '1.4.3'
 
           - python-version: '3.10'
-            django-version: '6.0rc1'
+            django-version: '6.0'
           - python-version: '3.12'
-            django-version: '6.0rc1'
+            django-version: '6.0'
   
     env:
       RDBMS: mysql
@@ -378,14 +378,14 @@ jobs:
         django-version:
           - '4.2'    # LTS April 2024
           - '5.2'    # LTS April 2028
-          - '6.0rc1' # April 2027
+          - '6.0' # April 2027
         exclude:
           - django-version: '4.2'
             mariadb-version: 'latest'
 
           - django-version: '5.2'
             mariadb-version: '10.4'
-          - django-version: '6.0rc1'
+          - django-version: '6.0'
             mariadb-version: '10.4'
 
           - mariadb-version: 'latest'
@@ -404,9 +404,9 @@ jobs:
             mysqlclient-version: '1.4.3'
 
           - python-version: '3.10'
-            django-version: '6.0rc1'
+            django-version: '6.0'
           - python-version: '3.12'
-            django-version: '6.0rc1'
+            django-version: '6.0'
 
           - mariadb-version: '10.4'
             mysqlclient-version: ''
@@ -496,7 +496,7 @@ jobs:
         django-version:
           - '4.2' # LTS April 2026
           - '5.2' # LTS April 2028
-          - '6.0rc1' # LTS April 2028
+          - '6.0' # LTS April 2028
         oracle-version:
           - 'oracle-xe:21'
           - 'oracle-free:latest'
@@ -508,18 +508,18 @@ jobs:
           - django-version: '5.2'
             oracle-version: 'oracle-free:latest'
 
-          - django-version: '6.0rc1'
+          - django-version: '6.0'
             oracle-version: 'oracle-xe:21'
 
           - python-version: '3.10'
             django-version: '5.2'
           - python-version: '3.10'
-            django-version: '6.0rc1'
+            django-version: '6.0'
 
           - python-version: '3.12'
             django-version: '4.2'
           - python-version: '3.12'
-            django-version: '6.0rc1'
+            django-version: '6.0'
 
           - python-version: '3.14'
             django-version: '4.2'
@@ -640,17 +640,17 @@ jobs:
         django-version:
           - '4.2' # LTS April 2026
           - '5.2' # LTS April 2028
-          - '6.0rc1' # LTS April 2028
+          - '6.0' # LTS April 2028
         exclude:
           - python-version: '3.10'
             django-version: '5.2'
           - python-version: '3.10'
-            django-version: '6.0rc1'
+            django-version: '6.0'
 
           - python-version: '3.12'
             django-version: '4.2'
           - python-version: '3.12'
-            django-version: '6.0rc1'
+            django-version: '6.0'
 
           - python-version: '3.14'
             django-version: '4.2'
@@ -717,17 +717,17 @@ jobs:
         django-version:
           - '4.2' # LTS April 2026
           - '5.2' # LTS April 2028
-          - '6.0rc1' # LTS April 2028
+          - '6.0' # LTS April 2028
         exclude:
           - python-version: '3.10'
             django-version: '5.2'
           - python-version: '3.10'
-            django-version: '6.0rc1'
+            django-version: '6.0'
 
           - python-version: '3.12'
             django-version: '4.2'
           - python-version: '3.12'
-            django-version: '6.0rc1'
+            django-version: '6.0'
 
           - python-version: '3.14'
             django-version: '4.2'
