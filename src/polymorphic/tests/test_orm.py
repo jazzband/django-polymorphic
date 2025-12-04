@@ -23,7 +23,6 @@ from polymorphic.tests.models import (
     ChildModelWithManager,
     CustomPkBase,
     CustomPkInherit,
-    Duck,
     Enhance_Base,
     Enhance_Inherit,
     InitTestModelSubclass,
@@ -90,6 +89,8 @@ from polymorphic.tests.models import (
     UUIDPlainC,
     UUIDProject,
     UUIDResearchProject,
+    Duck,
+    PurpleHeadDuck,
 )
 
 
@@ -1411,3 +1412,13 @@ class PolymorphicTests(TransactionTestCase):
                 # known deletion issue with oracle
                 # https://github.com/jazzband/django-polymorphic/issues/673
                 pass
+
+    def test_transmogrify_with_init(self):
+        pur = PurpleHeadDuck.objects.create()
+        assert pur.color == "blue"
+        assert pur.home == "Duckburg"
+
+        pur = Duck.objects.get(id=pur.id)
+        assert pur.color == "blue"
+        # issues/615 fixes following line:
+        assert pur.home == "Duckburg"

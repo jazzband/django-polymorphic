@@ -4,6 +4,7 @@ Changelog
 v4.2.0 (2025-12-04)
 -------------------
 
+* Fixed `The objects which were transmogrified aren't initialized correctly if they implement __init__ method. <https://github.com/jazzband/django-polymorphic/issues/615>`_
 * Implemented `Defer to chunk_size parameter on .iterators for fetching get_real_instances() <https://github.com/jazzband/django-polymorphic/pull/672>`_
 * Fixed `Show full admin context (breadcrumb and logout nav) in model type selection admin form <https://github.com/jazzband/django-polymorphic/pull/580>`_
 * Fixed `Issue with Autocomplete Fields in StackedPolymorphicInline.Child Inline <https://github.com/jazzband/django-polymorphic/issues/546>`_
