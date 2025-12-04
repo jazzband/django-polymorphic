@@ -3,10 +3,11 @@ import re
 import uuid
 
 from django.contrib.contenttypes.models import ContentType
-from django.db import models
+from django.db import models, connection
 from django.db.models import Case, Count, FilteredRelation, Q, Sum, When, F
 from django.db.utils import IntegrityError, NotSupportedError
 from django.test import TransactionTestCase
+from django.test.utils import CaptureQueriesContext
 
 from polymorphic import query_translate
 from polymorphic.managers import PolymorphicManager
@@ -1234,3 +1235,179 @@ class PolymorphicTests(TransactionTestCase):
     def test_non_polymorphic_parent(self):
         obj = NonPolymorphicParent.objects.create()
         assert obj.delete()
+
+    def test_iteration(self):
+        Model2A.objects.all().delete()
+
+        for i in range(250):
+            Model2B.objects.create(field1=f"B1-{i}", field2=f"B2-{i}")
+        for i in range(1000):
+            Model2C.objects.create(
+                field1=f"C1-{i + 250}", field2=f"C2-{i + 250}", field3=f"C3-{i + 250}"
+            )
+        for i in range(2000):
+            Model2D.objects.create(
+                field1=f"D1-{i + 1250}",
+                field2=f"D2-{i + 1250}",
+                field3=f"D3-{i + 1250}",
+                field4=f"D4-{i + 1250}",
+            )
+
+        with CaptureQueriesContext(connection) as base_all:
+            for _ in Model2A.objects.non_polymorphic().all():
+                pass  # Evaluating the queryset
+
+        len_base_all = len(base_all)
+        assert len_base_all == 1, (
+            f"Expected 1 queries for chunked iteration over 3250 base objects. {len_base_all}"
+        )
+
+        with CaptureQueriesContext(connection) as base_iterator:
+            for _ in Model2A.objects.non_polymorphic().iterator():
+                pass  # Evaluating the queryset
+
+        len_base_iterator = len(base_iterator)
+        assert len_base_iterator == 1, (
+            f"Expected 1 queries for chunked iteration over 3250 base objects. {len_base_iterator}"
+        )
+
+        with CaptureQueriesContext(connection) as base_chunked:
+            for _ in Model2A.objects.non_polymorphic().iterator(chunk_size=1000):
+                pass  # Evaluating the queryset
+
+        len_base_chunked = len(base_chunked)
+        assert len_base_chunked == 1, (
+            f"Expected 1 queries for chunked iteration over 3250 base objects. {len_base_chunked}"
+        )
+
+        with CaptureQueriesContext(connection) as poly_all:
+            b, c, d = 0, 0, 0
+            for idx, obj in enumerate(reversed(list(Model2A.objects.order_by("-pk").all()))):
+                if isinstance(obj, Model2D):
+                    d += 1
+                    assert obj.field1 == f"D1-{idx}"
+                    assert obj.field2 == f"D2-{idx}"
+                    assert obj.field3 == f"D3-{idx}"
+                    assert obj.field4 == f"D4-{idx}"
+                elif isinstance(obj, Model2C):
+                    c += 1
+                    assert obj.field1 == f"C1-{idx}"
+                    assert obj.field2 == f"C2-{idx}"
+                    assert obj.field3 == f"C3-{idx}"
+                elif isinstance(obj, Model2B):
+                    b += 1
+                    assert obj.field1 == f"B1-{idx}"
+                    assert obj.field2 == f"B2-{idx}"
+                else:
+                    assert False, "Unexpected model type"
+            assert (b, c, d) == (250, 1000, 2000)
+
+        assert len(poly_all) <= 7, (
+            f"Expected < 7 queries for chunked iteration over 3250 "
+            f"objects with 3 child models and the default chunk size of 2000, encountered "
+            f"{len(poly_all)}"
+        )
+
+        with CaptureQueriesContext(connection) as poly_all:
+            b, c, d = 0, 0, 0
+            for idx, obj in enumerate(Model2A.objects.order_by("pk").iterator(chunk_size=None)):
+                if isinstance(obj, Model2D):
+                    d += 1
+                    assert obj.field1 == f"D1-{idx}"
+                    assert obj.field2 == f"D2-{idx}"
+                    assert obj.field3 == f"D3-{idx}"
+                    assert obj.field4 == f"D4-{idx}"
+                elif isinstance(obj, Model2C):
+                    c += 1
+                    assert obj.field1 == f"C1-{idx}"
+                    assert obj.field2 == f"C2-{idx}"
+                    assert obj.field3 == f"C3-{idx}"
+                elif isinstance(obj, Model2B):
+                    b += 1
+                    assert obj.field1 == f"B1-{idx}"
+                    assert obj.field2 == f"B2-{idx}"
+                else:
+                    assert False, "Unexpected model type"
+            assert (b, c, d) == (250, 1000, 2000)
+
+        assert len(poly_all) <= 7, (
+            f"Expected < 7 queries for chunked iteration over 3250 "
+            f"objects with 3 child models and a chunk size of 2000, encountered "
+            f"{len(poly_all)}"
+        )
+
+        with CaptureQueriesContext(connection) as poly_iterator:
+            b, c, d = 0, 0, 0
+            for idx, obj in enumerate(Model2A.objects.order_by("pk").iterator()):
+                if isinstance(obj, Model2D):
+                    d += 1
+                    assert obj.field1 == f"D1-{idx}"
+                    assert obj.field2 == f"D2-{idx}"
+                    assert obj.field3 == f"D3-{idx}"
+                    assert obj.field4 == f"D4-{idx}"
+                elif isinstance(obj, Model2C):
+                    c += 1
+                    assert obj.field1 == f"C1-{idx}"
+                    assert obj.field2 == f"C2-{idx}"
+                    assert obj.field3 == f"C3-{idx}"
+                elif isinstance(obj, Model2B):
+                    b += 1
+                    assert obj.field1 == f"B1-{idx}"
+                    assert obj.field2 == f"B2-{idx}"
+                else:
+                    assert False, "Unexpected model type"
+            assert (b, c, d) == (250, 1000, 2000)
+
+        assert len(poly_iterator) <= 7, (
+            f"Expected <= 7 queries for chunked iteration over 3250 "
+            f"objects with 3 child models and a default chunk size of 2000, encountered "
+            f"{len(poly_iterator)}"
+        )
+
+        with CaptureQueriesContext(connection) as poly_chunked:
+            b, c, d = 0, 0, 0
+            for idx, obj in enumerate(Model2A.objects.order_by("pk").iterator(chunk_size=4000)):
+                if isinstance(obj, Model2D):
+                    d += 1
+                    assert obj.field1 == f"D1-{idx}"
+                    assert obj.field2 == f"D2-{idx}"
+                    assert obj.field3 == f"D3-{idx}"
+                    assert obj.field4 == f"D4-{idx}"
+                elif isinstance(obj, Model2C):
+                    c += 1
+                    assert obj.field1 == f"C1-{idx}"
+                    assert obj.field2 == f"C2-{idx}"
+                    assert obj.field3 == f"C3-{idx}"
+                elif isinstance(obj, Model2B):
+                    b += 1
+                    assert obj.field1 == f"B1-{idx}"
+                    assert obj.field2 == f"B2-{idx}"
+                else:
+                    assert False, "Unexpected model type"
+            assert (b, c, d) == (250, 1000, 2000)
+
+        assert len(poly_chunked) <= 7, (
+            f"Expected <= 7 queries for chunked iteration over 3250 objects with 3 child "
+            f"models and a chunk size of 4000, encountered {len(poly_chunked)}"
+        )
+
+        if connection.vendor == "postgresql":
+            assert len(poly_chunked) == 4, "On postgres with a 4000 chunk size, expected 4 queries"
+
+        try:
+            result = Model2A.objects.all().delete()
+            assert result == (
+                11500,
+                {
+                    "tests.Model2D": 2000,
+                    "tests.Model2C": 3000,
+                    "tests.Model2A": 3250,
+                    "tests.Model2B": 3250,
+                },
+            )
+        except AttributeError:
+            if connection.vendor == "oracle":
+                # FIXME
+                # known deletion issue with oracle
+                # https://github.com/jazzband/django-polymorphic/issues/673
+                pass

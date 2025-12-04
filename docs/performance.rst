@@ -27,6 +27,54 @@ if all are class ``ModelA``. If 50 objects are ``ModelA`` and 50 are ``ModelB``,
 are executed. The pathological worst case is 101 db queries if result_objects contains 100 different
 object types (with all of them subclasses of ``ModelA``).
 
+Iteration: Memory vs DB Round Trips
+-----------------------------------
+
+When iterating over large QuerySets, there is a trade-off between memory consumption and number
+of round trips to the database. One additional query is needed per model subclass present in the
+QuerySet and these queries take the form of ``SELECT ... WHERE pk IN (....)`` with a potentially
+large number of IDs in the IN clause. All models in the IN clause will be loaded into memory during
+iteration.
+
+To balance this trade-off, by default a maximum of 2000 objects are requested at once. This means
+that if your QuerySet contains 10,000 objects of 3 different subclasses, then 16 queries will be
+executed: 1 to fetch the base objects, and 5 (10/2 == 5) * 3 more to fetch the subclasses.
+
+The `chunk_size` parameter on :meth:`~django.db.models.query.QuerySet.iterator` can be used to
+change the number of objects loaded into memory at once during iteration. For example, to load 5000 objects at once:
+
+.. code-block:: python
+
+    for obj in ModelA.objects.all().iterator(chunk_size=5000):
+        process(obj)
+
+.. note::
+
+    ``chunk_size`` on non-polymorphic QuerySets controls the number of rows fetched from the
+    database at once, but for polymorphic QuerySets the behavior is more analogous to its behavior
+    when :meth:`~django.db.models.query.QuerySet.prefetch_related` is used.
+
+Some database backends limit the number of parameters in a query. For those backends the
+``chunk_size`` will be restricted to be no greater than that limit. This limit can be checked in:
+
+.. code-block:: python
+
+    from django.db import connection
+
+    print(connection.features.max_query_params)
+
+
+You may change the global default fallback ``chunk_size`` by modifying the
+:attr:`polymorphic.query.Polymorphic_QuerySet_objects_per_request` attribute. Place code like
+this somewhere that will be executed during startup:
+
+.. code-block:: python
+
+    from polymorphic import query
+
+    query.Polymorphic_QuerySet_objects_per_request = 5000
+
+
 :class:`~django.contrib.contenttypes.models.ContentType` retrieval
 ------------------------------------------------------------------
 
