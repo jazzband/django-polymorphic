@@ -452,7 +452,12 @@ class InlineModelB(InlineModelA):
     field2 = models.CharField(max_length=30)
 
     plain_a = models.ForeignKey(
-        PlainA, null=True, blank=True, default=None, on_delete=models.SET_NULL
+        PlainA,
+        null=True,
+        blank=True,
+        default=None,
+        on_delete=models.SET_NULL,
+        related_name="inline_bs",
     )
 
 
