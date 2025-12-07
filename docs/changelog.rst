@@ -3,6 +3,8 @@ Changelog
 
 v4.3.0 (202X-XX-XX)
 -------------------
+
+* Fixed `Foreign key resolves to parent class when using abstract models <https://github.com/jazzband/django-polymorphic/issues/437>`_
 * Fixed `Support Q expressions that contain subquery expressions <https://github.com/jazzband/django-polymorphic/pull/572>`_
 
 v4.2.0 (2025-12-04)
