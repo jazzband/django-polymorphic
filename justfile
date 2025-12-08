@@ -15,7 +15,7 @@ manage *COMMAND:
     import sys
     from django.core import management
     sys.path.append(os.getcwd())
-    os.environ["DJANGO_SETTINGS_MODULE"] = "polymorphic.tests.settings"
+    os.environ["DJANGO_SETTINGS_MODULE"] = "polymorphic.tests.debug"
     os.environ["SQLITE_DATABASES"] = "test1.db,test2.db"
     management.execute_from_command_line(sys.argv + "{{ COMMAND }}".split(" "))
 

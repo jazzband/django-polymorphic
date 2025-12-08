@@ -101,6 +101,7 @@ INSTALLED_APPS = (
     "polymorphic",
     "polymorphic.tests",
 )
+
 MIDDLEWARE = (
     "django.middleware.common.CommonMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",

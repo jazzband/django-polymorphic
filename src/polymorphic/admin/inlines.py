@@ -77,12 +77,22 @@ class PolymorphicInlineModelAdmin(InlineModelAdmin):
         for child_inline in self.child_inline_instances:
             self._child_inlines_lookup[child_inline.model] = child_inline
 
+    def get_child_inlines(self):
+        """
+        Return the derived inline classes which this admin should handle.
+
+        This should return an iterable of
+        :class:`~polymorphic.admin.inlines.PolymorphicInlineModelAdmin.Child classes,
+        to override :attr:`child_inlines.
+        """
+        return self.child_inlines or []
+
     def get_child_inline_instances(self):
         """
         :rtype List[PolymorphicInlineModelAdmin.Child]
         """
         instances = []
-        for ChildInlineType in self.child_inlines:
+        for ChildInlineType in self.get_child_inlines():
             instances.append(ChildInlineType(parent_inline=self))
         return instances
 

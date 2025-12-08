@@ -36,6 +36,7 @@
 * Jacob Rief
 * James Murty
 * Jedediah Smith (proxy models support)
+* Jesús Leganés-Combarro (Auto-discover child models and inlines, #582)
 * John Furr
 * Jonas Haag
 * Jonas Obrist
