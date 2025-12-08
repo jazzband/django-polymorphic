@@ -4,6 +4,7 @@ Changelog
 v4.3.0 (202X-XX-XX)
 -------------------
 
+* Fixed `Resolve primary key name correctly. <https://github.com/jazzband/django-polymorphic/pull/620>`_
 * Implemented `Include get_child_inlines() hook in stacked inline admin forms. <https://github.com/jazzband/django-polymorphic/pull/681>`_
 * Fixed `multi-database support in inheritance accessors. <https://github.com/jazzband/django-polymorphic/pull/550>`_
 * Fixed `Caching in inheritance accessor functions <https://github.com/jazzband/django-polymorphic/pull/510>`_
