@@ -82,8 +82,8 @@ class PolymorphicInlineModelAdmin(InlineModelAdmin):
         Return the derived inline classes which this admin should handle.
 
         This should return an iterable of
-        :class:`~polymorphic.admin.inlines.PolymorphicInlineModelAdmin.Child classes,
-        to override :attr:`child_inlines.
+        :class:`~polymorphic.admin.inlines.PolymorphicInlineModelAdmin.Child` classes,
+        to override :attr:`~polymorphic.admin.inlines.PolymorphicInlineModelAdmin.child_inlines`.
         """
         return self.child_inlines or []
 
