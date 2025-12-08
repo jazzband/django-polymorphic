@@ -5,7 +5,7 @@ v4.3.0 (202X-XX-XX)
 -------------------
 
 * Implemented `Include get_child_inlines() hook in stacked inline admin forms. <https://github.com/jazzband/django-polymorphic/pull/681>`_
-* Fixed `"multi-database support in inheritance accessors. <https://github.com/jazzband/django-polymorphic/pull/550>`_
+* Fixed `multi-database support in inheritance accessors. <https://github.com/jazzband/django-polymorphic/pull/550>`_
 * Fixed `Caching in inheritance accessor functions <https://github.com/jazzband/django-polymorphic/pull/510>`_
 * Fixed `Foreign key resolves to parent class when using abstract models <https://github.com/jazzband/django-polymorphic/issues/437>`_
 * Fixed `Support Q expressions that contain subquery expressions <https://github.com/jazzband/django-polymorphic/pull/572>`_
