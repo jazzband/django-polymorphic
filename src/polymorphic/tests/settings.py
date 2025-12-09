@@ -138,3 +138,5 @@ STATIC_URL = "/static/"
 ALLOWED_HOSTS = ["*"]
 
 ROOT_URLCONF = "polymorphic.tests.urls"
+
+USE_TZ = False

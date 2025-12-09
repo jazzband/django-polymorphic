@@ -1,5 +1,7 @@
 from inspect import isclass
 from django.contrib.admin import register, ModelAdmin, site as admin_site
+from django.db.models.query import QuerySet
+from django.http import HttpRequest
 from polymorphic.admin import (
     StackedPolymorphicInline,
     PolymorphicInlineSupportMixin,
@@ -34,6 +36,9 @@ admin_site.register(Model2D, PolymorphicChildModelAdmin)
 @register(PlainA)
 class PlainAAdmin(ModelAdmin):
     search_fields = ["field1"]
+
+    def get_queryset(self, request: HttpRequest) -> QuerySet:
+        return super().get_queryset(request).order_by("pk")
 
 
 class Inline(StackedPolymorphicInline):
