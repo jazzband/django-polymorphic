@@ -405,7 +405,7 @@ class RelatedNameClash(ShowFieldType, PolymorphicModel):
 # class with a parent_link to superclass, and a related_name back to subclass
 
 
-class TestParentLinkAndRelatedName(ModelShow1_plain):
+class ParentLinkAndRelatedName(ModelShow1_plain):
     superclass = models.OneToOneField(
         ModelShow1_plain,
         on_delete=models.CASCADE,
@@ -584,3 +584,31 @@ class SpecialAccount1_1(SpecialAccount1):
 
 class SpecialAccount2(Account):
     extra1 = models.CharField(default="", blank=True, max_length=30)
+
+
+class ModelMixin(models.Model):
+    class Meta:
+        abstract = True
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    modified_at = models.DateTimeField(auto_now=True)
+
+
+class PolymorphicMixin(PolymorphicModel):
+    class Meta:
+        abstract = True
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    modified_at = models.DateTimeField(auto_now=True)
+
+
+class Foo(PolymorphicModel):
+    pass
+
+
+class Bar(PolymorphicMixin, PolymorphicModel):
+    pass
+
+
+class Baz(ModelMixin, PolymorphicModel):
+    pass

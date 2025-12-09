@@ -86,7 +86,7 @@ from polymorphic.tests.models import (
     SubclassSelectorAbstractConcreteModel,
     SubclassSelectorProxyBaseModel,
     SubclassSelectorProxyConcreteModel,
-    TestParentLinkAndRelatedName,
+    ParentLinkAndRelatedName,
     UUIDArtProject,
     UUIDPlainA,
     UUIDPlainB,
@@ -458,8 +458,7 @@ class PolymorphicTests(TransactionTestCase):
     def test_onetoone_field(self):
         self.create_model2abcd()
 
-        # FIXME: We should not use base_objects here.
-        a = Model2A.base_objects.get(field1="C1")
+        a = Model2A.objects.non_polymorphic().get(field1="C1")
         b = One2OneRelatingModelDerived.objects.create(one2one=a, field1="f1", field2="f2")
 
         # FIXME: this result is basically wrong, probably due to Django cacheing (we used base_objects), but should not be a problem
@@ -960,17 +959,17 @@ class PolymorphicTests(TransactionTestCase):
         assert o.bar == "XYZ"
 
     def test_parent_link_and_related_name(self):
-        t = TestParentLinkAndRelatedName(field1="TestParentLinkAndRelatedName")
+        t = ParentLinkAndRelatedName(field1="ParentLinkAndRelatedName")
         t.save()
-        p = ModelShow1_plain.objects.get(field1="TestParentLinkAndRelatedName")
+        p = ModelShow1_plain.objects.get(field1="ParentLinkAndRelatedName")
 
         # check that p is equal to the
-        assert isinstance(p, TestParentLinkAndRelatedName)
+        assert isinstance(p, ParentLinkAndRelatedName)
         assert p == t
 
         # check that the accessors to parent and sublass work correctly and return the right object
-        p = ModelShow1_plain.objects.non_polymorphic().get(field1="TestParentLinkAndRelatedName")
-        # p should be Plain1 and t TestParentLinkAndRelatedName, so not equal
+        p = ModelShow1_plain.objects.non_polymorphic().get(field1="ParentLinkAndRelatedName")
+        # p should be Plain1 and t ParentLinkAndRelatedName, so not equal
         assert p != t
         assert p == t.superclass
         assert p.related_name_subclass == t
