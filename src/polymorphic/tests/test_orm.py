@@ -927,7 +927,7 @@ class PolymorphicTests(TransactionTestCase):
         self.assertEqual(2, AliasOfNonProxyChild.objects.count())
 
     def test_revert_back_to_polymorphic_proxy(self):
-        self.assertFalse(ProxyChildAliasProxy._meta.polymorphic__proxy)
+        self.assertFalse(ProxyChildAliasProxy._meta.polymorphic_proxy)
 
     def test_proxy_get_real_instance_class(self):
         """
