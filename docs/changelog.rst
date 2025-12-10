@@ -1,10 +1,14 @@
 Changelog
 =========
 
+v5.0.0 (202x-XX-XX)
+-------------------
+
+* Implemented `Fix proxy model support. <https://github.com/jazzband/django-polymorphic/pull/676>`_
+
 v4.3.0 (202X-XX-XX)
 -------------------
 
-* Implemented `Add polymorphic_proxy flag to enable polymorphic queries from proxy models. <https://github.com/jazzband/django-polymorphic/pull/676>`_
 * Fixed `Resolve primary key name correctly. <https://github.com/jazzband/django-polymorphic/pull/620>`_
 * Implemented `Include get_child_inlines() hook in stacked inline admin forms. <https://github.com/jazzband/django-polymorphic/pull/681>`_
 * Fixed `multi-database support in inheritance accessors. <https://github.com/jazzband/django-polymorphic/pull/550>`_

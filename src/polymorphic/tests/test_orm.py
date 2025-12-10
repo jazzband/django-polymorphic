@@ -895,6 +895,47 @@ class PolymorphicTests(TransactionTestCase):
             self.assertEqual(2, NonAliasNonProxyChild.objects.count())
             self.assertEqual(3, NonProxyChild.objects.count())
 
+    def test_proxied_instances_are_proxies(self):
+        ProxyBase.objects.create(some_data="ProxyBase")
+        AliasProxyChild.objects.create(some_data="AliasProxyChild")
+        AliasProxyChild.objects.create(some_data="AliasProxyChild")
+        ProxyChild.objects.create(some_data="ProxyChild")
+        NonAliasNonProxyChild.objects.create(some_data="NonAliasNonProxyChild", name="nanpc1")
+        NonAliasNonProxyChild.objects.create(some_data="NonAliasNonProxyChild", name="nanpc1")
+        NonProxyChild.objects.create(some_data="NonProxyChild", name="t1")
+        TradProxyChild.objects.create(some_data="TradProxyChild")
+        TradProxyChild.objects.create(some_data="TradProxyChild")
+        ProxyChildAliasProxy.objects.create(some_data="ProxyChildAliasProxy")
+        AliasOfNonProxyChild.objects.create(some_data="AliasOfNonProxyChild", name="aonpc1")
+        TradProxyOnProxyChild.objects.create(some_data="TradProxyOnProxyChild")
+        TradProxyOnProxyChild.objects.create(some_data="TradProxyOnProxyChild")
+
+        self.assertEqual(13, ProxyBase.objects.count())
+        self.assertEqual(13, AliasProxyChild.objects.count())
+        self.assertEqual(3, ProxyChild.objects.count())
+        self.assertEqual(2, NonAliasNonProxyChild.objects.count())
+        self.assertEqual(4, AliasOfNonProxyChild.objects.count())
+        self.assertEqual(13, TradProxyChild.objects.count())
+        self.assertEqual(1, ProxyChildAliasProxy.objects.count())
+        self.assertEqual(13, TradProxyOnProxyChild.objects.count())
+        self.assertEqual(4, NonProxyChild.objects.count())
+
+        # for row in ProxyBase.objects.all():
+        #     if row.some_data in ["ProxyBase", "ProxyChild"]:
+        #         assert row.__class__ is ProxyBase, row.__class__.__name__
+        #     elif row.some_data == "TradProxyOnProxyChild":
+        #         assert row.__class__ is TradProxyOnProxyChild, row.__class__.__name__
+        #     elif row.some_data in ["NonProxyChild", "NonAliasNonProxyChild"]:
+        #         assert row.__class__ is NonProxyChild, row.__class__.__name__
+        #     elif row.some_data == "AliasOfNonProxyChild":
+        #         assert row.__class__ is AliasOfNonProxyChild, row.__class__.__name__
+        #     elif row.some_data in ["TradProxyChild", "ProxyChildAliasProxy"]:
+        #         assert row.__class__ is TradProxyChild, row.__class__.__name__
+        #     elif row.some_data == "AliasProxyChild":
+        #         assert row.__class__ is AliasProxyChild, row.__class__.__name__
+        #     else:
+        #         assert False, f"Unexpected row: {row.some_data}"
+
     def test_polymorphic_proxy_object_has_different_ctype_from_base(self):
         obj1 = ProxyBase.objects.create(some_data="Base1")
         obj2 = AliasProxyChild.objects.create(some_data="ProxyChild1")
