@@ -1,7 +1,7 @@
 Changelog
 =========
 
-v4.3.0 (202X-XX-XX)
+v4.3.0 (2025-12-09)
 -------------------
 
 * Fixed `Resolve primary key name correctly. <https://github.com/jazzband/django-polymorphic/pull/620>`_
