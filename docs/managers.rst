@@ -88,3 +88,23 @@ Django's :class:`~django.db.models.query.QuerySet` as the base class:
         class MyModel(PolymorphicModel):
             my_objects = PolymorphicManager.from_queryset(MyQuerySet)()
             ...
+
+If you do not wish to extend from a custom :class:`~polymorphic.managers.PolymorphicManager` you
+may also prefer the :meth:`~polymorphic.managers.PolymorphicQuerySet.as_manager`
+shortcut:
+
+.. code-block:: python
+
+    from polymorphic.models import PolymorphicModel
+    from polymorphic.query import PolymorphicQuerySet
+
+    class MyQuerySet(PolymorphicQuerySet):
+        def my_queryset_method(self):
+            ...
+
+    class MyModel(PolymorphicModel):
+        my_objects = MyQuerySet.as_manager()
+        ...
+
+For further discussion see `this topic on the Q&A page
+<https://github.com/jazzband/django-polymorphic/discussions/696#discussioncomment-15223661>`_.
