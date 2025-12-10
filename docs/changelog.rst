@@ -1,6 +1,11 @@
 Changelog
 =========
 
+v5.0.0 (202x-XX-XX)
+-------------------
+
+* Implemented `Fix proxy model support. <https://github.com/jazzband/django-polymorphic/pull/676>`_
+
 v4.3.0 (202X-XX-XX)
 -------------------
 
