@@ -15,7 +15,7 @@ from .query import PolymorphicQuerySet
 
 # PolymorphicQuerySet Q objects (and filter()) support these additional key words.
 # These are forbidden as field names (a descriptive exception is raised)
-POLYMORPHIC_SPECIAL_Q_KWORDS = ["instance_of", "not_instance_of"]
+POLYMORPHIC_SPECIAL_Q_KWORDS = {"instance_of", "not_instance_of"}
 
 DUMPDATA_COMMAND = os.path.join("django", "core", "management", "commands", "dumpdata.py")
 
@@ -63,9 +63,6 @@ class PolymorphicModelBase(ModelBase):
             # is higher in the MRO
             new_class._meta.base_manager_name = "objects"
 
-        # check if the model fields are all allowed
-        cls.validate_model_fields(new_class)
-
         # validate resulting default manager
         if not new_class._meta.abstract and not new_class._meta.swapped:
             cls.validate_model_manager(new_class.objects, model_name, "objects")
@@ -79,27 +76,6 @@ class PolymorphicModelBase(ModelBase):
             new_class.polymorphic_primary_key_name = new_class._meta.pk.name
 
         return new_class
-
-    @classmethod
-    def call_superclass_new_method(self, model_name, bases, attrs, **kwargs):
-        """call __new__ method of super class and return the newly created class.
-        Also work around a limitation in Django's ModelBase."""
-        # There seems to be a general limitation in Django's app_label handling
-        # regarding abstract models (in ModelBase). See issue 1 on github - TODO: propose patch for Django
-        # We run into this problem if polymorphic.py is located in a top-level directory
-        # which is directly in the python path. To work around this we temporarily set
-        # app_label here for PolymorphicModel.
-        return super().__new__(self, model_name, bases, attrs, **kwargs)
-
-    @classmethod
-    def validate_model_fields(self, new_class):
-        "check if all fields names are allowed (i.e. not in POLYMORPHIC_SPECIAL_Q_KWORDS)"
-        for f in new_class._meta.fields:
-            if f.name in POLYMORPHIC_SPECIAL_Q_KWORDS:
-                raise AssertionError(
-                    f'PolymorphicModel: "{new_class.__name__}" - '
-                    f'field name "{f.name}" is not allowed in polymorphic models'
-                )
 
     @classmethod
     def validate_model_manager(cls, manager, model_name, manager_name):
