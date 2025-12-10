@@ -52,9 +52,9 @@ class PolymorphicModelBase(ModelBase):
     PolymorphicQuerySet.
     """
 
-    def __new__(self, model_name, bases, attrs, **kwargs):
+    def __new__(cls, model_name, bases, attrs, **kwargs):
         # create new model
-        new_class = self.call_superclass_new_method(model_name, bases, attrs, **kwargs)
+        new_class = super().__new__(cls, model_name, bases, attrs, **kwargs)
 
         if new_class._meta.base_manager_name is None:
             # by default, use polymorphic manager as the base manager - i.e. for
@@ -64,11 +64,11 @@ class PolymorphicModelBase(ModelBase):
             new_class._meta.base_manager_name = "objects"
 
         # check if the model fields are all allowed
-        self.validate_model_fields(new_class)
+        cls.validate_model_fields(new_class)
 
         # validate resulting default manager
         if not new_class._meta.abstract and not new_class._meta.swapped:
-            self.validate_model_manager(new_class.objects, model_name, "objects")
+            cls.validate_model_manager(new_class.objects, model_name, "objects")
 
         # for __init__ function of this class (monkeypatching inheritance accessors)
         new_class.polymorphic_super_sub_accessors_replaced = False
@@ -89,20 +89,7 @@ class PolymorphicModelBase(ModelBase):
         # We run into this problem if polymorphic.py is located in a top-level directory
         # which is directly in the python path. To work around this we temporarily set
         # app_label here for PolymorphicModel.
-        meta = attrs.get("Meta", None)
-        do_app_label_workaround = (
-            meta
-            and attrs["__module__"] == "polymorphic"
-            and model_name == "PolymorphicModel"
-            and getattr(meta, "app_label", None) is None
-        )
-
-        if do_app_label_workaround:
-            meta.app_label = "poly_dummy_app_label"
-        new_class = super().__new__(self, model_name, bases, attrs, **kwargs)
-        if do_app_label_workaround:
-            del meta.app_label
-        return new_class
+        return super().__new__(self, model_name, bases, attrs, **kwargs)
 
     @classmethod
     def validate_model_fields(self, new_class):
@@ -115,7 +102,7 @@ class PolymorphicModelBase(ModelBase):
                 )
 
     @classmethod
-    def validate_model_manager(self, manager, model_name, manager_name):
+    def validate_model_manager(cls, manager, model_name, manager_name):
         """check if the manager is derived from PolymorphicManager
         and its querysets from PolymorphicQuerySet - throw AssertionError if not"""
 
