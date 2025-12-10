@@ -1631,3 +1631,7 @@ class PolymorphicTests(TransactionTestCase):
         assert MyChild1Model.objects.filter_by_user(5).count() == 1
         assert MyChild1Model.objects.filter_by_user(5).first() == child1
         assert MyChild2Model.objects.filter_by_user(5).first() == child2
+
+        assert MyChild2Model._default_manager is MyChild2Model.objects
+        MyChild2Model.objects.filter_by_user(6).count() == 0
+        MyChild2Model.base_manager.filter_by_user(6).count() == 1
