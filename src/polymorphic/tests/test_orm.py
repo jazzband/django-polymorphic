@@ -1616,3 +1616,18 @@ class PolymorphicTests(TransactionTestCase):
             2,
             {"auth.User": 2},
         )
+
+    def test_manager_override(self):
+        from polymorphic.tests.models import MyBaseModel, MyChild1Model, MyChild2Model
+
+        child1 = MyChild1Model.objects.create(fieldA=4)
+        child2 = MyChild2Model.objects.create(fieldB=6)
+
+        assert MyBaseModel.objects.filter_by_user(5).count() == 2
+        assert child1 in MyBaseModel.objects.all()
+        assert child2 in MyBaseModel.objects.all()
+        assert MyChild1Model.objects.filter_by_user(5).count() == 1
+        assert MyChild2Model.objects.filter_by_user(5).count() == 1
+        assert MyChild1Model.objects.filter_by_user(5).count() == 1
+        assert MyChild1Model.objects.filter_by_user(5).first() == child1
+        assert MyChild2Model.objects.filter_by_user(5).first() == child2

@@ -612,3 +612,35 @@ class Bar(PolymorphicMixin, PolymorphicModel):
 
 class Baz(ModelMixin, PolymorphicModel):
     pass
+
+
+class MyBaseQuerySet(PolymorphicQuerySet):
+    def filter_by_user(self, _):
+        return self.all()
+
+
+class MyBaseModel(PolymorphicModel):
+    ...
+    objects = MyBaseQuerySet.as_manager()
+
+
+class MyChild1QuerySet(MyBaseQuerySet):
+    def filter_by_user(self, num):
+        return self.filter(fieldA__lt=num)
+
+
+class MyChild1Model(MyBaseModel):
+    fieldA = models.IntegerField()
+    ...
+    objects = MyChild1QuerySet.as_manager()
+
+
+class MyChild2QuerySet(MyBaseQuerySet):
+    def filter_by_user(self, num):
+        return self.filter(fieldB__gt=num)
+
+
+class MyChild2Model(MyBaseModel):
+    fieldB = models.IntegerField()
+    ...
+    objects = PolymorphicManager.from_queryset(MyChild2QuerySet)()
