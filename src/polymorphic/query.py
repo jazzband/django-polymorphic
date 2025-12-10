@@ -136,6 +136,11 @@ class PolymorphicQuerySet(QuerySet):
         return new
 
     def as_manager(cls):
+        """
+        Override base :meth:`~django.db.models.query.QuerySet.as_manager` to return
+        a manager extended from :class:`polymorphic.managers.PolymorphicManager`.
+        """
+
         from .managers import PolymorphicManager
 
         manager = PolymorphicManager.from_queryset(cls)()
