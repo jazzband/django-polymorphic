@@ -1,8 +1,10 @@
 Changelog
 =========
 
-.. v4.4.0 (202X-XX-XX)
-.. -------------------
+v4.4.0 (202X-XX-XX)
+-------------------
+
+* Fixed `Change model definition errors to be system checks <https://github.com/jazzband/django-polymorphic/pull/693>`_
 
 v4.3.0 (2025-12-09)
 -------------------
