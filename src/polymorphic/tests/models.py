@@ -644,3 +644,4 @@ class MyChild2Model(MyBaseModel):
     fieldB = models.IntegerField()
     ...
     objects = PolymorphicManager.from_queryset(MyChild2QuerySet)()
+    base_manager = MyBaseQuerySet.as_manager()
