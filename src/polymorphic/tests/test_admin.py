@@ -26,6 +26,7 @@ from polymorphic.tests.models import (
     Model2B,
     Model2C,
     Model2D,
+    NoChildren,
 )
 
 from playwright.sync_api import sync_playwright, expect
@@ -231,16 +232,9 @@ class _GenericAdminFormTest(StaticLiveServerTestCase):
 
 class StackedInlineTests(_GenericAdminFormTest):
     def setUp(self):
-        PlainA.objects.all().delete()
-        InlineParent.objects.all().delete()
         super().setUp()
         for name in ["Brian", "Alice", "Emma", "Anna"]:
             PlainA.objects.create(field1=name)
-
-    def tearDown(self):
-        PlainA.objects.all().delete()
-        InlineParent.objects.all().delete()
-        super().tearDown()
 
     def test_admin_inline_add_autocomplete(self):
         # https://github.com/jazzband/django-polymorphic/issues/546
@@ -287,14 +281,6 @@ class StackedInlineTests(_GenericAdminFormTest):
 
 
 class PolymorphicFormTests(_GenericAdminFormTest):
-    def setUp(self):
-        Model2A.objects.all().delete()
-        super().setUp()
-
-    def tearDown(self):
-        Model2A.objects.all().delete()
-        super().tearDown()
-
     def test_admin_polymorphic_add(self):
         model2b_ct = ContentType.objects.get_for_model(Model2B)
         model2c_ct = ContentType.objects.get_for_model(Model2C)
@@ -369,3 +355,19 @@ class PolymorphicFormTests(_GenericAdminFormTest):
         assert Model2D.objects.first().field2 == "2D2"
         assert Model2D.objects.first().field3 == "2D3"
         assert Model2D.objects.first().field4 == "2D4"
+
+
+class PolymorphicNoChildrenTests(_GenericAdminFormTest):
+    def test_admin_no_polymorphic_children(self):
+        self.page.goto(self.add_url(NoChildren))
+        self.page.fill("input[name='field1']", "NoChildren1")
+        with self.page.expect_navigation(timeout=10000) as nav_info:
+            self.page.click("input[name='_save']")
+
+        response = nav_info.value
+        assert response.status < 400
+
+        # verify the add
+        added = NoChildren.objects.get(field1="NoChildren1")
+        self.page.goto(self.change_url(NoChildren, added.pk))
+        assert self.page.locator("input[name='field1']").input_value() == "NoChildren1"

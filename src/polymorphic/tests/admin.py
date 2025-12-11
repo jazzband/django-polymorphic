@@ -68,4 +68,4 @@ class InlineParentAdmin(PolymorphicInlineSupportMixin, ModelAdmin):
 
 @register(NoChildren)
 class NoChildrenAdmin(PolymorphicParentModelAdmin):
-    child_models = ()
+    child_models = (NoChildren,)
