@@ -30,6 +30,7 @@ from polymorphic.tests.models import (
 )
 
 from playwright.sync_api import sync_playwright, expect
+from urllib.parse import urljoin
 
 
 class PolymorphicAdminTests(AdminTestCase):
@@ -169,6 +170,9 @@ class _GenericAdminFormTest(StaticLiveServerTestCase):
     admin_username = "admin"
     admin_password = "password"
     admin = None
+
+    def admin_url(self):
+        return f"{self.live_server_url}{reverse('admin:index')}"
 
     def add_url(self, model):
         path = reverse(f"admin:{model._meta.label_lower.replace('.', '_')}_add")
@@ -371,3 +375,88 @@ class PolymorphicNoChildrenTests(_GenericAdminFormTest):
         added = NoChildren.objects.get(field1="NoChildren1")
         self.page.goto(self.change_url(NoChildren, added.pk))
         assert self.page.locator("input[name='field1']").input_value() == "NoChildren1"
+
+
+class AdminRecentActionsTests(_GenericAdminFormTest):
+    def test_admin_recent_actions(self):
+        """
+        Test that recent actions links respect polymorphism
+        """
+        model2a_ct = ContentType.objects.get_for_model(Model2A)
+        model2d_ct = ContentType.objects.get_for_model(Model2D)
+
+        for model_type, fields in [
+            (
+                model2a_ct,
+                {
+                    "field1": "2A1",
+                },
+            ),
+            (
+                model2d_ct,
+                {
+                    "field1": "2D1",
+                    "field2": "2D2",
+                    "field3": "2D3",
+                    "field4": "2D4",
+                },
+            ),
+        ]:
+            self.page.goto(self.add_url(Model2A))
+            self.page.locator(f"input[type=radio][value='{model_type.pk}']").check()
+            with self.page.expect_navigation(timeout=10000) as nav_info:
+                self.page.click("input[name='_save']")
+
+            response = nav_info.value
+            assert response.status < 400
+
+            for field, value in fields.items():
+                self.page.fill(f"input[name='{field}']", value)
+
+            with self.page.expect_navigation(timeout=10000) as nav_info:
+                self.page.click("input[name='_save']")
+
+            response = nav_info.value
+            assert response.status < 400
+
+        self.page.goto(self.admin_url())
+        links = self.page.locator("ul.actionlist a")
+        count = links.count()
+
+        # Collect hrefs
+        hrefs = []
+        for i in range(count):
+            href = links.nth(i).get_attribute("href")
+            if href:  # ignore missing hrefs just in case
+                hrefs.append(href)
+
+        assert hrefs, "No links found in .actionlist"
+
+        # Visit each link and ensure the HTTP status is OK
+        for href in hrefs:
+            action_url = urljoin(self.live_server_url, href)
+            response = self.page.goto(action_url)
+            assert response is not None, f"No response for {action_url}"
+            assert response.ok, f"{action_url} returned bad status {response.status}"
+            if "model2a" in action_url:
+                inputs = self.page.locator("#model2a_form input[type='text']")
+                count = inputs.count()
+                assert count == 1
+
+                values = []
+                for i in range(count):
+                    values.append(inputs.nth(i).input_value())
+
+                assert values == ["2A1"]
+            elif "model2d" in action_url:
+                inputs = self.page.locator("#model2d_form input[type='text']")
+                count = inputs.count()
+                assert count == 4
+
+                values = []
+                for i in range(count):
+                    values.append(inputs.nth(i).input_value())
+
+                assert values == ["2D1", "2D2", "2D3", "2D4"]
+            else:
+                assert False, f"Unexpected change url: {action_url}"

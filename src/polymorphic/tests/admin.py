@@ -26,7 +26,7 @@ from polymorphic.tests.models import (
 @register(Model2A)
 class Model2Admin(PolymorphicParentModelAdmin):
     list_filter = (PolymorphicChildModelFilter,)
-    child_models = (Model2B, Model2C, Model2D)
+    child_models = (Model2A, Model2B, Model2C, Model2D)
 
 
 admin_site.register(Model2B, PolymorphicChildModelAdmin)
