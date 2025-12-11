@@ -19,6 +19,7 @@ from polymorphic.tests.models import (
     InlineModelA,
     InlineModelB,
     InlineParent,
+    NoChildren,
 )
 
 
@@ -63,3 +64,8 @@ class Inline(StackedPolymorphicInline):
 class InlineParentAdmin(PolymorphicInlineSupportMixin, ModelAdmin):
     inlines = (Inline,)
     extra = 1
+
+
+@register(NoChildren)
+class NoChildrenAdmin(PolymorphicParentModelAdmin):
+    child_models = ()
