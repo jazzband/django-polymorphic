@@ -88,6 +88,10 @@ from polymorphic.tests.models import (
     SubclassSelectorProxyConcreteModel,
     ParentLinkAndRelatedName,
     UUIDArtProject,
+    UUIDArtProjectA,
+    UUIDArtProjectB,
+    UUIDArtProjectC,
+    UUIDArtProjectD,
     UUIDPlainA,
     UUIDPlainB,
     UUIDPlainC,
@@ -175,24 +179,34 @@ class PolymorphicTests(TransactionTestCase):
         """
         object retrieval problem occuring with some custom primary key fields (UUIDField as test case)
         """
-        UUIDProject.objects.create(topic="John's gathering")
-        UUIDArtProject.objects.create(topic="Sculpting with Tim", artist="T. Turner")
-        UUIDResearchProject.objects.create(topic="Swallow Aerodynamics", supervisor="Dr. Winter")
+        up1 = UUIDProject.objects.create(topic="John's gathering")
+        up2 = UUIDArtProject.objects.create(topic="Sculpting with Tim", artist="T. Turner")
+        up3 = UUIDResearchProject.objects.create(
+            topic="Swallow Aerodynamics", supervisor="Dr. Winter"
+        )
+
+        up4 = UUIDArtProjectA.objects.create(topic="ProjectA", artist="Artist A")
+        up5 = UUIDArtProjectB.objects.create(topic="ProjectB", artist="Artist B")
+        up6 = UUIDArtProjectC.objects.create(topic="ProjectC", artist="Artist C")
+        up7 = UUIDArtProjectD.objects.create(topic="ProjectD", artist="Artist D")
 
         qs = UUIDProject.objects.all()
         ol = list(qs)
         a = qs[0]
         b = qs[1]
         c = qs[2]
-        assert len(qs) == 3
+        assert len(qs) == 7
         assert isinstance(a.uuid_primary_key, uuid.UUID)
         assert isinstance(a.pk, uuid.UUID)
 
-        res = re.sub(' "(.*?)..", topic', ", topic", repr(qs))
-        res_exp = """[ <UUIDProject: uuid_primary_key (UUIDField/pk), topic (CharField) "John's gathering">,
-  <UUIDArtProject: uuid_primary_key (UUIDField/pk), topic (CharField) "Sculpting with Tim", artist (CharField) "T. Turner">,
-  <UUIDResearchProject: uuid_primary_key (UUIDField/pk), topic (CharField) "Swallow Aerodynamics", supervisor (CharField) "Dr. Winter"> ]"""
-        assert res == res_exp
+        # https://github.com/jazzband/django-polymorphic/issues/306
+        assert {up1, up2, up3, up4, up5, up6, up7} == set(qs)
+        assert {up2, up4, up5, up6, up7} == set(UUIDArtProject.objects.all())
+        assert {up3} == set(UUIDResearchProject.objects.all())
+        assert {up4, up5, up6, up7} == set(UUIDArtProjectA.objects.all())
+        assert {up5, up6, up7} == set(UUIDArtProjectB.objects.all())
+        assert {up6, up7} == set(UUIDArtProjectC.objects.all())
+        assert {up7} == set(UUIDArtProjectD.objects.all())
 
         a = UUIDPlainA.objects.create(field1="A1")
         b = UUIDPlainB.objects.create(field1="B1", field2="B2")
