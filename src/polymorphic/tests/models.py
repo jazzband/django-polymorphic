@@ -673,8 +673,17 @@ class AbstractManagerTest(PolymorphicModel):
         abstract = True
 
 
+class RelatedManagerTest(models.Model): ...
+
+
 class DerivedManagerTest(AbstractManagerTest):
-    pass
+    related_test = models.ForeignKey(
+        RelatedManagerTest,
+        on_delete=models.CASCADE,
+        default=None,
+        null=True,
+        related_name="derived",
+    )
 
 
 class DerivedManagerTest2(DerivedManagerTest):

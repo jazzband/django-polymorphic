@@ -1644,6 +1644,7 @@ class PolymorphicTests(TransactionTestCase):
             DerivedManagerTest2,
             SpecialPolymorphicManager,
             SpecialQuerySet,
+            RelatedManagerTest,
         )
 
         with self.assertRaises(AttributeError):
@@ -1675,3 +1676,6 @@ class PolymorphicTests(TransactionTestCase):
 
         with self.assertRaises(AttributeError):
             DerivedManagerTest2.objects.has_text("dmt")
+
+        related = RelatedManagerTest.objects.create()
+        assert isinstance(related.derived, SpecialPolymorphicManager)
