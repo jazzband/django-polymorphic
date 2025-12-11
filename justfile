@@ -94,6 +94,11 @@ build: build-docs-html
     @just manage compilemessages --ignore ".venv/*"
     uv build
 
+# regenerate test migrations using the lowest version of Django
+make-test-migrations:
+    - rm src/polymorphic/tests/migrations/00*.py
+    uv run --isolated --resolution lowest-direct --script ./manage.py makemigrations
+
 # open the html documentation
 [script]
 open-docs:
