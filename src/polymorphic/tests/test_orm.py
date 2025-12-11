@@ -1679,3 +1679,17 @@ class PolymorphicTests(TransactionTestCase):
 
         related = RelatedManagerTest.objects.create()
         assert isinstance(related.derived, SpecialPolymorphicManager)
+
+    def test_fk_polymorphism(self):
+        from polymorphic.tests.models import FKTest, FKTestChild
+
+        child = FKTestChild.objects.create()
+
+        fk_test = FKTest.objects.create(fk=child)
+
+        assert fk_test.fk is child
+
+        fk_test = FKTest.objects.get(pk=fk_test.id)
+
+        assert fk_test.fk == child
+        assert isinstance(fk_test.fk, FKTestChild)

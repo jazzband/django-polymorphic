@@ -688,3 +688,13 @@ class DerivedManagerTest(AbstractManagerTest):
 
 class DerivedManagerTest2(DerivedManagerTest):
     objects = PolymorphicManager()
+
+
+class FKTestBase(PolymorphicModel): ...
+
+
+class FKTestChild(Base): ...
+
+
+class FKTest(models.Model):
+    fk = models.ForeignKey(Base, null=True, on_delete=models.SET_NULL)
