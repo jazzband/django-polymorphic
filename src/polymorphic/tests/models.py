@@ -4,6 +4,7 @@ import django
 from django.contrib.auth.models import Group
 from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
+from django.db.models import Manager
 from django.db import models
 from django.db.models.query import QuerySet
 
@@ -645,3 +646,36 @@ class MyChild2Model(MyBaseModel):
     ...
     objects = PolymorphicManager.from_queryset(MyChild2QuerySet)()
     base_manager = MyBaseQuerySet.as_manager()
+
+
+class SpecialQuerySet(PolymorphicQuerySet):
+    def has_text(self, text):
+        return self.filter(abstract_field__icontains=text)
+
+
+class SpecialPolymorphicManager(PolymorphicManager.from_queryset(SpecialQuerySet)):
+    def custom_queryset(self):
+        return self.get_queryset()
+
+
+class AbstractManagerTest(PolymorphicModel):
+    """
+    Tests that custom manager patterns work on abstract base models
+    """
+
+    objects = SpecialPolymorphicManager()
+    basic_manager = Manager()
+    default_manager = PolymorphicManager()
+
+    abstract_field = models.CharField(max_length=32)
+
+    class Meta:
+        abstract = True
+
+
+class DerivedManagerTest(AbstractManagerTest):
+    pass
+
+
+class DerivedManagerTest2(DerivedManagerTest):
+    objects = PolymorphicManager()

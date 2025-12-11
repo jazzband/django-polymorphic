@@ -1635,3 +1635,43 @@ class PolymorphicTests(TransactionTestCase):
         assert MyChild2Model._default_manager is MyChild2Model.objects
         MyChild2Model.objects.filter_by_user(6).count() == 0
         MyChild2Model.base_manager.filter_by_user(6).count() == 1
+
+    def test_abstract_managers(self):
+        from django.db.models import Manager
+        from polymorphic.tests.models import (
+            AbstractManagerTest,
+            DerivedManagerTest,
+            DerivedManagerTest2,
+            SpecialPolymorphicManager,
+            SpecialQuerySet,
+        )
+
+        with self.assertRaises(AttributeError):
+            AbstractManagerTest.objects
+        with self.assertRaises(AttributeError):
+            AbstractManagerTest.basic_manager
+        with self.assertRaises(AttributeError):
+            AbstractManagerTest.default_manager
+
+        assert type(DerivedManagerTest.objects) is SpecialPolymorphicManager
+        assert type(DerivedManagerTest.basic_manager) is Manager
+        assert type(DerivedManagerTest.default_manager) is PolymorphicManager
+        assert type(DerivedManagerTest._default_manager) is SpecialPolymorphicManager
+
+        assert type(DerivedManagerTest2.objects) is PolymorphicManager
+        assert type(DerivedManagerTest2.basic_manager) is Manager
+        assert type(DerivedManagerTest2.default_manager) is PolymorphicManager
+        assert type(DerivedManagerTest2._default_manager) is PolymorphicManager
+
+        dmt1 = DerivedManagerTest.objects.create(abstract_field="dmt1")
+        dmt2 = DerivedManagerTest2.objects.create(abstract_field="dmt2")
+
+        assert DerivedManagerTest.objects.has_text("dmt").count() == 2
+        assert dmt1 in DerivedManagerTest.objects.has_text("dmt")
+        assert dmt2 in DerivedManagerTest.objects.has_text("dmt")
+        assert DerivedManagerTest.objects.custom_queryset().has_text("dmt").count() == 2
+
+        assert isinstance(DerivedManagerTest.objects.has_text("dmt"), SpecialQuerySet)
+
+        with self.assertRaises(AttributeError):
+            DerivedManagerTest2.objects.has_text("dmt")
