@@ -342,6 +342,18 @@ class UUIDResearchProject(UUIDProject):
     supervisor = models.CharField(max_length=30)
 
 
+class UUIDArtProjectA(UUIDArtProject): ...
+
+
+class UUIDArtProjectB(UUIDArtProjectA): ...
+
+
+class UUIDArtProjectC(UUIDArtProjectB): ...
+
+
+class UUIDArtProjectD(UUIDArtProjectC): ...
+
+
 class UUIDPlainA(models.Model):
     uuid_primary_key = models.UUIDField(primary_key=True, default=uuid.uuid1)
     field1 = models.CharField(max_length=30)
