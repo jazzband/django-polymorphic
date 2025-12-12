@@ -39,7 +39,7 @@ class Model2B(Model2A):
 
 
 class Model2C(Model2B):
-    field3 = models.CharField(max_length=30)
+    field3 = models.CharField(max_length=30, blank=True, default="")
 
 
 class Model2D(Model2C):

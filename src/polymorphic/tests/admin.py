@@ -31,7 +31,11 @@ class Model2Admin(PolymorphicParentModelAdmin):
 
 admin_site.register(Model2B, PolymorphicChildModelAdmin)
 admin_site.register(Model2C, PolymorphicChildModelAdmin)
-admin_site.register(Model2D, PolymorphicChildModelAdmin)
+
+
+@register(Model2D)
+class Model2DAdmin(PolymorphicChildModelAdmin):
+    exclude = ("field3",)
 
 
 @register(PlainA)
