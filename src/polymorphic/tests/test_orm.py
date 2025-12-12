@@ -1707,3 +1707,31 @@ class PolymorphicTests(TransactionTestCase):
 
         assert fk_test.fk == child
         assert isinstance(fk_test.fk, FKTestChild)
+
+    def test_polymorphic_extension(self):
+        from polymorphic.tests.models import (
+            NormalBase,
+            NormalExtension,
+            PolyExtension,
+            PolyExtChild,
+        )
+
+        nb = NormalBase.objects.create(nb_field=5)
+        ne = NormalExtension.objects.create(nb_field=6, ne_field="normal ext")
+        poly_ext = PolyExtension.objects.create(nb_field=6, ne_field="poly ext", poly_ext_field=7)
+        child_ext = PolyExtChild.objects.create(
+            nb_field=7, ne_field="child ext", poly_ext_field=8, poly_child_field="poly child"
+        )
+        assert set(NormalBase.objects.all()) == {
+            nb,
+            NormalBase.objects.get(pk=ne.pk),
+            NormalBase.objects.get(pk=poly_ext.pk),
+            NormalBase.objects.get(pk=child_ext.pk),
+        }
+        assert set(NormalExtension.objects.all()) == {
+            NormalExtension.objects.get(pk=ne.pk),
+            NormalExtension.objects.get(pk=poly_ext.pk),
+            NormalExtension.objects.get(pk=child_ext.pk),
+        }
+        assert set(PolyExtension.objects.all()) == {poly_ext, child_ext}
+        assert set(PolyExtChild.objects.all()) == {child_ext}
