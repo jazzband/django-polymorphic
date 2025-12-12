@@ -1,4 +1,5 @@
 import os
+from time import sleep
 import pytest
 from django.urls import reverse
 from django.contrib.auth import get_user_model
@@ -203,22 +204,19 @@ class _GenericAdminFormTest(StaticLiveServerTestCase):
         cls.playwright = sync_playwright().start()
         cls.browser = cls.playwright.chromium.launch(headless=cls.HEADLESS)
 
-        cls.admin = get_user_model().objects.create_superuser(
-            username=cls.admin_username, email="admin@example.com", password=cls.admin_password
-        )
-
     @classmethod
     def tearDownClass(cls):
         """Clean up Playwright instance after tests."""
         cls.browser.close()
         cls.playwright.stop()
-        if cls.admin:
-            cls.admin.delete()
         super().tearDownClass()
         del os.environ["DJANGO_ALLOW_ASYNC_UNSAFE"]
 
     def setUp(self):
         """Create an admin user before running tests."""
+        self.admin = get_user_model().objects.create_superuser(
+            username=self.admin_username, email="admin@example.com", password=self.admin_password
+        )
         self.page = self.browser.new_page()
         # Log in to the Django admin
         self.page.goto(f"{self.live_server_url}/admin/login/")
@@ -235,13 +233,10 @@ class _GenericAdminFormTest(StaticLiveServerTestCase):
 
 
 class StackedInlineTests(_GenericAdminFormTest):
-    def setUp(self):
-        super().setUp()
-        for name in ["Brian", "Alice", "Emma", "Anna"]:
-            PlainA.objects.create(field1=name)
-
     def test_admin_inline_add_autocomplete(self):
         # https://github.com/jazzband/django-polymorphic/issues/546
+        for name in ["Brian", "Alice", "Emma", "Anna"]:
+            PlainA.objects.create(field1=name)
         self.page.goto(self.add_url(InlineParent))
         self.page.fill("input[name='title']", "Parent 1")
         with self.page.expect_navigation(timeout=10000) as nav_info:
@@ -282,6 +277,71 @@ class StackedInlineTests(_GenericAdminFormTest):
 
         suggestions = self.page.locator("ul.select2-results__options > li").all_inner_texts()
         assert suggestions == ["Brian"]
+
+    def test_inline_form_ordering_and_removal(self):
+        """
+        Test that the javascript places the inline forms in the correct order on
+        repeated adds without a save.
+
+        https://github.com/jazzband/django-polymorphic/issues/426
+        """
+        self.page.goto(self.add_url(InlineParent))
+
+        polymorphic_menu = self.page.locator(
+            "div.polymorphic-add-choice div.polymorphic-type-menu"
+        )
+
+        self.page.click("div.polymorphic-add-choice a")
+        polymorphic_menu.wait_for(state="visible")
+        self.page.click("div.polymorphic-type-menu a[data-type='inlinemodelb']")
+        polymorphic_menu.wait_for(state="hidden")
+        self.page.click("div.polymorphic-add-choice a")
+        polymorphic_menu.wait_for(state="visible")
+        self.page.click("div.polymorphic-type-menu a[data-type='inlinemodela']")
+        polymorphic_menu.wait_for(state="hidden")
+        self.page.click("div.polymorphic-add-choice a")
+        polymorphic_menu.wait_for(state="visible")
+        self.page.click("div.polymorphic-type-menu a[data-type='inlinemodela']")
+        polymorphic_menu.wait_for(state="hidden")
+        self.page.click("div.polymorphic-add-choice a")
+        polymorphic_menu.wait_for(state="visible")
+        self.page.click("div.polymorphic-type-menu a[data-type='inlinemodelb']")
+        polymorphic_menu.wait_for(state="hidden")
+
+        inline0 = self.page.locator("div#inline_children-0")
+        inline1 = self.page.locator("div#inline_children-1")
+        inline2 = self.page.locator("div#inline_children-2")
+        inline3 = self.page.locator("div#inline_children-3")
+
+        inline0.wait_for(state="visible")
+        inline1.wait_for(state="visible")
+        inline2.wait_for(state="visible")
+        inline3.wait_for(state="visible")
+
+        assert "model b" in inline0.inner_text() and "#1" in inline0.inner_text()
+        assert "model a" in inline1.inner_text() and "#2" in inline1.inner_text()
+        assert "model a" in inline2.inner_text() and "#3" in inline2.inner_text()
+        assert "model b" in inline3.inner_text() and "#4" in inline3.inner_text()
+
+        # Now remove inline 2 and check the numbering is correct
+        inline1.locator("a.inline-deletelink").click()
+        # the ids are updated - so we expect the last div id to be removed
+        inline3.wait_for(state="detached")
+        assert "model b" in inline0.inner_text() and "#1" in inline0.inner_text()
+        assert "model a" in inline1.inner_text() and "#2" in inline1.inner_text()
+        assert "model b" in inline2.inner_text() and "#3" in inline2.inner_text()
+
+        inline0.locator("a.inline-deletelink").click()
+        inline2.wait_for(state="detached")
+        assert "model a" in inline0.inner_text() and "#1" in inline0.inner_text()
+        assert "model b" in inline1.inner_text() and "#2" in inline1.inner_text()
+
+        inline1.locator("a.inline-deletelink").click()
+        inline1.wait_for(state="detached")
+        assert "model a" in inline0.inner_text() and "#1" in inline0.inner_text()
+
+        inline0.locator("a.inline-deletelink").click()
+        inline0.wait_for(state="detached")
 
 
 class PolymorphicFormTests(_GenericAdminFormTest):

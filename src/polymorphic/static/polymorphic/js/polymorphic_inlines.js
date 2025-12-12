@@ -118,13 +118,18 @@
                     // last child element of the form's container:
                     row.children(":first").append('<span><a class="' + options.deleteCssClass + '" href="#">' + options.deleteText + "</a></span>");
                 }
+                let totForms = parseInt(totalForms.val(), 10);
                 row.find("*").each(function() {
-                    updateElementIndex(this, options.prefix, totalForms.val());
+                    updateElementIndex(this, options.prefix, totForms);
+                });
+                row.find("h3 span.inline_label").each(function () {
+                    $(this).text($(this).text().replace(/##/g, `#${totForms+1}`));
                 });
                 // Insert the new form when it has been fully edited
-                row.insertBefore($(template));
+                const firstTemplate = $("#" + options.childTypes[0].type + "-empty");
+                row.insertBefore($(firstTemplate));
                 // Update number of total forms
-                $(totalForms).val(parseInt(totalForms.val(), 10) + 1);
+                $(totalForms).val(totForms+1);
                 nextIndex += 1;
                 // Hide add button in case we've hit the max, except we want to add infinitely
                 if ((maxForms.val() !== '') && (maxForms.val() - totalForms.val()) <= 0) {
@@ -161,6 +166,9 @@
                     for (i = 0, formCount = forms.length; i < formCount; i++) {
                         updateElementIndex($(forms).get(i), options.prefix, i);
                         $(forms.get(i)).find("*").each(updateElementCallback);
+                        $(forms.get(i)).find("h3 span.inline_label").each(function () {
+                            $(this).text($(this).text().replace(/#\d+/g, `#${i+1}`));
+                        });
                     }
                 });
                 // If a post-add callback was supplied, call it with the added form:

@@ -15,7 +15,7 @@
        id="{% if inline_admin_form.original.pk %}{{ inline_admin_formset.formset.prefix }}-{{ forloop.counter0 }}{% else %}{{ inline_admin_form.model_admin.opts.model_name }}-empty{% endif %}">
 
     <h3><b>{{ inline_admin_form.model_admin.opts.verbose_name|capfirst }}:</b>&nbsp;<span class="inline_label">{% if inline_admin_form.original %}{{ inline_admin_form.original }}{% if inline_admin_form.model_admin.show_change_link and inline_admin_form.model_admin.has_registered_model %} <a href="{% url inline_admin_form.model_admin.opts|admin_urlname:'change' inline_admin_form.original.pk|admin_urlquote %}" class="inlinechangelink">{% trans "Change" %}</a>{% endif %}
-{% else %}#{{ forloop.counter }}{% endif %}</span>
+{% else %}##{% endif %}</span>
         {% if inline_admin_form.show_url %}<a href="{{ inline_admin_form.absolute_url }}">{% trans "View on site" %}</a>{% endif %}
       {% if inline_admin_form.formset.can_delete and inline_admin_form.original %}<span class="delete">{{ inline_admin_form.deletion_field.field }} {{ inline_admin_form.deletion_field.label_tag }}</span>{% endif %}
     </h3>
