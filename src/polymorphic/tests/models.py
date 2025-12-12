@@ -714,3 +714,19 @@ class FKTest(models.Model):
 
 class NoChildren(PolymorphicModel):
     field1 = models.CharField(max_length=12)
+
+
+class NormalBase(models.Model):
+    nb_field = models.IntegerField()
+
+
+class NormalExtension(NormalBase):
+    ne_field = models.CharField(max_length=12)
+
+
+class PolyExtension(PolymorphicModel, NormalExtension):
+    poly_ext_field = models.IntegerField()
+
+
+class PolyExtChild(PolyExtension):
+    poly_child_field = models.CharField(max_length=12)
