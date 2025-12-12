@@ -311,7 +311,7 @@ class PolymorphicFormTests(_GenericAdminFormTest):
                 {
                     "field1": "2D1",
                     "field2": "2D2",
-                    "field3": "2D3",
+                    # "field3": "2D3", excluded!
                     "field4": "2D4",
                 },
             ),
@@ -357,7 +357,7 @@ class PolymorphicFormTests(_GenericAdminFormTest):
 
         assert Model2D.objects.first().field1 == "2D1"
         assert Model2D.objects.first().field2 == "2D2"
-        assert Model2D.objects.first().field3 == "2D3"
+        assert Model2D.objects.first().field3 == ""
         assert Model2D.objects.first().field4 == "2D4"
 
 
@@ -397,7 +397,7 @@ class AdminRecentActionsTests(_GenericAdminFormTest):
                 {
                     "field1": "2D1",
                     "field2": "2D2",
-                    "field3": "2D3",
+                    # "field3": "2D3",  excluded!
                     "field4": "2D4",
                 },
             ),
@@ -449,14 +449,15 @@ class AdminRecentActionsTests(_GenericAdminFormTest):
 
                 assert values == ["2A1"]
             elif "model2d" in action_url:
+                # this also tests that exclusion of field3 works
                 inputs = self.page.locator("#model2d_form input[type='text']")
                 count = inputs.count()
-                assert count == 4
+                assert count == 3
 
                 values = []
                 for i in range(count):
                     values.append(inputs.nth(i).input_value())
 
-                assert values == ["2D1", "2D2", "2D3", "2D4"]
+                assert values == ["2D1", "2D2", "2D4"]
             else:
                 assert False, f"Unexpected change url: {action_url}"
