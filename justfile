@@ -193,6 +193,10 @@ test-db DB_CLIENT="dev" *TESTS:
     uv sync --group {{ DB_CLIENT }}
     @just run pytest --cov-append {{ TESTS }}
 
+# debug a test - (break at test start/run in headed mode)
+debug-test *TESTS:
+    @just run pytest -s --trace --pdbcls=IPython.terminal.debugger:Pdb --headed {{ TESTS }}
+
 # run the pre-commit checks
 precommit:
     @just run pre-commit
