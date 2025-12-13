@@ -266,7 +266,9 @@ class PolymorphicQuerySet(QuerySet):
             # The field on which the aggregate operates is
             # stored inside a complex query expression.
             if isinstance(a, Q):
-                translate_polymorphic_Q_object(self.model, a)
+                # modify in place - this should be fixed if we want immutable
+                # aggregate/annotation expressions
+                a.children = translate_polymorphic_Q_object(self.model, a).children
             elif isinstance(a, FilteredRelation):
                 patch_lookup(a.condition)
             elif hasattr(a, "get_source_expressions"):

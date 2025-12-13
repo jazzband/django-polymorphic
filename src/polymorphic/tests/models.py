@@ -730,3 +730,11 @@ class PolyExtension(PolymorphicModel, NormalExtension):
 
 class PolyExtChild(PolyExtension):
     poly_child_field = models.CharField(max_length=12)
+
+
+class DeepCopyTester(PolymorphicModel):
+    binary_field = models.BinaryField()
+
+
+class DeepCopyTester2(DeepCopyTester):
+    binary_field2 = models.BinaryField()

@@ -59,23 +59,25 @@ def translate_polymorphic_filter_definitions_in_kwargs(
 def translate_polymorphic_Q_object(queryset_model, potential_q_object, using=DEFAULT_DB_ALIAS):
     def tree_node_correct_field_specs(my_model, node):
         "process all children of this Q node"
-        for i in range(len(node.children)):
-            child = node.children[i]
-
+        cpy = copy.copy(node)
+        cpy.children = []
+        for child in node.children:
             if isinstance(child, (tuple, list)):
                 # this Q object child is a tuple => a kwarg like Q( instance_of=ModelB )
                 key, val = child
                 new_expr = _translate_polymorphic_filter_definition(
                     my_model, key, val, using=using
                 )
-                if new_expr:
-                    node.children[i] = new_expr
+                cpy.children.append(new_expr or child)
             elif isinstance(child, models.Q):
                 # this Q object child is another Q object, recursively process
-                tree_node_correct_field_specs(my_model, child)
+                cpy.children.append(tree_node_correct_field_specs(my_model, child))
+            else:
+                cpy.children.append(child)
+        return cpy
 
     if isinstance(potential_q_object, models.Q):
-        tree_node_correct_field_specs(queryset_model, potential_q_object)
+        return tree_node_correct_field_specs(queryset_model, potential_q_object)
 
     return potential_q_object
 
@@ -91,9 +93,8 @@ def translate_polymorphic_filter_definitions_in_args(queryset_model, args, using
 
     Returns: modified Q objects
     """
-    return [
-        translate_polymorphic_Q_object(queryset_model, copy.deepcopy(q), using=using) for q in args
-    ]
+
+    return [translate_polymorphic_Q_object(queryset_model, q, using=using) for q in args]
 
 
 def _translate_polymorphic_filter_definition(

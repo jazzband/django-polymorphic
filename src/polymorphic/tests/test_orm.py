@@ -1,5 +1,4 @@
 import pytest
-import re
 import uuid
 
 from django.contrib.auth import get_user_model
@@ -1046,11 +1045,22 @@ class PolymorphicTests(TransactionTestCase):
         Model2B.objects.create(field1="A1", field2="B2")
 
         # aggregate using **kwargs
+        cnt = Count(Case(When(Model2B___field2="B2", then=1)))
         result = Model2A.objects.aggregate(
             cnt_a1=Count(Case(When(field1="A1", then=1))),
-            cnt_b2=Count(Case(When(Model2B___field2="B2", then=1))),
+            cnt_b2=cnt,
         )
         assert result == {"cnt_b2": 2, "cnt_a1": 3}
+
+        # test that our expression was immutable
+        # FIXME - expression passed into aggregate are not immutable!
+        # assert (
+        #     cnt.get_source_expressions()[0]
+        #     .get_source_expressions()[0]
+        #     .get_source_expressions()[0]
+        #     .children[0][0]
+        #     == "Model2B___field2"
+        # )
 
         # aggregate using **args
         # we have to set the defaul alias or django won't except a complex expression
