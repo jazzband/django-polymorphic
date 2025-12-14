@@ -1868,3 +1868,64 @@ class PolymorphicTests(TransactionTestCase):
         self.assertEqual(cfs1.polymorphic_ctype, ContentType.objects.get_for_model(Model2C))
 
         self.assertEqual(set(Model2A.objects.all()), {a1, a2, b1, dfs1, cfs1, c2, d1, d2})
+
+    def test_through_models_creates_and_reads(self):
+        from polymorphic.tests.models import (
+            BetMultiple,
+            ChoiceAthlete,
+            ChoiceBlank,
+            RankedAthlete,
+        )
+
+        bet = BetMultiple.objects.create()
+
+        a1 = ChoiceAthlete.objects.create(choice="Alice")
+        a2 = ChoiceAthlete.objects.create(choice="Bob")
+        a3 = ChoiceBlank.objects.create()
+
+        # Exercise the "through" model via the M2M manager using through_defaults.
+        bet.answer.add(a1, through_defaults={"rank": 2})
+        bet.answer.add(a2, through_defaults={"rank": 1})
+        bet.answer.add(a3, through_defaults={"rank": 3})  # ChoiceBlank also works
+
+        # Through rows were created with rank preserved
+        rows = list(
+            RankedAthlete.objects.filter(bet=bet)
+            .order_by("rank")
+            .values_list("choiceAthlete_id", "rank")
+        )
+        assert rows == [(a2.pk, 1), (a1.pk, 2), (a3.pk, 3)]
+
+        # Reading back via the M2M returns polymorphic instances (ChoiceAthlete, not ChoiceBlank)
+        answers = list(bet.answer.order_by("rankedathlete__rank"))
+        assert answers == [a2, a1, a3]
+        assert isinstance(answers[0], ChoiceAthlete)
+        assert isinstance(answers[1], ChoiceAthlete)
+        assert isinstance(answers[2], ChoiceBlank)
+
+        # Sanity: the through model is the one we expect
+        assert bet.answer.through is RankedAthlete
+        assert isinstance(bet.answer, PolymorphicManager)
+
+    def test_through_model_updates(self):
+        from polymorphic.tests.models import BetMultiple, ChoiceAthlete, RankedAthlete, ChoiceBlank
+
+        bet = BetMultiple.objects.create()
+        a1 = ChoiceAthlete.objects.create(choice="Alice")
+        a2 = ChoiceBlank.objects.create()
+
+        bet.answer.add(a2, through_defaults={"rank": 0})
+        bet.answer.add(a1, through_defaults={"rank": 1})
+        ra = RankedAthlete.objects.get(bet=bet, choiceAthlete=a1)
+        assert ra.rank == 1
+
+        ra.rank = 99
+        ra.save(update_fields=["rank"])
+
+        ra2 = RankedAthlete.objects.get(bet=bet, choiceAthlete=a2)
+        assert ra2.rank == 0
+
+        # ordering uses the through-table rank
+        assert list(bet.answer.order_by("rankedathlete__rank")) == [a2, a1]
+        assert RankedAthlete.objects.get(pk=ra.pk).rank == 99
+        assert RankedAthlete.objects.get(pk=ra2.pk).rank == 0

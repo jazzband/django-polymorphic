@@ -752,3 +752,21 @@ class Lake(models.Model):
 
 class LakeWithThrough(models.Model):
     ducks = models.ManyToManyField(Duck, through=DucksLake)
+
+
+class ChoiceBlank(PolymorphicModel):
+    pass
+
+
+class ChoiceAthlete(ChoiceBlank):
+    choice = models.CharField(max_length=100)
+
+
+class BetMultiple(models.Model):
+    answer = models.ManyToManyField("ChoiceBlank", blank=True, through="RankedAthlete")
+
+
+class RankedAthlete(models.Model):
+    choiceAthlete = models.ForeignKey("ChoiceBlank", on_delete=models.CASCADE)
+    bet = models.ForeignKey("BetMultiple", on_delete=models.CASCADE)
+    rank = models.IntegerField()
