@@ -1,10 +1,14 @@
 Changelog
 =========
 
-v4.4.0 (202X-XX-XX)
+v4.4.0 (2025-12-14)
 -------------------
 
+* Implemented `Add create_from_super method and test <https://github.com/jazzband/django-polymorphic/pull/684>`_
+* Implemented `Move model definition errors to system checks <https://github.com/jazzband/django-polymorphic/pull/693>`_
+* Fixed `Fix ordering of stacked inline admin forms on add. <https://github.com/jazzband/django-polymorphic/pull/719>`_
 * Fixed `Change model definition errors to be system checks <https://github.com/jazzband/django-polymorphic/pull/693>`_
+* Fixed `Replace deepcopy of the Q object <https://github.com/jazzband/django-polymorphic/pull/543>`_
 
 v4.3.0 (2025-12-09)
 -------------------
