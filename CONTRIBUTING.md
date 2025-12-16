@@ -12,7 +12,7 @@ We are actively seeking additional maintainers. If you're interested, [contact m
 
 ### Install Just
 
-We provide a platform independent justfile with recipes for all the development tasks. You should [install just](https://just.systems/man/en/installation.html) if it is not on your system already.
+We provide a platform independent justfile with recipes for all the development tasks. You should [install just](https://just.systems/man/en/) if it is not on your system already.
 
 [django-polymorphic](https://pypi.python.org/pypi/django-polymorphic) uses [uv](https://docs.astral.sh/uv) for environment, package, and dependency management. ``just setup`` will install the necessary build tooling if you do not already have it:
 
