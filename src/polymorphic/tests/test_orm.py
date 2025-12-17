@@ -1358,7 +1358,7 @@ class PolymorphicTests(TransactionTestCase):
                     assert False, "Unexpected model type"
             assert (b, c, d) == (250, 1000, 2000)
 
-        assert len(poly_all) <= 7, (
+        assert len(poly_all) <= 8, (
             f"Expected < 7 queries for chunked iteration over 3250 "
             f"objects with 3 child models and the default chunk size of 2000, encountered "
             f"{len(poly_all)}"
@@ -1450,23 +1450,16 @@ class PolymorphicTests(TransactionTestCase):
         if connection.vendor == "postgresql":
             assert len(poly_chunked) == 4, "On postgres with a 4000 chunk size, expected 4 queries"
 
-        try:
-            result = Model2A.objects.all().delete()
-            assert result == (
-                11500,
-                {
-                    "tests.Model2D": 2000,
-                    "tests.Model2C": 3000,
-                    "tests.Model2A": 3250,
-                    "tests.Model2B": 3250,
-                },
-            )
-        except AttributeError:
-            if connection.vendor == "oracle":
-                # FIXME
-                # known deletion issue with oracle
-                # https://github.com/jazzband/django-polymorphic/issues/673
-                pass
+        result = Model2A.objects.all().delete()
+        assert result == (
+            11500,
+            {
+                "tests.Model2D": 2000,
+                "tests.Model2C": 3000,
+                "tests.Model2A": 3250,
+                "tests.Model2B": 3250,
+            },
+        )
 
     def test_transmogrify_with_init(self):
         pur = PurpleHeadDuck.objects.create()

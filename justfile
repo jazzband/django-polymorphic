@@ -97,6 +97,7 @@ build: build-docs-html
 # regenerate test migrations using the lowest version of Django
 make-test-migrations:
     - rm src/polymorphic/tests/migrations/00*.py
+    - rm src/polymorphic/tests/deletion/migrations/00*.py
     uv run --isolated --resolution lowest-direct --script ./manage.py makemigrations
 
 # open the html documentation

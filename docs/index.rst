@@ -119,6 +119,7 @@ Advanced topics
    formsets
    migrating
    managers
+   deletion
    advanced
    changelog
    api/index
