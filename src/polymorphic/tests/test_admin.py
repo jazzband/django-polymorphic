@@ -643,3 +643,43 @@ class AdminRecentActionsTests(_GenericAdminFormTest):
                 assert values == ["2D1", "2D2", "2D4"]
             else:
                 assert False, f"Unexpected change url: {action_url}"
+
+
+class AdminPreservedFiltersTests(_GenericAdminFormTest):
+    def test_changelist_filter_persists_after_edit(self):
+        # Arrange: create 1 instance for each concrete polymorphic child model
+        # so the changelist has something to filter and something to click into.
+        Model2B.objects.create(field1="B1", field2="B2")
+        Model2C.objects.create(field1="C1", field2="C2", field3="C3")
+
+        # Get the ContentType for Model2B. The admin filter uses this PK to
+        # restrict the polymorphic changelist to only "B" rows.
+        ct_b = ContentType.objects.get_for_model(Model2B)
+
+        # Build a changelist URL for the polymorphic parent (Model2A) with the
+        # polymorphic content-type filter applied via querystring.
+        filtered_url = f"{self.list_url(Model2A)}?polymorphic_ctype__id__exact={ct_b.pk}"
+
+        # Act: open the filtered changelist page in the browser.
+        self.page.goto(filtered_url)
+
+        # Click the first row's object link in the results table to go to its change form.
+        self.page.click("table#result_list tbody tr th a")
+
+        # Edit a field on the change form.
+        self.page.fill("input[name='field1']", "B1-edited")
+
+        # Click Save and explicitly wait for navigation caused by form submission.
+        # Capturing the navigation response lets us assert the HTTP status.
+        with self.page.expect_navigation(timeout=10000) as nav_info:
+            self.page.click("input[name='_save']")
+        response = nav_info.value
+
+        # Assert: request succeeded (admin returned a normal page load).
+        expected_status_code = 200
+        assert response.status == expected_status_code
+
+        # Assert: after saving, the redirected URL still contains the original filter,
+        # meaning the changelist preserved the querystring across edit/save.
+        assert f"polymorphic_ctype__id__exact={ct_b.pk}" in self.page.url
+
