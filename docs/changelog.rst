@@ -4,7 +4,7 @@ Changelog
 v4.4.1 (2025-12-15)
 -------------------
 
-
+* `Fix infinite recursion bug when using only() <https://github.com/jazzband/django-polymorphic/pull/739>`_
 
 v4.4.0 (2025-12-14)
 -------------------
