@@ -682,4 +682,3 @@ class AdminPreservedFiltersTests(_GenericAdminFormTest):
         # Assert: after saving, the redirected URL still contains the original filter,
         # meaning the changelist preserved the querystring across edit/save.
         assert f"polymorphic_ctype__id__exact={ct_b.pk}" in self.page.url
-
