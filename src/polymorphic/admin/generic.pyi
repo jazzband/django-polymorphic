@@ -1,5 +1,6 @@
 from django.contrib.contenttypes.admin import GenericInlineModelAdmin
 from django.utils.functional import cached_property as cached_property
+from django_stubs_ext.http import HttpRequest
 
 from polymorphic.formsets import (
     BaseGenericPolymorphicInlineFormSet as BaseGenericPolymorphicInlineFormSet,
@@ -11,14 +12,14 @@ from .inlines import PolymorphicInlineModelAdmin as PolymorphicInlineModelAdmin
 
 class GenericPolymorphicInlineModelAdmin(PolymorphicInlineModelAdmin, GenericInlineModelAdmin):
     formset = BaseGenericPolymorphicInlineFormSet
-    def get_formset(self, request, obj=None, **kwargs): ...
+    def get_formset(self, request: HttpRequest, obj=None, **kwargs): ...
     class Child(PolymorphicInlineModelAdmin.Child):
         formset_child = GenericPolymorphicFormSetChild
         ct_field: str
         ct_fk_field: str
         @cached_property
         def content_type(self): ...
-        def get_formset_child(self, request, obj=None, **kwargs): ...
+        def get_formset_child(self, request: HttpRequest, obj=None, **kwargs): ...
 
 class GenericStackedPolymorphicInline(GenericPolymorphicInlineModelAdmin):
     template: str

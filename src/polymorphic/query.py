@@ -248,6 +248,9 @@ class PolymorphicQuerySet(QuerySet):
             field_names.remove("pk")
             field_names.add(self.model._meta.pk.name)
 
+        if self.model.polymorphic_ctype_id:
+            field_names.add(self.model.polymorphic_ctype.field.name)
+
         if defer:
             # Remove any existing deferred names from the current set before
             # setting the new names.
