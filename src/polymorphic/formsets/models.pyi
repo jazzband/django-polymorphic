@@ -1,8 +1,10 @@
-from .utils import add_media as add_media
 from _typeshed import Incomplete
 from django.forms.models import BaseInlineFormSet, BaseModelFormSet
 from django.utils.functional import cached_property as cached_property
+
 from polymorphic.models import PolymorphicModel as PolymorphicModel
+
+from .utils import add_media as add_media
 
 class UnsupportedChildType(LookupError): ...
 
@@ -16,7 +18,19 @@ class PolymorphicFormSetChild:
     labels: Incomplete
     help_texts: Incomplete
     error_messages: Incomplete
-    def __init__(self, model, form=..., fields=None, exclude=None, formfield_callback=None, widgets=None, localized_fields=None, labels=None, help_texts=None, error_messages=None) -> None: ...
+    def __init__(
+        self,
+        model,
+        form=...,
+        fields=None,
+        exclude=None,
+        formfield_callback=None,
+        widgets=None,
+        localized_fields=None,
+        labels=None,
+        help_texts=None,
+        error_messages=None,
+    ) -> None: ...
     @cached_property
     def content_type(self): ...
     def get_form(self, **kwargs): ...
@@ -37,8 +51,54 @@ class BasePolymorphicModelFormSet(BaseModelFormSet):
     @property
     def empty_form(self) -> None: ...
 
-def polymorphic_modelformset_factory(model, formset_children, formset=..., form=..., fields=None, exclude=None, extra: int = 1, can_order: bool = False, can_delete: bool = True, max_num=None, formfield_callback=None, widgets=None, validate_max: bool = False, localized_fields=None, labels=None, help_texts=None, error_messages=None, min_num=None, validate_min: bool = False, field_classes=None, child_form_kwargs=None): ...
+def polymorphic_modelformset_factory(
+    model,
+    formset_children,
+    formset=...,
+    form=...,
+    fields=None,
+    exclude=None,
+    extra: int = 1,
+    can_order: bool = False,
+    can_delete: bool = True,
+    max_num=None,
+    formfield_callback=None,
+    widgets=None,
+    validate_max: bool = False,
+    localized_fields=None,
+    labels=None,
+    help_texts=None,
+    error_messages=None,
+    min_num=None,
+    validate_min: bool = False,
+    field_classes=None,
+    child_form_kwargs=None,
+): ...
 
 class BasePolymorphicInlineFormSet(BaseInlineFormSet, BasePolymorphicModelFormSet): ...
 
-def polymorphic_inlineformset_factory(parent_model, model, formset_children, formset=..., fk_name=None, form=..., fields=None, exclude=None, extra: int = 1, can_order: bool = False, can_delete: bool = True, max_num=None, formfield_callback=None, widgets=None, validate_max: bool = False, localized_fields=None, labels=None, help_texts=None, error_messages=None, min_num=None, validate_min: bool = False, field_classes=None, child_form_kwargs=None): ...
+def polymorphic_inlineformset_factory(
+    parent_model,
+    model,
+    formset_children,
+    formset=...,
+    fk_name=None,
+    form=...,
+    fields=None,
+    exclude=None,
+    extra: int = 1,
+    can_order: bool = False,
+    can_delete: bool = True,
+    max_num=None,
+    formfield_callback=None,
+    widgets=None,
+    validate_max: bool = False,
+    localized_fields=None,
+    labels=None,
+    help_texts=None,
+    error_messages=None,
+    min_num=None,
+    validate_min: bool = False,
+    field_classes=None,
+    child_form_kwargs=None,
+): ...

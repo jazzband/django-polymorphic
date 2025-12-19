@@ -1,13 +1,20 @@
-from .query_translate import translate_polymorphic_Q_object as translate_polymorphic_Q_object, translate_polymorphic_field_path as translate_polymorphic_field_path, translate_polymorphic_filter_definitions_in_args as translate_polymorphic_filter_definitions_in_args, translate_polymorphic_filter_definitions_in_kwargs as translate_polymorphic_filter_definitions_in_kwargs
-from _typeshed import Incomplete
 from django.db.models.query import ModelIterable, QuerySet
+
+from .query_translate import translate_polymorphic_field_path as translate_polymorphic_field_path
+from .query_translate import (
+    translate_polymorphic_filter_definitions_in_args as translate_polymorphic_filter_definitions_in_args,
+)
+from .query_translate import (
+    translate_polymorphic_filter_definitions_in_kwargs as translate_polymorphic_filter_definitions_in_kwargs,
+)
+from .query_translate import translate_polymorphic_Q_object as translate_polymorphic_Q_object
 
 Polymorphic_QuerySet_objects_per_request: int
 
 class PolymorphicModelIterable(ModelIterable):
     def __iter__(self): ...
 
-def transmogrify(cls, obj) ->cls: ...
+def transmogrify(cls, obj): ...
 
 class PolymorphicQuerySet(QuerySet):
     polymorphic_disabled: bool
@@ -24,4 +31,5 @@ class PolymorphicQuerySet(QuerySet):
     def annotate(self, *args, **kwargs): ...
     def aggregate(self, *args, **kwargs): ...
     class _p_list_class(list): ...
+
     def get_real_instances(self, base_result_objects=None): ...

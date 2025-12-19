@@ -1,8 +1,8 @@
-from .base import PolymorphicModelBase as PolymorphicModelBase
-from .managers import PolymorphicManager as PolymorphicManager
-from .query_translate import translate_polymorphic_Q_object as translate_polymorphic_Q_object
 from _typeshed import Incomplete
 from django.db import models
+
+from .base import PolymorphicModelBase as PolymorphicModelBase
+from .managers import PolymorphicManager as PolymorphicManager
 
 class PolymorphicTypeUndefined(LookupError): ...
 class PolymorphicTypeInvalid(RuntimeError): ...
@@ -16,6 +16,7 @@ class PolymorphicModel(models.Model, metaclass=PolymorphicModelBase):
     class Meta:
         abstract: bool
         base_manager_name: str
+
     @classmethod
     def translate_polymorphic_Q_object(cls, q): ...
     def pre_save_polymorphic(self, using=...) -> None: ...

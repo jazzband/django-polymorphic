@@ -632,8 +632,6 @@ source = { editable = "." }
 dependencies = [
     { name = "django", version = "5.2.9", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
     { name = "django", version = "6.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
-    { name = "django-stubs" },
-    { name = "mypy" },
 ]
 
 [package.dev-dependencies]
@@ -643,6 +641,7 @@ cx-oracle = [
 dev = [
     { name = "coverage" },
     { name = "dj-database-url" },
+    { name = "django-stubs" },
     { name = "ipdb" },
     { name = "ipython", version = "8.37.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "ipython", version = "9.8.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
@@ -682,17 +681,14 @@ psycopg3 = [
 ]
 
 [package.metadata]
-requires-dist = [
-    { name = "django", specifier = ">=4.2" },
-    { name = "django-stubs", specifier = ">=5.2.8" },
-    { name = "mypy", specifier = ">=1.19.0" },
-]
+requires-dist = [{ name = "django", specifier = ">=4.2" }]
 
 [package.metadata.requires-dev]
 cx-oracle = [{ name = "cx-oracle", specifier = ">=8.3.0" }]
 dev = [
     { name = "coverage", specifier = ">=7.6.1" },
     { name = "dj-database-url", specifier = ">=2.2.0" },
+    { name = "django-stubs", specifier = ">=5.2.8" },
     { name = "ipdb", specifier = ">=0.13.13" },
     { name = "ipython", specifier = ">=8.18.1" },
     { name = "mypy", specifier = ">=1.14.1" },

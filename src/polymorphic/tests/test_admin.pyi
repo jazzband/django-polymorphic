@@ -1,9 +1,25 @@
 from _typeshed import Incomplete
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from polymorphic import tests as tests
-from polymorphic.admin import PolymorphicChildModelAdmin as PolymorphicChildModelAdmin, PolymorphicChildModelFilter as PolymorphicChildModelFilter, PolymorphicInlineSupportMixin as PolymorphicInlineSupportMixin, PolymorphicParentModelAdmin as PolymorphicParentModelAdmin, StackedPolymorphicInline as StackedPolymorphicInline
+from polymorphic.admin import (
+    PolymorphicChildModelAdmin as PolymorphicChildModelAdmin,
+    PolymorphicChildModelFilter as PolymorphicChildModelFilter,
+    PolymorphicInlineSupportMixin as PolymorphicInlineSupportMixin,
+    PolymorphicParentModelAdmin as PolymorphicParentModelAdmin,
+    StackedPolymorphicInline as StackedPolymorphicInline,
+)
 from polymorphic.tests.admintestcase import AdminTestCase as AdminTestCase
-from polymorphic.tests.models import InlineModelA as InlineModelA, InlineModelB as InlineModelB, InlineParent as InlineParent, Model2A as Model2A, Model2B as Model2B, Model2C as Model2C, Model2D as Model2D, NoChildren as NoChildren, PlainA as PlainA
+from polymorphic.tests.models import (
+    InlineModelA as InlineModelA,
+    InlineModelB as InlineModelB,
+    InlineParent as InlineParent,
+    Model2A as Model2A,
+    Model2B as Model2B,
+    Model2C as Model2C,
+    Model2D as Model2D,
+    NoChildren as NoChildren,
+    PlainA as PlainA,
+)
 from time import sleep as sleep
 
 class PolymorphicAdminTests(AdminTestCase):

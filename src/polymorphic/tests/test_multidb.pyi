@@ -1,6 +1,21 @@
 from _typeshed import Incomplete
 from django.test import TestCase
-from polymorphic.tests.models import Base as Base, BlogA as BlogA, BlogEntry as BlogEntry, Model2A as Model2A, Model2B as Model2B, Model2C as Model2C, Model2D as Model2D, ModelX as ModelX, ModelY as ModelY, One2OneRelatingModel as One2OneRelatingModel, RelatingModel as RelatingModel, RelationA as RelationA, RelationB as RelationB, RelationBase as RelationBase
+from polymorphic.tests.models import (
+    Base as Base,
+    BlogA as BlogA,
+    BlogEntry as BlogEntry,
+    Model2A as Model2A,
+    Model2B as Model2B,
+    Model2C as Model2C,
+    Model2D as Model2D,
+    ModelX as ModelX,
+    ModelY as ModelY,
+    One2OneRelatingModel as One2OneRelatingModel,
+    RelatingModel as RelatingModel,
+    RelationA as RelationA,
+    RelationB as RelationB,
+    RelationBase as RelationBase,
+)
 
 class MultipleDatabasesTests(TestCase):
     databases: Incomplete

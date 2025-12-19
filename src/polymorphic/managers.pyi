@@ -1,12 +1,15 @@
 from django.db import models
+
 from polymorphic.query import PolymorphicQuerySet as PolymorphicQuerySet
 
-__all__ = ['PolymorphicManager', 'PolymorphicQuerySet']
+__all__ = list[str]
 
 class PolymorphicManager(models.Manager):
     queryset_class = PolymorphicQuerySet
     @classmethod
-    def from_queryset(cls, queryset_class, class_name=None): ...
+    def from_queryset(
+        cls, queryset_class: type[PolymorphicQuerySet], class_name: str | None = None
+    ): ...
     def get_queryset(self): ...
     def non_polymorphic(self): ...
     def instance_of(self, *args): ...

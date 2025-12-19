@@ -1,8 +1,9 @@
 import extra_views
 from _typeshed import Incomplete
+
 from polymorphic.formsets import BasePolymorphicInlineFormSet, BasePolymorphicModelFormSet
 
-__all__ = ['PolymorphicFormSetView', 'PolymorphicInlineFormSetView', 'PolymorphicInlineFormSet']
+__all__ = ["PolymorphicFormSetView", "PolymorphicInlineFormSetView", "PolymorphicInlineFormSet"]
 
 class PolymorphicFormSetMixin:
     formset_class = BasePolymorphicModelFormSet

@@ -1,5 +1,7 @@
-from _typeshed import Incomplete
 from collections.abc import Generator
+
+from _typeshed import Incomplete
+
 from polymorphic.formsets import BasePolymorphicModelFormSet as BasePolymorphicModelFormSet
 
 register: Incomplete

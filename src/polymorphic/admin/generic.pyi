@@ -1,7 +1,13 @@
-from .inlines import PolymorphicInlineModelAdmin as PolymorphicInlineModelAdmin
 from django.contrib.contenttypes.admin import GenericInlineModelAdmin
 from django.utils.functional import cached_property as cached_property
-from polymorphic.formsets import BaseGenericPolymorphicInlineFormSet as BaseGenericPolymorphicInlineFormSet, GenericPolymorphicFormSetChild as GenericPolymorphicFormSetChild, polymorphic_child_forms_factory as polymorphic_child_forms_factory
+
+from polymorphic.formsets import (
+    BaseGenericPolymorphicInlineFormSet as BaseGenericPolymorphicInlineFormSet,
+)
+from polymorphic.formsets import GenericPolymorphicFormSetChild as GenericPolymorphicFormSetChild
+from polymorphic.formsets import polymorphic_child_forms_factory as polymorphic_child_forms_factory
+
+from .inlines import PolymorphicInlineModelAdmin as PolymorphicInlineModelAdmin
 
 class GenericPolymorphicInlineModelAdmin(PolymorphicInlineModelAdmin, GenericInlineModelAdmin):
     formset = BaseGenericPolymorphicInlineFormSet

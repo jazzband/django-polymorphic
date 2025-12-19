@@ -1,5 +1,6 @@
 from _typeshed import Incomplete
 from django.contrib.admin.helpers import InlineAdminForm, InlineAdminFormSet
+
 from polymorphic.formsets import BasePolymorphicModelFormSet as BasePolymorphicModelFormSet
 
 class PolymorphicInlineAdminForm(InlineAdminForm):
@@ -18,4 +19,6 @@ class PolymorphicInlineAdminFormSet(InlineAdminFormSet):
     def inline_formset_data(self): ...
 
 class PolymorphicInlineSupportMixin:
-    def get_inline_formsets(self, request, formsets, inline_instances, obj=None, *args, **kwargs): ...
+    def get_inline_formsets(
+        self, request, formsets, inline_instances, obj=None, *args, **kwargs
+    ): ...

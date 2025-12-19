@@ -1,5 +1,7 @@
 from django.test import TestCase
-from polymorphic.query_translate import translate_polymorphic_filter_definitions_in_args as translate_polymorphic_filter_definitions_in_args
+from polymorphic.query_translate import (
+    translate_polymorphic_filter_definitions_in_args as translate_polymorphic_filter_definitions_in_args,
+)
 from polymorphic.tests.models import Bottom as Bottom, Middle as Middle, Top as Top
 
 class QueryTranslateTests(TestCase):

@@ -5,7 +5,11 @@ from django.db.models.query import QuerySet
 from polymorphic.managers import PolymorphicManager as PolymorphicManager
 from polymorphic.models import PolymorphicModel as PolymorphicModel
 from polymorphic.query import PolymorphicQuerySet as PolymorphicQuerySet
-from polymorphic.showfields import ShowFieldContent as ShowFieldContent, ShowFieldType as ShowFieldType, ShowFieldTypeAndContent as ShowFieldTypeAndContent
+from polymorphic.showfields import (
+    ShowFieldContent as ShowFieldContent,
+    ShowFieldType as ShowFieldType,
+    ShowFieldTypeAndContent as ShowFieldTypeAndContent,
+)
 
 class PlainA(models.Model):
     field1: Incomplete
@@ -389,12 +393,14 @@ class SpecialAccount2(Account):
 class ModelMixin(models.Model):
     class Meta:
         abstract: bool
+
     created_at: Incomplete
     modified_at: Incomplete
 
 class PolymorphicMixin(PolymorphicModel):
     class Meta:
         abstract: bool
+
     created_at: Incomplete
     modified_at: Incomplete
 
