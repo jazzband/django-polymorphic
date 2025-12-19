@@ -50,6 +50,8 @@ classifiers = [
 ]
 dependencies = [
     "Django >= 4.2",
+    "django-stubs>=5.2.8",
+    "mypy>=1.19.0",
 ]
 
 [project.urls]
