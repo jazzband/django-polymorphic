@@ -1,6 +1,6 @@
-from _typeshed import Incomplete
+from typing import Pattern
 
-RE_DEFERRED: Incomplete
+RE_DEFERRED: Pattern[str]
 
 class ShowFieldBase:
     polymorphic_query_multiline_output: bool
