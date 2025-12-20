@@ -1,7 +1,7 @@
 from _typeshed import Incomplete
 from django.contrib.admin import ModelAdmin
 from django.db.models.query import QuerySet
-from django.http import HttpRequest
+from django_stubs_ext.http import HttpRequest
 from polymorphic.admin import (
     PolymorphicChildModelAdmin as PolymorphicChildModelAdmin,
     PolymorphicChildModelFilter as PolymorphicChildModelFilter,
