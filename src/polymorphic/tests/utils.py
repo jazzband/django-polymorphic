@@ -1,12 +1,16 @@
 import os
 import shutil
 from pathlib import Path
-import io
 
 from django.core.management import call_command
-
 from django_test_migrations.migrator import Migrator
+from django.contrib.auth import get_user_model
+from django.contrib.staticfiles.testing import StaticLiveServerTestCase
+from django.urls import reverse
 from django.apps import apps
+
+from playwright.sync_api import sync_playwright, expect
+from polymorphic import tests
 
 
 class GeneratedMigrationsPerClassMixin:
@@ -85,3 +89,80 @@ class GeneratedMigrationsPerClassMixin:
         if not candidates:
             raise RuntimeError(f"No migrations generated for {app_label}")
         return candidates[-1].stem
+
+
+class _GenericUITest(StaticLiveServerTestCase):
+    """Generic admin form test using Playwright."""
+
+    HEADLESS = tests.HEADLESS
+
+    admin_username = "admin"
+    admin_password = "password"
+    admin = None
+
+    def admin_url(self):
+        return f"{self.live_server_url}{reverse('admin:index')}"
+
+    def add_url(self, model):
+        path = reverse(f"admin:{model._meta.label_lower.replace('.', '_')}_add")
+        return f"{self.live_server_url}{path}"
+
+    def change_url(self, model, id):
+        path = reverse(
+            f"admin:{model._meta.label_lower.replace('.', '_')}_change",
+            args=[id],
+        )
+        return f"{self.live_server_url}{path}"
+
+    def list_url(self, model):
+        path = reverse(f"admin:{model._meta.label_lower.replace('.', '_')}_changelist")
+        return f"{self.live_server_url}{path}"
+
+    def get_object_ids(self, model):
+        self.page.goto(self.list_url(model))
+        return self.page.eval_on_selector_all(
+            "input[name='_selected_action']", "elements => elements.map(e => e.value)"
+        )
+
+    @classmethod
+    def setUpClass(cls):
+        """Set up the test class with a live server and Playwright instance."""
+        os.environ["DJANGO_ALLOW_ASYNC_UNSAFE"] = "1"
+        super().setUpClass()
+        try:
+            cls.playwright = sync_playwright().start()
+            cls.browser = cls.playwright.chromium.launch(headless=cls.HEADLESS)
+        except Exception as e:
+            if "asyncio loop" in str(e) or "executable" in str(e).lower():
+                raise RuntimeError(
+                    "Playwright failed to start. This often happens if browser drivers are missing. "
+                    "Please run 'just install-playwright' to install them."
+                ) from e
+            raise
+
+    @classmethod
+    def tearDownClass(cls):
+        """Clean up Playwright instance after tests."""
+        cls.browser.close()
+        cls.playwright.stop()
+        super().tearDownClass()
+        del os.environ["DJANGO_ALLOW_ASYNC_UNSAFE"]
+
+    def setUp(self):
+        """Create an admin user before running tests."""
+        self.admin = get_user_model().objects.create_superuser(
+            username=self.admin_username, email="admin@example.com", password=self.admin_password
+        )
+        self.page = self.browser.new_page()
+        # Log in to the Django admin
+        self.page.goto(f"{self.live_server_url}/admin/login/")
+        self.page.fill("input[name='username']", self.admin_username)
+        self.page.fill("input[name='password']", self.admin_password)
+        self.page.click("input[type='submit']")
+
+        # Ensure login is successful
+        expect(self.page).to_have_url(f"{self.live_server_url}/admin/")
+
+    def tearDown(self):
+        if self.page:
+            self.page.close()
