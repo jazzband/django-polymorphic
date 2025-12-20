@@ -1929,3 +1929,19 @@ class PolymorphicTests(TransactionTestCase):
         assert list(bet.answer.order_by("rankedathlete__rank")) == [a2, a1]
         assert RankedAthlete.objects.get(pk=ra.pk).rank == 99
         assert RankedAthlete.objects.get(pk=ra2.pk).rank == 0
+
+    def test_infinite_recursion_with_only(self):
+        """
+        https://github.com/jazzband/django-polymorphic/issues/334
+        """
+        from polymorphic.tests.models import RecursionBug
+
+        draft = PlainA.objects.create(field1="draft")
+        closed = PlainA.objects.create(field1="closed")
+
+        assert isinstance(closed.recursions, PolymorphicManager)
+
+        item = RecursionBug.objects.create(status=draft)
+        RecursionBug.objects.filter(id=item.id).update(status=closed)
+        item.refresh_from_db(fields=("status",))
+        assert item.status == closed

@@ -131,7 +131,7 @@ addopts = [
 
 [tool.coverage.run]
 source = [
-    "src/polymorphic"
+    "src"
 ]
 omit = ["*/migrations/*", "*/tests/*", "src/polymorphic/tests/*"]
 branch = true

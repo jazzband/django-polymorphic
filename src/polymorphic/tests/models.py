@@ -770,3 +770,14 @@ class RankedAthlete(models.Model):
     choiceAthlete = models.ForeignKey("ChoiceBlank", on_delete=models.CASCADE)
     bet = models.ForeignKey("BetMultiple", on_delete=models.CASCADE)
     rank = models.IntegerField()
+
+
+class RecursionBug(PolymorphicModel):
+    status = models.ForeignKey(PlainA, on_delete=models.CASCADE, related_name="recursions")
+
+    def __init__(self, *args, **kwargs):
+        """
+        https://github.com/jazzband/django-polymorphic/issues/334
+        """
+        super().__init__(*args, **kwargs)
+        self.old_status_id = self.status_id

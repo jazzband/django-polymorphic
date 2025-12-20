@@ -219,7 +219,8 @@ class PolymorphicQuerySet(QuerySet):
         when we're retrieving the real instance (since we'll need to translate
         them again, as the model will have changed).
         """
-        new_fields = [translate_polymorphic_field_path(self.model, a) for a in fields]
+        new_fields = {translate_polymorphic_field_path(self.model, a) for a in fields}
+        new_fields.add("polymorphic_ctype_id")
         clone = super().only(*new_fields)
         clone._polymorphic_add_immediate_loading(fields)
         return clone
