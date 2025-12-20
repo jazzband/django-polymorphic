@@ -1,7 +1,8 @@
 from _typeshed import Incomplete
-from django.contrib.admin import ModelAdmin
-from django.db.models.query import QuerySet
-from django_stubs_ext.http import HttpRequest
+from django_stubs.admin import ModelAdmin
+from django_stubs.query import QuerySet
+from django_stubs.http import HttpRequest
+from typing import Any, ClassVar
 from polymorphic.admin import (
     PolymorphicChildModelAdmin as PolymorphicChildModelAdmin,
     PolymorphicChildModelFilter as PolymorphicChildModelFilter,
@@ -22,11 +23,11 @@ from polymorphic.tests.models import (
 )
 
 class Model2Admin(PolymorphicParentModelAdmin):
-    list_filter: Incomplete
-    child_models: Incomplete
+    list_filter: ClassVar[Any]
+    child_models: Any
 
 class Model2DAdmin(PolymorphicChildModelAdmin):
-    exclude: Incomplete
+    exclude: ClassVar[Any]
 
 class PlainAAdmin(ModelAdmin):
     search_fields: Incomplete
@@ -40,10 +41,10 @@ class Inline(StackedPolymorphicInline):
 
     class InlineModelBChild(StackedPolymorphicInline.Child):
         model = InlineModelB
-        autocomplete_fields: Incomplete
+        autocomplete_fields: ClassVar[Any]
 
 class InlineParentAdmin(PolymorphicInlineSupportMixin, ModelAdmin):
-    inlines: Incomplete
+    inlines: ClassVar[Any]
     extra: int
 
 class NoChildrenAdmin(PolymorphicParentModelAdmin):

@@ -1,7 +1,9 @@
 from _typeshed import Incomplete
+from typing import Any, ClassVar
 from django.contrib.auth.models import Group
 from django.db import models
-from django.db.models.query import QuerySet
+from django_stubs.db.models import Manager
+from django_stubs.db.models.query import QuerySet
 from polymorphic.managers import PolymorphicManager as PolymorphicManager
 from polymorphic.models import PolymorphicModel as PolymorphicModel
 from polymorphic.query import PolymorphicQuerySet as PolymorphicQuerySet
@@ -75,6 +77,7 @@ class ModelY(Base):
 
 class Enhance_Plain(models.Model):
     field_p: Incomplete
+    objects: ClassVar[Any]
 
 class Enhance_Base(ShowFieldTypeAndContent, PolymorphicModel):
     base_id: Incomplete
@@ -85,7 +88,7 @@ class Enhance_Inherit(Enhance_Base, Enhance_Plain):
 
 class RelationAbstractModel(models.Model):
     class Meta:
-        abstract: bool
+        abstract = True
 
 class RelationBase(RelationAbstractModel, ShowFieldTypeAndContent, PolymorphicModel):
     field_base: Incomplete
@@ -117,10 +120,10 @@ class ModelUnderRelParent(PolymorphicModel):
 class ModelUnderRelChild(PolymorphicModel):
     parent: Incomplete
 
-class MyManagerQuerySet(PolymorphicQuerySet):
+class MyManagerQuerySet(PolymorphicQuerySet[Any]):
     def my_queryset_foo(self): ...
 
-class MyManager(PolymorphicManager):
+class MyManager(PolymorphicManager[Any]):
     queryset_class = MyManagerQuerySet
     def get_queryset(self): ...
     def my_queryset_foo(self): ...
@@ -173,10 +176,10 @@ class ChildModelWithManager(PolymorphicModel):
     fk: Incomplete
     objects: Incomplete
 
-class PlainMyManagerQuerySet(QuerySet):
+class PlainMyManagerQuerySet(QuerySet[Any]):
     def my_queryset_foo(self): ...
 
-class PlainMyManager(models.Manager):
+class PlainMyManager(models.Manager[Any]):
     def my_queryset_foo(self): ...
     def get_queryset(self): ...
 
@@ -251,7 +254,7 @@ class ProxyBase(PolymorphicModel):
 
 class ProxyChild(ProxyBase):
     class Meta:
-        proxy: bool
+        proxy = True
 
 class NonProxyChild(ProxyBase):
     name: Incomplete
@@ -261,7 +264,7 @@ class ProxiedBase(ShowFieldTypeAndContent, PolymorphicModel):
 
 class ProxyModelBase(ProxiedBase):
     class Meta:
-        proxy: bool
+        proxy = True
 
 class ProxyModelA(ProxyModelBase):
     field1: Incomplete
@@ -287,7 +290,7 @@ class DateModel(PolymorphicModel):
 
 class AbstractModel(PolymorphicModel):
     class Meta:
-        abstract: bool
+        abstract = True
 
 class SwappableModel(AbstractModel):
     class Meta:
@@ -309,7 +312,7 @@ class InlineModelB(InlineModelA):
 class AbstractProject(PolymorphicModel):
     topic: Incomplete
     class Meta:
-        abstract: bool
+        abstract = True
 
 class ArtProject(AbstractProject):
     artist: Incomplete
@@ -319,11 +322,11 @@ class Duck(PolymorphicModel):
 
 class RedheadDuck(Duck):
     class Meta:
-        proxy: bool
+        proxy = True
 
 class RubberDuck(Duck):
     class Meta:
-        proxy: bool
+        proxy = True
 
 class MultiTableBase(PolymorphicModel):
     field1: Incomplete
@@ -337,7 +340,7 @@ class SubclassSelectorAbstractBaseModel(PolymorphicModel):
 class SubclassSelectorAbstractModel(SubclassSelectorAbstractBaseModel):
     abstract_field: Incomplete
     class Meta:
-        abstract: bool
+        abstract = True
 
 class SubclassSelectorAbstractConcreteModel(SubclassSelectorAbstractModel):
     concrete_field: Incomplete
@@ -347,13 +350,14 @@ class SubclassSelectorProxyBaseModel(PolymorphicModel):
 
 class SubclassSelectorProxyModel(SubclassSelectorProxyBaseModel):
     class Meta:
-        proxy: bool
+        proxy = True
 
 class SubclassSelectorProxyConcreteModel(SubclassSelectorProxyModel):
     concrete_field: Incomplete
 
 class NonPolymorphicParent(PolymorphicModel, Group):
     test: Incomplete
+    objects: Manager[Any]
 
 class Participant(PolymorphicModel): ...
 
@@ -372,11 +376,11 @@ class HomeDuck(models.Model):
     home: str
     def __init__(self, *args, **kwargs) -> None: ...
     class Meta:
-        abstract: bool
+        abstract = True
 
 class PurpleHeadDuck(HomeDuck, BlueHeadDuck):
     class Meta:
-        proxy: bool
+        proxy = True
 
 class Account(PolymorphicModel):
     user: Incomplete
@@ -392,14 +396,14 @@ class SpecialAccount2(Account):
 
 class ModelMixin(models.Model):
     class Meta:
-        abstract: bool
+        abstract = True
 
     created_at: Incomplete
     modified_at: Incomplete
 
 class PolymorphicMixin(PolymorphicModel):
     class Meta:
-        abstract: bool
+        abstract = True
 
     created_at: Incomplete
     modified_at: Incomplete
@@ -408,7 +412,7 @@ class Foo(PolymorphicModel): ...
 class Bar(PolymorphicMixin, PolymorphicModel): ...
 class Baz(ModelMixin, PolymorphicModel): ...
 
-class MyBaseQuerySet(PolymorphicQuerySet):
+class MyBaseQuerySet(PolymorphicQuerySet[Any]):
     def filter_by_user(self, _): ...
 
 class MyBaseModel(PolymorphicModel):
@@ -429,7 +433,7 @@ class MyChild2Model(MyBaseModel):
     objects: Incomplete
     base_manager: Incomplete
 
-class SpecialQuerySet(PolymorphicQuerySet):
+class SpecialQuerySet(PolymorphicQuerySet[Any]):
     def has_text(self, text): ...
 
 class SpecialPolymorphicManager(Incomplete):
@@ -441,7 +445,7 @@ class AbstractManagerTest(PolymorphicModel):
     default_manager: Incomplete
     abstract_field: Incomplete
     class Meta:
-        abstract: bool
+        abstract = True
 
 class RelatedManagerTest(models.Model): ...
 
@@ -462,6 +466,7 @@ class NoChildren(PolymorphicModel):
 
 class NormalBase(models.Model):
     nb_field: Incomplete
+    objects: ClassVar[Any]
 
 class NormalExtension(NormalBase):
     ne_field: Incomplete

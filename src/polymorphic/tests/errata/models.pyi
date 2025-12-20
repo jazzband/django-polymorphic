@@ -1,6 +1,6 @@
 from _typeshed import Incomplete
-from django.db import models
+from django_stubs.db import models
 
 class BadModel(models.Model):
-    instance_of: Incomplete
-    not_instance_of: Incomplete
+    instance_of: models.CharField
+    not_instance_of: models.IntegerField

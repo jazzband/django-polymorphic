@@ -1,5 +1,7 @@
+from typing import Any
+
 from _typeshed import Incomplete
-from django.contrib.contenttypes.forms import BaseGenericInlineFormSet
+from django_stubs.contrib.contenttypes.forms import BaseGenericInlineFormSet
 
 from .models import BasePolymorphicModelFormSet as BasePolymorphicModelFormSet
 from .models import PolymorphicFormSetChild as PolymorphicFormSetChild
@@ -12,7 +14,7 @@ class GenericPolymorphicFormSetChild(PolymorphicFormSetChild):
     def get_form(self, ct_field: str = "content_type", fk_field: str = "object_id", **kwargs): ...
 
 class BaseGenericPolymorphicInlineFormSet(
-    BaseGenericInlineFormSet, BasePolymorphicModelFormSet
+    BaseGenericInlineFormSet[Any, Any], BasePolymorphicModelFormSet
 ): ...
 
 def generic_polymorphic_inlineformset_factory(

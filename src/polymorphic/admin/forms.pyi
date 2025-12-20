@@ -1,5 +1,5 @@
 from _typeshed import Incomplete
-from django import forms
+from django_stubs import forms
 
 class PolymorphicModelChoiceForm(forms.Form):
     type_label: str

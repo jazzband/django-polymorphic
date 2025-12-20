@@ -1,6 +1,6 @@
 from _typeshed import Incomplete
-from django.test import TestCase
-from django.urls import include as include
+from django_stubs.test import TestCase
+from django_stubs.urls import include as include
 
 class AdminTestCase(TestCase):
     model: Incomplete

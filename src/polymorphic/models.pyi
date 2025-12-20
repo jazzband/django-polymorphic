@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, ClassVar
 
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
@@ -16,8 +16,8 @@ class PolymorphicModel(models.Model, metaclass=PolymorphicModelBase):
     polymorphic_internal_model_fields: list[str]
     objects: PolymorphicManager[Any]
     class Meta:
-        abstract: bool
-        base_manager_name: str
+        abstract = True
+        base_manager_name: ClassVar[str]
 
     @classmethod
     def translate_polymorphic_Q_object(cls, q: models.Q) -> models.Q: ...

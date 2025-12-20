@@ -1,10 +1,10 @@
 from typing import Any
 
-from django.contrib.contenttypes.admin import GenericInlineModelAdmin
-from django.contrib.contenttypes.models import ContentType
-from django.forms.models import BaseInlineFormSet
 from django.utils.functional import cached_property as cached_property
-from django_stubs_ext.http import HttpRequest
+from django_stubs.contrib.contenttypes.admin import GenericInlineModelAdmin
+from django_stubs.contrib.contenttypes.models import ContentType
+from django_stubs.forms.models import BaseInlineFormSet
+from django_stubs.http import HttpRequest
 
 from polymorphic.formsets import (
     BaseGenericPolymorphicInlineFormSet as BaseGenericPolymorphicInlineFormSet,
@@ -15,10 +15,10 @@ from polymorphic.formsets import polymorphic_child_forms_factory as polymorphic_
 from .inlines import PolymorphicInlineModelAdmin as PolymorphicInlineModelAdmin
 
 class GenericPolymorphicInlineModelAdmin(PolymorphicInlineModelAdmin, GenericInlineModelAdmin):
-    formset = BaseGenericPolymorphicInlineFormSet
+    formset: Any = BaseGenericPolymorphicInlineFormSet
     def get_formset(
         self, request: HttpRequest, obj: Any = None, **kwargs: Any
-    ) -> type[BaseInlineFormSet]: ...
+    ) -> type[BaseInlineFormSet[Any, Any, Any]]: ...
     class Child(PolymorphicInlineModelAdmin.Child):
         formset_child = GenericPolymorphicFormSetChild
         ct_field: str

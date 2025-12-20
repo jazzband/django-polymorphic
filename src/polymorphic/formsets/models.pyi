@@ -1,6 +1,8 @@
+from typing import Any
+
 from _typeshed import Incomplete
-from django.forms.models import BaseInlineFormSet, BaseModelFormSet
-from django.utils.functional import cached_property as cached_property
+from django_stubs.forms.models import BaseInlineFormSet, BaseModelFormSet
+from django_stubs.utils.functional import cached_property as cached_property
 
 from polymorphic.models import PolymorphicModel as PolymorphicModel
 
@@ -37,7 +39,7 @@ class PolymorphicFormSetChild:
 
 def polymorphic_child_forms_factory(formset_children, **kwargs): ...
 
-class BasePolymorphicModelFormSet(BaseModelFormSet):
+class BasePolymorphicModelFormSet(BaseModelFormSet[Any, Any]):
     child_forms: Incomplete
     queryset_data: Incomplete
     def __init__(self, *args, **kwargs) -> None: ...
@@ -75,7 +77,9 @@ def polymorphic_modelformset_factory(
     child_form_kwargs=None,
 ): ...
 
-class BasePolymorphicInlineFormSet(BaseInlineFormSet, BasePolymorphicModelFormSet): ...
+class BasePolymorphicInlineFormSet(
+    BaseInlineFormSet[Any, Any, Any], BasePolymorphicModelFormSet
+): ...
 
 def polymorphic_inlineformset_factory(
     parent_model,

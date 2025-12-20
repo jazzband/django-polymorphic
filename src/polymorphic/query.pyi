@@ -1,7 +1,7 @@
 from typing import Any, Iterator, TypeVar
 
 from django.db.models import Model
-from django.db.models.query import ModelIterable, QuerySet
+from django_stubs.query import ModelIterable, QuerySet
 
 from .query_translate import translate_polymorphic_field_path as translate_polymorphic_field_path
 from .query_translate import (

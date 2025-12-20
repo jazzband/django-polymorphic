@@ -1,5 +1,5 @@
 from _typeshed import Incomplete
-from django.contrib.admin.helpers import InlineAdminForm, InlineAdminFormSet
+from django_stubs.contrib.admin.helpers import InlineAdminForm, InlineAdminFormSet
 
 from polymorphic.formsets import BasePolymorphicModelFormSet as BasePolymorphicModelFormSet
 
