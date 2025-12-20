@@ -478,9 +478,15 @@ class PolymorphicQuerySet(QuerySet):
                     real_object = transmogrify(real_class, real_object)
 
                 if self.query.annotations:
-                    for anno_field_name in self.query.annotations.keys():
-                        attr = getattr(base_object, anno_field_name)
-                        setattr(real_object, anno_field_name, attr)
+                    # New in Django 3.2+: annotation_select contains only the selected annotations
+                    # (excluding aliases). Fallback for older Django versions if needed.
+                    annotation_select = getattr(
+                        self.query, "annotation_select", self.query.annotations
+                    )
+                    for anno_field_name in annotation_select.keys():
+                        if hasattr(base_object, anno_field_name):
+                            attr = getattr(base_object, anno_field_name)
+                            setattr(real_object, anno_field_name, attr)
 
                 if self.query.extra_select:
                     for select_field_name in self.query.extra_select.keys():
@@ -494,7 +500,8 @@ class PolymorphicQuerySet(QuerySet):
         # set polymorphic_annotate_names in all objects (currently just used for debugging/printing)
         if self.query.annotations:
             # get annotate field list
-            annotate_names = list(self.query.annotations.keys())
+            annotation_select = getattr(self.query, "annotation_select", self.query.annotations)
+            annotate_names = list(annotation_select.keys())
             for real_object in resultlist:
                 real_object.polymorphic_annotate_names = annotate_names
 
