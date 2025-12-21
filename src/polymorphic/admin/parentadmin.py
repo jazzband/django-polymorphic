@@ -199,9 +199,17 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
         else:
             real_admin = self._get_real_admin_by_ct(ct_id)
             # rebuild form_url, otherwise libraries below will override it.
+            # Preserve popup-related parameters to ensure popup functionality works
+            # correctly even after validation errors (issue #612)
+            preserved_params = {"ct_id": ct_id}
+            if "_popup" in request.GET:
+                preserved_params["_popup"] = request.GET["_popup"]
+            if "_to_field" in request.GET:
+                preserved_params["_to_field"] = request.GET["_to_field"]
+
             form_url = add_preserved_filters(
                 {
-                    "preserved_filters": urlencode({"ct_id": ct_id}),
+                    "preserved_filters": urlencode(preserved_params),
                     "opts": self.model._meta,
                 },
                 form_url,
