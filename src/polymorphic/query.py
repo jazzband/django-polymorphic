@@ -546,3 +546,12 @@ class PolymorphicQuerySet(QuerySet):
             return olist
         clist = PolymorphicQuerySet._p_list_class(olist)
         return clist
+
+    def delete(self):
+        """
+        Deletion will be done non-polymorphically because Django's multi-table deletion
+        mechanism is already walking the class hierarchy and producing a correct
+        deletion graph. Introducing polymorphic querysets into the deletion process
+        disrupts the model hierarchy/relationship traversal.
+        """
+        return QuerySet.delete(self.non_polymorphic())
