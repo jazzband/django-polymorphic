@@ -1,8 +1,5 @@
-import os
-from time import sleep
 import pytest
 from django.urls import reverse
-from django.contrib.auth import get_user_model
 from django.contrib import admin
 from django.contrib.contenttypes.models import ContentType
 from django.utils.html import escape
@@ -29,10 +26,28 @@ from polymorphic.tests.models import (
     NoChildren,
 )
 
-from playwright.sync_api import sync_playwright, expect
+from playwright.sync_api import expect
 from urllib.parse import urljoin
 
 from .utils import _GenericUITest
+from django import forms
+
+
+class FileFieldInlineA(StackedPolymorphicInline.Child):
+    model = InlineModelA
+
+
+class FileFieldInlineB(StackedPolymorphicInline.Child):
+    model = InlineModelB
+
+
+class FileFieldInline(StackedPolymorphicInline):
+    model = InlineModelA
+    child_inlines = (FileFieldInlineA, FileFieldInlineB)
+
+
+class FileFieldParentAdmin(PolymorphicInlineSupportMixin, admin.ModelAdmin):
+    inlines = (FileFieldInline,)
 
 
 class PolymorphicAdminTests(AdminTestCase):
@@ -274,6 +289,32 @@ class PolymorphicAdminTests(AdminTestCase):
         assert child.__class__ == InlineModelB
         assert child.field1 == "A2"
         assert child.field2 == "B2"
+
+    def test_render_change_form_sets_has_file_field(self):
+        """
+        Test that render_change_form correctly sets has_file_field
+        when a polymorphic inline contains a FileField.
+        """
+        # Register the admin for testing
+        self.register(InlineParent)(FileFieldParentAdmin)
+
+        parent = InlineParent.objects.create(title="Parent with file inline")
+
+        # Add a file field dynamically to simulate file upload
+        FileFieldInlineB.form = type(
+            "DynamicFileForm",
+            (forms.ModelForm,),
+            {
+                "Meta": type("Meta", (), {"model": InlineModelB, "fields": "__all__"}),
+                "file_field": forms.FileField(required=False),
+            },
+        )
+
+        # Go to the change page
+        response = self.admin_get_change(InlineParent, parent.pk)
+        response.render()  # Force TemplateResponse to render
+        self.assertIn("has_file_field", response.context_data)
+        self.assertTrue(response.context_data["has_file_field"])
 
 
 class _GenericAdminFormTest(_GenericUITest):

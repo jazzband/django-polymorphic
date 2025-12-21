@@ -141,3 +141,49 @@ class PolymorphicInlineSupportMixin:
                 admin_formset.request = request
                 admin_formset.obj = obj
         return inline_admin_formsets
+
+    def render_change_form(self, request, context, add=False, change=False, form_url="", obj=None):
+        """
+        Override to ensure multipart encoding is set when polymorphic inlines contain file fields.
+        This fixes issue #380 where file uploads don't work in polymorphic inlines.
+        """
+        # Check if any polymorphic inline has file fields
+        has_file_field = context.get("has_file_field", False)
+
+        if not has_file_field:
+            # Check polymorphic inlines for file fields
+            for inline in self.get_inline_instances(request, obj):
+                from polymorphic.admin.inlines import PolymorphicInlineModelAdmin
+
+                if isinstance(inline, PolymorphicInlineModelAdmin):
+                    # Check each child inline for file fields
+                    for child_inline in inline.child_inline_instances:
+                        try:
+                            # Get the formset child to check its form fields
+                            formset_child = child_inline.get_formset_child(request, obj)
+                            form_class = formset_child.get_form()
+
+                            # Check if any field needs multipart
+                            for field in form_class.base_fields.values():
+                                if (
+                                    hasattr(field.widget, "needs_multipart_form")
+                                    and field.widget.needs_multipart_form
+                                ):
+                                    has_file_field = True
+                                    break
+                        except Exception:
+                            # If we can't check, skip this child
+                            pass
+
+                        if has_file_field:
+                            break
+
+                if has_file_field:
+                    break
+
+            # Update context with the result
+            context["has_file_field"] = has_file_field
+
+        return super().render_change_form(
+            request, context, add=add, change=change, form_url=form_url, obj=obj
+        )
