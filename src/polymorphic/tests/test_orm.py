@@ -104,6 +104,7 @@ from polymorphic.tests.models import (
     SpecialAccount1_1,
     SpecialAccount2,
 )
+from django.db.models.signals import post_delete
 
 
 class PolymorphicTests(TransactionTestCase):
@@ -1938,3 +1939,120 @@ class PolymorphicTests(TransactionTestCase):
         RecursionBug.objects.filter(id=item.id).update(status=closed)
         item.refresh_from_db(fields=("status",))
         assert item.status == closed
+
+    def test_queryset_first_returns_remaining_object_in_post_delete_signal(self):
+        """
+        Regression test for issue #347: first() returning None in post_delete signals.
+
+        The bug occurs when:
+        1. An object with a post_delete signal is created first
+        2. Another object is created second
+        3. The first object is deleted
+        4. In the post_delete signal, first() should return the second object but returned None
+        """
+        # Clear any existing blog entries
+        BlogEntry.objects.all().delete()
+
+        # Create a blog for the entries
+        blog = BlogA.objects.create(name="TestBlog", info="test")
+
+        # Define signal handler
+        def log_first_with_first_method(sender, instance, **kwargs):
+            entry = Model2A.objects.order_by("pk").first()
+            if entry:
+                BlogEntry.objects.create(blog=blog, text=entry.field1)
+
+        # Connect signal
+        post_delete.connect(log_first_with_first_method, sender=Model2B)
+
+        try:
+            # Create Model2B (has signal) first, then Model2A
+            obj1 = Model2B.objects.create(field1="First", field2="B")
+            obj2 = Model2A.objects.create(field1="Second")
+
+            # This will trigger the post_delete signal
+            obj1.delete()
+
+            # The signal should have created a blog entry with the remaining object
+            entries = BlogEntry.objects.all()
+            self.assertEqual(entries.count(), 1, "Signal should have created exactly one entry")
+            self.assertEqual(entries.first().text, "Second")
+        finally:
+            # Disconnect signal
+            post_delete.disconnect(log_first_with_first_method, sender=Model2B)
+            BlogEntry.objects.all().delete()
+
+    def test_queryset_getitem_returns_remaining_object_in_post_delete_signal(self):
+        """
+        Regression test for issue #347: [0] returning None in post_delete signals.
+        """
+        # Clear any existing blog entries
+        BlogEntry.objects.all().delete()
+
+        # Create a blog for the entries
+        blog = BlogA.objects.create(name="TestBlog", info="test")
+
+        # Define signal handler
+        def log_first_with_brackets(sender, instance, **kwargs):
+            try:
+                entry = Model2A.objects.order_by("pk")[0]
+                BlogEntry.objects.create(blog=blog, text=entry.field1)
+            except IndexError:
+                pass
+
+        # Connect signal
+        post_delete.connect(log_first_with_brackets, sender=Model2C)
+
+        try:
+            # Create Model2C (has signal) first, then Model2A
+            obj1 = Model2C.objects.create(field1="First", field2="C", field3="C3")
+            obj2 = Model2A.objects.create(field1="Second")
+
+            # This will trigger the post_delete signal
+            obj1.delete()
+
+            # The signal should have created a blog entry with the remaining object
+            entries = BlogEntry.objects.all()
+            self.assertEqual(entries.count(), 1, "Signal should have created exactly one entry")
+            self.assertEqual(entries.first().text, "Second")
+        finally:
+            # Disconnect signal
+            post_delete.disconnect(log_first_with_brackets, sender=Model2C)
+            BlogEntry.objects.all().delete()
+
+    def test_queryset_first_works_when_deleted_object_created_second(self):
+        """
+        Test that the fix works when the object with signal is created second.
+        The bug only occurred when the signaled object was created first.
+        """
+        # Clear any existing blog entries
+        BlogEntry.objects.all().delete()
+
+        # Create a blog for the entries
+        blog = BlogA.objects.create(name="TestBlog", info="test")
+
+        # Define signal handler
+        def log_first_reverse(sender, instance, **kwargs):
+            entry = Model2A.objects.order_by("pk").first()
+            if entry:
+                BlogEntry.objects.create(blog=blog, text=entry.field1)
+
+        # Connect signal
+        post_delete.connect(log_first_reverse, sender=Model2B)
+
+        try:
+            # Create Model2A first, then Model2B (has signal)
+            obj1 = Model2A.objects.create(field1="First")
+            obj2 = Model2B.objects.create(field1="Second", field2="B")
+
+            # This will trigger the post_delete signal
+            obj2.delete()
+
+            # The signal should have created a blog entry with the remaining object
+            entries = BlogEntry.objects.all()
+            self.assertEqual(entries.count(), 1)
+            self.assertEqual(entries.first().text, "First")
+        finally:
+            # Disconnect signal
+            post_delete.disconnect(log_first_reverse, sender=Model2B)
+            BlogEntry.objects.all().delete()

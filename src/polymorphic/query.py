@@ -547,6 +547,57 @@ class PolymorphicQuerySet(QuerySet):
         clist = PolymorphicQuerySet._p_list_class(olist)
         return clist
 
+    def first(self):
+        """
+        Return the first object of a query or None if no match is found.
+
+        This override handles the case where objects are being deleted (e.g., in a post_delete signal)
+        and _get_real_instances() filters them out, which could cause first() to incorrectly return None
+        even when there are valid objects remaining in the queryset.
+        """
+        # Try to get objects one at a time until we find a valid one
+        # This handles the case where _get_real_instances filters out objects
+        for obj in self.iterator():
+            if obj is not None:
+                return obj
+        return None
+
+    def __getitem__(self, k):
+        """
+        Retrieve an item or slice from the set of results.
+
+        This override handles the case where objects are being deleted (e.g., in a post_delete signal)
+        and _get_real_instances() filters them out. For integer indices, we iterate to ensure we
+        get a valid object at the requested position.
+        """
+        if not isinstance(k, (int, slice)):
+            raise TypeError(
+                "QuerySet indices must be integers or slices, not %s." % type(k).__name__
+            )
+
+        if isinstance(k, slice):
+            # For slices, use the parent implementation
+            # The iterator will handle filtering out None values correctly
+            return super().__getitem__(k)
+
+        # For integer index, we need to handle the case where _get_real_instances
+        # might filter out objects. We'll iterate through the queryset to get
+        # the k-th valid object.
+        if k < 0:
+            # Negative indexing not supported
+            raise ValueError("Negative indexing is not supported.")
+
+        # Use iterator to get the k-th valid (non-None) object
+        # This ensures we skip over any objects filtered out by _get_real_instances
+        count = 0
+        for obj in self.iterator():
+            if obj is not None:
+                if count == k:
+                    return obj
+                count += 1
+
+        return None
+
     def delete(self):
         """
         Deletion will be done non-polymorphically because Django's multi-table deletion
