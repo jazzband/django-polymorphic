@@ -29,6 +29,10 @@ class PlainC(PlainB):
     field3 = models.CharField(max_length=30)
 
 
+class PlainD(PlainA):
+    field2 = models.CharField(max_length=30)
+
+
 class Model2A(ShowFieldType, PolymorphicModel):
     field1 = models.CharField(max_length=30)
     polymorphic_showfield_deferred = True
