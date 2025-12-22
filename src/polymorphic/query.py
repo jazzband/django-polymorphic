@@ -596,7 +596,7 @@ class PolymorphicQuerySet(QuerySet):
                     return obj
                 count += 1
 
-        return None
+        raise IndexError("Index out of range %s" % k)
 
     def delete(self):
         """

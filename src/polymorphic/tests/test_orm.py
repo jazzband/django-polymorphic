@@ -2056,3 +2056,22 @@ class PolymorphicTests(TransactionTestCase):
             # Disconnect signal
             post_delete.disconnect(log_first_reverse, sender=Model2B)
             BlogEntry.objects.all().delete()
+
+    def test_queryset_first_returns_none_on_empty_queryset(self):
+        self.assertIsNone(Model2A.objects.first())
+
+    def test_queryset_getitem_raises_indexerror_on_empty_queryset(self):
+        with self.assertRaises(IndexError):
+            _ = Model2A.objects.all()[0]
+
+    def test_queryset_getitem_negative_index_raises_valueerror(self):
+        Model2A.objects.create(field1="OnlyOne")
+        with self.assertRaises(ValueError):
+            _ = Model2A.objects.all()[-1]
+
+    def test_queryset_getitem_slice_returns_objects(self):
+        Model2A.objects.create(field1="First")
+        Model2A.objects.create(field1="Second")
+        objs = Model2A.objects.all()[0:2]
+        self.assertEqual(len(objs), 2)
+        self.assertEqual([o.field1 for o in objs], ["First", "Second"])
