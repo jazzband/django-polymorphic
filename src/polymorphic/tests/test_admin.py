@@ -6,6 +6,8 @@ from django.contrib.auth import get_user_model
 from django.contrib import admin
 from django.contrib.contenttypes.models import ContentType
 from django.utils.html import escape
+from django.test import RequestFactory
+from django.urls import resolve
 
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 
@@ -180,6 +182,28 @@ class PolymorphicAdminTests(AdminTestCase):
 
         finally:
             self.admin_site.name = original_name
+
+    def test_get_model_perms_hidden(self):
+        # Register a child admin with show_in_index=False
+        @self.register(Model2B)
+        class Model2ChildAdmin(PolymorphicChildModelAdmin):
+            base_model = Model2A
+            show_in_index = False
+
+        # Simulate a request to the admin index
+        factory = RequestFactory()
+        request = factory.get("/tmp-admin/")
+        match = resolve("/tmp-admin/")
+
+        # Ensure namespace matches admin site
+        match.namespace = self.admin_site.name
+        request._resolver_match = match
+
+        # Call get_model_perms directly
+        perms = Model2ChildAdmin(Model2B, self.admin_site).get_model_perms(request)
+
+        # Assert that all perms are False
+        assert perms == {"add": False, "change": False, "delete": False}
 
     def test_admin_inlines(self):
         """
