@@ -739,3 +739,30 @@ class TestDeletion(TestCase):
         # b1.delete()
         # assert Poly5.objects.count() == 0
         # assert Normal5.objects.count() == 0
+
+    def test_raw_delete_results(self):
+        """
+        Test what happens when you delete a child row with raw SQL then try to access
+        polymorphic objects.
+
+        If a polymorphic_ctype_id points to a non existing row, those models will be
+        ellided from polymorphic queryset results. This test monitors that behavior
+        so if fixed in future we can remove the warning from the docs.
+        """
+        from .models import Poly1, A1
+
+        a1 = A1.objects.create(some_data="test")
+        p1 = Poly1.objects.non_polymorphic().get(pk=a1.pk)
+        p2 = Poly1.objects.create()
+
+        with connection.cursor() as cursor:
+            cursor.execute(
+                f"DELETE FROM {A1._meta.db_table} WHERE {A1._meta.pk.column} = %s", [a1.pk]
+            )
+
+        assert set(Poly1.objects.all()) == {p2}
+        assert set(Poly1.objects.non_polymorphic().all()) == {p1, p2}
+
+        p1_fetched = Poly1.objects.non_polymorphic().get(pk=a1.pk)
+        with self.assertRaises(A1.DoesNotExist):
+            p1_fetched.get_real_instance()

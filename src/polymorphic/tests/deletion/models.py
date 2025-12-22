@@ -84,7 +84,7 @@ class Poly1(PolymorphicModel):
 
 
 class A1(Poly1):
-    pass
+    some_data = models.CharField(max_length=100, blank=True, default="")
 
 
 class B1(Poly1):
