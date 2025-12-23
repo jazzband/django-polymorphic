@@ -66,16 +66,33 @@ class PolymorphicModel(models.Model, metaclass=PolymorphicModelBase):
     def pre_save_polymorphic(self, using=DEFAULT_DB_ALIAS):
         """
         Make sure the ``polymorphic_ctype`` value is correctly set on this model.
+
+        This method automatically updates the polymorphic_ctype when:
+        - The object is being saved for the first time
+        - The object is being saved to a different database than it was loaded from
+
+        This ensures cross-database saves work correctly without ForeignKeyViolation.
         """
         # This function may be called manually in special use-cases. When the object
         # is saved for the first time, we store its real class in polymorphic_ctype.
         # When the object later is retrieved by PolymorphicQuerySet, it uses this
         # field to figure out the real class of this object
         # (used by PolymorphicQuerySet._get_real_instances)
-        if not self.polymorphic_ctype_id:
-            self.polymorphic_ctype = ContentType.objects.db_manager(using).get_for_model(
+
+        # Update polymorphic_ctype if:
+        # 1. It's not set yet (new object), OR
+        # 2. The database has changed (cross-database save)
+        needs_update = not self.polymorphic_ctype_id or (
+            self._state.db and self._state.db != using
+        )
+
+        if needs_update:
+            # Set polymorphic_ctype_id directly to avoid database router issues
+            # when saving across databases
+            ctype = ContentType.objects.db_manager(using).get_for_model(
                 self, for_concrete_model=False
             )
+            self.polymorphic_ctype_id = ctype.pk
 
     pre_save_polymorphic.alters_data = True
 
