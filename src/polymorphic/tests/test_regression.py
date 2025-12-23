@@ -5,6 +5,7 @@ from django.test import TestCase
 
 from polymorphic.formsets import polymorphic_modelformset_factory, PolymorphicFormSetChild
 from polymorphic.models import PolymorphicModel, PolymorphicTypeInvalid
+from polymorphic.models import PolymorphicTypeInvalid
 from polymorphic.tests.models import Bottom, Middle, Top, Team, UserProfile, Model2A, Model2B
 
 
@@ -77,7 +78,7 @@ class RegressionTests(TestCase):
         # with postgresql:  2 != 3
         self.assertEqual(len(my_teams[0].user_profiles.all()), 3)
         self.assertEqual(len(my_teams[1].user_profiles.all()), 1)
-
+    
     def test_alias_queryset(self):
         """
         Test that .alias() works works correctly with polymorphic querysets.
@@ -110,7 +111,7 @@ class RegressionTests(TestCase):
         self.assertFalse(hasattr(results[0], "alias_val"))
         self.assertTrue(hasattr(results[0], "anno_val"))
         self.assertEqual(results[0].anno_val, "VAL1")
-
+        
     def test_alias_advanced(self):
         """
         Test .alias() interactions with filter, order_by, only, and defer.
@@ -147,6 +148,30 @@ class RegressionTests(TestCase):
         self.assertEqual(len(results), 3)
         # accessing field1 should trigger refresh
         self.assertEqual(results[0].field1, "Alpha")
+       
+    def test_upcasting_to_sibling_class(self):
+        """
+        Test that querying a model that has been upcasted to a sibling
+        polymorphic class does not raise a TypeError.
+        Reproduces issue #280.
+        """
+        # Create a Model2A instance with a specific pk
+        Model2A.objects.create(pk=1, field1="original")
+
+        # "Upcast" it to a Model2B by creating an object with the same pk.
+        # The polymorphic_ctype will now point to Model2B.
+        Model2B.objects.create(pk=1, field1="updated", field2="new")
+
+        # The original bug raised TypeError. We expect that accessing the
+        # queryset should not raise TypeError. It should either be empty,
+        # or raise a clean PolymorphicTypeInvalid error.
+        try:
+            list(Model2A.objects.all())
+        except PolymorphicTypeInvalid:
+            pass  # This is an acceptable outcome.
+        except TypeError as e:
+            self.fail(f"Querying for upcasted sibling raised TypeError: {e}")
+
 
 
 class Author(models.Model):
@@ -205,3 +230,4 @@ class TestFormsetExclude(TestCase):
         # not the ContentType instance. This proves the normalization worked.
         self.assertEqual(form.fields["polymorphic_ctype"].initial, ct.pk)
         self.assertIsInstance(form.fields["polymorphic_ctype"].initial, int)
+   

@@ -1077,6 +1077,35 @@ class PolymorphicTests(TransactionTestCase):
         ):
             Model2A.objects.aggregate(ComplexAgg("Model2B___field2"))
 
+    def test_annotate_f_expression(self):
+        """
+        Verify that F() expressions with '___' syntax correctly translate in annotate() calls.
+        """
+        Model2A.objects.create(field1="A_only")
+        Model2B.objects.create(field1="A_from_B1", field2="B2_val1")
+        Model2B.objects.create(field1="A_from_B2", field2="B2_val2")
+
+        # Use annotate with an F-expression targeting a child model field
+        # We'll count occurrences of field2 from Model2B
+        # This implicitly tests that 'Model2B___field2' is correctly translated
+        annotated_queryset = Model2A.objects.annotate(
+            field2_count=Count(models.F("Model2B___field2"))
+        ).order_by("pk")
+
+        results = list(annotated_queryset)
+        assert len(results) == 3
+
+        # For Model2A that is not a Model2B, the count should be 0
+        assert results[0].field1 == "A_only"
+        assert results[0].field2_count == 0
+
+        # For Model2B instances, the field2_count should be 1
+        assert results[1].field1 == "A_from_B1"
+        assert results[1].field2_count == 1
+
+        assert results[2].field1 == "A_from_B2"
+        assert results[2].field2_count == 1
+
     def test_polymorphic__filtered_relation(self):
         """test annotation using FilteredRelation"""
 
