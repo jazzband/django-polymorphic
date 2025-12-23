@@ -381,13 +381,21 @@ class PolymorphicTests(TransactionTestCase):
         b_base = Model2A.objects.non_polymorphic().get(pk=b.pk)
         c_base = Model2A.objects.non_polymorphic().get(pk=c.pk)
 
+        b_pk = b.pk  # Save pk before deletion
         b.delete(keep_parents=True)  # e.g. table was truncated
 
         qs_base = Model2A.objects.order_by("field1").non_polymorphic()
         qs_polymorphic = Model2A.objects.order_by("field1").all()
 
         assert list(qs_base) == [a, b_base, c_base]
-        assert list(qs_polymorphic) == [a, c]
+        # Best effort: when derived object is missing, return parent object
+        result = list(qs_polymorphic)
+        assert len(result) == 3
+        assert result[0] == a
+        assert result[1].pk == b_pk  # b returned as Model2A (parent)
+        assert isinstance(result[1], Model2A)
+        assert not isinstance(result[1], Model2B)
+        assert result[2] == c
 
     def test_queryset_missing_contenttype(self):
         stale_ct = ContentType.objects.create(app_label="tests", model="nonexisting")
@@ -1266,14 +1274,19 @@ class PolymorphicTests(TransactionTestCase):
         b1.many2many.add(rel1)
         b2.many2many.add(rel2)
 
+        rel2_pk = rel2.pk  # Save pk before deletion
         rel2.delete(keep_parents=True)
 
         qs = RelatingModel.objects.order_by("pk").prefetch_related("many2many")
         objects = list(qs)
         assert len(objects[0].many2many.all()) == 1
 
-        # derived object was not fetched
-        assert len(objects[1].many2many.all()) == 0
+        # Best effort: parent object is returned when derived object is missing
+        assert len(objects[1].many2many.all()) == 1
+        parent_obj = objects[1].many2many.all()[0]
+        assert parent_obj.pk == rel2_pk
+        assert isinstance(parent_obj, Model2A)
+        assert not isinstance(parent_obj, Model2B)
 
         # base object does exist
         assert len(objects[1].many2many.non_polymorphic()) == 1

@@ -336,6 +336,56 @@ class PolymorphicQuerySet(QuerySet):
     # The "polymorphic" keyword argument is not supported anymore.
     # def extra(self, *args, **kwargs):
 
+    def _get_best_effort_instance(self, base_object, failed_class):
+        """
+        Walk up the inheritance hierarchy to find the best available instance.
+
+        When a derived object cannot be fetched (e.g., during deletion),
+        try parent classes until we find one that exists.
+
+        Returns the base_object as a last resort, ensuring we never return None.
+        """
+        pk_name = self.model.polymorphic_primary_key_name
+        o_pk = getattr(base_object, pk_name)
+
+        # Get the MRO (method resolution order) for the failed class
+        # Skip the first item (the class itself) since we already know it failed
+        for parent_class in failed_class.__mro__[1:]:
+            # Stop at PolymorphicModel or models.Model
+            if not hasattr(parent_class, "_base_objects"):
+                break
+            if parent_class == self.model:
+                # We've reached the base model, return base_object
+                return base_object
+
+            try:
+                # Try to fetch as this parent class
+                parent_object = parent_class._base_objects.db_manager(self.db).get(
+                    **{pk_name: o_pk}
+                )
+                # Copy annotations and extra fields from base_object
+                if self.query.annotations:
+                    annotation_select = getattr(
+                        self.query, "annotation_select", self.query.annotations
+                    )
+                    for anno_field_name in annotation_select.keys():
+                        if hasattr(base_object, anno_field_name):
+                            attr = getattr(base_object, anno_field_name)
+                            setattr(parent_object, anno_field_name, attr)
+
+                if self.query.extra_select:
+                    for select_field_name in self.query.extra_select.keys():
+                        attr = getattr(base_object, select_field_name)
+                        setattr(parent_object, select_field_name, attr)
+
+                return parent_object
+            except parent_class.DoesNotExist:
+                # This parent doesn't exist either, try the next one
+                continue
+
+        # Couldn't find any parent, return the base_object as last resort
+        return base_object
+
     def _get_real_instances(self, base_result_objects):
         """
         Polymorphic object loader
@@ -467,7 +517,8 @@ class PolymorphicQuerySet(QuerySet):
                 o_pk = getattr(base_object, pk_name)
                 real_object = real_objects_dict.get(o_pk)
                 if real_object is None:
-                    continue
+                    # Best effort: walk up the inheritance hierarchy
+                    real_object = self._get_best_effort_instance(base_object, real_concrete_class)
 
                 # need shallow copy to avoid duplication in caches (see PR #353)
                 real_object = copy.copy(real_object)
@@ -495,7 +546,7 @@ class PolymorphicQuerySet(QuerySet):
 
                 resultlist[j] = real_object
 
-        resultlist = [i for i in resultlist if i]
+        # No longer filter out None values - best effort ensures all objects are valid
 
         # set polymorphic_annotate_names in all objects (currently just used for debugging/printing)
         if self.query.annotations:
@@ -546,57 +597,6 @@ class PolymorphicQuerySet(QuerySet):
             return olist
         clist = PolymorphicQuerySet._p_list_class(olist)
         return clist
-
-    def first(self):
-        """
-        Return the first object of a query or None if no match is found.
-
-        This override handles the case where objects are being deleted (e.g., in a post_delete signal)
-        and _get_real_instances() filters them out, which could cause first() to incorrectly return None
-        even when there are valid objects remaining in the queryset.
-        """
-        # Try to get objects one at a time until we find a valid one
-        # This handles the case where _get_real_instances filters out objects
-        for obj in self.iterator():
-            if obj is not None:
-                return obj
-        return None
-
-    def __getitem__(self, k):
-        """
-        Retrieve an item or slice from the set of results.
-
-        This override handles the case where objects are being deleted (e.g., in a post_delete signal)
-        and _get_real_instances() filters them out. For integer indices, we iterate to ensure we
-        get a valid object at the requested position.
-        """
-        if not isinstance(k, (int, slice)):
-            raise TypeError(
-                "QuerySet indices must be integers or slices, not %s." % type(k).__name__
-            )
-
-        if isinstance(k, slice):
-            # For slices, use the parent implementation
-            # The iterator will handle filtering out None values correctly
-            return super().__getitem__(k)
-
-        # For integer index, we need to handle the case where _get_real_instances
-        # might filter out objects. We'll iterate through the queryset to get
-        # the k-th valid object.
-        if k < 0:
-            # Negative indexing not supported
-            raise ValueError("Negative indexing is not supported.")
-
-        # Use iterator to get the k-th valid (non-None) object
-        # This ensures we skip over any objects filtered out by _get_real_instances
-        count = 0
-        for obj in self.iterator():
-            if obj is not None:
-                if count == k:
-                    return obj
-                count += 1
-
-        raise IndexError("Index out of range %s" % k)
 
     def delete(self):
         """

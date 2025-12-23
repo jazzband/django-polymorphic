@@ -20,7 +20,7 @@ class TestSignals(TestCase):
 
         def log_first_with_first_method(sender, instance, **kwargs):
             self.assertEqual(Model2A.objects.order_by("pk").first().pk, obj1.pk)
-            self.assertEqual(Model2A.objects.order_by("pk").last().pk, obj2)
+            self.assertEqual(Model2A.objects.order_by("pk").last().pk, obj2.pk)
             self.assertEqual(Model2B.objects.count(), 0)
             self.assertEqual(Model2A.objects.count(), 2)
 
@@ -54,7 +54,7 @@ class TestSignals(TestCase):
         def log_first_with_brackets(sender, instance, **kwargs):
             try:
                 self.assertEqual(Model2A.objects.order_by("pk")[0].pk, obj1.pk)
-                self.assertEqual(Model2A.objects.order_by("pk")[1], obj2)
+                self.assertEqual(Model2A.objects.order_by("pk")[1].pk, obj2.pk)
                 self.assertEqual(Model2C.objects.count(), 0)
                 self.assertEqual(Model2A.objects.count(), 2)
             except IndexError:
