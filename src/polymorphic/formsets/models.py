@@ -48,7 +48,7 @@ class PolymorphicFormSetChild:
         # This is mostly needed for the generic inline formsets
         self._form_base = form
         self.fields = fields
-        self.exclude = exclude or ()
+        self.exclude = exclude
         self.formfield_callback = formfield_callback
         self.widgets = widgets
         self.localized_fields = localized_fields
@@ -75,16 +75,29 @@ class PolymorphicFormSetChild:
         # that doesn't completely replace all 'exclude' settings defined per child type,
         # we allow to define things like 'extra_...' fields that are amended to the current child settings.
 
-        exclude = list(self.exclude)
+        # Handle exclude parameter carefully:
+        # - If exclude was explicitly provided (not None), use it
+        # - If extra_exclude is provided, merge it with self.exclude
+        # - If neither was provided, don't pass exclude to modelform_factory at all,
+        #   allowing the form's Meta.exclude to take effect
         extra_exclude = kwargs.pop("extra_exclude", None)
-        if extra_exclude:
-            exclude += list(extra_exclude)
+
+        # Determine if we should pass exclude to modelform_factory
+        should_pass_exclude = self.exclude is not None or extra_exclude is not None
+
+        if should_pass_exclude:
+            if self.exclude is not None:
+                exclude = list(self.exclude)
+            else:
+                exclude = []
+
+            if extra_exclude:
+                exclude += list(extra_exclude)
 
         defaults = {
             "form": self._form_base,
             "formfield_callback": self.formfield_callback,
             "fields": self.fields,
-            "exclude": exclude,
             # 'for_concrete_model': for_concrete_model,
             "localized_fields": self.localized_fields,
             "labels": self.labels,
@@ -93,6 +106,11 @@ class PolymorphicFormSetChild:
             "widgets": self.widgets,
             # 'field_classes': field_classes,
         }
+
+        # Only add exclude to defaults if we determined it should be passed
+        if should_pass_exclude:
+            defaults["exclude"] = exclude
+
         defaults.update(kwargs)
 
         return modelform_factory(self.model, **defaults)

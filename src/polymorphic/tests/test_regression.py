@@ -1,8 +1,7 @@
-from django.test import TestCase
-
+from django import forms
 from django.db import models
 from django.db.models import functions
-from polymorphic.models import PolymorphicTypeInvalid
+from polymorphic.models import PolymorphicModel, PolymorphicTypeInvalid
 from polymorphic.tests.models import (
     Bottom,
     Middle,
@@ -17,6 +16,9 @@ from polymorphic.tests.models import (
     RelationA,
     RelationB,
 )
+from django.test import TestCase
+
+from polymorphic.formsets import polymorphic_modelformset_factory, PolymorphicFormSetChild
 
 
 class RegressionTests(TestCase):
@@ -321,3 +323,32 @@ class RegressionTests(TestCase):
         self.assertIsInstance(relations[0], RelationBase)
         self.assertIsInstance(relations[1], RelationA)
         self.assertIsInstance(relations[2], RelationB)
+
+
+class Author(models.Model):
+    pass
+
+
+class Book(PolymorphicModel):
+    author = models.ForeignKey(Author, on_delete=models.CASCADE)
+
+
+class SpecialBook(Book):
+    pass
+
+
+class SpecialBookForm(forms.ModelForm):
+    class Meta:
+        model = SpecialBook
+        exclude = ("author",)
+
+
+class TestFormsetExclude(TestCase):
+    def test_formset_child_respects_exclude(self):
+        SpecialBookFormSet = polymorphic_modelformset_factory(
+            Book,
+            fields=[],
+            formset_children=(PolymorphicFormSetChild(SpecialBook, form=SpecialBookForm),),
+        )
+        formset = SpecialBookFormSet(queryset=SpecialBook.objects.none())
+        self.assertNotIn("author", formset.forms[0].fields)
