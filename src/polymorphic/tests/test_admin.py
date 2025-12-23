@@ -118,9 +118,14 @@ class PolymorphicAdminTests(AdminTestCase):
             child_models = (Model2B,)
 
         @self.register(Model2B)
-        class Model2ChildAdmin(PolymorphicChildModelAdmin):
+        class Model2BChildAdmin(PolymorphicChildModelAdmin):
             base_model = Model2A
             show_in_index = False
+
+        @self.register(Model2C)
+        class Model2CChildAdmin(PolymorphicChildModelAdmin):
+            base_model = Model2A
+            show_in_index = True
 
         # Case 1: Index Page (url_name="index")
         request = self.create_admin_request("get", "/tmp-admin/")
@@ -132,6 +137,11 @@ class PolymorphicAdminTests(AdminTestCase):
         )
         self.assertFalse(found_model2b, "Child model should be hidden in index (Issue #532)")
 
+        found_model2c = any(
+            model["object_name"] == "Model2C" for app in app_list for model in app["models"]
+        )
+        self.assertTrue(found_model2c, "Child model should be visible in sidebar on change page")
+
         # Case 2: Change Page (url_name="change") - Simulating Sidebar (Issue #497)
         # We need a URL that resolves to a change view to test the sidebar context.
         change_url = "/tmp-admin/polymorphic/model2a/1/change/"
@@ -141,9 +151,13 @@ class PolymorphicAdminTests(AdminTestCase):
         found_model2b = any(
             model["object_name"] == "Model2B" for app in app_list for model in app["models"]
         )
+        found_model2c = any(
+            model["object_name"] == "Model2C" for app in app_list for model in app["models"]
+        )
         self.assertFalse(
             found_model2b, "Child model should be hidden in sidebar on change page (Issue #497)"
         )
+        self.assertTrue(found_model2c, "Child model should be visible in sidebar on change page")
 
     def test_show_in_index_custom_site(self):
         """
