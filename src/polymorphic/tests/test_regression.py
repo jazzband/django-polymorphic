@@ -2,6 +2,7 @@ from django.test import TestCase
 
 from django.db import models
 from django.db.models import functions
+from polymorphic.models import PolymorphicTypeInvalid
 from polymorphic.tests.models import Bottom, Middle, Top, Team, UserProfile, Model2A, Model2B
 
 
@@ -144,3 +145,26 @@ class RegressionTests(TestCase):
         self.assertEqual(len(results), 3)
         # accessing field1 should trigger refresh
         self.assertEqual(results[0].field1, "Alpha")
+
+    def test_upcasting_to_sibling_class(self):
+        """
+        Test that querying a model that has been upcasted to a sibling
+        polymorphic class does not raise a TypeError.
+        Reproduces issue #280.
+        """
+        # Create a Model2A instance with a specific pk
+        Model2A.objects.create(pk=1, field1="original")
+
+        # "Upcast" it to a Model2B by creating an object with the same pk.
+        # The polymorphic_ctype will now point to Model2B.
+        Model2B.objects.create(pk=1, field1="updated", field2="new")
+
+        # The original bug raised TypeError. We expect that accessing the
+        # queryset should not raise TypeError. It should either be empty,
+        # or raise a clean PolymorphicTypeInvalid error.
+        try:
+            list(Model2A.objects.all())
+        except PolymorphicTypeInvalid:
+            pass  # This is an acceptable outcome.
+        except TypeError as e:
+            self.fail(f"Querying for upcasted sibling raised TypeError: {e}")
