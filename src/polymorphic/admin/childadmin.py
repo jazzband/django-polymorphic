@@ -44,6 +44,12 @@ class PolymorphicChildModelAdmin(admin.ModelAdmin):
     #: Default title for extra fieldset
     extra_fieldset_title = _("Contents")
 
+    #: Optional mapping of extra fields to existing fieldsets.
+    #: Format: {'Fieldset Title': ['field1', 'field2'], ...}
+    #: Fields mapped to None will be added to a new fieldset with extra_fieldset_title.
+    #: If not set, all extra fields go to a single new fieldset (backward compatible behavior).
+    extra_fieldset_mapping = None
+
     #: Whether the child admin model should be visible in the admin index page.
     show_in_index = False
 
@@ -186,6 +192,60 @@ class PolymorphicChildModelAdmin(admin.ModelAdmin):
 
     # ---- Extra: improving the form/fieldset default display ----
 
+    def _merge_fieldsets_with_mapping(self, base_fieldsets, extra_fields, mapping):
+        """
+        Merge extra fields into base_fieldsets according to the mapping.
+
+        Args:
+            base_fieldsets: Tuple of base fieldsets
+            extra_fields: List of extra field names to distribute
+            mapping: Dict mapping fieldset titles to field lists
+
+        Returns:
+            Tuple of merged fieldsets
+        """
+        # Convert to list for easier manipulation
+        result = []
+        extra_fields_set = set(extra_fields)
+        mapped_fields = set()
+
+        # Process each base fieldset
+        for title, options in base_fieldsets:
+            fields_to_add = []
+
+            # Check if this fieldset should receive extra fields
+            if title in mapping:
+                for field in mapping[title]:
+                    if field in extra_fields_set:
+                        fields_to_add.append(field)
+                        mapped_fields.add(field)
+
+            # Merge fields if any
+            if fields_to_add:
+                new_options = options.copy()
+                existing_fields = new_options.get("fields", ())
+                new_options["fields"] = tuple(existing_fields) + tuple(fields_to_add)
+                result.append((title, new_options))
+            else:
+                result.append((title, options))
+
+        # Handle unmapped fields (those not in any mapping or mapped to None)
+        unmapped_fields = [f for f in extra_fields if f not in mapped_fields]
+
+        # Add explicitly None-mapped fields to unmapped
+        if None in mapping:
+            for field in mapping[None]:
+                if field in extra_fields_set and field not in mapped_fields:
+                    unmapped_fields.append(field)
+                    mapped_fields.add(field)
+
+        # Create new fieldset for unmapped fields
+        if unmapped_fields:
+            # Insert after first fieldset (same position as original behavior)
+            result.insert(1, (self.extra_fieldset_title, {"fields": unmapped_fields}))
+
+        return tuple(result)
+
     def get_base_fieldsets(self, request, obj=None):
         return self.base_fieldsets
 
@@ -200,13 +260,20 @@ class PolymorphicChildModelAdmin(admin.ModelAdmin):
         # where the subclass fields are automatically included.
         other_fields = self.get_subclass_fields(request, obj)
 
-        if other_fields:
-            return (
-                base_fieldsets[0],
-                (self.extra_fieldset_title, {"fields": other_fields}),
-            ) + base_fieldsets[1:]
-        else:
+        if not other_fields:
             return base_fieldsets
+
+        # Use new mapping-based merging if extra_fieldset_mapping is defined
+        if self.extra_fieldset_mapping is not None:
+            return self._merge_fieldsets_with_mapping(
+                base_fieldsets, other_fields, self.extra_fieldset_mapping
+            )
+
+        # Backward compatibility: use original behavior
+        return (
+            base_fieldsets[0],
+            (self.extra_fieldset_title, {"fields": other_fields}),
+        ) + base_fieldsets[1:]
 
     def get_subclass_fields(self, request, obj=None):
         # Find out how many fields would really be on the form,
