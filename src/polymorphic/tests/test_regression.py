@@ -324,7 +324,6 @@ class RegressionTests(TestCase):
         self.assertIsInstance(relations[1], RelationA)
         self.assertIsInstance(relations[2], RelationB)
 
-
 class Author(models.Model):
     pass
 
@@ -381,3 +380,31 @@ class TestFormsetExclude(TestCase):
         # not the ContentType instance. This proves the normalization worked.
         self.assertEqual(form.fields["polymorphic_ctype"].initial, ct.pk)
         self.assertIsInstance(form.fields["polymorphic_ctype"].initial, int)
+
+    def test_formset_with_none_instance(self):
+        """Test that formset handles None instance without AttributeError (issue #363)."""
+        from django.contrib.contenttypes.models import ContentType
+
+        ct = ContentType.objects.get_for_model(SpecialBook, for_concrete_model=False)
+
+        SpecialBookFormSet = polymorphic_modelformset_factory(
+            Book,
+            fields="__all__",
+            formset_children=(PolymorphicFormSetChild(SpecialBook, form=SpecialBookForm),),
+        )
+
+        # Simulate nested formset scenario where instance can be None
+        # This happens when creating a new form in a nested formset
+        formset = SpecialBookFormSet(
+            queryset=SpecialBook.objects.none(),
+        )
+
+        # Access the form - this should not raise AttributeError
+        # even though the instance might be None
+        try:
+            form = formset.forms[0]
+            # Verify the form was created successfully
+            self.assertIsNotNone(form)
+            self.assertIn("polymorphic_ctype", form.fields)
+        except AttributeError as e:
+            self.fail(f"Formset with None instance raised AttributeError: {e}")
