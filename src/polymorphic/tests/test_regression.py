@@ -352,3 +352,32 @@ class TestFormsetExclude(TestCase):
         )
         formset = SpecialBookFormSet(queryset=SpecialBook.objects.none())
         self.assertNotIn("author", formset.forms[0].fields)
+
+    def test_formset_initial_with_contenttype_instance(self):
+        """Test that polymorphic_ctype can be set as ContentType instance in initial data (issue #549)"""
+        from django.contrib.contenttypes.models import ContentType
+
+        ct = ContentType.objects.get_for_model(SpecialBook, for_concrete_model=False)
+
+        SpecialBookFormSet = polymorphic_modelformset_factory(
+            Book,
+            fields="__all__",
+            formset_children=(PolymorphicFormSetChild(SpecialBook, form=SpecialBookForm),),
+        )
+
+        # Set initial data with ContentType instance (as users do in issue #549)
+        formset = SpecialBookFormSet(
+            queryset=SpecialBook.objects.none(),
+            initial=[{"polymorphic_ctype": ct}],
+        )
+
+        # Should not raise an error when creating the formset
+        form = formset.forms[0]
+
+        # Verify the polymorphic_ctype field is properly set up with the ID
+        self.assertIn("polymorphic_ctype", form.fields)
+
+        # The critical assertion: the field's initial value should be the ID (int),
+        # not the ContentType instance. This proves the normalization worked.
+        self.assertEqual(form.fields["polymorphic_ctype"].initial, ct.pk)
+        self.assertIsInstance(form.fields["polymorphic_ctype"].initial, int)

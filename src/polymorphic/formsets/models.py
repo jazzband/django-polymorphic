@@ -185,6 +185,16 @@ class BasePolymorphicModelFormSet(BaseModelFormSet):
                 defaults["initial"] = self.initial[i]
             except IndexError:
                 pass
+        # Normalize polymorphic_ctype in initial data if it's a ContentType instance
+        # This allows users to set initial[i]['polymorphic_ctype'] = ct (ContentType instance)
+        # while the form field expects an integer ID
+        if "initial" in defaults and "polymorphic_ctype" in defaults["initial"]:
+            ct_value = defaults["initial"]["polymorphic_ctype"]
+            if isinstance(ct_value, ContentType):
+                # Create a copy to avoid modifying the original formset.initial
+                defaults["initial"] = defaults["initial"].copy()
+                # Convert ContentType instance to its ID
+                defaults["initial"]["polymorphic_ctype"] = ct_value.pk
         # Allow extra forms to be empty, unless they're part of
         # the minimum forms.
         if i >= self.initial_form_count() and i >= self.min_num:
