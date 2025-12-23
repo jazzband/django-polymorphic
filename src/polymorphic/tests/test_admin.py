@@ -6,6 +6,8 @@ from django.contrib.auth import get_user_model
 from django.contrib import admin
 from django.contrib.contenttypes.models import ContentType
 from django.utils.html import escape
+from django.test import RequestFactory
+from django.urls import resolve
 
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 
@@ -104,6 +106,118 @@ class PolymorphicAdminTests(AdminTestCase):
         self.assertEqual(len(child_inlines), 2)
         self.assertEqual(child_inlines[0], Inline.InlineModelAChild)
         self.assertEqual(child_inlines[1], Inline.InlineModelBChild)
+
+    def test_show_in_index(self):
+        """
+        Test that show_in_index=False hides the model from the index and sidebar.
+        """
+
+        @self.register(Model2A)
+        class Model2Admin(PolymorphicParentModelAdmin):
+            base_model = Model2A
+            child_models = (Model2B,)
+
+        @self.register(Model2B)
+        class Model2BChildAdmin(PolymorphicChildModelAdmin):
+            base_model = Model2A
+            show_in_index = False
+
+        @self.register(Model2C)
+        class Model2CChildAdmin(PolymorphicChildModelAdmin):
+            base_model = Model2A
+            show_in_index = True
+
+        # Case 1: Index Page (url_name="index")
+        request = self.create_admin_request("get", "/tmp-admin/")
+        app_list = self.admin_site.get_app_list(request)
+
+        # Check that Model2B is NOT present
+        found_model2b = any(
+            model["object_name"] == "Model2B" for app in app_list for model in app["models"]
+        )
+        self.assertFalse(found_model2b, "Child model should be hidden in index (Issue #532)")
+
+        found_model2c = any(
+            model["object_name"] == "Model2C" for app in app_list for model in app["models"]
+        )
+        self.assertTrue(found_model2c, "Child model should be visible in sidebar on change page")
+
+        # Case 2: Change Page (url_name="change") - Simulating Sidebar (Issue #497)
+        # We need a URL that resolves to a change view to test the sidebar context.
+        change_url = "/tmp-admin/polymorphic/model2a/1/change/"
+        request = self.create_admin_request("get", change_url)
+        app_list = self.admin_site.get_app_list(request)
+
+        found_model2b = any(
+            model["object_name"] == "Model2B" for app in app_list for model in app["models"]
+        )
+        found_model2c = any(
+            model["object_name"] == "Model2C" for app in app_list for model in app["models"]
+        )
+        self.assertFalse(
+            found_model2b, "Child model should be hidden in sidebar on change page (Issue #497)"
+        )
+        self.assertTrue(found_model2c, "Child model should be visible in sidebar on change page")
+
+    def test_show_in_index_custom_site(self):
+        """
+        Test that show_in_index=False works correctly with a custom AdminSite.
+        """
+        original_name = self.admin_site.name
+        try:
+            # Change the site name to simulate a custom site
+            self.admin_site.name = "custom_admin"
+
+            # Register the model
+            @self.register(Model2B)
+            class Model2ChildAdmin(PolymorphicChildModelAdmin):
+                base_model = Model2A
+                show_in_index = False
+
+            # Re-set URLConf to update patterns with new name
+            from django.urls import clear_url_caches, set_urlconf, path, resolve
+
+            clear_url_caches()
+            set_urlconf(tuple([path("tmp-admin/", self.admin_site.urls)]))
+
+            request = self.create_admin_request("get", "/tmp-admin/")
+
+            # Verify resolving matches namespace 'custom_admin'
+            match = resolve("/tmp-admin/")
+            assert match.namespace == "custom_admin"
+
+            # Now check app list
+            app_list = self.admin_site.get_app_list(request)
+
+            found_model2b = any(
+                model["object_name"] == "Model2B" for app in app_list for model in app["models"]
+            )
+            self.assertFalse(found_model2b, "Child model should be hidden in Custom Admin Site")
+
+        finally:
+            self.admin_site.name = original_name
+
+    def test_get_model_perms_hidden(self):
+        # Register a child admin with show_in_index=False
+        @self.register(Model2B)
+        class Model2ChildAdmin(PolymorphicChildModelAdmin):
+            base_model = Model2A
+            show_in_index = False
+
+        # Simulate a request to the admin index
+        factory = RequestFactory()
+        request = factory.get("/tmp-admin/")
+        match = resolve("/tmp-admin/")
+
+        # Ensure namespace matches admin site
+        match.namespace = self.admin_site.name
+        request._resolver_match = match
+
+        # Call get_model_perms directly
+        perms = Model2ChildAdmin(Model2B, self.admin_site).get_model_perms(request)
+
+        # Assert that all perms are False
+        assert perms == {"add": False, "change": False, "delete": False}
 
     def test_admin_inlines(self):
         """
