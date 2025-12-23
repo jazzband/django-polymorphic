@@ -611,6 +611,60 @@ class PolymorphicTests(TransactionTestCase):
             objects, [Model2A], transform=lambda o: o.__class__, ordered=False
         )
 
+    def test_instance_of_with_string_reference(self):
+        """Test instance_of with string model reference (issue #505)"""
+        self.create_model2abcd()
+
+        # Test with full app.Model format
+        objects = Model2A.objects.instance_of("tests.Model2B")
+        self.assertQuerySetEqual(
+            objects,
+            [Model2B, Model2C, Model2D],
+            transform=lambda o: o.__class__,
+            ordered=False,
+        )
+
+        # Test with short name (requires queryset context)
+        objects = Model2A.objects.instance_of("Model2B")
+        self.assertQuerySetEqual(
+            objects,
+            [Model2B, Model2C, Model2D],
+            transform=lambda o: o.__class__,
+            ordered=False,
+        )
+
+    def test_instance_of_Q_object_with_string_reference(self):
+        """Test instance_of in Q-object with string model reference (issue #505)"""
+        self.create_model2abcd()
+
+        # Test with full app.Model format in filter
+        objects = Model2A.objects.filter(instance_of="tests.Model2B")
+        self.assertQuerySetEqual(
+            objects,
+            [Model2B, Model2C, Model2D],
+            transform=lambda o: o.__class__,
+            ordered=False,
+        )
+
+        # Test with full app.Model format in explicit Q object
+        objects = Model2A.objects.filter(Q(instance_of="tests.Model2B"))
+        self.assertQuerySetEqual(
+            objects,
+            [Model2B, Model2C, Model2D],
+            transform=lambda o: o.__class__,
+            ordered=False,
+        )
+
+    def test_not_instance_of_with_string_reference(self):
+        """Test not_instance_of with string model reference (issue #505)"""
+        self.create_model2abcd()
+
+        # Test with full app.Model format
+        objects = Model2A.objects.not_instance_of("tests.Model2B")
+        self.assertQuerySetEqual(
+            objects, [Model2A], transform=lambda o: o.__class__, ordered=False
+        )
+
     def test_polymorphic___filter(self):
         self.create_model2abcd()
 
