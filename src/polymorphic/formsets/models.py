@@ -205,7 +205,7 @@ class BasePolymorphicModelFormSet(BaseModelFormSet):
         # Need to find the model that will be displayed in this form.
         # Hence, peeking in the self.queryset_data beforehand.
         if self.is_bound:
-            if "instance" in defaults:
+            if "instance" in defaults and defaults["instance"] is not None:
                 # Object is already bound to a model, won't change the content type
                 model = defaults["instance"].get_real_instance_class()  # allow proxy models
             else:
@@ -226,7 +226,7 @@ class BasePolymorphicModelFormSet(BaseModelFormSet):
                         f"Child model type {model} is not part of the formset"
                     )
         else:
-            if "instance" in defaults:
+            if "instance" in defaults and defaults["instance"] is not None:
                 model = defaults["instance"].get_real_instance_class()  # allow proxy models
             elif "polymorphic_ctype" in defaults.get("initial", {}):
                 model = defaults["initial"]["polymorphic_ctype"].model_class()

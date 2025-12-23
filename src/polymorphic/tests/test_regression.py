@@ -5,7 +5,6 @@ from django.test import TestCase
 
 from polymorphic.formsets import polymorphic_modelformset_factory, PolymorphicFormSetChild
 from polymorphic.models import PolymorphicModel, PolymorphicTypeInvalid
-from polymorphic.models import PolymorphicTypeInvalid
 from polymorphic.tests.models import Bottom, Middle, Top, Team, UserProfile, Model2A, Model2B
 
 
@@ -78,7 +77,7 @@ class RegressionTests(TestCase):
         # with postgresql:  2 != 3
         self.assertEqual(len(my_teams[0].user_profiles.all()), 3)
         self.assertEqual(len(my_teams[1].user_profiles.all()), 1)
-    
+
     def test_alias_queryset(self):
         """
         Test that .alias() works works correctly with polymorphic querysets.
@@ -111,7 +110,7 @@ class RegressionTests(TestCase):
         self.assertFalse(hasattr(results[0], "alias_val"))
         self.assertTrue(hasattr(results[0], "anno_val"))
         self.assertEqual(results[0].anno_val, "VAL1")
-        
+
     def test_alias_advanced(self):
         """
         Test .alias() interactions with filter, order_by, only, and defer.
@@ -148,7 +147,7 @@ class RegressionTests(TestCase):
         self.assertEqual(len(results), 3)
         # accessing field1 should trigger refresh
         self.assertEqual(results[0].field1, "Alpha")
-       
+
     def test_upcasting_to_sibling_class(self):
         """
         Test that querying a model that has been upcasted to a sibling
@@ -171,7 +170,6 @@ class RegressionTests(TestCase):
             pass  # This is an acceptable outcome.
         except TypeError as e:
             self.fail(f"Querying for upcasted sibling raised TypeError: {e}")
-
 
 
 class Author(models.Model):
@@ -230,4 +228,31 @@ class TestFormsetExclude(TestCase):
         # not the ContentType instance. This proves the normalization worked.
         self.assertEqual(form.fields["polymorphic_ctype"].initial, ct.pk)
         self.assertIsInstance(form.fields["polymorphic_ctype"].initial, int)
-   
+
+    def test_formset_with_none_instance(self):
+        """Test that formset handles None instance without AttributeError (issue #363)."""
+        from django.contrib.contenttypes.models import ContentType
+
+        ct = ContentType.objects.get_for_model(SpecialBook, for_concrete_model=False)
+
+        SpecialBookFormSet = polymorphic_modelformset_factory(
+            Book,
+            fields="__all__",
+            formset_children=(PolymorphicFormSetChild(SpecialBook, form=SpecialBookForm),),
+        )
+
+        # Simulate nested formset scenario where instance can be None
+        # This happens when creating a new form in a nested formset
+        formset = SpecialBookFormSet(
+            queryset=SpecialBook.objects.none(),
+        )
+
+        # Access the form - this should not raise AttributeError
+        # even though the instance might be None
+        try:
+            form = formset.forms[0]
+            # Verify the form was created successfully
+            self.assertIsNotNone(form)
+            self.assertIn("polymorphic_ctype", form.fields)
+        except AttributeError as e:
+            self.fail(f"Formset with None instance raised AttributeError: {e}")
