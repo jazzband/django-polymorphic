@@ -1,7 +1,10 @@
-from django.test import TestCase
-
+from django import forms
 from django.db import models
 from django.db.models import functions
+from django.test import TestCase
+
+from polymorphic.formsets import polymorphic_modelformset_factory, PolymorphicFormSetChild
+from polymorphic.models import PolymorphicModel, PolymorphicTypeInvalid
 from polymorphic.tests.models import Bottom, Middle, Top, Team, UserProfile, Model2A, Model2B
 
 
@@ -144,3 +147,32 @@ class RegressionTests(TestCase):
         self.assertEqual(len(results), 3)
         # accessing field1 should trigger refresh
         self.assertEqual(results[0].field1, "Alpha")
+
+
+class Author(models.Model):
+    pass
+
+
+class Book(PolymorphicModel):
+    author = models.ForeignKey(Author, on_delete=models.CASCADE)
+
+
+class SpecialBook(Book):
+    pass
+
+
+class SpecialBookForm(forms.ModelForm):
+    class Meta:
+        model = SpecialBook
+        exclude = ("author",)
+
+
+class TestFormsetExclude(TestCase):
+    def test_formset_child_respects_exclude(self):
+        SpecialBookFormSet = polymorphic_modelformset_factory(
+            Book,
+            fields=[],
+            formset_children=(PolymorphicFormSetChild(SpecialBook, form=SpecialBookForm),),
+        )
+        formset = SpecialBookFormSet(queryset=SpecialBook.objects.none())
+        self.assertNotIn("author", formset.forms[0].fields)
