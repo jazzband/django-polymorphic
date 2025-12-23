@@ -109,6 +109,7 @@ from polymorphic.tests.models import (
     SubclassSelectorProxyBaseModel,
     SubclassSelectorProxyConcreteModel,
     ParentLinkAndRelatedName,
+    TestParentLinkAndRelatedName,
     UUIDArtProject,
     UUIDArtProjectA,
     UUIDArtProjectB,
@@ -1020,21 +1021,21 @@ class PolymorphicTests(TransactionTestCase):
         blog_a = BlogA.objects.get(id=blog_a.id)
 
         # test reverse accessor & check that we get back cached object on repeated access
-        self.assertEqual(blog_base.bloga, blog_a)
-        self.assertIs(blog_base.bloga, blog_base.bloga)
+        assert blog_base.bloga == blog_a
+        assert blog_base.bloga is blog_base.bloga
         cached_blog_a = blog_base.bloga
 
         # test forward accessor & check that we get back cached object on repeated access
-        self.assertEqual(blog_a.blogbase_ptr, blog_base)
-        self.assertIs(blog_a.blogbase_ptr, blog_a.blogbase_ptr)
+        assert blog_a.blogbase_ptr == blog_base
+        assert blog_a.blogbase_ptr is blog_a.blogbase_ptr
         cached_blog_base = blog_a.blogbase_ptr
 
         # check that refresh_from_db correctly clears cached related objects
         blog_base.refresh_from_db()
         blog_a.refresh_from_db()
 
-        self.assertIsNot(cached_blog_a, blog_base.bloga)
-        self.assertIsNot(cached_blog_base, blog_a.blogbase_ptr)
+        assert cached_blog_a is not blog_base.bloga
+        assert cached_blog_base is not blog_a.blogbase_ptr
 
     def test_polymorphic__aggregate(self):
         """test ModelX___field syntax on aggregate (should work for annotate either)"""
@@ -2105,10 +2106,10 @@ class PolymorphicTests(TransactionTestCase):
                 ).order_by("pk")
             )
         with self.assertNumQueries(0):
-            self.assertEqual(obj_list[0].relation.name, "p1")
-            self.assertEqual(obj_list[1].relation.name, "c1")
-            self.assertEqual(obj_list[2].relation.name, "ac1")
-            self.assertEqual(obj_list[3].relation.name, "ac2")
+            assert obj_list[0].relation.name == "p1"
+            assert obj_list[1].relation.name == "c1"
+            assert obj_list[2].relation.name == "ac1"
+            assert obj_list[3].relation.name == "ac2"
             obj_list[1].relation.link_on_child
             obj_list[2].relation.link_on_altchild
             obj_list[3].relation.link_on_altchild
@@ -2145,11 +2146,11 @@ class PolymorphicTests(TransactionTestCase):
                 ).order_by("pk")
             )
         with self.assertNumQueries(0):
-            self.assertEqual(obj_list[0].relation.name, "p1")
-            self.assertEqual(obj_list[1].relation.name, "c1")
-            self.assertEqual(obj_list[2].relation.name, "ac1")
-            self.assertEqual(obj_list[3].relation.name, "ac2ab")
-            self.assertEqual(obj_list[3].relation.more_name, "acab2morename")
+            assert obj_list[0].relation.name == "p1"
+            assert obj_list[1].relation.name == "c1"
+            assert obj_list[2].relation.name == "ac1"
+            assert obj_list[3].relation.name == "ac2ab"
+            assert obj_list[3].relation.more_name == "acab2morename"
             obj_list[1].relation.link_on_child
             obj_list[2].relation.link_on_altchild
             obj_list[3].relation.link_on_altchild
@@ -2181,9 +2182,9 @@ class PolymorphicTests(TransactionTestCase):
             )
 
         with self.assertNumQueries(0):
-            self.assertEqual(obj_list[0].relation.name, "p1")
-            self.assertEqual(obj_list[1].relation.name, "c1")
-            self.assertEqual(obj_list[2].relation.name, "acab2")
+            assert obj_list[0].relation.name == "p1"
+            assert obj_list[1].relation.name == "c1"
+            assert obj_list[2].relation.name == "acab2"
             obj_list[1].relation.link_on_child
             obj_list[2].relation.link_on_altchild
 
@@ -2388,14 +2389,14 @@ class PolymorphicTests(TransactionTestCase):
         )
 
         objects = list(qs)
-        self.assertEqual(len(objects[0].poly), 1)
+        assert len(objects[0].poly) == 1
 
         # derived object was not fetched
-        self.assertEqual(len(objects[1].poly), 0)
+        assert len(objects[1].poly) == 0
 
         # base object always found
-        self.assertEqual(len(objects[0].non_poly), 1)
-        self.assertEqual(len(objects[1].non_poly), 1)
+        assert len(objects[0].non_poly) == 1
+        assert len(objects[1].non_poly) == 1
 
     def test_select_related_on_poly_classes_preserves_on_relations_annotations(self):
         b1 = RelatingModel.objects.create()
@@ -2418,9 +2419,9 @@ class PolymorphicTests(TransactionTestCase):
         )
 
         objects = list(qs)
-        self.assertEqual(objects[0].poly[0].relatingmodel__count, 1)
-        self.assertEqual(objects[1].poly[0].relatingmodel__count, 2)
-        self.assertEqual(objects[2].poly[0].relatingmodel__count, 2)
+        assert objects[0].poly[0].relatingmodel__count == 1
+        assert objects[1].poly[0].relatingmodel__count == 2
+        assert objects[2].poly[0].relatingmodel__count == 2
 
     @expectedFailure
     def test_prefetch_loading_relation_only_on_some_poly_model(self):
