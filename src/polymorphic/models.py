@@ -98,7 +98,15 @@ class PolymorphicModel(models.Model, metaclass=PolymorphicModelBase):
 
     def save(self, *args, **kwargs):
         """Calls :meth:`pre_save_polymorphic` and saves the model."""
-        using = kwargs.get("using", self._state.db or DEFAULT_DB_ALIAS)
+        # Determine the database to use:
+        # 1. Explicit 'using' parameter takes precedence
+        # 2. Otherwise use self._state.db (the database the object was loaded from)
+        # 3. Fall back to DEFAULT_DB_ALIAS
+        # This ensures database routers are respected when no explicit database is specified
+        using = kwargs.get("using")
+        if using is None:
+            using = self._state.db or DEFAULT_DB_ALIAS
+
         self.pre_save_polymorphic(using=using)
         return super().save(*args, **kwargs)
 
