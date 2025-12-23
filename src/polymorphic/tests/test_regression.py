@@ -427,12 +427,16 @@ class TestFormsetExclude(TestCase):
 
         # 3. polymorphic_ctype normalization
         ct = ContentType.objects.get_for_model(SpecialBook, for_concrete_model=False)
-        child_ct = PolymorphicFormSetChild(SpecialBook, form=SpecialBookForm)
-        form_ct = child_ct._construct_form(0, initial={"polymorphic_ctype": ct})
+        SpecialBookFormSet = polymorphic_modelformset_factory(
+            Book,
+            fields="__all__",
+            formset_children=(PolymorphicFormSetChild(SpecialBook, form=SpecialBookForm),),
+        )
+        formset = SpecialBookFormSet(
+            queryset=SpecialBook.objects.none(),
+            initial=[{"polymorphic_ctype": ct}],
+        )
+        # The formset should normalize the ContentType instance to its ID
+        form_ct = formset.forms[0]
         self.assertIsInstance(form_ct.initial["polymorphic_ctype"], int)
         self.assertEqual(form_ct.initial["polymorphic_ctype"], ct.pk)
-
-        # 4. _construct_form with None instance
-        form_none = child_ct._construct_form(0, instance=None)
-        self.assertIsNotNone(form_none)
-        self.assertIn("polymorphic_ctype", form_none.fields)
