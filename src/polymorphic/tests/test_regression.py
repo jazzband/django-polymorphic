@@ -17,7 +17,7 @@ from polymorphic.tests.models import (
     RelationB,
 )
 from django.test import TestCase
-
+from django.contrib.contenttypes.models import ContentType
 from polymorphic.formsets import polymorphic_modelformset_factory, PolymorphicFormSetChild
 
 
@@ -408,3 +408,31 @@ class TestFormsetExclude(TestCase):
             self.assertIn("polymorphic_ctype", form.fields)
         except AttributeError as e:
             self.fail(f"Formset with None instance raised AttributeError: {e}")
+
+    def test_combined_formset_behaviors(self):
+        # 1. __init__ exclude handling
+        child_none = PolymorphicFormSetChild(Book, form=SpecialBookForm, exclude=None)
+        self.assertEqual(child_none.exclude, ())
+
+        child_list = PolymorphicFormSetChild(Book, form=SpecialBookForm, exclude=["author"])
+        self.assertIn("author", child_list.exclude)
+
+        # 2. get_form exclude merging
+        form = child_list.get_form(extra_exclude=["field1"])
+        self.assertIn("author", form._meta.exclude)
+        self.assertIn("field1", form._meta.exclude)
+
+        form_meta_default = child_none.get_form()
+        self.assertIn("author", form_meta_default._meta.exclude)
+
+        # 3. polymorphic_ctype normalization
+        ct = ContentType.objects.get_for_model(SpecialBook, for_concrete_model=False)
+        child_ct = PolymorphicFormSetChild(SpecialBook, form=SpecialBookForm)
+        form_ct = child_ct._construct_form(0, initial={"polymorphic_ctype": ct})
+        self.assertIsInstance(form_ct.initial["polymorphic_ctype"], int)
+        self.assertEqual(form_ct.initial["polymorphic_ctype"], ct.pk)
+
+        # 4. _construct_form with None instance
+        form_none = child_ct._construct_form(0, instance=None)
+        self.assertIsNotNone(form_none)
+        self.assertIn("polymorphic_ctype", form_none.fields)
