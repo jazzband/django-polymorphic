@@ -1,8 +1,17 @@
 Changelog
 =========
 
+v4.5.1 (2025-12-24)
+-------------------
+
+* Fixed `4.5.0 generates a lot of migrations on my project <https://github.com/jazzband/django-polymorphic/pull/759>`_
+
 v4.5.0 (2025-12-22)
 -------------------
+
+.. warning::
+
+  This version has a bug that generates unnecessary migrations - use 4.5.1 instead!
 
 * Implemented `Deletion fixes <https://github.com/jazzband/django-polymorphic/pull/746>`_
   **This release fixes the longstanding polymorphic deletion bug.** The fix should be transparent
