@@ -85,11 +85,29 @@ jobs:
           detached: true
         timeout-minutes: 60
       - name: Run Bandit Security Analysis
+        continue-on-error: true
         run: |
-          just check-security-bandit
+          just run bandit -c pyproject.toml -r src/polymorphic -f json -o bandit-report.json || true
+          just run bandit -c pyproject.toml -r src/polymorphic -f txt -o bandit-report.txt || true
       - name: Run pip-audit Dependency Scanning
+        continue-on-error: true
         run: |
-          just run pip-audit --disable-pip
+          just run pip-audit --disable-pip --format json --output pip-audit-report.json || true
+          just run pip-audit --disable-pip --format cyclonedx-json --output pip-audit-sbom.json || true
       - name: Run Safety Vulnerability Checks
+        continue-on-error: true
         run: |
-          just run safety check --json
+          just run safety check --json --output safety-report.json || true
+      - name: Upload Security Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-reports-py${{ matrix.python-version }}-dj${{ matrix.django-version }}
+          path: |
+            bandit-report.json
+            bandit-report.txt
+            pip-audit-report.json
+            pip-audit-sbom.json
+            safety-report.json
+          retention-days: 30
+

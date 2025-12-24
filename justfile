@@ -170,7 +170,7 @@ fix: lint format
 
 # run bandit static security analysis
 check-security-bandit:
-    @just run bandit -c .bandit -r src/polymorphic
+    @just run bandit -c pyproject.toml -r src/polymorphic
 
 # run dependency vulnerability scanning
 check-security-deps:
@@ -181,7 +181,7 @@ check-security-deps:
 check-security: check-security-bandit check-security-deps
 
 # run all static checks
-check: check-lint check-format check-types check-package check-docs check-docs-links _check-readme-quiet check-security
+check: check-lint check-format check-types check-package check-security check-docs check-docs-links _check-readme-quiet
 
 [script]
 _lock-python:

@@ -79,6 +79,16 @@ artifacts = ["*.mo"]
 max-line-length = 100
 sphinx = true
 
+[tool.bandit]
+exclude_dirs = [
+    "*/tests/*",
+    "*/migrations/*",
+    "example",
+    ".venv",
+    "docs",
+]
+skips = ["B101"]  # assert_used - assertions are fine in tests and Django code
+
 [tool.ruff]
 line-length = 99
 
