@@ -70,9 +70,6 @@ class PolymorphicGuard:
     def migration_key(self):
         return migration_fingerprint(self.action)
 
-    def __neq__(self, other):
-        return not self.__eq__(other)
-
     def __eq__(self, other):
         if (
             isinstance(other, tuple)
