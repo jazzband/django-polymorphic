@@ -1,0 +1,56 @@
+name: Bandit
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    paths:
+      - "src/**"
+      - "pyproject.toml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  bandit-analysis:
+    name: Run Bandit
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
+        id: sp
+        with:
+          python-version: '3.x'
+          allow-prereleases: true
+      - name: Install uv
+        uses: astral-sh/setup-uv@5a095e7a2014a4212f075830d4f7277575a9d098
+        with:
+          enable-cache: false
+      - name: Install Just
+        uses: extractions/setup-just@f8a3cce218d9f83db3a2ecd90e41ac3de6cdfd9b
+
+      - name: Run Bandit
+        run: |
+          just bandit
+
+      - name: Upload analysis results
+        if: ${{ always() }}
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f
+        with:
+          name: bandit-results
+          path: bandit.sarif
+          retention-days: 7
+
+      - name: Upload to code-scanning
+        if: ${{ always() }}
+        uses: github/codeql-action/upload-sarif@0d579ffd059c29b07949a3cce3983f0780820c98
+        with:
+          sarif_file: bandit.sarif

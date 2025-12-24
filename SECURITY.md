@@ -1,7 +1,8 @@
 # Security Policy
 
 [![CodeQL](https://github.com/jazzband/django-polymorphic/actions/workflows/github-code-scanning/codeql/badge.svg?branch=main)](https://github.com/jazzband/django-polymorphic/actions/workflows/github-code-scanning/codeql?query=branch:main)
-[![Zizmor](https://github.com/jazzband/django-polymorphic/actions/workflows/zizmor.yml/badge.svg?branch=main)](https://docs.zizmor.sh/)
+[![Zizmor](https://github.com/jazzband/django-polymorphic/actions/workflows/zizmor.yml/badge.svg?branch=main)](https://docs.zizmor.sh)
+[![Bandit](https://github.com/jazzband/django-polymorphic/actions/workflows/bandit.yml/badge.svg?branch=main)](https://bandit.readthedocs.io)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/jazzband/django-polymorphic/badge)](https://securityscorecards.dev/viewer/?uri=github.com/jazzband/django-polymorphic)
 
 ## Supported Versions

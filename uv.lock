@@ -78,12 +78,45 @@ wheels = [
 ]
 
 [[package]]
+name = "attrs"
+version = "25.4.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/6b/5c/685e6633917e101e5dcb62b9dd76946cbb57c26e133bae9e0cd36033c0a9/attrs-25.4.0.tar.gz", hash = "sha256:16d5969b87f0859ef33a48b35d55ac1be6e42ae49d5e853b597db70c35c57e11", size = 934251, upload-time = "2025-10-06T13:54:44.725Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/3a/2a/7cc015f5b9f5db42b7d48157e23356022889fc354a2813c15934b7cb5c0e/attrs-25.4.0-py3-none-any.whl", hash = "sha256:adcf7e2a1fb3b36ac48d97835bb6d8ade15b8dcce26aba8bf1d14847b57a3373", size = 67615, upload-time = "2025-10-06T13:54:43.17Z" },
+]
+
+[[package]]
 name = "babel"
 version = "2.18.0"
 source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/7d/b2/51899539b6ceeeb420d40ed3cd4b7a40519404f9baf3d4ac99dc413a834b/babel-2.18.0.tar.gz", hash = "sha256:b80b99a14bd085fcacfa15c9165f651fbb3406e66cc603abf11c5750937c992d", size = 9959554, upload-time = "2026-02-01T12:30:56.078Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/77/f5/21d2de20e8b8b0408f0681956ca2c69f1320a3848ac50e6e7f39c6159675/babel-2.18.0-py3-none-any.whl", hash = "sha256:e2b422b277c2b9a9630c1d7903c2a00d0830c409c59ac8cae9081c92f1aeba35", size = 10196845, upload-time = "2026-02-01T12:30:53.445Z" },
+]
+
+[[package]]
+name = "bandit"
+version = "1.9.4"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "colorama", marker = "sys_platform == 'win32' or (extra == 'group-18-django-polymorphic-cx-oracle' and extra == 'group-18-django-polymorphic-oracledb') or (extra == 'group-18-django-polymorphic-dj42' and extra == 'group-18-django-polymorphic-dj52') or (extra == 'group-18-django-polymorphic-dj42' and extra == 'group-18-django-polymorphic-dj60') or (extra == 'group-18-django-polymorphic-dj52' and extra == 'group-18-django-polymorphic-dj60') or (extra == 'group-18-django-polymorphic-mysqlclient14' and extra == 'group-18-django-polymorphic-mysqlclient2x') or (extra == 'group-18-django-polymorphic-psycopg2' and extra == 'group-18-django-polymorphic-psycopg3')" },
+    { name = "pyyaml" },
+    { name = "rich" },
+    { name = "stevedore" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/aa/c3/0cb80dfe0f3076e5da7e4c5ad8e57bac6ac357ff4a6406205501cade4965/bandit-1.9.4.tar.gz", hash = "sha256:b589e5de2afe70bd4d53fa0c1da6199f4085af666fde00e8a034f152a52cd628", size = 4242677, upload-time = "2026-02-25T06:44:15.503Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/05/a4/a26d5b25671d27e03afb5401a0be5899d94ff8fab6a698b1ac5be3ec29ef/bandit-1.9.4-py3-none-any.whl", hash = "sha256:f89ffa663767f5a0585ea075f01020207e966a9c0f2b9ef56a57c7963a3f6f8e", size = 134741, upload-time = "2026-02-25T06:44:13.694Z" },
+]
+
+[package.optional-dependencies]
+sarif = [
+    { name = "jschema-to-python" },
+    { name = "sarif-om" },
+]
+toml = [
+    { name = "tomli", marker = "python_full_version < '3.11' or (extra == 'group-18-django-polymorphic-cx-oracle' and extra == 'group-18-django-polymorphic-oracledb') or (extra == 'group-18-django-polymorphic-dj42' and extra == 'group-18-django-polymorphic-dj52') or (extra == 'group-18-django-polymorphic-dj42' and extra == 'group-18-django-polymorphic-dj60') or (extra == 'group-18-django-polymorphic-dj52' and extra == 'group-18-django-polymorphic-dj60') or (extra == 'group-18-django-polymorphic-mysqlclient14' and extra == 'group-18-django-polymorphic-mysqlclient2x') or (extra == 'group-18-django-polymorphic-psycopg2' and extra == 'group-18-django-polymorphic-psycopg3')" },
 ]
 
 [[package]]
@@ -707,6 +740,7 @@ cx-oracle = [
     { name = "cx-oracle" },
 ]
 dev = [
+    { name = "bandit", extra = ["sarif", "toml"] },
     { name = "coverage" },
     { name = "django-extra-views" },
     { name = "django-filter", version = "25.1", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-18-django-polymorphic-dj42' or (extra == 'group-18-django-polymorphic-cx-oracle' and extra == 'group-18-django-polymorphic-oracledb') or (extra == 'group-18-django-polymorphic-dj52' and extra == 'group-18-django-polymorphic-dj60') or (extra == 'group-18-django-polymorphic-mysqlclient14' and extra == 'group-18-django-polymorphic-mysqlclient2x') or (extra != 'group-18-django-polymorphic-oracledb' and extra == 'group-18-django-polymorphic-psycopg2' and extra == 'group-18-django-polymorphic-psycopg3') or (extra != 'group-18-django-polymorphic-cx-oracle' and extra == 'group-18-django-polymorphic-psycopg2' and extra == 'group-18-django-polymorphic-psycopg3')" },
@@ -778,6 +812,7 @@ integrations = [
     { name = "djangorestframework" },
 ]
 lint = [
+    { name = "bandit", extra = ["sarif", "toml"] },
     { name = "doc8" },
     { name = "readme-renderer", extra = ["md"] },
     { name = "ruff" },
@@ -834,6 +869,7 @@ requires-dist = [
 coverage = [{ name = "coverage", specifier = ">=7.6.1" }]
 cx-oracle = [{ name = "cx-oracle", specifier = ">=8.3.0" }]
 dev = [
+    { name = "bandit", extras = ["toml", "sarif"], specifier = ">=1.7.10" },
     { name = "coverage", specifier = ">=7.6.1" },
     { name = "django-extra-views", specifier = ">=0.16.0" },
     { name = "django-filter", specifier = ">=24.0" },
@@ -884,6 +920,7 @@ integrations = [
     { name = "djangorestframework", specifier = ">=3.16.1" },
 ]
 lint = [
+    { name = "bandit", extras = ["toml", "sarif"], specifier = ">=1.7.10" },
     { name = "doc8", specifier = ">=1.1.2" },
     { name = "readme-renderer", extras = ["md"], specifier = ">=43.0" },
     { name = "ruff", specifier = ">=0.15.0" },
@@ -1305,6 +1342,29 @@ wheels = [
 ]
 
 [[package]]
+name = "jschema-to-python"
+version = "1.2.3"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "attrs" },
+    { name = "jsonpickle" },
+    { name = "pbr" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/1d/7f/5ae3d97ddd86ec33323231d68453afd504041efcfd4f4dde993196606849/jschema_to_python-1.2.3.tar.gz", hash = "sha256:76ff14fe5d304708ccad1284e4b11f96a658949a31ee7faed9e0995279549b91", size = 10061, upload-time = "2019-10-05T20:02:39.657Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/31/9e/1b6819a87c3f59170406163ba17bc55b0abe18ae552f53d2b0a2025f9c63/jschema_to_python-1.2.3-py3-none-any.whl", hash = "sha256:8a703ca7604d42d74b2815eecf99a33359a8dccbb80806cce386d5e2dd992b05", size = 10400, upload-time = "2019-10-05T20:02:37.948Z" },
+]
+
+[[package]]
+name = "jsonpickle"
+version = "4.1.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/e4/a6/d07afcfdef402900229bcca795f80506b207af13a838d4d99ad45abf530c/jsonpickle-4.1.1.tar.gz", hash = "sha256:f86e18f13e2b96c1c1eede0b7b90095bbb61d99fedc14813c44dc2f361dbbae1", size = 316885, upload-time = "2025-06-02T20:36:11.57Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/c1/73/04df8a6fa66d43a9fd45c30f283cc4afff17da671886e451d52af60bdc7e/jsonpickle-4.1.1-py3-none-any.whl", hash = "sha256:bb141da6057898aa2438ff268362b126826c812a1721e31cf08a6e142910dc91", size = 47125, upload-time = "2025-06-02T20:36:08.647Z" },
+]
+
+[[package]]
 name = "librt"
 version = "0.8.1"
 source = { registry = "https://pypi.org/simple" }
@@ -1387,6 +1447,18 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/b9/eb/7697f60fbe7042ab4e88f4ee6af496b7f222fffb0a4e3593ef1f29f81652/librt-0.8.1-cp314-cp314t-win32.whl", hash = "sha256:738f08021b3142c2918c03692608baed43bc51144c29e35807682f8070ee2a3a", size = 51328, upload-time = "2026-02-17T16:12:45.148Z" },
     { url = "https://files.pythonhosted.org/packages/7c/72/34bf2eb7a15414a23e5e70ecb9440c1d3179f393d9349338a91e2781c0fb/librt-0.8.1-cp314-cp314t-win_amd64.whl", hash = "sha256:89815a22daf9c51884fb5dbe4f1ef65ee6a146e0b6a8df05f753e2e4a9359bf4", size = 58722, upload-time = "2026-02-17T16:12:46.85Z" },
     { url = "https://files.pythonhosted.org/packages/b2/c8/d148e041732d631fc76036f8b30fae4e77b027a1e95b7a84bb522481a940/librt-0.8.1-cp314-cp314t-win_arm64.whl", hash = "sha256:bf512a71a23504ed08103a13c941f763db13fb11177beb3d9244c98c29fb4a61", size = 48755, upload-time = "2026-02-17T16:12:47.943Z" },
+]
+
+[[package]]
+name = "markdown-it-py"
+version = "4.0.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "mdurl" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/5b/f5/4ec618ed16cc4f8fb3b701563655a69816155e79e24a17b651541804721d/markdown_it_py-4.0.0.tar.gz", hash = "sha256:cb0a2b4aa34f932c007117b194e945bd74e0ec24133ceb5bac59009cda1cb9f3", size = 73070, upload-time = "2025-08-11T12:57:52.854Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/94/54/e7d793b573f298e1c9013b8c4dade17d481164aa517d1d7148619c2cedbf/markdown_it_py-4.0.0-py3-none-any.whl", hash = "sha256:87327c59b172c5011896038353a81343b6754500a08cd7a4973bb48c6d578147", size = 87321, upload-time = "2025-08-11T12:57:51.923Z" },
 ]
 
 [[package]]
@@ -1484,6 +1556,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/c7/74/97e72a36efd4ae2bccb3463284300f8953f199b5ffbc04cbbb0ec78f74b1/matplotlib_inline-0.2.1.tar.gz", hash = "sha256:e1ee949c340d771fc39e241ea75683deb94762c8fa5f2927ec57c83c4dffa9fe", size = 8110, upload-time = "2025-10-23T09:00:22.126Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/af/33/ee4519fa02ed11a94aef9559552f3b17bb863f2ecfe1a35dc7f548cde231/matplotlib_inline-0.2.1-py3-none-any.whl", hash = "sha256:d56ce5156ba6085e00a9d54fead6ed29a9c47e215cd1bba2e976ef39f5710a76", size = 9516, upload-time = "2025-10-23T09:00:20.675Z" },
+]
+
+[[package]]
+name = "mdurl"
+version = "0.1.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/d6/54/cfe61301667036ec958cb99bd3efefba235e65cdeb9c84d24a8293ba1d90/mdurl-0.1.2.tar.gz", hash = "sha256:bb413d29f5eea38f31dd4754dd7377d4465116fb207585f97bf925588687c1ba", size = 8729, upload-time = "2022-08-14T12:40:10.846Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/b3/38/89ba8ad64ae25be8de66a6d463314cf1eb366222074cfda9ee839c56a4b4/mdurl-0.1.2-py3-none-any.whl", hash = "sha256:84008a41e51615a49fc9966191ff91509e3c40b939176e643fd50a5c2196b8f8", size = 9979, upload-time = "2022-08-14T12:40:09.779Z" },
 ]
 
 [[package]]
@@ -1676,6 +1757,18 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/fa/36/e27608899f9b8d4dff0617b2d9ab17ca5608956ca44461ac14ac48b44015/pathspec-1.0.4.tar.gz", hash = "sha256:0210e2ae8a21a9137c0d470578cb0e595af87edaa6ebf12ff176f14a02e0e645", size = 131200, upload-time = "2026-01-27T03:59:46.938Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/ef/3c/2c197d226f9ea224a9ab8d197933f9da0ae0aac5b6e0f884e2b8d9c8e9f7/pathspec-1.0.4-py3-none-any.whl", hash = "sha256:fb6ae2fd4e7c921a165808a552060e722767cfa526f99ca5156ed2ce45a5c723", size = 55206, upload-time = "2026-01-27T03:59:45.137Z" },
+]
+
+[[package]]
+name = "pbr"
+version = "7.0.3"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "setuptools" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/5e/ab/1de9a4f730edde1bdbbc2b8d19f8fa326f036b4f18b2f72cfbea7dc53c26/pbr-7.0.3.tar.gz", hash = "sha256:b46004ec30a5324672683ec848aed9e8fc500b0d261d40a3229c2d2bbfcedc29", size = 135625, upload-time = "2025-11-03T17:04:56.274Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/c0/db/61efa0d08a99f897ef98256b03e563092d36cc38dc4ebe4a85020fe40b31/pbr-7.0.3-py2.py3-none-any.whl", hash = "sha256:ff223894eb1cd271a98076b13d3badff3bb36c424074d26334cd25aebeecea6b", size = 131898, upload-time = "2025-11-03T17:04:54.875Z" },
 ]
 
 [[package]]
@@ -2071,6 +2164,19 @@ wheels = [
 ]
 
 [[package]]
+name = "rich"
+version = "14.3.3"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "markdown-it-py" },
+    { name = "pygments" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/b3/c6/f3b320c27991c46f43ee9d856302c70dc2d0fb2dba4842ff739d5f46b393/rich-14.3.3.tar.gz", hash = "sha256:b8daa0b9e4eef54dd8cf7c86c03713f53241884e814f4e2f5fb342fe520f639b", size = 230582, upload-time = "2026-02-19T17:23:12.474Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/14/25/b208c5683343959b670dc001595f2f3737e051da617f66c31f7c4fa93abc/rich-14.3.3-py3-none-any.whl", hash = "sha256:793431c1f8619afa7d3b52b2cdec859562b950ea0d4b6b505397612db8d5362d", size = 310458, upload-time = "2026-02-19T17:23:13.732Z" },
+]
+
+[[package]]
 name = "roman-numerals"
 version = "4.1.0"
 source = { registry = "https://pypi.org/simple" }
@@ -2102,6 +2208,28 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/28/3a/950367aee7c69027f4f422059227b290ed780366b6aecee5de5039d50fa8/ruff-0.15.5-py3-none-win32.whl", hash = "sha256:732e5ee1f98ba5b3679029989a06ca39a950cced52143a0ea82a2102cb592b74", size = 10551676, upload-time = "2026-03-05T20:06:13.705Z" },
     { url = "https://files.pythonhosted.org/packages/b8/00/bf077a505b4e649bdd3c47ff8ec967735ce2544c8e4a43aba42ee9bf935d/ruff-0.15.5-py3-none-win_amd64.whl", hash = "sha256:821d41c5fa9e19117616c35eaa3f4b75046ec76c65e7ae20a333e9a8696bc7fe", size = 11678972, upload-time = "2026-03-05T20:06:45.379Z" },
     { url = "https://files.pythonhosted.org/packages/fe/4e/cd76eca6db6115604b7626668e891c9dd03330384082e33662fb0f113614/ruff-0.15.5-py3-none-win_arm64.whl", hash = "sha256:b498d1c60d2fe5c10c45ec3f698901065772730b411f164ae270bb6bfcc4740b", size = 10965572, upload-time = "2026-03-05T20:06:16.984Z" },
+]
+
+[[package]]
+name = "sarif-om"
+version = "1.0.4"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "attrs" },
+    { name = "pbr" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/ba/de/bbdd93fe456d4011500784657c5e4a31e3f4fcbb276255d4db1213aed78c/sarif_om-1.0.4.tar.gz", hash = "sha256:cd5f416b3083e00d402a92e449a7ff67af46f11241073eea0461802a3b5aef98", size = 28847, upload-time = "2019-10-05T20:11:23.338Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/82/7c/1d3d0467565aa8b3e77ab8712042a09dd1158056826f45783f3d2b34adf1/sarif_om-1.0.4-py3-none-any.whl", hash = "sha256:539ef47a662329b1c8502388ad92457425e95dc0aaaf995fe46f4984c4771911", size = 30193, upload-time = "2019-10-05T20:11:21.577Z" },
+]
+
+[[package]]
+name = "setuptools"
+version = "82.0.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/82/f3/748f4d6f65d1756b9ae577f329c951cda23fb900e4de9f70900ced962085/setuptools-82.0.0.tar.gz", hash = "sha256:22e0a2d69474c6ae4feb01951cb69d515ed23728cf96d05513d36e42b62b37cb", size = 1144893, upload-time = "2026-02-08T15:08:40.206Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e1/c6/76dc613121b793286a3f91621d7b75a2b493e0390ddca50f11993eadf192/setuptools-82.0.0-py3-none-any.whl", hash = "sha256:70b18734b607bd1da571d097d236cfcfacaf01de45717d59e6e04b96877532e0", size = 1003468, upload-time = "2026-02-08T15:08:38.723Z" },
 ]
 
 [[package]]
