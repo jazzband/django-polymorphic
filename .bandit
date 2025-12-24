@@ -1,0 +1,22 @@
+[bandit]
+# Exclude paths from security scanning
+exclude_dirs = [
+    "/src/polymorphic/tests",
+    "/src/polymorphic/migrations",
+    "/example",
+    "/.venv",
+    "/docs",
+]
+
+# Test IDs to skip
+skips = [
+    "B101",  # assert_used - assertions are fine in tests and Django code
+]
+
+# Severity level threshold
+# Options: LOW, MEDIUM, HIGH
+severity = "MEDIUM"
+
+# Confidence level threshold
+# Options: LOW, MEDIUM, HIGH
+confidence = "MEDIUM"

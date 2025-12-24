@@ -168,8 +168,20 @@ lint: sort-imports
 # fix formatting, linting issues and import sorting
 fix: lint format
 
+# run bandit static security analysis
+check-security-bandit:
+    @just run bandit -c .bandit -r src/polymorphic
+
+# run dependency vulnerability scanning
+check-security-deps:
+    @just run pip-audit --disable-pip
+    @just run safety check --json
+
+# run all security checks
+check-security: check-security-bandit check-security-deps
+
 # run all static checks
-check: check-lint check-format check-types check-package check-docs check-docs-links _check-readme-quiet
+check: check-lint check-format check-types check-package check-docs check-docs-links _check-readme-quiet check-security
 
 [script]
 _lock-python:
