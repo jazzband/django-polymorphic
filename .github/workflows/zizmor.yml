@@ -40,25 +40,25 @@ jobs:
 
       - name: Run Zizmor analysis
         run: |
-          zizmor --format sarif .github/workflows/ > results.sarif
+          zizmor --format sarif .github/workflows/ > zizmor.sarif
 
       - name: Upload analysis results
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f
         with:
           name: zizmor-results
-          path: results.sarif
+          path: zizmor.sarif
           retention-days: 7
 
       - name: Upload to code-scanning
         uses: github/codeql-action/upload-sarif@0d579ffd059c29b07949a3cce3983f0780820c98
         with:
-          sarif_file: results.sarif
+          sarif_file: zizmor.sarif
 
       - name: Fail on Findings
         run: |
           count="$(
             jq '([.runs[]? | (.results // [])[] | select(.level != "note")] | length) // 0' \
-              results.sarif
+              zizmor.sarif
           )"
           echo "Zizmor findings: $count"
           test "$count" -eq 0

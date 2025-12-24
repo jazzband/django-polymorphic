@@ -195,6 +195,10 @@ lint: sort-imports
 # fix formatting, linting issues and import sorting
 fix: lint format
 
+# run bandit static security analysis
+bandit:
+    @just run --no-default-groups --group lint bandit -c pyproject.toml -r ./src -f sarif -o bandit.sarif
+
 # run all static checks
 check *ENV:
     @just check-lint {{ ENV }}

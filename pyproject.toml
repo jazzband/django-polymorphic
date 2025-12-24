@@ -207,6 +207,30 @@ reportGeneralTypeIssues = false
 reportOptionalSubscript = false
 reportPrivateImportUsage = false
 
+
+[tool.bandit]
+targets = ["src"]
+exclude_dirs = [
+    "./src/polymorphic/tests",
+    "./src/polymorphic/migrations",
+    "./example",
+    "./.venv",
+    "./docs",
+]
+
+skips = [
+    "B101",  # assert_used - assertions are fine in tests and Django code
+]
+
+# Severity level threshold
+# Options: LOW, MEDIUM, HIGH
+severity = "MEDIUM"
+
+# Confidence level threshold
+# Options: LOW, MEDIUM, HIGH
+confidence = "MEDIUM"
+
+
 [dependency-groups]
 typing = [
     "django-stubs>=5.1.1",
@@ -216,9 +240,10 @@ typing = [
     "mypy>=1.19.1",
 ]
 lint = [
-    "ruff>=0.15.0", 
+    "ruff>=0.15.0",
     "readme-renderer[md]>=43.0",
-    "doc8>=1.1.2"
+    "doc8>=1.1.2",
+    "bandit[toml,sarif]>=1.7.10"
 ]
 coverage = ["coverage>=7.6.1"]
 test = [
