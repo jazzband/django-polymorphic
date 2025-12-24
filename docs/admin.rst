@@ -198,6 +198,91 @@ model in the admin will raise an :exc:`AttributeError` with the message "can't s
         inlines = [ModelBInline]
 
 
+ManyToMany fields in polymorphic inlines
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. warning::
+
+    Django's admin interface does not support :class:`~django.db.models.ManyToManyField` fields
+    directly in inline forms. This is a Django limitation, not specific to django-polymorphic.
+
+When a polymorphic inline model contains a :class:`~django.db.models.ManyToManyField`, the field
+may not appear in the inline form or may not function correctly. This is because Django's inline
+forms are designed for ForeignKey relationships (one-to-many), not many-to-many relationships.
+
+**Workaround 1: Use filter_horizontal or filter_vertical**
+
+If the ManyToMany field is on the parent model (not the inline), use
+:attr:`~django.contrib.admin.ModelAdmin.filter_horizontal` or
+:attr:`~django.contrib.admin.ModelAdmin.filter_vertical`:
+
+.. code-block:: python
+
+    from django.contrib import admin
+    from .models import Article
+
+
+    @admin.register(Article)
+    class ArticleAdmin(admin.ModelAdmin):
+        filter_horizontal = ('tags',)  # For M2M fields on the parent model
+
+
+**Workaround 2: Inline the through model**
+
+For ManyToMany fields on polymorphic inline models, create an inline for the **through model**
+(the intermediate table) instead:
+
+.. code-block:: python
+
+    from django.contrib import admin
+    from polymorphic.admin import PolymorphicInlineSupportMixin, StackedPolymorphicInline
+    from .models import Article, BaseSection, TextSection, ImageSection
+
+
+    # Inline for the M2M through model
+    class SectionTagInline(admin.TabularInline):
+        model = BaseSection.tags.through
+        extra = 1
+
+
+    class BaseSectionAdmin(admin.ModelAdmin):
+        inlines = [SectionTagInline]
+        # Exclude the M2M field since we're managing it through the inline
+        exclude = ('tags',)
+
+
+    # For polymorphic inlines with M2M fields, use the same approach
+    class TextSectionInline(StackedPolymorphicInline.Child):
+        model = TextSection
+        # Exclude M2M fields from the inline
+        exclude = ('tags',)
+
+
+    class ImageSectionInline(StackedPolymorphicInline.Child):
+        model = ImageSection
+        # Exclude M2M fields from the inline
+        exclude = ('tags',)
+
+
+    class SectionInline(StackedPolymorphicInline):
+        model = BaseSection
+        child_inlines = (TextSectionInline, ImageSectionInline)
+
+
+    @admin.register(Article)
+    class ArticleAdmin(PolymorphicInlineSupportMixin, admin.ModelAdmin):
+        inlines = (SectionInline,)
+
+
+This approach allows you to manage the many-to-many relationships through a separate inline,
+which is the standard Django pattern for handling M2M fields in the admin interface.
+
+.. seealso::
+
+    For more information about ManyToMany fields in Django admin, see the
+    :doc:`Django admin documentation <django:ref/contrib/admin/index>`.
+
+
 
 Internal details
 ----------------
