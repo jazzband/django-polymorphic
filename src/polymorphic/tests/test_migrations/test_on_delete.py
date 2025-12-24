@@ -6,7 +6,7 @@ SET_NULL, SET_DEFAULT, SET(...), DO_NOTHING, and RESTRICT) are properly wrapped
 with PolymorphicGuard and serialize correctly in migrations.
 """
 
-import shutil
+from django.core.management import call_command
 from pathlib import Path
 from django.test import TestCase, TransactionTestCase
 from django.db import models
@@ -582,3 +582,33 @@ class OnDeleteBehaviorTest(GeneratedMigrationsPerClassMixin, TransactionTestCase
         # Verify the object still exists but the field is now null
         one_to_one_obj = ModelWithOneToOneSetNull.objects.get(id=one_to_one_obj_id)
         self.assertIsNone(one_to_one_obj.related)
+
+
+class TestMigrationStateStability(TestCase):
+    """
+    Test that unchanged models do not generate new migrations.
+    """
+
+    def test_migration_state_stability(self):
+        call_command("makemigrations")
+
+        migrations_dirs = [
+            Path(__file__).parent.parent / "deletion" / "migrations",
+            Path(__file__).parent.parent / "test_migrations" / "migrations",
+            Path(__file__).parent.parent / "migrations",
+        ]
+
+        migrations = set()
+
+        for migrations_dir in migrations_dirs:
+            migrations.update(migrations_dir.glob("00*.py"))
+
+        call_command("makemigrations")
+        call_command("makemigrations")
+
+        migrations_post = set()
+
+        for migrations_dir in migrations_dirs:
+            migrations_post.update(migrations_dir.glob("00*.py"))
+
+        self.assertEqual(migrations, migrations_post)
