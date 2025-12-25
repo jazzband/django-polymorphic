@@ -79,6 +79,49 @@ class PolymorphicModel(models.Model, metaclass=PolymorphicModelBase):
 
     pre_save_polymorphic.alters_data = True
 
+    def reset_polymorphic_copy_fields(self):
+        """
+        Reset all fields necessary for copying a polymorphic object.
+
+        This method should be called before saving a copy of a polymorphic object.
+        It resets the primary key, polymorphic content type, and all parent link
+        fields in the inheritance chain.
+
+        Example usage:
+            >>> original = Model2C.objects.first()
+            >>> copy = Model2C.objects.get(pk=original.pk)
+            >>> copy.field1 = 'new value'
+            >>> copy.reset_polymorphic_copy_fields()
+            >>> copy.save()
+
+        This works for any depth of inheritance (ModelA -> ModelB -> ModelC -> ModelD, etc.)
+        """
+        # Reset primary key
+        self.pk = None
+        self.id = None
+
+        # Reset polymorphic content type (will be set automatically on save)
+        self.polymorphic_ctype_id = None
+
+        # Reset all parent link fields in the inheritance chain
+        # This is necessary for models with 3+ levels of inheritance
+        for field in self._meta.get_fields(include_parents=True):
+            if not isinstance(field, models.OneToOneField):
+                continue
+
+            # Check if this is a parent link field
+            if not field.remote_field or not field.remote_field.parent_link:
+                continue
+
+            # Test this is a pointer to something in our own inheritance tree
+            if not isinstance(self, field.related_model):
+                continue
+
+            # Reset the field's database column value (e.g., model2a_ptr_id, model2b_ptr_id)
+            setattr(self, field.attname, None)
+
+    reset_polymorphic_copy_fields.alters_data = True
+
     def save(self, *args, **kwargs):
         """Calls :meth:`pre_save_polymorphic` and saves the model."""
         using = kwargs.get("using", self._state.db or DEFAULT_DB_ALIAS)

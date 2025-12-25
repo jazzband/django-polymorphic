@@ -1967,3 +1967,121 @@ class PolymorphicTests(TransactionTestCase):
         RecursionBug.objects.filter(id=item.id).update(status=closed)
         item.refresh_from_db(fields=("status",))
         assert item.status == closed
+
+    def test_copy_polymorphic_objects(self):
+        """
+        Test copying polymorphic objects with multi-level inheritance.
+        https://github.com/jazzband/django-polymorphic/issues/414
+
+        This test verifies that the reset_polymorphic_copy_fields() method
+        correctly handles copying objects with 2, 3, and 4 levels of inheritance.
+        """
+        # Clean up any existing objects to ensure test isolation
+        Model2D.objects.all().delete()
+        Model2C.objects.all().delete()
+        Model2B.objects.all().delete()
+        Model2A.objects.all().delete()
+
+        # Create original objects
+        obj_b = Model2B.objects.create(field1="B1", field2="B2")
+        obj_c = Model2C.objects.create(field1="C1", field2="C2", field3="C3")
+        obj_d = Model2D.objects.create(field1="D1", field2="D2", field3="D3", field4="D4")
+
+        original_b_pk = obj_b.pk
+        original_c_pk = obj_c.pk
+        original_d_pk = obj_d.pk
+
+        # Note: Model2C and Model2D inherit from Model2B, so they're also counted in Model2B.objects
+        # Initial counts: Model2B=3 (obj_b, obj_c, obj_d), Model2C=2 (obj_c, obj_d), Model2D=1 (obj_d)
+        assert Model2B.objects.count() == 3  # obj_b + obj_c + obj_d
+        assert Model2C.objects.count() == 2  # obj_c + obj_d
+        assert Model2D.objects.count() == 1  # obj_d
+
+        # Test 1: Copy Model2B (2-level inheritance) using new method
+        copy_b = Model2B.objects.get(pk=obj_b.pk)
+        copy_b.field1 = "B1_copy"
+        copy_b.reset_polymorphic_copy_fields()
+        copy_b.save()
+
+        # Verify the copy
+        assert copy_b.pk != original_b_pk
+        assert copy_b.field1 == "B1_copy"
+        assert copy_b.field2 == "B2"
+        assert Model2B.objects.filter(pk=original_b_pk).exists()
+        assert Model2B.objects.filter(pk=copy_b.pk).exists()
+        # Now we have: obj_b, copy_b, obj_c, obj_d
+        assert Model2B.objects.count() == 4
+
+        # Test 2: Copy Model2C (3-level inheritance) using new method
+        # This is the main issue from #414 - previously failed
+        copy_c = Model2C.objects.get(pk=obj_c.pk)
+        copy_c.field1 = "C1_copy"
+        copy_c.reset_polymorphic_copy_fields()
+        copy_c.save()
+
+        # Verify the copy
+        assert copy_c.pk != original_c_pk
+        assert copy_c.field1 == "C1_copy"
+        assert copy_c.field2 == "C2"
+        assert copy_c.field3 == "C3"
+        assert Model2C.objects.filter(pk=original_c_pk).exists()
+        assert Model2C.objects.filter(pk=copy_c.pk).exists()
+        # Now we have Model2C: obj_c, copy_c, obj_d
+        assert Model2C.objects.count() == 3
+        # And Model2B: obj_b, copy_b, obj_c, copy_c, obj_d
+        assert Model2B.objects.count() == 5
+
+        # Test 3: Copy Model2D (4-level inheritance) using new method
+        copy_d = Model2D.objects.get(pk=obj_d.pk)
+        copy_d.field1 = "D1_copy"
+        copy_d.reset_polymorphic_copy_fields()
+        copy_d.save()
+
+        # Verify the copy
+        assert copy_d.pk != original_d_pk
+        assert copy_d.field1 == "D1_copy"
+        assert copy_d.field2 == "D2"
+        assert copy_d.field3 == "D3"
+        assert copy_d.field4 == "D4"
+        assert Model2D.objects.filter(pk=original_d_pk).exists()
+        assert Model2D.objects.filter(pk=copy_d.pk).exists()
+        # Now we have Model2D: obj_d, copy_d
+        assert Model2D.objects.count() == 2
+        # Model2C: obj_c, copy_c, obj_d, copy_d
+        assert Model2C.objects.count() == 4
+        # Model2B: obj_b, copy_b, obj_c, copy_c, obj_d, copy_d
+        assert Model2B.objects.count() == 6
+
+        # Test 4: Verify old manual method still works for 2-level inheritance
+        manual_copy_b = Model2B.objects.get(pk=obj_b.pk)
+        manual_copy_b.field1 = "B1_manual"
+        manual_copy_b.pk = None
+        manual_copy_b.id = None
+        manual_copy_b.save()
+
+        assert manual_copy_b.pk not in [original_b_pk, copy_b.pk]
+        assert manual_copy_b.field1 == "B1_manual"
+        assert manual_copy_b.field2 == "B2"
+        # Now we have Model2B: obj_b, copy_b, manual_copy_b, obj_c, copy_c, obj_d, copy_d
+        assert Model2B.objects.count() == 7
+
+        # Test 5: Verify that polymorphic queries work correctly on copied objects
+        all_b = list(Model2B.objects.all().order_by("pk"))
+        assert len(all_b) == 7  # obj_b, copy_b, manual_copy_b, obj_c, copy_c, obj_d, copy_d
+        # Check that each is the correct type
+        b_only = [obj for obj in all_b if type(obj).__name__ == "Model2B"]
+        assert len(b_only) == 3  # obj_b, copy_b, manual_copy_b
+
+        all_c = list(Model2C.objects.all().order_by("pk"))
+        assert len(all_c) == 4  # obj_c, copy_c, obj_d, copy_d
+        c_only = [obj for obj in all_c if type(obj).__name__ == "Model2C"]
+        assert len(c_only) == 2  # obj_c, copy_c
+
+        all_d = list(Model2D.objects.all().order_by("pk"))
+        assert len(all_d) == 2  # obj_d, copy_d
+        assert all(type(obj).__name__ == "Model2D" for obj in all_d)
+
+        # Test 6: Verify polymorphic_ctype is set correctly on copied objects
+        assert copy_b.polymorphic_ctype == ContentType.objects.get_for_model(Model2B)
+        assert copy_c.polymorphic_ctype == ContentType.objects.get_for_model(Model2C)
+        assert copy_d.polymorphic_ctype == ContentType.objects.get_for_model(Model2D)
