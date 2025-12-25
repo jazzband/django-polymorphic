@@ -338,6 +338,56 @@ class PolymorphicQuerySet(QuerySet):
     # The "polymorphic" keyword argument is not supported anymore.
     # def extra(self, *args, **kwargs):
 
+    def _get_best_effort_instance(self, base_object, failed_class):
+        """
+        Walk up the inheritance hierarchy to find the best available instance.
+
+        When a derived object cannot be fetched (e.g., during deletion),
+        try parent classes until we find one that exists.
+
+        Returns the base_object as a last resort, ensuring we never return None.
+        """
+        pk_name = self.model.polymorphic_primary_key_name
+        o_pk = getattr(base_object, pk_name)
+
+        # Get the MRO (method resolution order) for the failed class
+        # Skip the first item (the class itself) since we already know it failed
+        for parent_class in failed_class.__mro__[1:]:
+            # Stop at PolymorphicModel or models.Model
+            if not hasattr(parent_class, "_base_objects"):
+                break
+            if parent_class == self.model:
+                # We've reached the base model, return base_object
+                return base_object
+
+            try:
+                # Try to fetch as this parent class
+                parent_object = parent_class._base_objects.db_manager(self.db).get(
+                    **{pk_name: o_pk}
+                )
+                # Copy annotations and extra fields from base_object
+                if self.query.annotations:
+                    annotation_select = getattr(
+                        self.query, "annotation_select", self.query.annotations
+                    )
+                    for anno_field_name in annotation_select.keys():
+                        if hasattr(base_object, anno_field_name):
+                            attr = getattr(base_object, anno_field_name)
+                            setattr(parent_object, anno_field_name, attr)
+
+                if self.query.extra_select:
+                    for select_field_name in self.query.extra_select.keys():
+                        attr = getattr(base_object, select_field_name)
+                        setattr(parent_object, select_field_name, attr)
+
+                return parent_object
+            except parent_class.DoesNotExist:
+                # This parent doesn't exist either, try the next one
+                continue
+
+        # Couldn't find any parent, return the base_object as last resort
+        return base_object
+
     def _get_real_instances(self, base_result_objects):
         """
         Polymorphic object loader
@@ -469,7 +519,8 @@ class PolymorphicQuerySet(QuerySet):
                 o_pk = getattr(base_object, pk_name)
                 real_object = real_objects_dict.get(o_pk)
                 if real_object is None:
-                    continue
+                    # Best effort: walk up the inheritance hierarchy
+                    real_object = self._get_best_effort_instance(base_object, real_concrete_class)
 
                 # need shallow copy to avoid duplication in caches (see PR #353)
                 real_object = copy.copy(real_object)
@@ -497,7 +548,7 @@ class PolymorphicQuerySet(QuerySet):
 
                 resultlist[j] = real_object
 
-        resultlist = [i for i in resultlist if i]
+        # No longer filter out None values - best effort ensures all objects are valid
 
         # set polymorphic_annotate_names in all objects (currently just used for debugging/printing)
         if self.query.annotations:
