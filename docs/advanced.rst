@@ -111,19 +111,27 @@ A :class:`~django.db.models.ManyToManyField` example:
 Copying Polymorphic objects
 ---------------------------
 
-When creating a copy of a polymorphic object, both the
-:attr:`~django.db.models.Model.id` and the :attr:`~django.db.models.Model.pk` of the object need to
-be set to ``None`` before saving so that both the base table and the derived table will be updated
-to the new object:
+**Copying polymorphic models is no different than copying regular multi-table models.** You have
+two options:
+
+1. Use :meth:`~django.db.models.query.QuerySet.create` and provide all field values from the
+   original instance except the primary key(s).
+2. Set the primary key attribute, and parent table pointers at all levels of inheritance to ``None``
+   and call :meth:`~django.db.models.Model.save`.
+
+The Django documentation :ref:`offers some discussion on copying <topics/db/queries:copying model instances>`,
+including the complexity around related fields and multi-table inheritance.
+:pypi:`django-polymorphic` offers a utility function :func:`~polymorphic.utils.prepare_for_copy`
+that resets all necessary fields on a model instance to prepare it for copying:
 
 .. code-block:: python
 
-    >>> o = ModelB.objects.first()
-    >>> o.field1 = 'new val' # leave field2 unchanged
-    >>> o.pk = None
-    >>> o.id = None
-    >>> o.save()
+    from polymorphic.utils import prepare_for_copy
 
+    obj = ModelB.objects.first()
+    prepare_for_copy(obj)
+    obj.save()
+    # obj is now a copy of the original ModelB instance
 
 Using Third Party Models (without modifying them)
 -------------------------------------------------
