@@ -35,6 +35,26 @@ from polymorphic.tests.models import (
 from playwright.sync_api import sync_playwright, expect
 from urllib.parse import urljoin
 
+from django import forms
+from django.utils.encoding import force_str
+
+
+class FileFieldInlineA(StackedPolymorphicInline.Child):
+    model = InlineModelA
+
+
+class FileFieldInlineB(StackedPolymorphicInline.Child):
+    model = InlineModelB
+
+
+class FileFieldInline(StackedPolymorphicInline):
+    model = InlineModelA
+    child_inlines = (FileFieldInlineA, FileFieldInlineB)
+
+
+class FileFieldParentAdmin(PolymorphicInlineSupportMixin, admin.ModelAdmin):
+    inlines = (FileFieldInline,)
+
 
 class PolymorphicAdminTests(AdminTestCase):
     def test_admin_registration(self):
@@ -275,6 +295,32 @@ class PolymorphicAdminTests(AdminTestCase):
         assert child.__class__ == InlineModelB
         assert child.field1 == "A2"
         assert child.field2 == "B2"
+
+    def test_render_change_form_sets_has_file_field(self):
+        """
+        Test that render_change_form correctly sets has_file_field
+        when a polymorphic inline contains a FileField.
+        """
+        # Register the admin for testing
+        self.register(InlineParent)(FileFieldParentAdmin)
+
+        parent = InlineParent.objects.create(title="Parent with file inline")
+
+        # Add a file field dynamically to simulate file upload
+        FileFieldInlineB.form = type(
+            "DynamicFileForm",
+            (forms.ModelForm,),
+            {
+                "Meta": type("Meta", (), {"model": InlineModelB, "fields": "__all__"}),
+                "file_field": forms.FileField(required=False),
+            },
+        )
+
+        # Go to the change page
+        response = self.admin_get_change(InlineParent, parent.pk)
+        response.render()  # Force TemplateResponse to render
+        self.assertIn("has_file_field", response.context_data)
+        self.assertTrue(response.context_data["has_file_field"])
 
 
 class _GenericAdminFormTest(StaticLiveServerTestCase):
@@ -533,6 +579,70 @@ class PolymorphicFormTests(_GenericAdminFormTest):
         assert Model2D.objects.first().field2 == "2D2"
         assert Model2D.objects.first().field3 == ""
         assert Model2D.objects.first().field4 == "2D4"
+
+    def test_admin_popup_validation_error(self):
+        """
+        Test that popup functionality works correctly after validation errors.
+        Regression test for issue #612.
+        """
+        model2d_ct = ContentType.objects.get_for_model(Model2D)
+
+        # Navigate to add page with popup parameters
+        add_url = self.add_url(Model2A)
+        popup_url = f"{add_url}?_popup=1&_to_field=id"
+
+        self.page.goto(popup_url)
+
+        # Select Model2D type
+        self.page.locator(f"input[type=radio][value='{model2d_ct.pk}']").check()
+        with self.page.expect_navigation(timeout=10000) as nav_info:
+            self.page.click("input[name='_save']")
+
+        response = nav_info.value
+        assert response.status < 400
+
+        # Verify we're still on the add page with popup parameters
+        current_url = self.page.url
+        assert "_popup=1" in current_url, (
+            f"_popup parameter lost after type selection. URL: {current_url}"
+        )
+
+        # Submit form with validation error (missing required fields)
+        # Only fill field1, leave field2 and field4 empty to trigger validation error
+        self.page.fill("input[name='field1']", "Test1")
+
+        with self.page.expect_navigation(timeout=10000) as nav_info:
+            self.page.click("input[name='_save']")
+
+        response = nav_info.value
+        assert response.status < 400
+
+        # CRITICAL: Verify popup parameters are still present after validation error
+        current_url = self.page.url
+        assert "_popup=1" in current_url, (
+            f"_popup parameter lost after validation error. URL: {current_url}"
+        )
+        assert "ct_id=" in current_url, (
+            f"ct_id parameter lost after validation error. URL: {current_url}"
+        )
+
+        # Verify error messages are displayed
+        error_list = self.page.locator(".errorlist").first
+        expect(error_list).to_be_visible()
+
+        # Fix validation errors by filling all required fields
+        self.page.fill("input[name='field1']", "Test1")
+        self.page.fill("input[name='field2']", "Test2")
+        self.page.fill("input[name='field4']", "Test4")
+
+        with self.page.expect_navigation(timeout=10000) as nav_info:
+            self.page.click("input[name='_save']")
+
+        response = nav_info.value
+        assert response.status < 400
+
+        # Verify the object was created successfully
+        assert Model2D.objects.filter(field1="Test1", field2="Test2", field4="Test4").exists()
 
 
 class PolymorphicNoChildrenTests(_GenericAdminFormTest):
