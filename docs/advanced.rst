@@ -111,10 +111,9 @@ A :class:`~django.db.models.ManyToManyField` example:
 Copying Polymorphic objects
 ---------------------------
 
-When creating a copy of a polymorphic object, both the
+When creating a copy of a polymorphic object with **two levels of inheritance** (e.g., ``ModelB`` inheriting from ``ModelA``), both the
 :attr:`~django.db.models.Model.id` and the :attr:`~django.db.models.Model.pk` of the object need to
-be set to ``None`` before saving so that both the base table and the derived table will be updated
-to the new object:
+be set to ``None`` before saving:
 
 .. code-block:: python
 
@@ -123,6 +122,25 @@ to the new object:
     >>> o.pk = None
     >>> o.id = None
     >>> o.save()
+
+However, for objects with **three or more levels of inheritance** (e.g., ``ModelC`` inheriting from ``ModelB`` inheriting from ``ModelA``),
+you must use the :meth:`~polymorphic.models.PolymorphicModel.reset_polymorphic_copy_fields` method instead.
+This method automatically resets all necessary fields including parent link pointers:
+
+.. code-block:: python
+
+    >>> o = ModelC.objects.first()
+    >>> o.field1 = 'new val'  # modify fields as needed
+    >>> o.reset_polymorphic_copy_fields()
+    >>> o.save()
+
+This method works for any depth of inheritance and is the recommended approach for copying polymorphic objects.
+It resets the primary key, polymorphic content type, and all parent link fields in the inheritance chain.
+
+.. note::
+    The :meth:`~polymorphic.models.PolymorphicModel.reset_polymorphic_copy_fields` method was added
+    to fix `issue #414 <https://github.com/jazzband/django-polymorphic/issues/414>`_.
+    It can be used for all polymorphic models regardless of inheritance depth.
 
 
 Using Third Party Models (without modifying them)
