@@ -413,11 +413,30 @@ class PolymorphicTests(TransactionTestCase):
         )
 
     def test_create_instanceof_q(self):
+        # Test with a list of models
         q = query_translate.create_instanceof_q([Model2B])
         expected = sorted(
             ContentType.objects.get_for_model(m).pk for m in [Model2B, Model2C, Model2D]
         )
         assert dict(q.children) == dict(polymorphic_ctype__in=expected)
+
+        # Test with empty list - should return None
+        q = query_translate.create_instanceof_q([])
+        assert q is None
+
+        # Test with None - should return None
+        q = query_translate.create_instanceof_q(None)
+        assert q is None
+
+        # Test error when passing non-PolymorphicModel type
+        from django.contrib.auth.models import User
+
+        with pytest.raises(TypeError):
+            query_translate.create_instanceof_q([User])
+
+        # Test error when passing invalid type (not a model class)
+        with pytest.raises(TypeError):
+            query_translate.create_instanceof_q([123])
 
     def test_base_manager(self):
         def base_manager(model):
@@ -632,6 +651,18 @@ class PolymorphicTests(TransactionTestCase):
             transform=lambda o: o.__class__,
             ordered=False,
         )
+
+        # Test error with invalid model string (non-existent model)
+        with pytest.raises(ValueError, match="model.*not found"):
+            Model2A.objects.instance_of("tests.NonExistentModel")
+
+        # Test error with short name but no context (using create_instanceof_q directly)
+        with pytest.raises(ValueError, match="not found"):
+            query_translate.create_instanceof_q("InvalidModel", queryset_model=None)
+
+        # Test error when string resolves to non-PolymorphicModel
+        with pytest.raises(TypeError, match="is not a PolymorphicModel"):
+            Model2A.objects.instance_of("contenttypes.ContentType")
 
     def test_instance_of_Q_object_with_string_reference(self):
         """Test instance_of in Q-object with string model reference (issue #505)"""
