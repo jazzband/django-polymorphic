@@ -113,6 +113,83 @@ Child model types can be filtered by adding a
 :attr:`~django.contrib.admin.ModelAdmin.list_filter` attribute. See the example above.
 
 
+Using Raw ID Fields with Polymorphic Models
+--------------------------------------------
+
+When using :attr:`~django.contrib.admin.ModelAdmin.raw_id_fields` for foreign keys or many-to-many
+fields that point to polymorphic models, the popup change list normally shows **all** child types.
+This can be confusing when a field on a specific child model should only reference instances of
+another specific child type.
+
+The :class:`~polymorphic.admin.PolymorphicForeignKeyRawIdWidget` automatically filters the popup
+change list to show only instances of the correct child model type.
+
+Example
+~~~~~~~
+
+Consider polymorphic models where ``ChildA`` has a many-to-many field to ``ChildB``:
+
+.. code-block:: python
+
+    from django.db import models
+    from polymorphic.models import PolymorphicModel
+
+    class ParentModel(PolymorphicModel):
+        name = models.CharField(max_length=100)
+
+    class ChildA(ParentModel):
+        related_children = models.ManyToManyField('ChildB', related_name='related_to_a')
+
+    class ChildB(ParentModel):
+        description = models.TextField()
+
+To use the filtered raw ID widget in the admin:
+
+.. code-block:: python
+
+    from django.contrib import admin
+    from polymorphic.admin import (
+        PolymorphicParentModelAdmin,
+        PolymorphicChildModelAdmin,
+        PolymorphicForeignKeyRawIdWidget,
+    )
+    from .models import ParentModel, ChildA, ChildB
+
+    @admin.register(ChildA)
+    class ChildAAdmin(PolymorphicChildModelAdmin):
+        base_model = ParentModel
+        raw_id_fields = ['related_children']
+
+        def formfield_for_manytomany(self, db_field, request, **kwargs):
+            if db_field.name in self.raw_id_fields:
+                kwargs['widget'] = PolymorphicForeignKeyRawIdWidget(
+                    db_field.remote_field, self.admin_site
+                )
+            return super().formfield_for_manytomany(db_field, request, **kwargs)
+
+    @admin.register(ChildB)
+    class ChildBAdmin(PolymorphicChildModelAdmin):
+        base_model = ParentModel
+
+    @admin.register(ParentModel)
+    class ParentModelAdmin(PolymorphicParentModelAdmin):
+        base_model = ParentModel
+        child_models = (ChildA, ChildB)
+
+Now when editing a ``ChildA`` instance, clicking the magnifying glass icon next to the
+``related_children`` field will open a popup showing only ``ChildB`` instances, not all child types.
+
+How it works
+~~~~~~~~~~~~
+
+The :class:`~polymorphic.admin.PolymorphicForeignKeyRawIdWidget` adds a ``polymorphic_ctype``
+parameter to the popup URL, which is automatically detected by
+:class:`~polymorphic.admin.PolymorphicParentModelAdmin` to filter the queryset by content type.
+
+This feature is backward compatible - existing raw ID fields without the custom widget will continue
+to show all child types as before.
+
+
 Inline models
 -------------
 

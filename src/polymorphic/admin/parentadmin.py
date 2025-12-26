@@ -187,6 +187,16 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
         qs = super().get_queryset(request)
         if not self.polymorphic_list:
             qs = qs.non_polymorphic()
+
+        # Filter by content type if specified (for raw ID widget popups)
+        ctype_id = request.GET.get("polymorphic_ctype")
+        if ctype_id:
+            try:
+                qs = qs.filter(polymorphic_ctype_id=int(ctype_id))
+            except (ValueError, TypeError):
+                # Invalid ctype_id, ignore the filter
+                pass
+
         return qs
 
     def add_view(self, request, form_url="", extra_context=None):
