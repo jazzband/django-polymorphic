@@ -234,17 +234,6 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
         real_admin = self._get_real_admin(object_id)
         return real_admin.delete_view(request, object_id, extra_context)
 
-    def get_preserved_filters(self, request):
-        if "_changelist_filters" in request.GET:
-            request.GET = request.GET.copy()
-            filters = request.GET.get("_changelist_filters")
-            f = filters.split("&")
-            for x in f:
-                c = x.split("=")
-                request.GET[c[0]] = c[1]
-            del request.GET["_changelist_filters"]
-        return super().get_preserved_filters(request)
-
     def get_urls(self):
         """
         Expose the custom URLs for the subclasses and the URL resolver.
