@@ -79,3 +79,13 @@ When the model is created elsewhere, you can also use the
     reset_polymorphic_ctype(Base, Sub1, Sub2)
 
     reset_polymorphic_ctype(Base, Sub1, Sub2, ignore_existing=True)
+
+
+Renaming Polymorphic Models
+============================
+
+.. warning::
+
+    Renaming a polymorphic base class is a complex operation that requires manual migration editing.
+    Django's automatic migration generation does not properly handle renaming models with multi-table
+    inheritance, which can lead to invalid SQL and data loss.
