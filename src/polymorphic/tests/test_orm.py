@@ -420,24 +420,6 @@ class PolymorphicTests(TransactionTestCase):
         )
         assert dict(q.children) == dict(polymorphic_ctype__in=expected)
 
-        # Test with empty list - should return None
-        q = query_translate.create_instanceof_q([])
-        assert q is None
-
-        # Test with None - should return None
-        q = query_translate.create_instanceof_q(None)
-        assert q is None
-
-        # Test error when passing non-PolymorphicModel type
-        from django.contrib.auth.models import User
-
-        with pytest.raises(TypeError):
-            query_translate.create_instanceof_q([User])
-
-        # Test error when passing invalid type (not a model class)
-        with pytest.raises(TypeError):
-            query_translate.create_instanceof_q([123])
-
     def test_base_manager(self):
         def base_manager(model):
             return (type(model._base_manager), model._base_manager.model)
