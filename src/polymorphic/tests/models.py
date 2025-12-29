@@ -346,6 +346,10 @@ class UUIDResearchProject(UUIDProject):
     supervisor = models.CharField(max_length=30)
 
 
+class NonUUIDArtProject(UUIDResearchProject):
+    idkey = models.AutoField(primary_key=True)
+
+
 class UUIDArtProjectA(UUIDArtProject): ...
 
 
@@ -831,6 +835,10 @@ class AltChildModel(ParentModel):
 
 class AltChildAsBaseModel(AltChildModel):
     more_name = models.CharField(max_length=10)
+
+
+class NonAutoPKChild(AltChildModel):
+    uuid_primary_key = models.UUIDField(primary_key=True, default=uuid.uuid1)
 
 
 class PlainModel(models.Model):

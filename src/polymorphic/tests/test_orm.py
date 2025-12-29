@@ -74,12 +74,14 @@ from polymorphic.tests.models import (
     MultiTableDerived,
     MyManager,
     MyManagerQuerySet,
+    NonAutoPKChild,
     NonPolymorphicParent,
     NonProxyChild,
     NonSymRelationA,
     NonSymRelationB,
     NonSymRelationBase,
     NonSymRelationBC,
+    NonUUIDArtProject,
     One2OneRelatingModel,
     One2OneRelatingModelDerived,
     ParentModel,
@@ -112,7 +114,6 @@ from polymorphic.tests.models import (
     SubclassSelectorProxyBaseModel,
     SubclassSelectorProxyConcreteModel,
     ParentLinkAndRelatedName,
-    TestParentLinkAndRelatedName,
     UUIDArtProject,
     UUIDArtProjectA,
     UUIDArtProjectB,
@@ -1997,19 +1998,22 @@ class PolymorphicTests(TransactionTestCase):
     def test_normal_django_to_poly_related_give_poly_type(self):
         obj1 = ParentModel.objects.create(name="m1")
         obj2 = ChildModel.objects.create(name="m2", other_name="m2")
-        obj3 = ChildModel.objects.create(name="m1")
+        obj3 = ChildModel.objects.create(name="m3")
+        obj4 = ChildModel.objects.create(name="m3")
+        obj5 = AltChildModel.objects.create(name="m4")
 
         PlainModel.objects.create(relation=obj1)
         PlainModel.objects.create(relation=obj2)
         PlainModel.objects.create(relation=obj3)
+        PlainModel.objects.create(relation=obj4)
+        PlainModel.objects.create(relation=obj5)
 
-        ContentType.objects.get_for_model(AltChildModel)
-
-        with self.assertNumQueries(6):
+        with self.assertNumQueries(10):
             # Queries will be
             #    * 1 for All PlainModels object (1)
-            #    * 1 for each relations ParentModel (4)
-            #    * 1 for each relations ChilModel is needed (3)
+            #    * 1 for each relations ParentModel (5)
+            #    * 1 for each relations ChildModel is needed (3)
+            #    * 1 for each relations AltChildModel is needed (1)
             multi_q = [
                 # these obj.relation values will have their proper sub type
                 obj.relation
@@ -2017,7 +2021,32 @@ class PolymorphicTests(TransactionTestCase):
             ]
             multi_q_types = [type(obj) for obj in multi_q]
 
-        with self.assertNumQueries(2):
+        with self.assertNumQueries(3):
+            grouped_q = [
+                # these obj.relation values will all be ParentModel's
+                # unless we fix select related but should be their proper
+                # sub type by using PolymorphicRelatedQuerySetMixin
+                # 1 query for each relation type
+                obj.relation
+                for obj in PlainModel.objects.select_related("relation")
+            ]
+            grouped_q_types = [type(obj) for obj in grouped_q]
+
+        self.assertListEqual(multi_q_types, grouped_q_types)
+        self.assertListEqual(grouped_q, [obj1, obj2, obj3, obj4, obj5])
+
+    def test_normal_django_to_multi_level_poly_related_give_poly_type(self):
+        obj1 = ParentModel.objects.create(name="m1")
+        obj2 = ChildModel.objects.create(name="m2", other_name="c1")
+        obj3 = AltChildModel.objects.create(name="m3")
+        obj4 = AltChildAsBaseModel.objects.create(name="m4", more_name="acab1")
+
+        PlainModel.objects.create(relation=obj1)
+        PlainModel.objects.create(relation=obj2)
+        PlainModel.objects.create(relation=obj3)
+        PlainModel.objects.create(relation=obj4)
+
+        with self.assertNumQueries(4):
             grouped_q = [
                 # these obj.relation values will all be ParentModel's
                 # unless we fix select related but should be their proper
@@ -2025,10 +2054,88 @@ class PolymorphicTests(TransactionTestCase):
                 obj.relation
                 for obj in PlainModel.objects.select_related("relation")
             ]
-            grouped_q_types = [type(obj) for obj in grouped_q]
+        self.assertListEqual(grouped_q, [obj1, obj2, obj3, obj4])
 
-        self.assertListEqual(multi_q_types, grouped_q_types)
-        self.assertListEqual(grouped_q, [obj1, obj2, obj3])
+    def test_related_fetch_of_different_type_pks(self):
+        "pk on child is not same field type as pk on parent and thus prt field"
+        obj1 = ChildModel.objects.create(name="m1", other_name="c1")
+        obj2 = ParentModel.objects.create(name="m2")
+        obj3 = NonAutoPKChild.objects.create(name="m3", other_name="napk1")
+        obj4 = AltChildModel.objects.create(name="m4", other_name="acm1")
+        obj5 = ChildModel.objects.create(name="m5", other_name="c3")
+        obj6 = AltChildAsBaseModel.objects.create(name="m6", more_name="acab1")
+        obj7 = NonAutoPKChild.objects.create(name="m7", other_name="napk2")
+
+        PlainModel.objects.create(relation=obj1)
+        PlainModel.objects.create(relation=obj2)
+        PlainModel.objects.create(relation=obj3)
+        PlainModel.objects.create(relation=obj4)
+        PlainModel.objects.create(relation=obj5)
+        PlainModel.objects.create(relation=obj6)
+        PlainModel.objects.create(relation=obj7)
+
+        def object_info(obj):
+            return {
+                "pk": obj.pk,
+                "parentmodel_ptr": getattr(obj, "parentmodel_ptr_id", None),
+                "altchildmodel_ptr": getattr(obj, "altchildmodel_ptr_id", None),
+            }
+
+        with self.assertNumQueries(5):
+            grouped_q = [
+                # these obj.relation values will all be ParentModel's
+                # unless we fix select related but should be their proper
+                # sub type by using PolymorphicRelatedQuerySetMixin
+                obj.relation
+                for obj in PlainModel.objects.select_related("relation").order_by("pk")
+            ]
+            grouped_info = [object_info(obj) for obj in grouped_q]
+        self.assertListEqual(
+            grouped_info, [object_info(obj) for obj in [obj1, obj2, obj3, obj4, obj5, obj6, obj7]]
+        )
+        self.assertListEqual(grouped_q, [obj1, obj2, obj3, obj4, obj5, obj6, obj7])
+
+    def test_related_fetch_of_non_sequential_pks(self):
+        obj1 = ChildModel.objects.create(name="m1", other_name="c1")
+        obj2 = ParentModel.objects.create(name="m2")
+
+        # FIXME use PK from table to get in sequential PKS
+        # from django.db import connection
+        # with connection.cursor() as cursor:
+        #    cursor.execute('INSERT INTO "tests_childmodel" ("other_name", "parentmodel_ptr_id") VALUES (%s, %s)', ['fake', 1])
+
+        obj3 = ChildModel.objects.create(name="m3", other_name="c2")
+        obj4 = AltChildModel.objects.create(name="m4", other_name="acm1")
+        obj5 = ChildModel.objects.create(name="m5", other_name="c3")
+        obj6 = AltChildAsBaseModel.objects.create(name="m6", more_name="acab1")
+
+        PlainModel.objects.create(relation=obj1)
+        PlainModel.objects.create(relation=obj2)
+        PlainModel.objects.create(relation=obj3)
+        PlainModel.objects.create(relation=obj4)
+        PlainModel.objects.create(relation=obj5)
+        PlainModel.objects.create(relation=obj6)
+
+        def object_info(obj):
+            return {
+                "pk": obj.pk,
+                "parentmodel_ptr": getattr(obj, "parentmodel_ptr_id", None),
+                "altchildmodel_ptr": getattr(obj, "altchildmodel_ptr_id", None),
+            }
+
+        with self.assertNumQueries(4):
+            grouped_q = [
+                # these obj.relation values will all be ParentModel's
+                # unless we fix select related but should be their proper
+                # sub type by using PolymorphicRelatedQuerySetMixin
+                obj.relation
+                for obj in PlainModel.objects.select_related("relation")
+            ]
+            grouped_info = [object_info(obj) for obj in grouped_q]
+        self.assertListEqual(
+            grouped_info, [object_info(obj) for obj in [obj1, obj2, obj3, obj4, obj5, obj6]]
+        )
+        self.assertListEqual(grouped_q, [obj1, obj2, obj3, obj4, obj5, obj6])
 
     def test_normal_django_to_poly_related_give_poly_type_using_select_related_true(self):
         obj1 = ParentModel.objects.create(name="m1")
@@ -2335,7 +2442,12 @@ class PolymorphicTests(TransactionTestCase):
 
         # Prefetch content_types
         ContentType.objects.get_for_models(
-            PlainModel, PlainA, ModelExtraExternal, AltChildAsBaseModel, AltChildWithM2MModel
+            AltChildAsBaseModel,
+            AltChildWithM2MModel,
+            ModelExtraExternal,
+            NonAutoPKChild,
+            PlainA,
+            PlainModel,
         )
 
         with self.assertNumQueries(1):

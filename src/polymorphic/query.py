@@ -8,7 +8,7 @@ import operator
 from collections import defaultdict
 
 from django.contrib.contenttypes.models import ContentType
-from django.core.exceptions import FieldDoesNotExist
+from django.core.exceptions import FieldDoesNotExist, FieldError
 from django.db import connections, models
 from django.db.models import FilteredRelation, Manager
 from django.db.models.constants import LOOKUP_SEP
@@ -240,8 +240,19 @@ class RelatedPolymorphicPopulator:
                     self.remote_setter(obj, from_obj)
             return None, None
 
-        pk_name = self.model_cls.polymorphic_primary_key_name
-        return model_target_cls, (getattr(original, pk_name), self.field.name)
+        local_pk_name = original.__class__.polymorphic_primary_key_name
+        target_pk_name = original.__class__.polymorphic_primary_key_name
+        original_pk = getattr(original, local_pk_name)
+
+        # NOTE: We could use a recursive function on model_target_cls._meta.parents
+        # PolymorphicModel.much _get_inheritance_relation_fields_and_models.like add_all_sub_models
+        for field in model_target_cls._meta.fields:
+            if field.is_relation is True:
+                for rel_field in field.foreign_related_fields:
+                    if rel_field.name is local_pk_name and rel_field.model is original._meta.model:
+                        target_pk_name = field.attname
+
+        return model_target_cls, (original_pk, self.field.name, target_pk_name)
 
 
 def get_related_populators(klass_info, select, db):
@@ -409,8 +420,8 @@ class PolymorphicModelIterable(ModelIterable):
         for action, populate_fn in post_actions:
             target_class, pk_info = action()
             if target_class:
-                pk, name = pk_info
-                idlist_per_model[target_class].append((pk, name))
+                pk, name, pk_name = pk_info
+                idlist_per_model[target_class].append(pk_info)
                 update_fn_per_model[target_class].append((populate_fn, pk))
 
         # For each model in "idlist_per_model" request its objects (the real model)
@@ -419,16 +430,26 @@ class PolymorphicModelIterable(ModelIterable):
         # Then we copy the extra() select fields from the base objects to the real objects.
         # TODO: defer(), only(): support for these would be around here
         for real_concrete_class, data in idlist_per_model.items():
-            idlist, names = zip(*data)
+            idlist, names, pk_attr_names = zip(*data)
             updates = update_fn_per_model[real_concrete_class]
-            pk_name = real_concrete_class.polymorphic_primary_key_name
+
+            if len(set(pk_attr_names)) != 1:
+                raise FieldError(
+                    "PolymorphicModel: cannot convert model type as non "
+                    f"upk_namesnique related key names {pk_attr_names}"
+                )
+
+            pk_attr_name = pk_attr_names[0]
+            # FIXME: this seams to get extra field already fetch in base
+            # initial query, we may need to add defer?
+
             real_objects = real_concrete_class._base_objects.db_manager(self.queryset.db).filter(
-                **{("%s__in" % pk_name): idlist}
+                **{("%s__in" % pk_attr_name): idlist},
             )
 
             real_objects = self.apply_select_related(real_objects, set(names))
             real_objects_dict = {
-                getattr(real_object, pk_name): real_object for real_object in real_objects
+                getattr(real_object, pk_attr_name): real_object for real_object in real_objects
             }
 
             for populate_fn, o_pk in updates:
