@@ -2142,7 +2142,7 @@ class PolymorphicTests(TransactionTestCase):
         obj2 = ChildModel.objects.create(name="m2", other_name="m2")
         obj3 = ChildModel.objects.create(name="m1")
         obj4 = AltChildAsBaseModel.objects.create(
-            name="ac2", other_name="ac2name", more_name="ac2morename"
+            name="ac2", other_name="ac2name", more_name="ac2_mn"
         )
 
         PlainModel.objects.create(relation=obj1)
@@ -2482,7 +2482,7 @@ class PolymorphicTests(TransactionTestCase):
         obj_acab2 = AltChildAsBaseModel.objects.create(
             name="ac2ab",
             other_name="acab2name",
-            more_name="acab2morename",
+            more_name="acab2_mn",
             link_on_altchild=plain_a_obj_2,
         )
 
@@ -2508,7 +2508,7 @@ class PolymorphicTests(TransactionTestCase):
             assert obj_list[1].relation.name == "c1"
             assert obj_list[2].relation.name == "ac1"
             assert obj_list[3].relation.name == "ac2ab"
-            assert obj_list[3].relation.more_name == "acab2morename"
+            assert obj_list[3].relation.more_name == "acab2_mn"
             obj_list[1].relation.link_on_child
             obj_list[2].relation.link_on_altchild
             obj_list[3].relation.link_on_altchild
@@ -2521,7 +2521,7 @@ class PolymorphicTests(TransactionTestCase):
         obj_acab2 = AltChildAsBaseModel.objects.create(
             name="acab2",
             other_name="acab2name",
-            more_name="acab2morename",
+            more_name="acab2_mn",
             link_on_altchild=plain_a_obj_1,
         )
         obj_p_1 = PlainModel.objects.create(relation=obj_p)
@@ -2711,7 +2711,7 @@ class PolymorphicTests(TransactionTestCase):
         obj_acab2 = AltChildAsBaseModel.objects.create(
             name="acab2",
             other_name="acab2name",
-            more_name="acab2morename",
+            more_name="acab2_mn",
             link_on_altchild=plain_a_obj_1,
         )
         obj_c1 = ChildModel.objects.create(name="c1", other_name="c1name")
