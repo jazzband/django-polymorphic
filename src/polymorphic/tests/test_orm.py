@@ -413,6 +413,7 @@ class PolymorphicTests(TransactionTestCase):
         )
 
     def test_create_instanceof_q(self):
+        # Test with a list of models
         q = query_translate.create_instanceof_q([Model2B])
         expected = sorted(
             ContentType.objects.get_for_model(m).pk for m in [Model2B, Model2C, Model2D]

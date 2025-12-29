@@ -66,22 +66,47 @@ class PolymorphicModel(models.Model, metaclass=PolymorphicModelBase):
     def pre_save_polymorphic(self, using=DEFAULT_DB_ALIAS):
         """
         Make sure the ``polymorphic_ctype`` value is correctly set on this model.
+
+        This method automatically updates the polymorphic_ctype when:
+        - The object is being saved for the first time
+        - The object is being saved to a different database than it was loaded from
+
+        This ensures cross-database saves work correctly without ForeignKeyViolation.
         """
         # This function may be called manually in special use-cases. When the object
         # is saved for the first time, we store its real class in polymorphic_ctype.
         # When the object later is retrieved by PolymorphicQuerySet, it uses this
         # field to figure out the real class of this object
         # (used by PolymorphicQuerySet._get_real_instances)
-        if not self.polymorphic_ctype_id:
-            self.polymorphic_ctype = ContentType.objects.db_manager(using).get_for_model(
+
+        # Update polymorphic_ctype if:
+        # 1. It's not set yet (new object), OR
+        # 2. The database has changed (cross-database save)
+        needs_update = not self.polymorphic_ctype_id or (
+            self._state.db and self._state.db != using
+        )
+
+        if needs_update:
+            # Set polymorphic_ctype_id directly to avoid database router issues
+            # when saving across databases
+            ctype = ContentType.objects.db_manager(using).get_for_model(
                 self, for_concrete_model=False
             )
+            self.polymorphic_ctype_id = ctype.pk
 
     pre_save_polymorphic.alters_data = True
 
     def save(self, *args, **kwargs):
         """Calls :meth:`pre_save_polymorphic` and saves the model."""
-        using = kwargs.get("using", self._state.db or DEFAULT_DB_ALIAS)
+        # Determine the database to use:
+        # 1. Explicit 'using' parameter takes precedence
+        # 2. Otherwise use self._state.db (the database the object was loaded from)
+        # 3. Fall back to DEFAULT_DB_ALIAS
+        # This ensures database routers are respected when no explicit database is specified
+        using = kwargs.get("using")
+        if using is None:
+            using = self._state.db or DEFAULT_DB_ALIAS
+
         self.pre_save_polymorphic(using=using)
         return super().save(*args, **kwargs)
 
