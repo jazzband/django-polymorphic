@@ -1,12 +1,12 @@
 import uuid
 
-import django
 from django.contrib.auth.models import Group
 from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import Manager
 from django.db import models
 from django.db.models.query import QuerySet
+from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 
 from polymorphic.managers import PolymorphicManager
 from polymorphic.models import PolymorphicModel
@@ -807,3 +807,25 @@ class RecursionBug(PolymorphicModel):
         """
         super().__init__(*args, **kwargs)
         self.old_status_id = self.status_id
+
+
+class TaggedItem(models.Model):
+    tag = models.SlugField()
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.PositiveIntegerField()
+    content_object = GenericForeignKey("content_type", "object_id")
+
+
+class BookmarkManager(PolymorphicManager):
+    def get_queryset(self) -> PolymorphicQuerySet:
+        return super().get_queryset().annotate(cpy=models.F("url"))
+
+
+class Bookmark(PolymorphicModel):
+    url = models.URLField()
+    tags = GenericRelation(TaggedItem)
+    objects = BookmarkManager()
+
+
+class Assignment(Bookmark):
+    assigned_to = models.CharField(max_length=100)
