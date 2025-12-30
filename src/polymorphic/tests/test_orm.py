@@ -1945,7 +1945,7 @@ class PolymorphicTests(TransactionTestCase):
         self.assertEqual(set(Model2A.objects.all()), {a1, a2, b1, dfs1, cfs1, c2, d1, d2})
 
         custom_pk = CustomPkBase.objects.create(b="0")
-        custom_pk_ext = CustomPkInherit.objects.create_from_super(custom_pk, i="42")
+        custom_pk_ext = CustomPkInherit.objects.create_from_super(custom_pk, i="4")
         self.assertEqual(type(custom_pk_ext), CustomPkInherit)
         custom_pk_ext.refresh_from_db()
         self.assertEqual(custom_pk_ext.id, custom_pk.id)
@@ -1954,7 +1954,7 @@ class PolymorphicTests(TransactionTestCase):
 
         custom_pk2 = CustomPkBase.objects.create(b="2")
         custom_pk_ext2 = CustomPkInherit.objects.create_from_super(
-            custom_pk2, custom_id=100, i="42"
+            custom_pk2, custom_id=100, i="4"
         )
         self.assertEqual(type(custom_pk_ext2), CustomPkInherit)
         custom_pk_ext2.refresh_from_db()
@@ -1983,10 +1983,10 @@ class PolymorphicTests(TransactionTestCase):
             PolyExtension.objects.create_from_super(ne1, poly_ext_field=30)
 
         # FIXME: uncomment when #686 is fixed
-        # CustomPkInherit.objects.create(b="base1", i="i1")
+        # CustomPkInherit.objects.create(b="base1", i="1")
         # with self.assertRaises(IntegrityError):
         #     CustomPkInherit.objects.create_from_super(
-        #         CustomPkBase.objects.non_polymorphic().first(), i="i2"
+        #         CustomPkBase.objects.non_polymorphic().first(), i="2"
         #     )
 
     def test_through_models_creates_and_reads(self):
