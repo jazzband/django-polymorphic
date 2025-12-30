@@ -315,8 +315,16 @@ class _GenericAdminFormTest(StaticLiveServerTestCase):
         """Set up the test class with a live server and Playwright instance."""
         os.environ["DJANGO_ALLOW_ASYNC_UNSAFE"] = "1"
         super().setUpClass()
-        cls.playwright = sync_playwright().start()
-        cls.browser = cls.playwright.chromium.launch(headless=cls.HEADLESS)
+        try:
+            cls.playwright = sync_playwright().start()
+            cls.browser = cls.playwright.chromium.launch(headless=cls.HEADLESS)
+        except Exception as e:
+            if "asyncio loop" in str(e) or "executable" in str(e).lower():
+                raise RuntimeError(
+                    "Playwright failed to start. This often happens if browser drivers are missing. "
+                    "Please run 'just install-playwright' to install them."
+                ) from e
+            raise
 
     @classmethod
     def tearDownClass(cls):
