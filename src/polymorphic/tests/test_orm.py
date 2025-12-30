@@ -339,6 +339,33 @@ class PolymorphicTests(TransactionTestCase):
         with pytest.raises(PolymorphicTypeInvalid, match=match):
             o.get_real_instance()
 
+    def test_get_real_concrete_instance_class_id_with_stale_content_type(self):
+        """Test get_real_concrete_instance_class_id returns None for stale ContentType"""
+        ctype = ContentType.objects.create(app_label="tests", model="stale_model")
+        o = Model2A.objects.create(field1="A1", polymorphic_ctype=ctype)
+
+        # When ContentType is stale, get_real_instance_class returns None
+        # which should cause get_real_concrete_instance_class_id to return None
+        assert o.get_real_concrete_instance_class_id() is None
+
+    def test_get_real_concrete_instance_class_with_stale_content_type(self):
+        """Test get_real_concrete_instance_class returns None for stale ContentType"""
+        ctype = ContentType.objects.create(app_label="tests", model="another_stale")
+        o = Model2A.objects.create(field1="A1", polymorphic_ctype=ctype)
+
+        # When ContentType is stale, get_real_instance_class returns None
+        # which should cause get_real_concrete_instance_class to return None
+        assert o.get_real_concrete_instance_class() is None
+
+    def test_get_real_concrete_instance_class_with_proxy_model(self):
+        """Test get_real_concrete_instance_class with a proxy model"""
+        # Create a regular polymorphic object
+        a = Model2A.objects.create(field1="A1")
+
+        # get_real_concrete_instance_class should return the concrete model class
+        concrete_class = a.get_real_concrete_instance_class()
+        assert concrete_class == Model2A
+
     def test_non_polymorphic(self):
         self.create_model2abcd()
 
