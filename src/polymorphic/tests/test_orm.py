@@ -1,6 +1,8 @@
 import pytest
 import uuid
 
+import django
+from packaging.version import Version
 from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
 from django.db import models, connection
@@ -1995,3 +1997,42 @@ class PolymorphicTests(TransactionTestCase):
         RecursionBug.objects.filter(id=item.id).update(status=closed)
         item.refresh_from_db(fields=("status",))
         assert item.status == closed
+
+    @pytest.mark.skipif(
+        Version(django.get_version()) < Version("5.0"),
+        reason="Requires Django 5.0+",
+    )
+    def test_generic_relation_prefetch(self):
+        """
+        https://github.com/jazzband/django-polymorphic/issues/613
+        """
+        from polymorphic.tests.models import Bookmark, TaggedItem, Assignment
+        from django.contrib.contenttypes.prefetch import GenericPrefetch
+
+        bm1 = Bookmark.objects.create(url="http://example.com/1")
+        ass = Assignment.objects.create(url="http://example.com/2", assigned_to="Alice")
+
+        TaggedItem.objects.create(tag="tag1", content_object=bm1)
+        TaggedItem.objects.create(tag="tag2", content_object=ass)
+
+        bookmarks = list(Bookmark.objects.prefetch_related("tags").order_by("pk"))
+        assert len(bookmarks) == 2
+        assert list(bookmarks[0].tags.all()) == [TaggedItem.objects.get(tag="tag1")]
+        assert list(bookmarks[1].tags.all()) == [TaggedItem.objects.get(tag="tag2")]
+        assert bookmarks[0].__class__ is Bookmark
+        assert bookmarks[1].__class__ is Assignment
+
+        tags = TaggedItem.objects.prefetch_related(
+            GenericPrefetch(
+                lookup="content_object",
+                querysets=[
+                    Bookmark.objects.all(),
+                ],
+            ),
+        ).order_by("pk")
+
+        assert tags[0].content_object == bookmarks[0]
+        assert tags[1].content_object == bookmarks[1]
+
+        for tag in tags.all():
+            assert tag.content_object
