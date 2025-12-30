@@ -1,6 +1,8 @@
 import pytest
 import uuid
 
+import django
+from packaging.version import Version
 from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
 from django.db import models, connection
@@ -339,6 +341,33 @@ class PolymorphicTests(TransactionTestCase):
         with pytest.raises(PolymorphicTypeInvalid, match=match):
             o.get_real_instance()
 
+    def test_get_real_concrete_instance_class_id_with_stale_content_type(self):
+        """Test get_real_concrete_instance_class_id returns None for stale ContentType"""
+        ctype = ContentType.objects.create(app_label="tests", model="stale_model")
+        o = Model2A.objects.create(field1="A1", polymorphic_ctype=ctype)
+
+        # When ContentType is stale, get_real_instance_class returns None
+        # which should cause get_real_concrete_instance_class_id to return None
+        assert o.get_real_concrete_instance_class_id() is None
+
+    def test_get_real_concrete_instance_class_with_stale_content_type(self):
+        """Test get_real_concrete_instance_class returns None for stale ContentType"""
+        ctype = ContentType.objects.create(app_label="tests", model="another_stale")
+        o = Model2A.objects.create(field1="A1", polymorphic_ctype=ctype)
+
+        # When ContentType is stale, get_real_instance_class returns None
+        # which should cause get_real_concrete_instance_class to return None
+        assert o.get_real_concrete_instance_class() is None
+
+    def test_get_real_concrete_instance_class_with_proxy_model(self):
+        """Test get_real_concrete_instance_class with a proxy model"""
+        # Create a regular polymorphic object
+        a = Model2A.objects.create(field1="A1")
+
+        # get_real_concrete_instance_class should return the concrete model class
+        concrete_class = a.get_real_concrete_instance_class()
+        assert concrete_class == Model2A
+
     def test_non_polymorphic(self):
         self.create_model2abcd()
 
@@ -413,6 +442,7 @@ class PolymorphicTests(TransactionTestCase):
         )
 
     def test_create_instanceof_q(self):
+        # Test with a list of models
         q = query_translate.create_instanceof_q([Model2B])
         expected = sorted(
             ContentType.objects.get_for_model(m).pk for m in [Model2B, Model2C, Model2D]
@@ -1076,6 +1106,35 @@ class PolymorphicTests(TransactionTestCase):
             match="model lookup supported for keyword arguments only",
         ):
             Model2A.objects.aggregate(ComplexAgg("Model2B___field2"))
+
+    def test_annotate_f_expression(self):
+        """
+        Verify that F() expressions with '___' syntax correctly translate in annotate() calls.
+        """
+        Model2A.objects.create(field1="A_only")
+        Model2B.objects.create(field1="A_from_B1", field2="B2_val1")
+        Model2B.objects.create(field1="A_from_B2", field2="B2_val2")
+
+        # Use annotate with an F-expression targeting a child model field
+        # We'll count occurrences of field2 from Model2B
+        # This implicitly tests that 'Model2B___field2' is correctly translated
+        annotated_queryset = Model2A.objects.annotate(
+            field2_count=Count(models.F("Model2B___field2"))
+        ).order_by("pk")
+
+        results = list(annotated_queryset)
+        assert len(results) == 3
+
+        # For Model2A that is not a Model2B, the count should be 0
+        assert results[0].field1 == "A_only"
+        assert results[0].field2_count == 0
+
+        # For Model2B instances, the field2_count should be 1
+        assert results[1].field1 == "A_from_B1"
+        assert results[1].field2_count == 1
+
+        assert results[2].field1 == "A_from_B2"
+        assert results[2].field2_count == 1
 
     def test_polymorphic__filtered_relation(self):
         """test annotation using FilteredRelation"""
@@ -1938,3 +1997,42 @@ class PolymorphicTests(TransactionTestCase):
         RecursionBug.objects.filter(id=item.id).update(status=closed)
         item.refresh_from_db(fields=("status",))
         assert item.status == closed
+
+    @pytest.mark.skipif(
+        Version(django.get_version()) < Version("5.0"),
+        reason="Requires Django 5.0+",
+    )
+    def test_generic_relation_prefetch(self):
+        """
+        https://github.com/jazzband/django-polymorphic/issues/613
+        """
+        from polymorphic.tests.models import Bookmark, TaggedItem, Assignment
+        from django.contrib.contenttypes.prefetch import GenericPrefetch
+
+        bm1 = Bookmark.objects.create(url="http://example.com/1")
+        ass = Assignment.objects.create(url="http://example.com/2", assigned_to="Alice")
+
+        TaggedItem.objects.create(tag="tag1", content_object=bm1)
+        TaggedItem.objects.create(tag="tag2", content_object=ass)
+
+        bookmarks = list(Bookmark.objects.prefetch_related("tags").order_by("pk"))
+        assert len(bookmarks) == 2
+        assert list(bookmarks[0].tags.all()) == [TaggedItem.objects.get(tag="tag1")]
+        assert list(bookmarks[1].tags.all()) == [TaggedItem.objects.get(tag="tag2")]
+        assert bookmarks[0].__class__ is Bookmark
+        assert bookmarks[1].__class__ is Assignment
+
+        tags = TaggedItem.objects.prefetch_related(
+            GenericPrefetch(
+                lookup="content_object",
+                querysets=[
+                    Bookmark.objects.all(),
+                ],
+            ),
+        ).order_by("pk")
+
+        assert tags[0].content_object == bookmarks[0]
+        assert tags[1].content_object == bookmarks[1]
+
+        for tag in tags.all():
+            assert tag.content_object

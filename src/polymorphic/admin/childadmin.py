@@ -72,11 +72,7 @@ class PolymorphicChildModelAdmin(admin.ModelAdmin):
     def get_model_perms(self, request):
         match = resolve(request.path_info)
 
-        if (
-            not self.show_in_index
-            and match.app_name == "admin"
-            and match.url_name in ("index", "app_list")
-        ):
+        if not self.show_in_index and match.namespace == self.admin_site.name:
             return {"add": False, "change": False, "delete": False}
         return super().get_model_perms(request)
 
