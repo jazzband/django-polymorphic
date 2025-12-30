@@ -26,9 +26,7 @@ class PolymorphicModelBaseTest(TestCase):
 
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
-            PolymorphicModelBase.validate_model_manager(
-                regular_manager, "TestModel", "objects"
-            )
+            PolymorphicModelBase.validate_model_manager(regular_manager, "TestModel", "objects")
 
             # Should have emitted ManagerInheritanceWarning
             assert len(w) == 1
@@ -94,10 +92,14 @@ class DumpdataIntegrationTest(TestCase):
             # The code does: frm = inspect.stack()[1], then checks: frm[1] (which is filename)
             import collections
 
-            FrameInfo = collections.namedtuple('FrameInfo', ['frame', 'filename', 'lineno', 'function', 'code_context', 'index'])
+            FrameInfo = collections.namedtuple(
+                "FrameInfo", ["frame", "filename", "lineno", "function", "code_context", "index"]
+            )
 
             # Use os.path.join to generate platform-specific path (Windows: \\, Unix: /)
-            dumpdata_path = os.path.join("path", "to", "django", "core", "management", "commands", "dumpdata.py")
+            dumpdata_path = os.path.join(
+                "path", "to", "django", "core", "management", "commands", "dumpdata.py"
+            )
 
             fake_frame_info = FrameInfo(
                 frame=None,
@@ -105,7 +107,7 @@ class DumpdataIntegrationTest(TestCase):
                 lineno=100,
                 function="handle",
                 code_context=None,
-                index=None
+                index=None,
             )
 
             fake_stack = [
