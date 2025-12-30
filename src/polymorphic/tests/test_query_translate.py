@@ -77,3 +77,16 @@ class QueryTranslateTests(TestCase):
 
         self.assertEqual(DeepCopyTester.objects.all().delete()[0], 3)
         self.assertEqual(DeepCopyTester.objects.count(), 0)
+
+    def test_proxy_model_query_related_name(self):
+        """Test _get_query_related_name fallback for proxy models"""
+        from polymorphic.query_translate import _get_query_related_name
+        from polymorphic.tests.models import ProxyChild, SubclassSelectorProxyModel
+
+        # Test that proxy models use the fallback (lowercase class name)
+        # since they don't have a OneToOneField parent link
+        result = _get_query_related_name(ProxyChild)
+        assert result == "proxychild"
+
+        result = _get_query_related_name(SubclassSelectorProxyModel)
+        assert result == "subclassselectorproxymodel"

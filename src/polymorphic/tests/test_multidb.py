@@ -276,3 +276,59 @@ class MultipleDatabasesTests(TestCase):
         )
 
         self.assertEqual(Model2A.objects.count(), 0)
+
+    def test_cross_database_save(self):
+        """Test saving an object from one database to another (issue #486)"""
+        # Create object in default database
+        obj = Model2B.objects.create(field1="test", field2="value")
+        original_pk = obj.pk
+        original_ctype_id = obj.polymorphic_ctype_id
+
+        # Get the ContentType ID for Model2B in default database
+        default_ctype = ContentType.objects.get_for_model(Model2B, for_concrete_model=False)
+        self.assertEqual(obj.polymorphic_ctype_id, default_ctype.pk)
+
+        # Save to secondary database (simulating cross-database copy)
+        obj.pk = None  # Make it a new object
+        obj.save(using="secondary")
+
+        # polymorphic_ctype_id should be updated for secondary database
+        secondary_ctype = ContentType.objects.db_manager("secondary").get_for_model(
+            Model2B, for_concrete_model=False
+        )
+        self.assertEqual(obj.polymorphic_ctype_id, secondary_ctype.pk)
+
+        # Verify it can be retrieved correctly from secondary database
+        retrieved = Model2B.objects.using("secondary").get(pk=obj.pk)
+        self.assertIsInstance(retrieved, Model2B)
+        self.assertEqual(retrieved.field1, "test")
+        self.assertEqual(retrieved.field2, "value")
+
+        # Verify original object still exists in default database
+        original_obj = Model2B.objects.get(pk=original_pk)
+        self.assertEqual(original_obj.polymorphic_ctype_id, default_ctype.pk)
+
+    def test_database_router_respected(self):
+        """Test that _state.db is respected when no explicit using is provided (issue #446)"""
+        # Create object in secondary database
+        obj = Model2B.objects.using("secondary").create(field1="test", field2="value")
+
+        # Verify it was created in secondary database
+        secondary_ctype = ContentType.objects.db_manager("secondary").get_for_model(
+            Model2B, for_concrete_model=False
+        )
+        self.assertEqual(obj.polymorphic_ctype_id, secondary_ctype.pk)
+        self.assertEqual(obj._state.db, "secondary")
+
+        # Modify and save without explicit using parameter
+        # Should use _state.db (secondary) not default
+        obj.field1 = "modified"
+        obj.save()  # No using parameter
+
+        # Verify it's still using secondary database's ContentType
+        obj.refresh_from_db(using="secondary")
+        self.assertEqual(obj.polymorphic_ctype_id, secondary_ctype.pk)
+        self.assertEqual(obj.field1, "modified")
+
+        # Verify it wasn't saved to default database
+        self.assertFalse(Model2B.objects.filter(pk=obj.pk).exists())
