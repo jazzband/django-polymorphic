@@ -725,7 +725,7 @@ class NormalBase(models.Model):
 
 
 class NormalExtension(NormalBase):
-    ne_field = models.CharField(max_length=12)
+    ne_field = models.CharField(max_length=50)
 
     def add_to_ne(self, value):
         self.ne_field += value
@@ -741,7 +741,7 @@ class PolyExtension(PolymorphicModel, NormalExtension):
 
 
 class PolyExtChild(PolyExtension):
-    poly_child_field = models.CharField(max_length=12)
+    poly_child_field = models.CharField(max_length=50)
 
     def add_to_child(self, value):
         self.poly_child_field += value
