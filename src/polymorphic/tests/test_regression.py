@@ -168,3 +168,51 @@ class RegressionTests(TestCase):
             pass  # This is an acceptable outcome.
         except TypeError as e:
             self.fail(f"Querying for upcasted sibling raised TypeError: {e}")
+
+    def test_mixed_inheritance_save_issue_495(self):
+        """
+        Test that saving models with mixed polymorphic and non-polymorphic
+        inheritance works correctly. This addresses issue #495.
+        """
+        from polymorphic.tests.models import NormalExtension, PolyExtension, PolyExtChild
+
+        # Create and save NormalExtension
+        normal_ext = NormalExtension.objects.create(nb_field=1, ne_field="normal")
+        normal_ext.add_to_ne(" extended")
+        normal_ext.refresh_from_db()
+        self.assertEqual(normal_ext.ne_field, "normal extended")
+        normal_ext.add_to_nb(5)
+        normal_ext.refresh_from_db()
+        self.assertEqual(normal_ext.nb_field, 6)
+
+        # Create and save PolyExtension
+        poly_ext = PolyExtension.objects.create(nb_field=1, ne_field="normal", poly_ext_field=10)
+        poly_ext.add_to_ne(" extended")
+        poly_ext.refresh_from_db()
+        self.assertEqual(poly_ext.ne_field, "normal extended")
+        poly_ext.add_to_ext(5)
+        poly_ext.refresh_from_db()
+        self.assertEqual(poly_ext.poly_ext_field, 15)
+        poly_ext.add_to_nb(5)
+        poly_ext.refresh_from_db()
+        self.assertEqual(poly_ext.nb_field, 6)
+
+        # Create and save PolyExtChild
+        poly_child = PolyExtChild.objects.create(
+            nb_field=1, ne_field="normal", poly_ext_field=20, poly_child_field="child"
+        )
+        poly_child.add_to_ne(" extended")
+        poly_child.add_to_nb(5)
+        poly_child.add_to_ext(10)
+        poly_child.add_to_child(" added")
+        poly_child.refresh_from_db()
+        self.assertEqual(poly_child.nb_field, 6)
+        self.assertEqual(poly_child.ne_field, "normal extended")
+        self.assertEqual(poly_child.poly_ext_field, 30)
+        self.assertEqual(poly_child.poly_child_field, "child added")
+
+        poly_child.override_add_to_ne(" overridden")
+        poly_child.override_add_to_ext(5)
+        poly_child.refresh_from_db()
+        self.assertEqual(poly_child.ne_field, "normal extended OVERRIDDEN")
+        self.assertEqual(poly_child.poly_ext_field, 40)

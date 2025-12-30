@@ -719,17 +719,43 @@ class NoChildren(PolymorphicModel):
 class NormalBase(models.Model):
     nb_field = models.IntegerField()
 
+    def add_to_nb(self, value):
+        self.nb_field += value
+        self.save(update_fields=["nb_field"])
+
 
 class NormalExtension(NormalBase):
     ne_field = models.CharField(max_length=12)
+
+    def add_to_ne(self, value):
+        self.ne_field += value
+        self.save(update_fields=["ne_field"])
 
 
 class PolyExtension(PolymorphicModel, NormalExtension):
     poly_ext_field = models.IntegerField()
 
+    def add_to_ext(self, value):
+        self.poly_ext_field += value
+        self.save(update_fields=["poly_ext_field"])
+
 
 class PolyExtChild(PolyExtension):
     poly_child_field = models.CharField(max_length=12)
+
+    def add_to_child(self, value):
+        self.poly_child_field += value
+        self.save(update_fields=["poly_child_field"])
+
+    def override_add_to_ne(self, value):
+        # test that we can still access NormalExtension methods
+        self.ne_field += value.upper()
+        self.save(update_fields=["ne_field"])
+
+    def override_add_to_ext(self, value):
+        # test that we can still access PolyExtension methods
+        self.poly_ext_field += value * 2
+        self.save(update_fields=["poly_ext_field"])
 
 
 class DeepCopyTester(PolymorphicModel):
