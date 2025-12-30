@@ -3,7 +3,7 @@ The manager class for use in the models.
 """
 
 from django.contrib.contenttypes.models import ContentType
-from django.db import DEFAULT_DB_ALIAS, models
+from django.db import DEFAULT_DB_ALIAS, models, transaction
 
 from polymorphic.query import PolymorphicQuerySet
 
@@ -64,31 +64,34 @@ class PolymorphicManager(models.Manager):
         """
         from .models import PolymorphicModel
 
-        # ensure we have the most derived real instance
-        if isinstance(obj, PolymorphicModel):
-            obj = obj.get_real_instance()
+        with transaction.atomic(using=obj._state.db or DEFAULT_DB_ALIAS):
+            # ensure we have the most derived real instance
+            if isinstance(obj, PolymorphicModel):
+                obj = obj.get_real_instance()
 
-        parent_ptr = self.model._meta.parents.get(type(obj), None)
+            parent_ptr = self.model._meta.parents.get(type(obj), None)
 
-        if not parent_ptr:
-            raise TypeError(
-                f"{obj.__class__.__name__} is not a direct parent of {self.model.__name__}"
-            )
-        kwargs[parent_ptr.get_attname()] = obj.pk
+            if not parent_ptr:
+                raise TypeError(
+                    f"{obj.__class__.__name__} is not a direct parent of {self.model.__name__}"
+                )
+            kwargs[parent_ptr.get_attname()] = obj.pk
 
-        # create the new base class with only fields that apply to  it.
-        ctype = ContentType.objects.db_manager(
-            using=(obj._state.db or DEFAULT_DB_ALIAS)
-        ).get_for_model(self.model)
-        nobj = self.model(**kwargs, polymorphic_ctype=ctype)
-        nobj.save_base(raw=True, using=obj._state.db or DEFAULT_DB_ALIAS, force_insert=True)
-        # force update the content type, but first we need to
-        # retrieve a clean copy from the db to fill in the null
-        # fields otherwise they would be overwritten.
-        if isinstance(obj, PolymorphicModel):
-            parent = obj.__class__.objects.using(obj._state.db or DEFAULT_DB_ALIAS).get(pk=obj.pk)
-            parent.polymorphic_ctype = ctype
-            parent.save()
+            # create the new base class with only fields that apply to  it.
+            ctype = ContentType.objects.db_manager(
+                using=(obj._state.db or DEFAULT_DB_ALIAS)
+            ).get_for_model(self.model)
+            nobj = self.model(**kwargs, polymorphic_ctype=ctype)
+            nobj.save_base(raw=True, using=obj._state.db or DEFAULT_DB_ALIAS, force_insert=True)
+            # force update the content type, but first we need to
+            # retrieve a clean copy from the db to fill in the null
+            # fields otherwise they would be overwritten.
+            if isinstance(obj, PolymorphicModel):
+                parent = obj.__class__.objects.using(obj._state.db or DEFAULT_DB_ALIAS).get(
+                    pk=obj.pk
+                )
+                parent.polymorphic_ctype = ctype
+                parent.save()
 
-        nobj.refresh_from_db()  # cast to cls
-        return nobj
+            nobj.refresh_from_db()  # cast to cls
+            return nobj
