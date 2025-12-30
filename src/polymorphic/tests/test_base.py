@@ -93,7 +93,7 @@ class DumpdataIntegrationTest(TestCase):
             # The code does: frm = inspect.stack()[1], then checks: frm[1] (which is filename)
             import collections
             FrameInfo = collections.namedtuple('FrameInfo', ['frame', 'filename', 'lineno', 'function', 'code_context', 'index'])
-            
+
             fake_frame_info = FrameInfo(
                 frame=None,
                 filename="/path/to/django/core/management/commands/dumpdata.py",
@@ -102,7 +102,7 @@ class DumpdataIntegrationTest(TestCase):
                 code_context=None,
                 index=None
             )
-            
+
             fake_stack = [
                 None,  # Current frame (index 0)
                 fake_frame_info,  # Caller frame (index 1) - this is what gets accessed

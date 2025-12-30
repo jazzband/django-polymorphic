@@ -361,7 +361,7 @@ class PolymorphicTests(TransactionTestCase):
         """Test get_real_concrete_instance_class with a proxy model"""
         # Create a regular polymorphic object
         a = Model2A.objects.create(field1="A1")
-        
+
         # get_real_concrete_instance_class should return the concrete model class
         concrete_class = a.get_real_concrete_instance_class()
         assert concrete_class == Model2A
