@@ -3,7 +3,7 @@ Seamless Polymorphic Inheritance for Django Models
 """
 
 from django.contrib.contenttypes.models import ContentType
-from django.db import models
+from django.db import models, transaction
 from django.db.models.fields.related import ForwardManyToOneDescriptor, ReverseOneToOneDescriptor
 from django.db.utils import DEFAULT_DB_ALIAS
 
@@ -308,3 +308,37 @@ class PolymorphicModel(models.Model, metaclass=PolymorphicModelBase):
         add_all_super_models(self.__class__, result)
         add_all_sub_models(self.__class__, result)
         return result
+
+    def delete(self, using=None, keep_parents=False):
+        """
+        Behaves the same as Django's default :meth:`~django.db.models.Model.delete()`,
+        but with support for upcasting when ``keep_parents`` is True. When keeping
+        parents (upcasting the row) the ``polymorphic_ctype`` fields of the parent rows
+        are updated accordingly in a transaction with the child row deletion.
+        """
+        # if we are keeping parents, we must first determine which polymorphic_ctypes we
+        # need to update
+        parent_updates = (
+            [
+                (parent_model, getattr(self, parent_field.get_attname()))
+                for parent_model, parent_field in self._meta.parents.items()
+                if issubclass(parent_model, PolymorphicModel)
+            ]
+            if keep_parents
+            else []
+        )
+        if parent_updates:
+            with transaction.atomic(using=using):
+                # If keeping the parents (upcasting) we need to update the relevant
+                # content types for all parent inheritance paths.
+                ret = super().delete(using=using, keep_parents=keep_parents)
+                for parent_model, pk in parent_updates:
+                    parent_model.objects.non_polymorphic().filter(pk=pk).update(
+                        polymorphic_ctype=ContentType.objects.db_manager(
+                            using=using
+                        ).get_for_model(parent_model, for_concrete_model=False)
+                    )
+                return ret
+        return super().delete(using=using, keep_parents=keep_parents)
+
+    delete.alters_data = True
