@@ -7,7 +7,7 @@ from collections import defaultdict
 
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import FieldDoesNotExist
-from django.db import connections
+from django.db import connections, models
 from django.db.models import FilteredRelation
 from django.db.models.query import ModelIterable, Q, QuerySet
 
@@ -275,6 +275,8 @@ class PolymorphicQuerySet(QuerySet):
                 a.children = translate_polymorphic_Q_object(self.model, a).children
             elif isinstance(a, FilteredRelation):
                 patch_lookup(a.condition)
+            elif isinstance(a, models.F):
+                a.name = translate_polymorphic_field_path(self.model, a.name)
             elif hasattr(a, "get_source_expressions"):
                 for source_expression in a.get_source_expressions():
                     if source_expression is not None:
@@ -481,9 +483,15 @@ class PolymorphicQuerySet(QuerySet):
                     real_object = transmogrify(real_class, real_object)
 
                 if self.query.annotations:
-                    for anno_field_name in self.query.annotations.keys():
-                        attr = getattr(base_object, anno_field_name)
-                        setattr(real_object, anno_field_name, attr)
+                    # New in Django 3.2+: annotation_select contains only the selected annotations
+                    # (excluding aliases). Fallback for older Django versions if needed.
+                    annotation_select = getattr(
+                        self.query, "annotation_select", self.query.annotations
+                    )
+                    for anno_field_name in annotation_select.keys():
+                        if hasattr(base_object, anno_field_name):
+                            attr = getattr(base_object, anno_field_name)
+                            setattr(real_object, anno_field_name, attr)
 
                 if self.query.extra_select:
                     for select_field_name in self.query.extra_select.keys():
@@ -497,7 +505,8 @@ class PolymorphicQuerySet(QuerySet):
         # set polymorphic_annotate_names in all objects (currently just used for debugging/printing)
         if self.query.annotations:
             # get annotate field list
-            annotate_names = list(self.query.annotations.keys())
+            annotation_select = getattr(self.query, "annotation_select", self.query.annotations)
+            annotate_names = list(annotation_select.keys())
             for real_object in resultlist:
                 real_object.polymorphic_annotate_names = annotate_names
 
@@ -542,3 +551,12 @@ class PolymorphicQuerySet(QuerySet):
             return olist
         clist = PolymorphicQuerySet._p_list_class(olist)
         return clist
+
+    def delete(self):
+        """
+        Deletion will be done non-polymorphically because Django's multi-table deletion
+        mechanism is already walking the class hierarchy and producing a correct
+        deletion graph. Introducing polymorphic querysets into the deletion process
+        disrupts the model hierarchy/relationship traversal.
+        """
+        return QuerySet.delete(self.non_polymorphic())

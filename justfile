@@ -45,6 +45,10 @@ install *OPTS:
     uv sync {{ OPTS }}
     @just run pre-commit install
 
+# install playwright dependencies
+install-playwright:
+    @just run playwright install
+
 # install documentation dependencies
 install-docs:
     uv sync --group docs --all-extras
@@ -97,6 +101,7 @@ build: build-docs-html
 # regenerate test migrations using the lowest version of Django
 make-test-migrations:
     - rm src/polymorphic/tests/migrations/00*.py
+    - rm src/polymorphic/tests/deletion/migrations/00*.py
     uv run --isolated --resolution lowest-direct --script ./manage.py makemigrations
 
 # open the html documentation
@@ -184,10 +189,10 @@ test-lock +PACKAGES: _lock-python
     uv add {{ PACKAGES }}
 
 # run tests
-test *TESTS:
+test *TESTS: install-playwright
     @just run pytest --cov-append {{ TESTS }}
 
-test-db DB_CLIENT="dev" *TESTS:
+test-db DB_CLIENT="dev" *TESTS: install-playwright
     # No Optional Dependency Unit Tests
     # todo clean this up, rerunning a lot of tests
     uv sync --group {{ DB_CLIENT }}

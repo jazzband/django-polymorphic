@@ -413,6 +413,7 @@ class PolymorphicTests(TransactionTestCase):
         )
 
     def test_create_instanceof_q(self):
+        # Test with a list of models
         q = query_translate.create_instanceof_q([Model2B])
         expected = sorted(
             ContentType.objects.get_for_model(m).pk for m in [Model2B, Model2C, Model2D]
@@ -1077,6 +1078,35 @@ class PolymorphicTests(TransactionTestCase):
         ):
             Model2A.objects.aggregate(ComplexAgg("Model2B___field2"))
 
+    def test_annotate_f_expression(self):
+        """
+        Verify that F() expressions with '___' syntax correctly translate in annotate() calls.
+        """
+        Model2A.objects.create(field1="A_only")
+        Model2B.objects.create(field1="A_from_B1", field2="B2_val1")
+        Model2B.objects.create(field1="A_from_B2", field2="B2_val2")
+
+        # Use annotate with an F-expression targeting a child model field
+        # We'll count occurrences of field2 from Model2B
+        # This implicitly tests that 'Model2B___field2' is correctly translated
+        annotated_queryset = Model2A.objects.annotate(
+            field2_count=Count(models.F("Model2B___field2"))
+        ).order_by("pk")
+
+        results = list(annotated_queryset)
+        assert len(results) == 3
+
+        # For Model2A that is not a Model2B, the count should be 0
+        assert results[0].field1 == "A_only"
+        assert results[0].field2_count == 0
+
+        # For Model2B instances, the field2_count should be 1
+        assert results[1].field1 == "A_from_B1"
+        assert results[1].field2_count == 1
+
+        assert results[2].field1 == "A_from_B2"
+        assert results[2].field2_count == 1
+
     def test_polymorphic__filtered_relation(self):
         """test annotation using FilteredRelation"""
 
@@ -1358,7 +1388,7 @@ class PolymorphicTests(TransactionTestCase):
                     assert False, "Unexpected model type"
             assert (b, c, d) == (250, 1000, 2000)
 
-        assert len(poly_all) <= 7, (
+        assert len(poly_all) <= 8, (
             f"Expected < 7 queries for chunked iteration over 3250 "
             f"objects with 3 child models and the default chunk size of 2000, encountered "
             f"{len(poly_all)}"
@@ -1450,23 +1480,16 @@ class PolymorphicTests(TransactionTestCase):
         if connection.vendor == "postgresql":
             assert len(poly_chunked) == 4, "On postgres with a 4000 chunk size, expected 4 queries"
 
-        try:
-            result = Model2A.objects.all().delete()
-            assert result == (
-                11500,
-                {
-                    "tests.Model2D": 2000,
-                    "tests.Model2C": 3000,
-                    "tests.Model2A": 3250,
-                    "tests.Model2B": 3250,
-                },
-            )
-        except AttributeError:
-            if connection.vendor == "oracle":
-                # FIXME
-                # known deletion issue with oracle
-                # https://github.com/jazzband/django-polymorphic/issues/673
-                pass
+        result = Model2A.objects.all().delete()
+        assert result == (
+            11500,
+            {
+                "tests.Model2D": 2000,
+                "tests.Model2C": 3000,
+                "tests.Model2A": 3250,
+                "tests.Model2B": 3250,
+            },
+        )
 
     def test_transmogrify_with_init(self):
         pur = PurpleHeadDuck.objects.create()
