@@ -216,3 +216,35 @@ class RegressionTests(TestCase):
         poly_child.refresh_from_db()
         self.assertEqual(poly_child.ne_field, "normal extended OVERRIDDEN")
         self.assertEqual(poly_child.poly_ext_field, 40)
+
+    def test_create_or_update(self):
+        """
+        https://github.com/jazzband/django-polymorphic/issues/494
+        """
+        from polymorphic.tests.models import Model2B, Model2C
+
+        obj, created = Model2B.objects.update_or_create(
+            field1="value1", defaults={"field2": "value2"}
+        )
+        self.assertTrue(created)
+        self.assertEqual(obj.field1, "value1")
+        self.assertEqual(obj.field2, "value2")
+
+        obj2, created = Model2B.objects.update_or_create(
+            field1="value1", defaults={"field2": "new_value2"}
+        )
+        self.assertFalse(created)
+        self.assertEqual(obj2.pk, obj.pk)
+        self.assertEqual(obj2.field1, "value1")
+        self.assertEqual(obj2.field2, "new_value2")
+
+        self.assertEqual(Model2B.objects.count(), 1)
+
+        obj3, created = Model2C.objects.update_or_create(
+            field1="value1", defaults={"field2": "new_value3", "field3": "value3"}
+        )
+
+        self.assertTrue(created)
+        self.assertEqual(Model2B.objects.count(), 2)
+        self.assertEqual(Model2C.objects.count(), 1)
+        self.assertEqual(obj3, Model2B.objects.order_by("pk").last())
