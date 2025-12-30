@@ -2,6 +2,7 @@
 Tests for base.py metaclass edge cases to achieve high-value coverage.
 """
 
+import os
 import sys
 import warnings
 from unittest.mock import patch
@@ -36,7 +37,7 @@ class PolymorphicModelBaseTest(TestCase):
             assert "TestModel.objects" in str(w[0].message)
 
     def test_validate_model_manager_with_wrong_queryset_class(self):
-        """Test warning when manager has non-PolymorphicQuerySet queryset_class"""
+        """Test warning when manager has non-Polymorphic QuerySet queryset_class"""
 
         # Create a PolymorphicManager with wrong queryset_class
         class BadQuerySet(models.QuerySet):
@@ -92,11 +93,15 @@ class DumpdataIntegrationTest(TestCase):
             # FrameInfo has: frame, filename, lineno, function, code_context, index
             # The code does: frm = inspect.stack()[1], then checks: frm[1] (which is filename)
             import collections
+
             FrameInfo = collections.namedtuple('FrameInfo', ['frame', 'filename', 'lineno', 'function', 'code_context', 'index'])
+
+            # Use os.path.join to generate platform-specific path (Windows: \\, Unix: /)
+            dumpdata_path = os.path.join("path", "to", "django", "core", "management", "commands", "dumpdata.py")
 
             fake_frame_info = FrameInfo(
                 frame=None,
-                filename="/path/to/django/core/management/commands/dumpdata.py",
+                filename=dumpdata_path,
                 lineno=100,
                 function="handle",
                 code_context=None,
