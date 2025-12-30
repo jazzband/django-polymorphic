@@ -170,7 +170,7 @@ class RegressionTests(TestCase):
             pass  # This is an acceptable outcome.
         except TypeError as e:
             self.fail(f"Querying for upcasted sibling raised TypeError: {e}")
-    
+
     def test_mixed_inheritance_save_issue_495(self):
         """
         Test that saving models with mixed polymorphic and non-polymorphic
