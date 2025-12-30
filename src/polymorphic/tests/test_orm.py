@@ -982,14 +982,14 @@ class PolymorphicTests(TransactionTestCase):
         assert isinstance(objects[1], ProxyModelB)
 
     def test_custom_pk(self):
-        CustomPkBase.objects.create(b="b")
-        CustomPkInherit.objects.create(b="b", i="i")
+        pk_base = CustomPkBase.objects.create(b="b")
+        pk_inherit = CustomPkInherit.objects.create(b="b", i="i")
         qs = CustomPkBase.objects.all()
         assert len(qs) == 2
-        assert repr(qs[0]) == '<CustomPkBase: id 1, b (CharField) "b">'
+        assert repr(qs[0]) == f'<CustomPkBase: id {pk_base.id}, b (CharField) "b">'
         assert (
             repr(qs[1])
-            == '<CustomPkInherit: id 2, b (CharField) "b", custom_id (AutoField/pk) 1, i (CharField) "i">'
+            == f'<CustomPkInherit: id {pk_inherit.id}, b (CharField) "b", custom_id (AutoField/pk) {pk_inherit.custom_id}, i (CharField) "i">'
         )
 
     def test_fix_getattribute(self):
