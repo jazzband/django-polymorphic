@@ -1,6 +1,8 @@
 import pytest
 import uuid
 
+import django
+from packaging.version import Version
 from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
 from django.db import models, connection
@@ -339,6 +341,33 @@ class PolymorphicTests(TransactionTestCase):
         with pytest.raises(PolymorphicTypeInvalid, match=match):
             o.get_real_instance()
 
+    def test_get_real_concrete_instance_class_id_with_stale_content_type(self):
+        """Test get_real_concrete_instance_class_id returns None for stale ContentType"""
+        ctype = ContentType.objects.create(app_label="tests", model="stale_model")
+        o = Model2A.objects.create(field1="A1", polymorphic_ctype=ctype)
+
+        # When ContentType is stale, get_real_instance_class returns None
+        # which should cause get_real_concrete_instance_class_id to return None
+        assert o.get_real_concrete_instance_class_id() is None
+
+    def test_get_real_concrete_instance_class_with_stale_content_type(self):
+        """Test get_real_concrete_instance_class returns None for stale ContentType"""
+        ctype = ContentType.objects.create(app_label="tests", model="another_stale")
+        o = Model2A.objects.create(field1="A1", polymorphic_ctype=ctype)
+
+        # When ContentType is stale, get_real_instance_class returns None
+        # which should cause get_real_concrete_instance_class to return None
+        assert o.get_real_concrete_instance_class() is None
+
+    def test_get_real_concrete_instance_class_with_proxy_model(self):
+        """Test get_real_concrete_instance_class with a proxy model"""
+        # Create a regular polymorphic object
+        a = Model2A.objects.create(field1="A1")
+
+        # get_real_concrete_instance_class should return the concrete model class
+        concrete_class = a.get_real_concrete_instance_class()
+        assert concrete_class == Model2A
+
     def test_non_polymorphic(self):
         self.create_model2abcd()
 
@@ -386,7 +415,7 @@ class PolymorphicTests(TransactionTestCase):
         qs_polymorphic = Model2A.objects.order_by("field1").all()
 
         assert list(qs_base) == [a, b_base, c_base]
-        assert list(qs_polymorphic) == [a, c]
+        assert list(qs_polymorphic) == [a, b_base, c]
 
     def test_queryset_missing_contenttype(self):
         stale_ct = ContentType.objects.create(app_label="tests", model="nonexisting")
@@ -413,6 +442,7 @@ class PolymorphicTests(TransactionTestCase):
         )
 
     def test_create_instanceof_q(self):
+        # Test with a list of models
         q = query_translate.create_instanceof_q([Model2B])
         expected = sorted(
             ContentType.objects.get_for_model(m).pk for m in [Model2B, Model2C, Model2D]
@@ -952,14 +982,14 @@ class PolymorphicTests(TransactionTestCase):
         assert isinstance(objects[1], ProxyModelB)
 
     def test_custom_pk(self):
-        CustomPkBase.objects.create(b="b")
-        CustomPkInherit.objects.create(b="b", i="i")
+        pk_base = CustomPkBase.objects.create(b="b")
+        pk_inherit = CustomPkInherit.objects.create(b="b", i="i")
         qs = CustomPkBase.objects.all()
         assert len(qs) == 2
-        assert repr(qs[0]) == '<CustomPkBase: id 1, b (CharField) "b">'
+        assert repr(qs[0]) == f'<CustomPkBase: id {pk_base.id}, b (CharField) "b">'
         assert (
             repr(qs[1])
-            == '<CustomPkInherit: id 2, b (CharField) "b", custom_id (AutoField/pk) 1, i (CharField) "i">'
+            == f'<CustomPkInherit: id {pk_inherit.id}, b (CharField) "b", custom_id (AutoField/pk) {pk_inherit.custom_id}, i (CharField) "i">'
         )
 
     def test_fix_getattribute(self):
@@ -1300,8 +1330,9 @@ class PolymorphicTests(TransactionTestCase):
         objects = list(qs)
         assert len(objects[0].many2many.all()) == 1
 
-        # derived object was not fetched
-        assert len(objects[1].many2many.all()) == 0
+        # derived object was upcast by deletion that keeps parents
+        assert len(objects[1].many2many.all()) == 1
+        assert objects[1].many2many.first() == Model2A.objects.get(field1="A2")
 
         # base object does exist
         assert len(objects[1].many2many.non_polymorphic()) == 1
@@ -1801,6 +1832,8 @@ class PolymorphicTests(TransactionTestCase):
             NormalExtension,
             PolyExtension,
             PolyExtChild,
+            CustomPkBase,
+            CustomPkInherit,
         )
 
         nb = NormalBase.objects.create(nb_field=1)
@@ -1809,7 +1842,11 @@ class PolymorphicTests(TransactionTestCase):
         with self.assertRaises(TypeError):
             PolyExtension.objects.create_from_super(nb, poly_ext_field=3)
 
-        pe = PolyExtension.objects.create_from_super(ne, poly_ext_field=3)
+        with CaptureQueriesContext(connection) as ctx:
+            pe = PolyExtension.objects.create_from_super(ne, poly_ext_field=3)
+
+        # for q in ctx.captured_queries:
+        #     print(q["sql"])
 
         ne.refresh_from_db()
         self.assertEqual(type(ne), NormalExtension)
@@ -1824,7 +1861,24 @@ class PolymorphicTests(TransactionTestCase):
         self.assertEqual(pe.ne_field, "ne2")
         self.assertEqual(pe.poly_ext_field, 3)
 
-        pc = PolyExtChild.objects.create_from_super(pe, poly_child_field="pcf6")
+        print("===================================")
+
+        with CaptureQueriesContext(connection) as ctx:
+            """
+            BEGIN
+            SELECT "django_content_type"."id", "django_content_type"."app_label", "django_content_type"."model" FROM "django_content_type" WHERE ("django_content_type"."app_label" = 'tests' AND "django_content_type"."model" = 'polyextchild') LIMIT 21
+            INSERT INTO "tests_polyextchild" ("polyextension_ptr_id", "poly_child_field") VALUES (2, 'pcf6')
+            SELECT "tests_normalbase"."id", "tests_normalbase"."nb_field", "tests_normalextension"."normalbase_ptr_id", "tests_normalextension"."ne_field", "tests_polyextension"."normalextension_ptr_id", "tests_polyextension"."polymorphic_ctype_id", "tests_polyextension"."poly_ext_field" FROM "tests_polyextension" INNER JOIN "tests_normalextension" ON ("tests_polyextension"."normalextension_ptr_id" = "tests_normalextension"."normalbase_ptr_id") INNER JOIN "tests_normalbase" ON ("tests_normalextension"."normalbase_ptr_id" = "tests_normalbase"."id") WHERE "tests_polyextension"."normalextension_ptr_id" = 2 LIMIT 21
+            UPDATE "tests_normalbase" SET "nb_field" = 2 WHERE "tests_normalbase"."id" = 2
+            UPDATE "tests_normalextension" SET "ne_field" = 'ne2' WHERE "tests_normalextension"."normalbase_ptr_id" = 2
+            UPDATE "tests_polyextension" SET "polymorphic_ctype_id" = 100, "poly_ext_field" = 3 WHERE "tests_polyextension"."normalextension_ptr_id" = 2
+            SELECT "tests_normalbase"."id", "tests_normalbase"."nb_field", "tests_normalextension"."normalbase_ptr_id", "tests_normalextension"."ne_field", "tests_polyextension"."normalextension_ptr_id", "tests_polyextension"."polymorphic_ctype_id", "tests_polyextension"."poly_ext_field", "tests_polyextchild"."polyextension_ptr_id", "tests_polyextchild"."poly_child_field" FROM "tests_polyextchild" INNER JOIN "tests_polyextension" ON ("tests_polyextchild"."polyextension_ptr_id" = "tests_polyextension"."normalextension_ptr_id") INNER JOIN "tests_normalextension" ON ("tests_polyextension"."normalextension_ptr_id" = "tests_normalextension"."normalbase_ptr_id") INNER JOIN "tests_normalbase" ON ("tests_normalextension"."normalbase_ptr_id" = "tests_normalbase"."id") WHERE "tests_polyextchild"."polyextension_ptr_id" = 2 LIMIT 21
+            COMMIT
+            """
+            pc = PolyExtChild.objects.create_from_super(pe, poly_child_field="pcf6")
+
+        # for q in ctx.captured_queries:
+        #     print(q["sql"])
 
         pe.refresh_from_db()
         ne.refresh_from_db()
@@ -1890,6 +1944,51 @@ class PolymorphicTests(TransactionTestCase):
         self.assertEqual(cfs1.polymorphic_ctype, ContentType.objects.get_for_model(Model2C))
 
         self.assertEqual(set(Model2A.objects.all()), {a1, a2, b1, dfs1, cfs1, c2, d1, d2})
+
+        custom_pk = CustomPkBase.objects.create(b="0")
+        custom_pk_ext = CustomPkInherit.objects.create_from_super(custom_pk, i="4")
+        self.assertEqual(type(custom_pk_ext), CustomPkInherit)
+        custom_pk_ext.refresh_from_db()
+        self.assertEqual(custom_pk_ext.id, custom_pk.id)
+        self.assertEqual(CustomPkBase.objects.get(pk=custom_pk.id), custom_pk_ext)
+        self.assertEqual(CustomPkBase.objects.count(), 1)
+
+        custom_pk2 = CustomPkBase.objects.create(b="2")
+        custom_pk_ext2 = CustomPkInherit.objects.create_from_super(
+            custom_pk2, custom_id=100, i="4"
+        )
+        self.assertEqual(type(custom_pk_ext2), CustomPkInherit)
+        custom_pk_ext2.refresh_from_db()
+        self.assertEqual(custom_pk_ext2.id, custom_pk2.id)
+        self.assertEqual(custom_pk_ext2.custom_id, 100)
+        self.assertEqual(CustomPkBase.objects.get(pk=custom_pk2.id), custom_pk_ext2)
+        self.assertEqual(CustomPkBase.objects.count(), 2)
+
+    def test_create_from_super_child_exists(self):
+        """
+        Test several scenarios creating a child row where a parent already exists.
+
+        Should get integrity errors!
+        """
+        from polymorphic.tests.models import (
+            NormalExtension,
+            PolyExtension,
+            CustomPkBase,
+            CustomPkInherit,
+        )
+
+        pe1 = PolyExtension.objects.create(nb_field=10, ne_field="ne10", poly_ext_field=20)
+        ne1 = NormalExtension.objects.get(pk=pe1.pk)
+
+        with self.assertRaises(IntegrityError):
+            PolyExtension.objects.create_from_super(ne1, poly_ext_field=30)
+
+        # FIXME: uncomment when #686 is fixed
+        # CustomPkInherit.objects.create(b="base1", i="1")
+        # with self.assertRaises(IntegrityError):
+        #     CustomPkInherit.objects.create_from_super(
+        #         CustomPkBase.objects.non_polymorphic().first(), i="2"
+        #     )
 
     def test_through_models_creates_and_reads(self):
         from polymorphic.tests.models import (
@@ -1967,3 +2066,42 @@ class PolymorphicTests(TransactionTestCase):
         RecursionBug.objects.filter(id=item.id).update(status=closed)
         item.refresh_from_db(fields=("status",))
         assert item.status == closed
+
+    @pytest.mark.skipif(
+        Version(django.get_version()) < Version("5.0"),
+        reason="Requires Django 5.0+",
+    )
+    def test_generic_relation_prefetch(self):
+        """
+        https://github.com/jazzband/django-polymorphic/issues/613
+        """
+        from polymorphic.tests.models import Bookmark, TaggedItem, Assignment
+        from django.contrib.contenttypes.prefetch import GenericPrefetch
+
+        bm1 = Bookmark.objects.create(url="http://example.com/1")
+        ass = Assignment.objects.create(url="http://example.com/2", assigned_to="Alice")
+
+        TaggedItem.objects.create(tag="tag1", content_object=bm1)
+        TaggedItem.objects.create(tag="tag2", content_object=ass)
+
+        bookmarks = list(Bookmark.objects.prefetch_related("tags").order_by("pk"))
+        assert len(bookmarks) == 2
+        assert list(bookmarks[0].tags.all()) == [TaggedItem.objects.get(tag="tag1")]
+        assert list(bookmarks[1].tags.all()) == [TaggedItem.objects.get(tag="tag2")]
+        assert bookmarks[0].__class__ is Bookmark
+        assert bookmarks[1].__class__ is Assignment
+
+        tags = TaggedItem.objects.prefetch_related(
+            GenericPrefetch(
+                lookup="content_object",
+                querysets=[
+                    Bookmark.objects.all(),
+                ],
+            ),
+        ).order_by("pk")
+
+        assert tags[0].content_object == bookmarks[0]
+        assert tags[1].content_object == bookmarks[1]
+
+        for tag in tags.all():
+            assert tag.content_object

@@ -125,7 +125,6 @@ python_functions = "test_*"
 norecursedirs = "*.egg .eggs dist build docs .tox .git __pycache__"
 addopts = [
     "--strict-markers",
-    "--cov"
 ]
 
 [tool.coverage.run]

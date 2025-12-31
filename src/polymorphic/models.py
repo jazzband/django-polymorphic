@@ -3,7 +3,7 @@ Seamless Polymorphic Inheritance for Django Models
 """
 
 from django.contrib.contenttypes.models import ContentType
-from django.db import models
+from django.db import models, transaction
 from django.db.models.fields.related import ForwardManyToOneDescriptor, ReverseOneToOneDescriptor
 from django.db.utils import DEFAULT_DB_ALIAS
 
@@ -66,22 +66,47 @@ class PolymorphicModel(models.Model, metaclass=PolymorphicModelBase):
     def pre_save_polymorphic(self, using=DEFAULT_DB_ALIAS):
         """
         Make sure the ``polymorphic_ctype`` value is correctly set on this model.
+
+        This method automatically updates the polymorphic_ctype when:
+        - The object is being saved for the first time
+        - The object is being saved to a different database than it was loaded from
+
+        This ensures cross-database saves work correctly without ForeignKeyViolation.
         """
         # This function may be called manually in special use-cases. When the object
         # is saved for the first time, we store its real class in polymorphic_ctype.
         # When the object later is retrieved by PolymorphicQuerySet, it uses this
         # field to figure out the real class of this object
         # (used by PolymorphicQuerySet._get_real_instances)
-        if not self.polymorphic_ctype_id:
-            self.polymorphic_ctype = ContentType.objects.db_manager(using).get_for_model(
+
+        # Update polymorphic_ctype if:
+        # 1. It's not set yet (new object), OR
+        # 2. The database has changed (cross-database save)
+        needs_update = not self.polymorphic_ctype_id or (
+            self._state.db and self._state.db != using
+        )
+
+        if needs_update:
+            # Set polymorphic_ctype_id directly to avoid database router issues
+            # when saving across databases
+            ctype = ContentType.objects.db_manager(using).get_for_model(
                 self, for_concrete_model=False
             )
+            self.polymorphic_ctype_id = ctype.pk
 
     pre_save_polymorphic.alters_data = True
 
     def save(self, *args, **kwargs):
         """Calls :meth:`pre_save_polymorphic` and saves the model."""
-        using = kwargs.get("using", self._state.db or DEFAULT_DB_ALIAS)
+        # Determine the database to use:
+        # 1. Explicit 'using' parameter takes precedence
+        # 2. Otherwise use self._state.db (the database the object was loaded from)
+        # 3. Fall back to DEFAULT_DB_ALIAS
+        # This ensures database routers are respected when no explicit database is specified
+        using = kwargs.get("using")
+        if using is None:
+            using = self._state.db or DEFAULT_DB_ALIAS
+
         self.pre_save_polymorphic(using=using)
         return super().save(*args, **kwargs)
 
@@ -283,3 +308,37 @@ class PolymorphicModel(models.Model, metaclass=PolymorphicModelBase):
         add_all_super_models(self.__class__, result)
         add_all_sub_models(self.__class__, result)
         return result
+
+    def delete(self, using=None, keep_parents=False):
+        """
+        Behaves the same as Django's default :meth:`~django.db.models.Model.delete()`,
+        but with support for upcasting when ``keep_parents`` is True. When keeping
+        parents (upcasting the row) the ``polymorphic_ctype`` fields of the parent rows
+        are updated accordingly in a transaction with the child row deletion.
+        """
+        # if we are keeping parents, we must first determine which polymorphic_ctypes we
+        # need to update
+        parent_updates = (
+            [
+                (parent_model, getattr(self, parent_field.get_attname()))
+                for parent_model, parent_field in self._meta.parents.items()
+                if issubclass(parent_model, PolymorphicModel)
+            ]
+            if keep_parents
+            else []
+        )
+        if parent_updates:
+            with transaction.atomic(using=using):
+                # If keeping the parents (upcasting) we need to update the relevant
+                # content types for all parent inheritance paths.
+                ret = super().delete(using=using, keep_parents=keep_parents)
+                for parent_model, pk in parent_updates:
+                    parent_model.objects.non_polymorphic().filter(pk=pk).update(
+                        polymorphic_ctype=ContentType.objects.db_manager(
+                            using=using
+                        ).get_for_model(parent_model, for_concrete_model=False)
+                    )
+                return ret
+        return super().delete(using=using, keep_parents=keep_parents)
+
+    delete.alters_data = True

@@ -1,12 +1,12 @@
 import uuid
 
-import django
 from django.contrib.auth.models import Group
 from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import Manager
 from django.db import models
 from django.db.models.query import QuerySet
+from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 
 from polymorphic.managers import PolymorphicManager
 from polymorphic.models import PolymorphicModel
@@ -719,17 +719,43 @@ class NoChildren(PolymorphicModel):
 class NormalBase(models.Model):
     nb_field = models.IntegerField()
 
+    def add_to_nb(self, value):
+        self.nb_field += value
+        self.save(update_fields=["nb_field"])
+
 
 class NormalExtension(NormalBase):
-    ne_field = models.CharField(max_length=12)
+    ne_field = models.CharField(max_length=50)
+
+    def add_to_ne(self, value):
+        self.ne_field += value
+        self.save(update_fields=["ne_field"])
 
 
 class PolyExtension(PolymorphicModel, NormalExtension):
     poly_ext_field = models.IntegerField()
 
+    def add_to_ext(self, value):
+        self.poly_ext_field += value
+        self.save(update_fields=["poly_ext_field"])
+
 
 class PolyExtChild(PolyExtension):
-    poly_child_field = models.CharField(max_length=12)
+    poly_child_field = models.CharField(max_length=50)
+
+    def add_to_child(self, value):
+        self.poly_child_field += value
+        self.save(update_fields=["poly_child_field"])
+
+    def override_add_to_ne(self, value):
+        # test that we can still access NormalExtension methods
+        self.ne_field += value.upper()
+        self.save(update_fields=["ne_field"])
+
+    def override_add_to_ext(self, value):
+        # test that we can still access PolyExtension methods
+        self.poly_ext_field += value * 2
+        self.save(update_fields=["poly_ext_field"])
 
 
 class DeepCopyTester(PolymorphicModel):
@@ -781,3 +807,25 @@ class RecursionBug(PolymorphicModel):
         """
         super().__init__(*args, **kwargs)
         self.old_status_id = self.status_id
+
+
+class TaggedItem(models.Model):
+    tag = models.SlugField()
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.PositiveIntegerField()
+    content_object = GenericForeignKey("content_type", "object_id")
+
+
+class BookmarkManager(PolymorphicManager):
+    def get_queryset(self) -> PolymorphicQuerySet:
+        return super().get_queryset().annotate(cpy=models.F("url"))
+
+
+class Bookmark(PolymorphicModel):
+    url = models.URLField()
+    tags = GenericRelation(TaggedItem)
+    objects = BookmarkManager()
+
+
+class Assignment(Bookmark):
+    assigned_to = models.CharField(max_length=100)

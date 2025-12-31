@@ -45,6 +45,10 @@ install *OPTS:
     uv sync {{ OPTS }}
     @just run pre-commit install
 
+# install playwright dependencies
+install-playwright:
+    @just run playwright install
+
 # install documentation dependencies
 install-docs:
     uv sync --group docs --all-extras
@@ -185,14 +189,14 @@ test-lock +PACKAGES: _lock-python
     uv add {{ PACKAGES }}
 
 # run tests
-test *TESTS:
-    @just run pytest --cov-append {{ TESTS }}
+test *TESTS: install-playwright
+    @just run pytest {{ TESTS }} --cov 
 
-test-db DB_CLIENT="dev" *TESTS:
+test-db DB_CLIENT="dev" *TESTS: install-playwright
     # No Optional Dependency Unit Tests
     # todo clean this up, rerunning a lot of tests
     uv sync --group {{ DB_CLIENT }}
-    @just run pytest --cov-append {{ TESTS }}
+    @just run pytest {{ TESTS }} --cov 
 
 # debug a test - (break at test start/run in headed mode)
 debug-test *TESTS:
