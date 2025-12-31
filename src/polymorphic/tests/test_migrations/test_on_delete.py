@@ -344,6 +344,52 @@ class OnDeleteSerializationTest(GeneratedMigrationsPerClassMixin, TransactionTes
                 self.assertIsNotNone(field)
                 self.assertIsInstance(field.remote_field.on_delete, PolymorphicGuard)
 
+    def test_guard_equality_with_same_guard(self):
+        """Test that PolymorphicGuard equals another PolymorphicGuard with the same action"""
+        guard1 = PolymorphicGuard(models.CASCADE)
+        guard2 = PolymorphicGuard(models.CASCADE)
+
+        self.assertEqual(guard1, guard2)
+        self.assertEqual(guard1.migration_key, guard2.migration_key)
+
+    def test_guard_equality_with_different_guard(self):
+        """Test that PolymorphicGuard doesn't equal another with a different action"""
+        guard1 = PolymorphicGuard(models.CASCADE)
+        guard2 = PolymorphicGuard(models.PROTECT)
+
+        self.assertNotEqual(guard1, guard2)
+        self.assertNotEqual(guard1.migration_key, guard2.migration_key)
+
+    def test_guard_equality_with_non_serializable_object(self):
+        """Test PolymorphicGuard equality when comparing to an object that cannot be serialized"""
+
+        class UnserializableCallable:
+            """A callable that cannot be properly serialized by Django's migration system"""
+
+            def __call__(self, collector, field, sub_objs, using):
+                pass
+
+        guard = PolymorphicGuard(models.CASCADE)
+        non_serializable = UnserializableCallable()
+
+        result = guard == non_serializable
+        self.assertFalse(result)
+
+    def test_guard_equality_with_serialization_exception(self):
+        """Test PolymorphicGuard equality with an object that causes an exception during fingerprinting"""
+
+        class ProblematicObject:
+            """An object that breaks during serialization"""
+
+            def __repr__(self):
+                raise RuntimeError("Cannot serialize this object")
+
+        guard = PolymorphicGuard(models.CASCADE)
+        problematic = ProblematicObject()
+
+        result = guard == problematic
+        self.assertFalse(result)
+
 
 class PolymorphicInheritanceSerializationTest(TestCase):
     """

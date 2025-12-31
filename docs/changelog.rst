@@ -5,6 +5,8 @@ v4.5.1 (2025-12-24)
 -------------------
 
 * Fixed `4.5.0 generates a lot of migrations on my project <https://github.com/jazzband/django-polymorphic/pull/759>`_
+* Fixed `Annotations with F <https://github.com/jazzband/django-polymorphic/pull/755>`_
+* Fixed `show_in_index=False visibility in admin sites and sidebar <https://github.com/jazzband/django-polymorphic/pull/760>`_
 
 v4.5.0 (2025-12-22)
 -------------------
