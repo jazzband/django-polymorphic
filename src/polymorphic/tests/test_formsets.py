@@ -30,12 +30,12 @@ class PolymorphicFormSetChildTest(TestCase):
 
     def test_extra_exclude_parameter(self):
         """extra_exclude adds to existing exclude list"""
-        child = PolymorphicFormSetChild(model=Model2A, exclude=['field1'])
-        form_class = child.get_form(extra_exclude=['field2'])
+        child = PolymorphicFormSetChild(model=Model2A, exclude=["field1"])
+        form_class = child.get_form(extra_exclude=["field2"])
         form = form_class()
 
-        assert 'field1' not in form.fields
-        assert 'field2' not in form.fields
+        assert "field1" not in form.fields
+        assert "field2" not in form.fields
 
 
 class PolymorphicModelFormSetTest(TestCase):
@@ -49,8 +49,8 @@ class PolymorphicModelFormSetTest(TestCase):
         """Accessing empty_form raises RuntimeError (use empty_forms instead)"""
         FormSet = polymorphic_modelformset_factory(
             model=Model2A,
-            fields='__all__',
-            formset_children=[PolymorphicFormSetChild(model=Model2A)]
+            fields="__all__",
+            formset_children=[PolymorphicFormSetChild(model=Model2A)],
         )
         formset = FormSet(queryset=Model2A.objects.none())
 
@@ -61,8 +61,8 @@ class PolymorphicModelFormSetTest(TestCase):
         """get_form_class raises ImproperlyConfigured when child_forms empty"""
         FormSet = polymorphic_modelformset_factory(
             model=Model2A,
-            fields='__all__',
-            formset_children=[PolymorphicFormSetChild(model=Model2A)]
+            fields="__all__",
+            formset_children=[PolymorphicFormSetChild(model=Model2A)],
         )
         formset = FormSet(queryset=Model2A.objects.none())
         formset.child_forms = {}
@@ -76,8 +76,8 @@ class PolymorphicModelFormSetTest(TestCase):
 
         FormSet = polymorphic_modelformset_factory(
             model=Model2A,
-            fields='__all__',
-            formset_children=[PolymorphicFormSetChild(model=Model2A)]
+            fields="__all__",
+            formset_children=[PolymorphicFormSetChild(model=Model2A)],
         )
         formset = FormSet(queryset=Model2A.objects.none())
 
@@ -88,8 +88,8 @@ class PolymorphicModelFormSetTest(TestCase):
         """get_form_class raises UnsupportedChildType for unregistered models"""
         FormSet = polymorphic_modelformset_factory(
             model=Model2A,
-            fields='__all__',
-            formset_children=[PolymorphicFormSetChild(model=Model2A)]
+            fields="__all__",
+            formset_children=[PolymorphicFormSetChild(model=Model2A)],
         )
         formset = FormSet(queryset=Model2A.objects.none())
 
@@ -100,28 +100,28 @@ class PolymorphicModelFormSetTest(TestCase):
         """Bound formset processes existing objects correctly"""
         FormSet = polymorphic_modelformset_factory(
             model=Model2A,
-            fields='__all__',
+            fields="__all__",
             formset_children=[
                 PolymorphicFormSetChild(model=Model2A),
                 PolymorphicFormSetChild(model=Model2B),
-            ]
+            ],
         )
 
         ct_a = ContentType.objects.get_for_model(Model2A, for_concrete_model=False)
         ct_b = ContentType.objects.get_for_model(Model2B, for_concrete_model=False)
 
         data = {
-            'form-TOTAL_FORMS': '2',
-            'form-INITIAL_FORMS': '2',
-            'form-MIN_NUM_FORMS': '0',
-            'form-MAX_NUM_FORMS': '1000',
-            'form-0-id': str(self.obj_a.pk),
-            'form-0-field1': 'Modified A',
-            'form-0-polymorphic_ctype': str(ct_a.pk),
-            'form-1-id': str(self.obj_b.pk),
-            'form-1-field1': 'Modified B',
-            'form-1-field2': 'Modified B2',
-            'form-1-polymorphic_ctype': str(ct_b.pk),
+            "form-TOTAL_FORMS": "2",
+            "form-INITIAL_FORMS": "2",
+            "form-MIN_NUM_FORMS": "0",
+            "form-MAX_NUM_FORMS": "1000",
+            "form-0-id": str(self.obj_a.pk),
+            "form-0-field1": "Modified A",
+            "form-0-polymorphic_ctype": str(ct_a.pk),
+            "form-1-id": str(self.obj_b.pk),
+            "form-1-field1": "Modified B",
+            "form-1-field2": "Modified B2",
+            "form-1-polymorphic_ctype": str(ct_b.pk),
         }
 
         queryset = Model2A.objects.filter(pk__in=[self.obj_a.pk, self.obj_b.pk])
@@ -136,35 +136,35 @@ class PolymorphicModelFormSetTest(TestCase):
         """Extra forms cycle through registered child types"""
         FormSet = polymorphic_modelformset_factory(
             model=Model2A,
-            fields='__all__',
+            fields="__all__",
             extra=3,
             formset_children=[
                 PolymorphicFormSetChild(model=Model2A),
                 PolymorphicFormSetChild(model=Model2B),
-            ]
+            ],
         )
 
         formset = FormSet(queryset=Model2A.objects.none())
 
         # Forms cycle: A, B, A
-        assert 'field2' not in formset.forms[0].fields  # Model2A
-        assert 'field2' in formset.forms[1].fields      # Model2B
-        assert 'field2' not in formset.forms[2].fields  # Model2A
+        assert "field2" not in formset.forms[0].fields  # Model2A
+        assert "field2" in formset.forms[1].fields  # Model2B
+        assert "field2" not in formset.forms[2].fields  # Model2A
 
     def test_validation_error_missing_ctype(self):
         """ValidationError raised when polymorphic_ctype missing in bound data"""
         FormSet = polymorphic_modelformset_factory(
             model=Model2A,
-            fields='__all__',
-            formset_children=[PolymorphicFormSetChild(model=Model2A)]
+            fields="__all__",
+            formset_children=[PolymorphicFormSetChild(model=Model2A)],
         )
 
         data = {
-            'form-TOTAL_FORMS': '1',
-            'form-INITIAL_FORMS': '0',
-            'form-MIN_NUM_FORMS': '0',
-            'form-MAX_NUM_FORMS': '1000',
-            'form-0-field1': 'Test',
+            "form-TOTAL_FORMS": "1",
+            "form-INITIAL_FORMS": "0",
+            "form-MIN_NUM_FORMS": "0",
+            "form-MAX_NUM_FORMS": "1000",
+            "form-0-field1": "Test",
         }
 
         formset = FormSet(data=data, queryset=Model2A.objects.none())
@@ -176,18 +176,18 @@ class PolymorphicModelFormSetTest(TestCase):
         """UnsupportedChildType when bound data has unregistered child type"""
         FormSet = polymorphic_modelformset_factory(
             model=Model2A,
-            fields='__all__',
-            formset_children=[PolymorphicFormSetChild(model=Model2A)]
+            fields="__all__",
+            formset_children=[PolymorphicFormSetChild(model=Model2A)],
         )
 
         ct_b = ContentType.objects.get_for_model(Model2B, for_concrete_model=False)
         data = {
-            'form-TOTAL_FORMS': '1',
-            'form-INITIAL_FORMS': '0',
-            'form-MIN_NUM_FORMS': '0',
-            'form-MAX_NUM_FORMS': '1000',
-            'form-0-field1': 'Test',
-            'form-0-polymorphic_ctype': str(ct_b.pk),
+            "form-TOTAL_FORMS": "1",
+            "form-INITIAL_FORMS": "0",
+            "form-MIN_NUM_FORMS": "0",
+            "form-MAX_NUM_FORMS": "1000",
+            "form-0-field1": "Test",
+            "form-0-polymorphic_ctype": str(ct_b.pk),
         }
 
         formset = FormSet(data=data, queryset=Model2A.objects.none())
@@ -199,47 +199,48 @@ class PolymorphicModelFormSetTest(TestCase):
         """Unbound formset with polymorphic_ctype in initial creates correct form"""
         FormSet = polymorphic_modelformset_factory(
             model=Model2A,
-            fields='__all__',
+            fields="__all__",
             extra=1,
             formset_children=[
                 PolymorphicFormSetChild(model=Model2A),
                 PolymorphicFormSetChild(model=Model2B),
-            ]
+            ],
         )
 
         ct_b = ContentType.objects.get_for_model(Model2B, for_concrete_model=False)
-        initial = [{'polymorphic_ctype': ct_b}]
+        initial = [{"polymorphic_ctype": ct_b}]
         formset = FormSet(queryset=Model2A.objects.none(), initial=initial)
 
         # Form should be for Model2B
-        assert 'field2' in formset.forms[0].fields
+        assert "field2" in formset.forms[0].fields
 
     def test_child_form_kwargs(self):
         """child_form_kwargs passed to child form factory"""
         FormSet = polymorphic_modelformset_factory(
             model=Model2A,
-            fields='__all__',
+            fields="__all__",
             formset_children=[PolymorphicFormSetChild(model=Model2A)],
-            child_form_kwargs={'extra_exclude': ['field1']}
+            child_form_kwargs={"extra_exclude": ["field1"]},
         )
 
         formset = FormSet(queryset=Model2A.objects.none())
-        assert 'field1' not in formset.forms[0].fields
+        assert "field1" not in formset.forms[0].fields
 
     def test_is_multipart_with_file_field(self):
         """is_multipart returns True when form has FileField"""
+
         class FileForm(forms.ModelForm):
             file = forms.FileField()
 
             class Meta:
                 model = Model2A
-                fields = ['field1']
+                fields = ["field1"]
 
         FormSet = polymorphic_modelformset_factory(
             model=Model2A,
-            fields=['field1'],
+            fields=["field1"],
             formset_children=[PolymorphicFormSetChild(model=Model2A, form=FileForm)],
-            extra=1
+            extra=1,
         )
         formset = FormSet(queryset=Model2A.objects.none())
 
@@ -247,23 +248,24 @@ class PolymorphicModelFormSetTest(TestCase):
 
     def test_media_aggregation(self):
         """media property aggregates all child form media"""
+
         class MediaForm(forms.ModelForm):
             class Media:
-                js = ('test.js',)
+                js = ("test.js",)
 
             class Meta:
                 model = Model2A
-                fields = ['field1']
+                fields = ["field1"]
 
         FormSet = polymorphic_modelformset_factory(
             model=Model2A,
-            fields=['field1'],
+            fields=["field1"],
             formset_children=[PolymorphicFormSetChild(model=Model2A, form=MediaForm)],
-            extra=1
+            extra=1,
         )
         formset = FormSet(queryset=Model2A.objects.none())
 
-        assert 'test.js' in str(formset.media)
+        assert "test.js" in str(formset.media)
 
 
 class PolymorphicInlineFormSetTest(TestCase):
@@ -274,11 +276,11 @@ class PolymorphicInlineFormSetTest(TestCase):
         InlineFormSet = polymorphic_inlineformset_factory(
             parent_model=Model2A,
             model=Model2B,
-            fields='__all__',
+            fields="__all__",
             formset_children=[
                 PolymorphicFormSetChild(model=Model2B),
                 PolymorphicFormSetChild(model=Model2C),
-            ]
+            ],
         )
 
         parent = Model2A.objects.create(field1="Parent")
@@ -292,12 +294,12 @@ class PolymorphicInlineFormSetTest(TestCase):
         InlineFormSet = polymorphic_inlineformset_factory(
             parent_model=Model2A,
             model=Model2B,
-            fields='__all__',
+            fields="__all__",
             formset_children=[PolymorphicFormSetChild(model=Model2B)],
-            child_form_kwargs={'extra_exclude': ['field1']}
+            child_form_kwargs={"extra_exclude": ["field1"]},
         )
 
         parent = Model2A.objects.create(field1="Parent")
         formset = InlineFormSet(instance=parent)
 
-        assert 'field1' not in formset.forms[0].fields
+        assert "field1" not in formset.forms[0].fields
