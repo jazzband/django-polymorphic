@@ -415,7 +415,7 @@ class PolymorphicTests(TransactionTestCase):
         qs_polymorphic = Model2A.objects.order_by("field1").all()
 
         assert list(qs_base) == [a, b_base, c_base]
-        assert list(qs_polymorphic) == [a, c]
+        assert list(qs_polymorphic) == [a, b_base, c]
 
     def test_queryset_missing_contenttype(self):
         stale_ct = ContentType.objects.create(app_label="tests", model="nonexisting")
@@ -1330,8 +1330,9 @@ class PolymorphicTests(TransactionTestCase):
         objects = list(qs)
         assert len(objects[0].many2many.all()) == 1
 
-        # derived object was not fetched
-        assert len(objects[1].many2many.all()) == 0
+        # derived object was upcast by deletion that keeps parents
+        assert len(objects[1].many2many.all()) == 1
+        assert objects[1].many2many.first() == Model2A.objects.get(field1="A2")
 
         # base object does exist
         assert len(objects[1].many2many.non_polymorphic()) == 1
