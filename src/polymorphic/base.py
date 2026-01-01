@@ -10,6 +10,7 @@ import warnings
 from django.db import models
 from django.db.models.base import ModelBase
 
+from .deletion import PolymorphicGuard
 from .managers import PolymorphicManager
 from .query import PolymorphicQuerySet
 
@@ -74,6 +75,14 @@ class PolymorphicModelBase(ModelBase):
         # polymorphic_primary_key_name (it is needed by query.py)
         if new_class._meta.pk:
             new_class.polymorphic_primary_key_name = new_class._meta.pk.name
+
+        # wrap on_delete handlers of reverse relations back to this model with the
+        # polymorphic deletion guard
+        for fk in new_class._meta.fields:
+            if isinstance(fk, (models.ForeignKey, models.OneToOneField)) and not isinstance(
+                fk.remote_field.on_delete, PolymorphicGuard
+            ):
+                fk.remote_field.on_delete = PolymorphicGuard(fk.remote_field.on_delete)
 
         return new_class
 

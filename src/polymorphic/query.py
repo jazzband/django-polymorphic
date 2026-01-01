@@ -7,7 +7,7 @@ from collections import defaultdict
 
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import FieldDoesNotExist
-from django.db import connections
+from django.db import connections, models
 from django.db.models import FilteredRelation
 from django.db.models.query import ModelIterable, Q, QuerySet
 
@@ -272,6 +272,8 @@ class PolymorphicQuerySet(QuerySet):
                 a.children = translate_polymorphic_Q_object(self.model, a).children
             elif isinstance(a, FilteredRelation):
                 patch_lookup(a.condition)
+            elif isinstance(a, models.F):
+                a.name = translate_polymorphic_field_path(self.model, a.name)
             elif hasattr(a, "get_source_expressions"):
                 for source_expression in a.get_source_expressions():
                     if source_expression is not None:
@@ -546,3 +548,12 @@ class PolymorphicQuerySet(QuerySet):
             return olist
         clist = PolymorphicQuerySet._p_list_class(olist)
         return clist
+
+    def delete(self):
+        """
+        Deletion will be done non-polymorphically because Django's multi-table deletion
+        mechanism is already walking the class hierarchy and producing a correct
+        deletion graph. Introducing polymorphic querysets into the deletion process
+        disrupts the model hierarchy/relationship traversal.
+        """
+        return QuerySet.delete(self.non_polymorphic())

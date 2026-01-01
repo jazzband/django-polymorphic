@@ -100,6 +100,8 @@ INSTALLED_APPS = (
     "django.contrib.admin",
     "polymorphic",
     "polymorphic.tests",
+    "polymorphic.tests.deletion",
+    "polymorphic.tests.test_migrations",
 )
 
 MIDDLEWARE = (

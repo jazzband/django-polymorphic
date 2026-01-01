@@ -1,6 +1,25 @@
 Changelog
 =========
 
+v4.5.1 (2025-12-24)
+-------------------
+
+* Fixed `4.5.0 generates a lot of migrations on my project <https://github.com/jazzband/django-polymorphic/pull/759>`_
+* Fixed `Annotations with F <https://github.com/jazzband/django-polymorphic/pull/755>`_
+* Fixed `show_in_index=False visibility in admin sites and sidebar <https://github.com/jazzband/django-polymorphic/pull/760>`_
+
+v4.5.0 (2025-12-22)
+-------------------
+
+.. warning::
+
+  This version has a bug that generates unnecessary migrations - use 4.5.1 instead!
+
+* Implemented `Deletion fixes <https://github.com/jazzband/django-polymorphic/pull/746>`_
+  **This release fixes the longstanding polymorphic deletion bug.** The fix should be transparent
+  and not generate new migrations files. If you experience any issues, please report them.
+* Fixed `AttributeError Using .alias() On Polymorphic Querysets <https://github.com/jazzband/django-polymorphic/pull/745>`_
+
 v4.4.1 (2025-12-15)
 -------------------
 

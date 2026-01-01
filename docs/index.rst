@@ -120,6 +120,7 @@ Advanced topics
    views
    migrating
    managers
+   deletion
    advanced
    changelog
    api/index

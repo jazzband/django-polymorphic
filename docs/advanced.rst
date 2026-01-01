@@ -268,8 +268,8 @@ Similarly, pre-V1.0 output formatting can be re-estated by using
 ``polymorphic_showfield_old_format = True``.
 
 
-Creating Subclass Objects from Existing Superclass Objects
-------------------------------------------------------------
+Create Children from Parents (Downcasting)
+------------------------------------------
 
 You can create an instance of a subclass from an existing instance of a superclass using the
 :meth:`~polymorphic.managers.PolymorphicManager.create_from_super` method
@@ -284,6 +284,15 @@ The restriction is that ``super_instance`` must be an instance of the direct sup
 ``ModelB``, and any required fields of ``ModelB`` must be provided as keyword arguments. If multiple
 levels of subclassing are involved, you must call this method multiple times to "promote" each
 level.
+
+Delete Children, Leaving Parents (Upcasting)
+--------------------------------------------
+
+The reverse operation of :meth:`~polymorphic.managers.PolymorphicManager.create_from_super` is to
+delete the subclass instance while keeping the superclass instance. This can be done using the
+``keep_parents=True`` argument to :meth:`~django.db.models.Model.delete`. :pypi:`django-polymorphic`
+ensures that the ``polymorphic_ctype`` fields of the superclass instances are updated accordingly
+when doing this.
 
 .. _restrictions:
 
@@ -313,7 +322,20 @@ Restrictions & Caveats
     include the :option:`--natural-primary <dumpdata.--natural-primary>` and
     :option:`--natural-foreign <dumpdata.--natural-foreign>` flags in the arguments.
 
-
+*   If the ``polymorphic_ctype_id`` on the base table points to the wrong
+    :class:`~django.contrib.contenttypes.models.ContentType` (this can happen if you delete child
+    rows manually with raw SQL, ``DELETE FROM table``), then polymorphic queries will elide the
+    corresponding model objects:
+    
+    *   ``BaseClass.objects.all()`` will **exclude** these rows (it filters for existing child types).
+    *   ``BaseClass.objects.non_polymorphic().all()`` will behave as normal - but polymorphic
+        behavior for the affected rows will be undefined - for instance,
+        :meth:`~polymorphic.managers.PolymorphicQuerySet.get_real_instances` will raise an
+        exception.
+    
+    Always use ``instance.delete()`` or ``QuerySet.delete()`` to ensure cascading deletion of the
+    base row. If you must delete manually, ensure you also delete the corresponding row from the
+    base table.
 
 .. old links:
     - http://code.djangoproject.com/wiki/ModelInheritance

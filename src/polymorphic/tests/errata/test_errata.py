@@ -32,3 +32,20 @@ class TestErrata(SimpleTestCase):
         assert any("not_instance_of" in msg for msg in error_messages), (
             f"Expected error for 'not_instance_of' field but got: {error_messages}"
         )
+
+    def test_polymorphic_guard_requires_callable(self):
+        """Test that PolymorphicGuard raises TypeError if initialized with non-callable."""
+
+        from polymorphic.deletion import PolymorphicGuard
+
+        non_callable_values = [42, "not a function", None, 3.14, [], {}]
+
+        for value in non_callable_values:
+            try:
+                PolymorphicGuard(value)
+            except TypeError as e:
+                assert str(e) == "action must be callable", (
+                    f"Expected TypeError with message 'action must be callable' but got: {e}"
+                )
+            else:
+                assert False, f"Expected TypeError when initializing PolymorphicGuard with {value}"
