@@ -1529,7 +1529,7 @@ class PolymorphicTests(TransactionTestCase):
     def test_one_to_one_primary_key(self):
         # check pk name resolution
         for mdl in [Account, SpecialAccount1, SpecialAccount1_1, SpecialAccount2]:
-            assert mdl.polymorphic_primary_key_name == mdl._meta.pk.name
+            assert mdl.polymorphic_primary_key_name == mdl._meta.pk.attname
 
         user1 = get_user_model().objects.create(
             username="user1", email="user1@example.com", password="password"

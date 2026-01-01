@@ -1,6 +1,11 @@
 Changelog
 =========
 
+v4.3.1 (2026-01-01)
+-------------------
+
+* Fixed `Significant performance regression on polymorphic queryset iteration <https://github.com/jazzband/django-polymorphic/issues/781>`_
+
 v4.3.0 (2025-12-09)
 -------------------
 
