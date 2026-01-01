@@ -49,3 +49,19 @@ behavior during deletion collection. If you encounter an issue like this
             on_delete=PolymorphicGuard(models.CASCADE),
         )
 
+Deleting Children (upcasting)
+-----------------------------
+
+When deleting a polymorphic model instance, you can choose to keep the parent model instances by
+passing the ``keep_parents=True`` argument to the
+:meth:`~polymorphic.models.PolymorphicModel.delete` method. This will delete only the subclass
+instance, and leave the parent instances intact. :pypi:`django-polymorphic` will ensure that the
+``polymorphic_ctype`` fields of the parent instances are updated accordingly to reflect their new
+concrete model type.
+
+.. tip::
+
+    You can delete multiple levels of child rows by deleting the model from the desired parent
+    level. For example, if you have a model inheritance hierarchy of ``Base -> ChildA -> ChildB``,
+    and you delete a ``ChildB`` row from its parent model ``ChildA`` instance both the ``ChildA``
+    and ``ChildB`` rows will be deleted leaving a concrete row type of ``Base``.
