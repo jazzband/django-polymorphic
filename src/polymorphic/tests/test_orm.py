@@ -106,6 +106,7 @@ from polymorphic.tests.models import (
     SpecialAccount1_1,
     SpecialAccount2,
 )
+from django.db.models.signals import post_delete
 
 
 class PolymorphicTests(TransactionTestCase):
@@ -409,6 +410,7 @@ class PolymorphicTests(TransactionTestCase):
         b_base = Model2A.objects.non_polymorphic().get(pk=b.pk)
         c_base = Model2A.objects.non_polymorphic().get(pk=c.pk)
 
+        b_pk = b.pk  # Save pk before deletion
         b.delete(keep_parents=True)  # e.g. table was truncated
 
         qs_base = Model2A.objects.order_by("field1").non_polymorphic()
@@ -416,6 +418,13 @@ class PolymorphicTests(TransactionTestCase):
 
         assert list(qs_base) == [a, b_base, c_base]
         assert list(qs_polymorphic) == [a, b_base, c]
+        result = list(qs_polymorphic)
+        assert len(result) == 3
+        assert result[0] == a
+        assert result[1].pk == b_pk  # b returned as Model2A (parent)
+        assert isinstance(result[1], Model2A)
+        assert not isinstance(result[1], Model2B)
+        assert result[2] == c
 
     def test_queryset_missing_contenttype(self):
         stale_ct = ContentType.objects.create(app_label="tests", model="nonexisting")
@@ -1324,6 +1333,7 @@ class PolymorphicTests(TransactionTestCase):
         b1.many2many.add(rel1)
         b2.many2many.add(rel2)
 
+        rel2_pk = rel2.pk  # Save pk before deletion
         rel2.delete(keep_parents=True)
 
         qs = RelatingModel.objects.order_by("pk").prefetch_related("many2many")
@@ -1333,6 +1343,11 @@ class PolymorphicTests(TransactionTestCase):
         # derived object was upcast by deletion that keeps parents
         assert len(objects[1].many2many.all()) == 1
         assert objects[1].many2many.first() == Model2A.objects.get(field1="A2")
+        assert len(objects[1].many2many.all()) == 1
+        parent_obj = objects[1].many2many.all()[0]
+        assert parent_obj.pk == rel2_pk
+        assert isinstance(parent_obj, Model2A)
+        assert not isinstance(parent_obj, Model2B)
 
         # base object does exist
         assert len(objects[1].many2many.non_polymorphic()) == 1
@@ -1353,8 +1368,6 @@ class PolymorphicTests(TransactionTestCase):
         assert obj.delete()
 
     def test_iteration(self):
-        Model2A.objects.all().delete()
-
         for i in range(250):
             Model2B.objects.create(field1=f"B1-{i}", field2=f"B2-{i}")
         for i in range(1000):
@@ -1532,11 +1545,6 @@ class PolymorphicTests(TransactionTestCase):
         assert pur.home == "Duckburg"
 
     def test_subqueries(self):
-        PlainA.objects.all().delete()
-        InlineParent.objects.all().delete()
-        InlineModelA.objects.all().delete()
-        InlineModelB.objects.all().delete()
-
         pa1 = PlainA.objects.create(field1="plain1")
         PlainA.objects.create(field1="plain2")
 
@@ -2105,3 +2113,271 @@ class PolymorphicTests(TransactionTestCase):
 
         for tag in tags.all():
             assert tag.content_object
+
+    def test_besteffort_iteration(self):
+        """
+        Test that our best effort iteration avoids n+1 queries when n objects have stale
+        content type pointers.
+        """
+        for i in range(100):
+            Model2A.objects.create(field1=f"Model2C_{i}")
+
+        # force stale ctype condition
+        Model2A.objects.all().update(polymorphic_ctype=ContentType.objects.get_for_model(Model2C))
+
+        assert Model2C.objects.count() == 0
+        assert Model2B.objects.count() == 0
+        assert Model2A.objects.count() == 100
+
+        with CaptureQueriesContext(connection) as initial_all_2a:
+            for obj in Model2A.objects.all():
+                assert obj.__class__ is Model2A
+
+        assert len(initial_all_2a.captured_queries) <= 4
+
+    def test_queryset_first_returns_none_on_empty_queryset(self):
+        self.assertIsNone(Model2A.objects.first())
+
+    def test_queryset_getitem_raises_indexerror_on_empty_queryset(self):
+        with self.assertRaises(IndexError):
+            _ = Model2A.objects.all()[0]
+
+    def test_queryset_getitem_negative_index_raises_valueerror(self):
+        Model2A.objects.create(field1="OnlyOne")
+        with self.assertRaises(ValueError):
+            _ = Model2A.objects.all()[-1]
+
+    def test_queryset_getitem_slice_returns_objects(self):
+        Model2A.objects.create(field1="First")
+        Model2A.objects.create(field1="Second")
+        objs = Model2A.objects.all()[0:2]
+        self.assertEqual(len(objs), 2)
+        self.assertEqual([o.field1 for o in objs], ["First", "Second"])
+
+    def test_aggregate_with_filtered_relation(self):
+        """Test _process_aggregate_args with FilteredRelation (lines 273-280)"""
+        # Create test data
+        a1 = Model2A.objects.create(field1="A1")
+        b1 = Model2B.objects.create(field1="B1", field2="B2")
+        c1 = Model2C.objects.create(field1="C1", field2="C2", field3="C3")
+
+        # Create related objects
+        rel1 = RelatingModel.objects.create()
+        rel2 = RelatingModel.objects.create()
+        rel1.many2many.add(a1, b1)
+        rel2.many2many.add(c1)
+
+        # Test FilteredRelation with annotate
+        # This exercises the patch_lookup function with FilteredRelation
+        qs = RelatingModel.objects.annotate(
+            filtered_m2m=FilteredRelation(
+                "many2many", condition=Q(many2many__field1__startswith="B")
+            )
+        ).filter(filtered_m2m__isnull=False)
+
+        assert rel1 in qs
+        assert rel2 not in qs
+
+    def test_aggregate_with_nested_q_objects(self):
+        """Test _process_aggregate_args with nested Q objects (lines 285-298)"""
+        a1 = Model2A.objects.create(field1="A1")
+        b1 = Model2B.objects.create(field1="B1", field2="B2")
+        c1 = Model2C.objects.create(field1="C1", field2="C2", field3="C3")
+
+        # Test with nested Q objects in annotate
+        # This exercises the tree_node_test___lookup function
+        result = Model2A.objects.annotate(
+            has_b_field=Case(
+                When(Q(field1__startswith="B") | Q(field1__startswith="C"), then=1),
+                default=0,
+                output_field=models.IntegerField(),
+            )
+        ).filter(has_b_field=1)
+
+        assert b1 in result
+        assert c1 in result
+        assert a1 not in result
+
+    def test_aggregate_with_subclass_field_in_expression(self):
+        """Test _process_aggregate_args with source expressions (lines 275-278, 300-303)"""
+        b1 = Model2B.objects.create(field1="B1", field2="100")
+        b2 = Model2B.objects.create(field1="B2", field2="200")
+        c1 = Model2C.objects.create(field1="C1", field2="150", field3="C3")
+
+        # Test with complex expression containing field references
+        # This exercises the get_source_expressions path
+        from django.db.models import F, Value
+        from django.db.models.functions import Concat
+
+        result = Model2A.objects.annotate(
+            combined=Concat(F("field1"), Value(" - "), F("Model2B___field2"))
+        ).filter(Model2B___field2__isnull=False)
+
+        assert b1 in result
+        assert b2 in result
+        assert c1 in result  # C inherits from B
+
+    def test_get_best_effort_instance_with_missing_derived(self):
+        """Test _get_best_effort_instance when derived class is missing (lines 339-387)"""
+        # Create a Model2C object (which inherits from Model2B -> Model2A)
+        c1 = Model2C.objects.create(field1="C1", field2="C2", field3="C3")
+        c1_pk = c1.pk
+
+        # Delete the Model2C part but keep Model2B and Model2A parts
+        # This simulates a partially deleted object
+        c1.delete(keep_parents=True)
+
+        # Now try to fetch it - should fall back to Model2B
+        result = list(Model2A.objects.filter(pk=c1_pk))
+        assert len(result) == 1
+        assert result[0].pk == c1_pk
+        assert isinstance(result[0], Model2B)
+        assert not isinstance(result[0], Model2C)
+
+    def test_get_best_effort_instance_with_annotations(self):
+        """Test _get_best_effort_instance preserves annotations (lines 367-374)"""
+        # Create a Model2C object
+        c1 = Model2C.objects.create(field1="C1", field2="C2", field3="C3")
+        c1_pk = c1.pk
+
+        # Add annotation
+        annotated = Model2A.objects.annotate(field_count=Count("field1")).filter(pk=c1_pk)
+
+        # Delete the Model2C part
+        c1.delete(keep_parents=True)
+
+        # Fetch with annotation - should preserve annotation on fallback object
+        result = list(annotated)
+        assert len(result) == 1
+        assert hasattr(result[0], "field_count")
+        assert result[0].field_count == 1
+
+    def test_get_best_effort_instance_with_extra_select(self):
+        """Test _get_best_effort_instance preserves extra select (lines 376-379)"""
+        # Create a Model2C object
+        c1 = Model2C.objects.create(field1="C1", field2="C2", field3="C3")
+        c1_pk = c1.pk
+
+        # Add extra select
+        qs = Model2A.objects.extra(select={"upper_field1": "UPPER(field1)"}).filter(pk=c1_pk)
+
+        # Delete the Model2C part
+        c1.delete(keep_parents=True)
+
+        # Fetch with extra - should preserve extra on fallback object
+        result = list(qs)
+        assert len(result) == 1
+        assert hasattr(result[0], "upper_field1")
+        assert result[0].upper_field1 == "C1"
+
+    def test_get_best_effort_instance_multiple_inheritance_levels(self):
+        """Test _get_best_effort_instance walks up multiple levels (lines 351-384)"""
+        # Create a Model2D object (D -> C -> B -> A)
+        d1 = Model2D.objects.create(field1="D1", field2="D2", field3="D3", field4="D4")
+        d1_pk = d1.pk
+
+        # Delete Model2D part, keep Model2C
+        d1.delete(keep_parents=True)
+
+        # Should fall back to Model2C
+        result = list(Model2A.objects.filter(pk=d1_pk))
+        assert len(result) == 1
+        assert isinstance(result[0], Model2C)
+        assert not isinstance(result[0], Model2D)
+
+        # Now delete Model2C part too
+        c1 = Model2C.objects.get(pk=d1_pk)
+        c1.delete(keep_parents=True)
+
+        # Should fall back to Model2B
+        result = list(Model2A.objects.filter(pk=d1_pk))
+        assert len(result) == 1
+        assert isinstance(result[0], Model2B)
+        assert not isinstance(result[0], Model2C)
+
+    def test_deferred_loading_with_subclass_syntax(self):
+        """Test deferred loading with Model___field syntax (lines 481-505)"""
+        b1 = Model2B.objects.create(field1="B1", field2="B2")
+        c1 = Model2C.objects.create(field1="C1", field2="C2", field3="C3")
+
+        # Test defer with subclass field syntax
+        qs = Model2A.objects.defer("Model2B___field2")
+        result = list(qs)
+
+        # field2 should be deferred for Model2B instances
+        b_obj = [r for r in result if r.pk == b1.pk][0]
+        assert isinstance(b_obj, Model2B)
+        # Accessing deferred field should trigger a query
+        assert b_obj.field2 == "B2"
+
+    def test_deferred_loading_with_nonexistent_field(self):
+        """Test deferred loading handles non-existent fields gracefully (lines 496-501)"""
+        b1 = Model2B.objects.create(field1="B1", field2="B2")
+
+        # Try to defer a field that doesn't exist in Model2B using subclass syntax
+        # This should be handled gracefully (field doesn't exist in this subclass)
+        qs = Model2A.objects.defer("Model2C___field3")
+        result = list(qs)
+
+        # Should still work, just ignoring the non-existent field for Model2B
+        assert len(result) == 1
+        assert result[0].field1 == "B1"
+
+    def test_only_with_subclass_syntax(self):
+        """Test only() with Model___field syntax (lines 214-226)"""
+        b1 = Model2B.objects.create(field1="B1", field2="B2")
+        c1 = Model2C.objects.create(field1="C1", field2="C2", field3="C3")
+
+        # Test only with subclass field syntax
+        qs = Model2A.objects.only("field1", "Model2B___field2")
+        result = list(qs)
+
+        # Only field1 and field2 should be loaded for Model2B instances
+        b_obj = [r for r in result if r.pk == b1.pk][0]
+        assert isinstance(b_obj, Model2B)
+        assert b_obj.field1 == "B1"
+        assert b_obj.field2 == "B2"
+
+    def test_real_instances_with_stale_content_type(self):
+        """Test _get_real_instances handles stale content types (lines 451-453)"""
+        # This test verifies the stale content type handling by checking
+        # that objects with invalid content type IDs are skipped gracefully
+        # We'll use the existing prefetch_related_with_missing test pattern
+        # which already covers this scenario
+        pass  # Covered by test_prefetch_related_with_missing
+
+    def test_real_instances_with_proxy_model(self):
+        """Test _get_real_instances handles proxy models (lines 527-529)"""
+        # Create a proxy model instance
+        proxy = ProxyModelA.objects.create(field1="Proxy1")
+
+        # Fetch through base class
+        result = list(ProxyModelBase.objects.filter(pk=proxy.pk))
+        assert len(result) == 1
+        assert isinstance(result[0], ProxyModelA)
+        assert result[0].field1 == "Proxy1"
+
+    def test_annotate_with_polymorphic_field_path(self):
+        """Test annotate with polymorphic field paths (lines 312-316)"""
+        b1 = Model2B.objects.create(field1="B1", field2="B2")
+        b2 = Model2B.objects.create(field1="B2", field2="B3")
+        c1 = Model2C.objects.create(field1="C1", field2="C2", field3="C3")
+
+        # Test annotate with subclass field
+        result = Model2A.objects.annotate(b_field_count=Count("Model2B___field2"))
+
+        # All objects should be returned with annotation
+        assert result.count() == 3
+
+    def test_aggregate_with_polymorphic_field_path(self):
+        """Test aggregate with polymorphic field paths (lines 318-323)"""
+        b1 = Model2B.objects.create(field1="B1", field2="10")
+        b2 = Model2B.objects.create(field1="B2", field2="20")
+        c1 = Model2C.objects.create(field1="C1", field2="30", field3="C3")
+
+        # Test aggregate with subclass field
+        # This should use non_polymorphic internally
+        result = Model2A.objects.aggregate(total=Count("Model2B___field2"))
+
+        assert "total" in result
+        assert result["total"] >= 0

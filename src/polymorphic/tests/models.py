@@ -29,16 +29,30 @@ class PlainC(PlainB):
     field3 = models.CharField(max_length=30)
 
 
+class PlainD(PlainA):
+    field2 = models.CharField(max_length=30)
+
+
 class Model2A(ShowFieldType, PolymorphicModel):
     field1 = models.CharField(max_length=30)
     polymorphic_showfield_deferred = True
 
 
-class Model2B(Model2A):
+class RandomMixinB:
+    def random_method(self):
+        return "random b"
+
+
+class Model2B(RandomMixinB, Model2A):
     field2 = models.CharField(max_length=30)
 
 
-class Model2C(Model2B):
+class RandomMixinC:
+    def random_method(self):
+        return "random c"
+
+
+class Model2C(RandomMixinC, Model2B):
     field3 = models.CharField(max_length=30, blank=True, default="")
 
 

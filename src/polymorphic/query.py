@@ -3,6 +3,7 @@ QuerySet for PolymorphicModel
 """
 
 import copy
+import heapq
 from collections import defaultdict
 
 from django.contrib.contenttypes.models import ContentType
@@ -23,6 +24,15 @@ Polymorphic_QuerySet_objects_per_request = 2000
 The maximum number of objects requested per db-request by the polymorphic
 queryset.iterator() implementation
 """
+
+
+class _Inconsistent:
+    """
+    A marker class indicating that there is a mismatch between the content type
+    and the actual class of an object retrieved from the database.
+    """
+
+    pass
 
 
 class PolymorphicModelIterable(ModelIterable):
@@ -373,6 +383,14 @@ class PolymorphicQuerySet(QuerySet):
         idlist_per_model = defaultdict(list)
         indexlist_per_model = defaultdict(list)
 
+        # priority queue holding the query order of concrete classes
+        # we need this so we can retry fetching objects further up the hierarchy with
+        # stale content types - this can happen in some legitimate cases (deletion)
+        # we build up and pop classes off this queue to ensure we process in tree
+        # traversal order (leaves first) - this allows us to retry fetching as parent
+        # classes if child class retrieval fails
+        classes_to_query = []
+
         # django's automatic ".pk" field does not always work correctly for
         # custom fields in derived objects (unclear yet who to put the blame on).
         # We get different type(o.pk) in this case.
@@ -391,6 +409,11 @@ class PolymorphicQuerySet(QuerySet):
         self_concrete_model_class_id = content_type_manager.get_for_model(
             self.model, for_concrete_model=True
         ).pk
+
+        class_priorities = {
+            mdl: idx + 1
+            for idx, mdl in enumerate((*reversed(self.model._concrete_descendants), self.model))
+        }
 
         for i, base_object in enumerate(base_result_objects):
             if base_object.polymorphic_ctype_id == self_model_class_id:
@@ -412,7 +435,15 @@ class PolymorphicQuerySet(QuerySet):
                     real_concrete_class = content_type_manager.get_for_id(
                         real_concrete_class_id
                     ).model_class()
-                    idlist_per_model[real_concrete_class].append(getattr(base_object, pk_name))
+                    if real_concrete_class not in idlist_per_model:
+                        # Maintain a priority queue to process the model classes
+                        # in order of their occurrence in the inheritance tree - leafs
+                        # first
+                        heapq.heappush(
+                            classes_to_query,
+                            (class_priorities.get(real_concrete_class, 0), real_concrete_class),
+                        )
+                    idlist_per_model[real_concrete_class].append(base_object.pk)
                     indexlist_per_model[real_concrete_class].append((i, len(resultlist)))
                     resultlist.append(None)
 
@@ -421,8 +452,11 @@ class PolymorphicQuerySet(QuerySet):
         # Then we copy the annotate fields from the base objects to the real objects.
         # Then we copy the extra() select fields from the base objects to the real objects.
         # TODO: defer(), only(): support for these would be around here
-        for real_concrete_class, idlist in idlist_per_model.items():
-            indices = indexlist_per_model[real_concrete_class]
+
+        while classes_to_query:
+            _, real_concrete_class = heapq.heappop(classes_to_query)
+            idlist = idlist_per_model.pop(real_concrete_class)
+            indices = indexlist_per_model.pop(real_concrete_class)
             real_objects = real_concrete_class._base_objects.db_manager(self.db).filter(
                 **{(f"{pk_name}__in"): idlist}
             )
@@ -464,16 +498,36 @@ class PolymorphicQuerySet(QuerySet):
                 getattr(real_object, pk_name): real_object for real_object in real_objects
             }
 
-            for i, j in indices:
-                base_object = base_result_objects[i]
+            for base_idx, result_idx in indices:
+                base_object = base_result_objects[base_idx]
                 o_pk = getattr(base_object, pk_name)
                 real_object = real_objects_dict.get(o_pk)
                 if real_object is None:
+                    # Our content type is pointing to a row that does not exist anymore
+                    # We try to find the next best available parent row
+                    inheritance_path = real_concrete_class._route_to_ancestor(self.model)
+                    if not inheritance_path or inheritance_path[0].model is self.model:
+                        resultlist[result_idx] = base_object
+                    else:
+                        next_best_class = inheritance_path[0].model
+                        if next_best_class not in idlist_per_model:
+                            # add this class to the priority try queue
+                            heapq.heappush(
+                                classes_to_query,
+                                (class_priorities.get(next_best_class, 0), next_best_class),
+                            )
+                        idlist_per_model[next_best_class].append(o_pk)
+                        indexlist_per_model[next_best_class].append((base_idx, result_idx))
+                        resultlist[result_idx] = _Inconsistent
                     continue
 
                 # need shallow copy to avoid duplication in caches (see PR #353)
                 real_object = copy.copy(real_object)
-                real_class = real_object.get_real_instance_class()
+                real_class = (
+                    real_concrete_class
+                    if resultlist[result_idx] is _Inconsistent
+                    else real_object.get_real_instance_class()
+                )
 
                 # If the real class is a proxy, upcast it
                 if real_class != real_concrete_class:
@@ -495,9 +549,9 @@ class PolymorphicQuerySet(QuerySet):
                         attr = getattr(base_object, select_field_name)
                         setattr(real_object, select_field_name, attr)
 
-                resultlist[j] = real_object
+                resultlist[result_idx] = real_object
 
-        resultlist = [i for i in resultlist if i]
+        resultlist = [i for i in resultlist if i and i is not _Inconsistent]
 
         # set polymorphic_annotate_names in all objects (currently just used for debugging/printing)
         if self.query.annotations:

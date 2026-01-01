@@ -2,10 +2,14 @@
 Seamless Polymorphic Inheritance for Django Models
 """
 
+from dataclasses import dataclass
+from functools import lru_cache
+
 from django.contrib.contenttypes.models import ContentType
 from django.db import models, transaction
 from django.db.models.fields.related import ForwardManyToOneDescriptor, ReverseOneToOneDescriptor
 from django.db.utils import DEFAULT_DB_ALIAS
+from django.utils.functional import classproperty
 
 from .base import PolymorphicModelBase
 from .managers import PolymorphicManager
@@ -13,6 +17,16 @@ from .query_translate import translate_polymorphic_Q_object
 
 ###################################################################################
 # PolymorphicModel
+
+
+@dataclass(frozen=True)
+class ParentLinkInfo:
+    """
+    Information about a parent table link in a polymorphic model.
+    """
+
+    model: models.Model
+    link: models.Field
 
 
 class PolymorphicTypeUndefined(LookupError):
@@ -258,6 +272,72 @@ class PolymorphicModel(models.Model, metaclass=PolymorphicModelBase):
                     name,
                     property(create_accessor_function_for_model(model, field)),
                 )
+
+    @classmethod
+    @lru_cache(maxsize=None)
+    def _route_to_ancestor(cls, ancestor_model):
+        """
+        Returns the first (highest mro precedence - depth first on parents) model
+        inheritance route to the given ancestor model - or an empty list if no such
+        route exists.
+
+        .. warning::
+
+            This is a private method subject to unannounced changes. This only works for
+            concrete ancestors!
+
+        Returns a :class:`list` of :class:`ParentLinkInfo`
+        """
+        route = []
+
+        def find_route(model, target_model, current_route):
+            if model is target_model:
+                return current_route
+
+            for parent_model, field_to_parent in model._meta.parents.items():
+                if field_to_parent is not None:
+                    new_route = current_route + [ParentLinkInfo(parent_model, field_to_parent)]
+                    found_route = find_route(parent_model, target_model, new_route)
+                    if found_route is not None:
+                        return found_route
+            return None
+
+        found_route = find_route(cls, ancestor_model, route)
+        if found_route is None:
+            return []
+        return found_route
+
+    @classproperty
+    def _concrete_descendants(cls):
+        """
+        A list of all concrete (non-abstract, non-proxy) descendant
+        model classes in tree order with leaf descendants last.
+
+        .. warning::
+
+            This is a private method subject to unannounced changes. Also do not call
+            it before all models are loaded or its results will be incomplete!
+        """
+        from django.apps import apps
+
+        apps.check_models_ready()
+
+        def add_concrete_descendants(model, result):
+            """Add concrete descendants in tree order (ancestors before descendants)."""
+            for sub_cls in model.__subclasses__():
+                if not issubclass(sub_cls, models.Model):
+                    continue
+
+                # Add concrete models in pre-order (parent before children)
+                if not sub_cls._meta.abstract and not sub_cls._meta.proxy:
+                    result.append(sub_cls)
+
+                # Always recurse to find descendants through abstract and proxy models
+                add_concrete_descendants(sub_cls, result)
+
+        result = []
+        add_concrete_descendants(cls, result)
+        return result
 
     def _get_inheritance_relation_fields_and_models(self):
         """helper function for __init__:

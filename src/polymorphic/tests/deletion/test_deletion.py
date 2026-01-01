@@ -745,9 +745,8 @@ class TestDeletion(TestCase):
         Test what happens when you delete a child row with raw SQL then try to access
         polymorphic objects.
 
-        If a polymorphic_ctype_id points to a non existing row, those models will be
-        ellided from polymorphic queryset results. This test monitors that behavior
-        so if fixed in future we can remove the warning from the docs.
+        With best effort approach, when a polymorphic_ctype_id points to a non-existing
+        derived row, the parent object is returned instead of being filtered out.
         """
         from .models import Poly1, A1
 
@@ -760,7 +759,16 @@ class TestDeletion(TestCase):
                 f"DELETE FROM {A1._meta.db_table} WHERE {A1._meta.pk.column} = %s", [a1.pk]
             )
 
-        assert set(Poly1.objects.all()) == {p2}
+        # Best effort: parent object is returned when child is deleted via raw SQL
+        result = list(Poly1.objects.all())
+        assert len(result) == 2
+        assert p2 in result
+        # p1 is returned as Poly1 (parent) since A1 (child) was deleted
+        assert any(
+            obj.pk == p1.pk and isinstance(obj, Poly1) and not isinstance(obj, A1)
+            for obj in result
+        )
+
         assert set(Poly1.objects.non_polymorphic().all()) == {p1, p2}
 
         p1_fetched = Poly1.objects.non_polymorphic().get(pk=a1.pk)
