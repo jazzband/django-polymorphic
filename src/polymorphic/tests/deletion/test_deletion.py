@@ -772,8 +772,7 @@ class TestDeletion(TestCase):
         assert set(Poly1.objects.non_polymorphic().all()) == {p1, p2}
 
         p1_fetched = Poly1.objects.non_polymorphic().get(pk=a1.pk)
-        with self.assertRaises(A1.DoesNotExist):
-            p1_fetched.get_real_instance()
+        assert p1_fetched.get_real_instance().__class__ is Poly1
 
     def test_delete_keep_parents(self):
         """

@@ -2135,6 +2135,17 @@ class PolymorphicTests(TransactionTestCase):
 
         assert len(initial_all_2a.captured_queries) <= 4
 
+    def test_besteffort_get_real_instance(self):
+        obj = Model2B.objects.create(field1="TestB", field2="TestB2")
+        obj.polymorphic_ctype = ContentType.objects.get_for_model(Model2C)
+        obj.save()
+        as_a = Model2A.objects.non_polymorphic().get(pk=obj.pk)
+        assert as_a.__class__ is Model2A
+        should_be_b = as_a.get_real_instance()
+        assert should_be_b.__class__ is Model2B
+        # ctype should still be wrong
+        assert should_be_b.polymorphic_ctype == ContentType.objects.get_for_model(Model2C)
+
     def test_queryset_first_returns_none_on_empty_queryset(self):
         self.assertIsNone(Model2A.objects.first())
 
