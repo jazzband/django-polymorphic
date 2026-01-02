@@ -3,7 +3,17 @@ from django.test import TestCase
 from django.db import models
 from django.db.models import functions
 from polymorphic.models import PolymorphicTypeInvalid
-from polymorphic.tests.models import Bottom, Middle, Top, Team, UserProfile, Model2A, Model2B
+from polymorphic.tests.models import (
+    Bottom,
+    Middle,
+    Top,
+    Team,
+    UserProfile,
+    Model2A,
+    Model2B,
+    Regression295Parent,
+    Regression295Related,
+)
 
 
 class RegressionTests(TestCase):
@@ -248,3 +258,18 @@ class RegressionTests(TestCase):
         self.assertEqual(Model2B.objects.count(), 2)
         self.assertEqual(Model2C.objects.count(), 1)
         self.assertEqual(obj3, Model2B.objects.order_by("pk").last())
+
+    def test_double_underscore_in_related_name(self):
+        """
+        Test filtering on a related field when the relation name itself contains '__'.
+        This reproduces the issue in #295, where 'my__relation___real_field' was
+        being incorrectly parsed as a polymorphic lookup.
+        """
+
+        related = Regression295Related.objects.create(_real_field="test_value")
+        Regression295Parent.objects.create(related_object=related)
+
+        # The following filter would be translated to 'related_object___real_field'
+        # by Django's query machinery.
+        qs = Regression295Parent.objects.filter(related_object___real_field="test_value")
+        self.assertEqual(qs.count(), 1)
