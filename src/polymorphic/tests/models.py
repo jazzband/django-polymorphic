@@ -843,3 +843,11 @@ class Bookmark(PolymorphicModel):
 
 class Assignment(Bookmark):
     assigned_to = models.CharField(max_length=100)
+
+
+class Regression295Related(models.Model):
+    _real_field = models.CharField(max_length=10)
+
+
+class Regression295Parent(PolymorphicModel):
+    related_object = models.ForeignKey(Regression295Related, on_delete=models.CASCADE)
