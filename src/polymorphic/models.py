@@ -206,14 +206,14 @@ class PolymorphicModel(models.Model, metaclass=PolymorphicModelBase):
             to upcast a complete list in a single efficient query.
         """
         real_model = self.get_real_instance_class()
-        if real_model == self.__class__:
+        if real_model is self.__class__:
             return self
         if real_model is None:
             raise PolymorphicTypeInvalid(
                 f"ContentType {self.polymorphic_ctype_id} for {self.__class__} "
                 f"#{self.pk} does not have a corresponding model!"
             )
-        return real_model.objects.db_manager(self._state.db).get(pk=self.pk)
+        return self.__class__.objects.db_manager(self._state.db).get(pk=self.pk)
 
     def __init__(self, *args, **kwargs):
         """Replace Django's inheritance accessor member functions for our model
