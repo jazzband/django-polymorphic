@@ -74,3 +74,68 @@ def get_base_polymorphic_model(ChildModel, allow_abstract=False):
         ):
             return Model
     return None
+
+
+def prepare_for_copy(obj):
+    """
+    Prepare a model instance for copying by resetting all primary keys and parent table
+    pointers in the inheritance chain. **Copy semantics are application specific.** This
+    function only resets the fields required to create a new instance when saved, it
+    does not deep copy related objects or save the new instance
+    (See :ref:`copying discussion in the Django documentation.
+    <topics/db/queries:copying model instances>`):
+
+    .. code-block:: python
+
+        from polymorphic.utils import prepare_for_copy
+
+        original = YourModel.objects.get(pk=1)
+        prepare_for_copy(original)
+        # update any related fields here as needed
+        original.save()  # creates a new object in the database
+
+    .. tip::
+
+        Preparation is at the inheritance level of the passed in model. This means you
+        can copy and upcast at the same time. Suppose you have A->B->C inheritance chain,
+        and you have an instance of C that you want to copy as a B instance:
+
+        .. code-block:: python
+
+            c = C.objects.create()
+            c_as_b = B.objects.non_polymorphic().get(pk=c.pk)
+
+            # copy c as a b instance
+            prepare_for_copy(c_as_b)
+            c_as_b.save()
+
+            assert B.objects.count() == 2
+            assert C.objects.count() == 1
+
+        If you want polymorphic copying instead:
+
+        .. code-block:: python
+
+            prepare_for_copy(b_instance.get_real_instance())
+
+    **This function also works for non-polymorphic multi-table models.**
+
+    :param obj: The model instance to prepare for copying.
+    """
+    obj.pk = None
+    if isinstance(obj, PolymorphicModel):
+        # we might be upcasting - allow ctype to be reset automatically on save
+        obj.polymorphic_ctype_id = None
+
+    def reset_parent_pointers(mdl):
+        """
+        Reset all parent table pointers and pks in the inheritance chain.
+        """
+        for parent, ptr in mdl._meta.parents.items():
+            reset_parent_pointers(parent)
+            if ptr is not None:
+                setattr(obj, ptr.attname, None)
+                setattr(obj, parent._meta.pk.attname, None)
+
+    reset_parent_pointers(obj)
+    obj._state.adding = True  # Mark as new object
