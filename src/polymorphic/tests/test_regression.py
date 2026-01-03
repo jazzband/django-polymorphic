@@ -13,6 +13,9 @@ from polymorphic.tests.models import (
     Model2B,
     Regression295Parent,
     Regression295Related,
+    RelationBase,
+    RelationA,
+    RelationB,
 )
 
 
@@ -273,3 +276,48 @@ class RegressionTests(TestCase):
         # by Django's query machinery.
         qs = Regression295Parent.objects.filter(related_object___real_field="test_value")
         self.assertEqual(qs.count(), 1)
+
+    def test_issue_252_abstract_base_class(self):
+        """
+        Test that polymorphic models inheriting from both an abstract model
+        and PolymorphicModel can be created and saved without IndexError.
+
+        This reproduces issue #252:
+        https://github.com/jazzband/django-polymorphic/issues/252
+
+        The issue reported an IndexError when trying to create an Event object
+        that inherited from both an abstract model (AbstractDateInfo) and
+        PolymorphicModel. The error occurred in Django's query_utils.py when
+        accessing polymorphic_ctype_id.
+
+        We use RelationBase which inherits from RelationAbstractModel (abstract)
+        and PolymorphicModel, demonstrating the same pattern.
+        """
+        # Test creating base polymorphic model with abstract parent
+        # RelationBase inherits from RelationAbstractModel (abstract) and PolymorphicModel
+        base = RelationBase(field_base="test_base")
+        # This should not raise IndexError
+        base.save()
+
+        # Verify the object was saved correctly
+        self.assertIsNotNone(base.pk)
+        self.assertEqual(base.field_base, "test_base")
+        self.assertIsNotNone(base.polymorphic_ctype_id)
+
+        # Test creating child models
+        relation_a = RelationA.objects.create(field_base="base_a", field_a="field_a_value")
+        self.assertIsNotNone(relation_a.pk)
+        self.assertEqual(relation_a.field_a, "field_a_value")
+
+        relation_b = RelationB.objects.create(field_base="base_b", field_b="field_b_value")
+        self.assertIsNotNone(relation_b.pk)
+        self.assertEqual(relation_b.field_b, "field_b_value")
+
+        # Test querying polymorphic objects
+        relations = RelationBase.objects.all().order_by("pk")
+        self.assertEqual(relations.count(), 3)
+
+        # Verify polymorphic behavior - objects should be returned as their actual types
+        self.assertIsInstance(relations[0], RelationBase)
+        self.assertIsInstance(relations[1], RelationA)
+        self.assertIsInstance(relations[2], RelationB)
