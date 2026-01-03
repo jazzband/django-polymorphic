@@ -124,14 +124,122 @@ including the complexity around related fields and multi-table inheritance.
 :pypi:`django-polymorphic` offers a utility function :func:`~polymorphic.utils.prepare_for_copy`
 that resets all necessary fields on a model instance to prepare it for copying:
 
-.. code-block:: python
-
     from polymorphic.utils import prepare_for_copy
 
     obj = ModelB.objects.first()
     prepare_for_copy(obj)
     obj.save()
     # obj is now a copy of the original ModelB instance
+
+
+Working with Signals and Fixtures
+----------------------------------
+
+When using Django's :django-admin:`loaddata` command with polymorphic models, you may notice that
+``post_save`` signal handlers receive instances that appear incomplete - parent class attributes
+may be empty and ``pk``/``id`` fields may not match. **This is expected Django behavior** for
+multi-table inheritance during deserialization, not a bug in :pypi:`django-polymorphic`.
+
+Understanding the Issue
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+During fixture loading, Django deserializes parent and child table rows separately. When a child
+model's ``post_save`` signal fires, Django passes a ``raw=True`` parameter to indicate the data
+is being loaded from a fixture. At this point, parent attributes may not yet be fully accessible.
+
+For example, with this model hierarchy:
+
+.. code-block:: python
+
+    class Endpoint(PolymorphicModel):
+        id = models.UUIDField(primary_key=True, default=uuid.uuid4)
+        name = models.CharField(max_length=250)
+
+    class Switch(Endpoint):
+        ip_address = models.GenericIPAddressField()
+
+    @receiver(post_save, sender=Switch)
+    def switch_saved(sender, instance, created, **kwargs):
+        # During loaddata: instance.name may be empty!
+        print(f"Switch: {instance.name}")
+
+During ``loaddata``, the signal may fire before ``instance.name`` is populated, even though the
+fixture contains the correct data.
+
+Recommended Solution: Check for raw=True
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The standard Django pattern is to check the ``raw`` parameter and skip custom logic during
+fixture loading:
+
+.. code-block:: python
+
+    from django.db.models.signals import post_save
+    from django.dispatch import receiver
+
+    @receiver(post_save, sender=Switch)
+    def switch_saved(sender, instance, created, raw, **kwargs):
+        # Skip signal logic during fixture loading
+        if raw:
+            return
+        
+        if created:
+            # This logic only runs during normal saves, not loaddata
+            print(f"New switch created: {instance.name}")
+            setup_monitoring(instance)
+
+This is the recommended approach in Django's documentation and prevents issues with incomplete
+data during deserialization.
+
+Alternative: Use post_migrate Signal
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If you need to perform setup tasks after loading fixtures, use the ``post_migrate`` signal instead:
+
+.. code-block:: python
+
+    from django.db.models.signals import post_migrate
+    from django.dispatch import receiver
+
+    @receiver(post_migrate)
+    def setup_switches(sender, **kwargs):
+        """Run after migrations and fixtures are loaded"""
+        from myapp.models import Switch
+        
+        for switch in Switch.objects.filter(monitoring_configured=False):
+            # Now all attributes are fully loaded
+            setup_monitoring(switch)
+            switch.monitoring_configured = True
+            switch.save()
+
+Best Practices for Fixtures
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When working with fixtures and polymorphic models:
+
+1. **Always use natural keys** when creating fixtures with :django-admin:`dumpdata`:
+
+   .. code-block:: bash
+
+       python manage.py dumpdata myapp --natural-foreign --natural-primary > fixture.json
+
+   This ensures ``polymorphic_ctype`` references are portable across databases.
+
+2. **Check for raw=True** in signal handlers to avoid accessing incomplete data.
+
+3. **Use post_migrate** for post-fixture setup tasks rather than ``post_save``.
+
+4. **Verify polymorphic_ctype** after loading fixtures if needed:
+
+   .. code-block:: python
+
+       from polymorphic.utils import reset_polymorphic_ctype
+       from myapp.models import Endpoint, Switch
+
+       # After loaddata, ensure ctype is correct
+       reset_polymorphic_ctype(Endpoint, Switch)
+
+For more details, see `issue #502 <https://github.com/django-polymorphic/django-polymorphic/issues/502>`_.
 
 Using Third Party Models (without modifying them)
 -------------------------------------------------
@@ -329,6 +437,8 @@ Restrictions & Caveats
     (or any table that has a reference to :class:`~django.contrib.contenttypes.models.ContentType`),
     include the :option:`--natural-primary <dumpdata.--natural-primary>` and
     :option:`--natural-foreign <dumpdata.--natural-foreign>` flags in the arguments.
+    See :ref:`Working with Signals and Fixtures` for more details on using fixtures with
+    polymorphic models.
 
 *   If the ``polymorphic_ctype_id`` on the base table points to the wrong
     :class:`~django.contrib.contenttypes.models.ContentType` (this can happen if you delete child

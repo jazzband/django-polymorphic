@@ -105,6 +105,9 @@ works fully automatic and just delivers the expected results.
     :option:`--natural-foreign <dumpdata.--natural-foreign>` flag in the arguments. This makes sure
     the :class:`~django.contrib.contenttypes.models.ContentType` models will be referenced by name
     instead of their primary key as that changes between Django instances.
+    
+    If you're using ``post_save`` signals with polymorphic models, see
+    :ref:`advanced-features` for important information about handling signals during fixture loading.
 
 
 .. note::
