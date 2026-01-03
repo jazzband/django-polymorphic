@@ -74,7 +74,7 @@ class PolymorphicModelBase(ModelBase):
         # determine the name of the primary key field and store it into the class variable
         # polymorphic_primary_key_name (it is needed by query.py)
         if new_class._meta.pk:
-            new_class.polymorphic_primary_key_name = new_class._meta.pk.name
+            new_class.polymorphic_primary_key_name = new_class._meta.pk.attname
 
         # wrap on_delete handlers of reverse relations back to this model with the
         # polymorphic deletion guard
