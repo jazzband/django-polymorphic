@@ -48,7 +48,8 @@ class PolymorphicFormSetChild:
         # This is mostly needed for the generic inline formsets
         self._form_base = form
         self.fields = fields
-        self.exclude = exclude or ()
+        # Normalize exclude=None to () to match Django's formset behavior
+        self.exclude = () if exclude is None else exclude
         self.formfield_callback = formfield_callback
         self.widgets = widgets
         self.localized_fields = localized_fields
@@ -75,16 +76,30 @@ class PolymorphicFormSetChild:
         # that doesn't completely replace all 'exclude' settings defined per child type,
         # we allow to define things like 'extra_...' fields that are amended to the current child settings.
 
-        exclude = list(self.exclude)
+        # Handle exclude parameter carefully:
+        # - If exclude was explicitly provided (not empty), use it
+        # - If extra_exclude is provided, merge it with self.exclude
+        # - If neither was provided, don't pass exclude to modelform_factory at all,
+        #   allowing the form's Meta.exclude to take effect
         extra_exclude = kwargs.pop("extra_exclude", None)
-        if extra_exclude:
-            exclude += list(extra_exclude)
+
+        # Determine if we should pass exclude to modelform_factory
+        # Treat empty tuples/lists the same as None to allow form's Meta.exclude to take effect
+        should_pass_exclude = bool(self.exclude) or extra_exclude is not None
+
+        if should_pass_exclude:
+            if self.exclude:
+                exclude = list(self.exclude)
+            else:
+                exclude = []
+
+            if extra_exclude:
+                exclude += list(extra_exclude)
 
         defaults = {
             "form": self._form_base,
             "formfield_callback": self.formfield_callback,
             "fields": self.fields,
-            "exclude": exclude,
             # 'for_concrete_model': for_concrete_model,
             "localized_fields": self.localized_fields,
             "labels": self.labels,
@@ -93,6 +108,11 @@ class PolymorphicFormSetChild:
             "widgets": self.widgets,
             # 'field_classes': field_classes,
         }
+
+        # Only add exclude to defaults if we determined it should be passed
+        if should_pass_exclude:
+            defaults["exclude"] = exclude
+
         defaults.update(kwargs)
 
         return modelform_factory(self.model, **defaults)
@@ -177,7 +197,7 @@ class BasePolymorphicModelFormSet(BaseModelFormSet):
         # Need to find the model that will be displayed in this form.
         # Hence, peeking in the self.queryset_data beforehand.
         if self.is_bound:
-            if "instance" in defaults:
+            if "instance" in defaults and defaults["instance"] is not None:
                 # Object is already bound to a model, won't change the content type
                 model = defaults["instance"].get_real_instance_class()  # allow proxy models
             else:
@@ -198,10 +218,15 @@ class BasePolymorphicModelFormSet(BaseModelFormSet):
                         f"Child model type {model} is not part of the formset"
                     )
         else:
-            if "instance" in defaults:
+            if "instance" in defaults and defaults["instance"] is not None:
                 model = defaults["instance"].get_real_instance_class()  # allow proxy models
             elif "polymorphic_ctype" in defaults.get("initial", {}):
-                model = defaults["initial"]["polymorphic_ctype"].model_class()
+                ct_value = defaults["initial"]["polymorphic_ctype"]
+                # Handle both ContentType instances and IDs
+                if isinstance(ct_value, ContentType):
+                    model = ct_value.model_class()
+                else:
+                    model = ContentType.objects.get_for_id(ct_value).model_class()
             elif i < len(self.queryset_data):
                 model = self.queryset_data[i].__class__
             else:
@@ -210,6 +235,18 @@ class BasePolymorphicModelFormSet(BaseModelFormSet):
                 total_known = len(self.queryset_data)
                 child_models = list(self.child_forms.keys())
                 model = child_models[(i - total_known) % len(child_models)]
+
+        # Normalize polymorphic_ctype in initial data if it's a ContentType instance
+        # This allows users to set initial[i]['polymorphic_ctype'] = ct (ContentType instance)
+        # while the form field expects an integer ID
+        # We do this AFTER determining the model so the model determination can use the ContentType
+        if "initial" in defaults and "polymorphic_ctype" in defaults["initial"]:
+            ct_value = defaults["initial"]["polymorphic_ctype"]
+            if isinstance(ct_value, ContentType):
+                # Create a copy to avoid modifying the original formset.initial
+                defaults["initial"] = defaults["initial"].copy()
+                # Convert ContentType instance to its ID
+                defaults["initial"]["polymorphic_ctype"] = ct_value.pk
 
         form_class = self.get_form_class(model)
         form = form_class(**defaults)
@@ -352,6 +389,7 @@ def polymorphic_modelformset_factory(
     FormSet = modelformset_factory(**kwargs)
 
     child_kwargs = {
+        "fields": fields,
         # 'exclude': exclude,
     }
     if child_form_kwargs:
@@ -435,6 +473,7 @@ def polymorphic_inlineformset_factory(
     FormSet = inlineformset_factory(**kwargs)
 
     child_kwargs = {
+        "fields": fields,
         # 'exclude': exclude,
     }
     if child_form_kwargs:
