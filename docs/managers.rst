@@ -108,3 +108,54 @@ shortcut:
 
 For further discussion see `this topic on the Q&A page
 <https://github.com/jazzband/django-polymorphic/discussions/696#discussioncomment-15223661>`_.
+
+
+Natural Key Serialization
+-------------------------
+
+When using Django's natural key serialization with :django-admin:`dumpdata` and 
+:django-admin:`loaddata`, polymorphic models require special handling.
+
+.. important::
+
+    Always use :meth:`~polymorphic.managers.PolymorphicQuerySet.non_polymorphic` in 
+    ``get_by_natural_key()`` for polymorphic models. Without this, deserialization fails 
+    when loading new objects because polymorphic queries try to fetch incomplete objects.
+
+Example implementation:
+
+.. code-block:: python
+
+    from polymorphic.models import PolymorphicModel
+    from polymorphic.managers import PolymorphicManager
+
+    class ArticleManager(PolymorphicManager):
+        def get_by_natural_key(self, slug):
+            return self.non_polymorphic().get(slug=slug)
+
+    class Article(PolymorphicModel):
+        slug = models.SlugField(unique=True)
+        title = models.CharField(max_length=200)
+        objects = ArticleManager()
+        
+        def natural_key(self):
+            return (self.slug,)
+
+    class BlogPost(Article):
+        author = models.CharField(max_length=100)
+
+Usage:
+
+.. code-block:: bash
+
+    # Dump with natural keys
+    $ python manage.py dumpdata myapp --natural-primary --natural-foreign > fixtures.json
+    
+    # Load into another database
+    $ python manage.py loaddata fixtures.json
+
+.. note::
+
+    * Child models inherit ``natural_key()`` from the parent - no need to override
+    * Always use both ``--natural-primary`` and ``--natural-foreign`` flags with polymorphic models
+    * See `issue #517 <https://github.com/jazzband/django-polymorphic/issues/517>`_ for details
