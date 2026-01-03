@@ -7,7 +7,6 @@ from functools import lru_cache
 
 from django.contrib.contenttypes.models import ContentType
 from django.db import models, transaction
-from django.db.models.fields.related import ForwardManyToOneDescriptor, ReverseOneToOneDescriptor
 from django.db.utils import DEFAULT_DB_ALIAS
 from django.utils.functional import classproperty
 
@@ -215,64 +214,6 @@ class PolymorphicModel(models.Model, metaclass=PolymorphicModelBase):
             )
         return self.__class__.objects.db_manager(self._state.db).get(pk=self.pk)
 
-    def __init__(self, *args, **kwargs):
-        """Replace Django's inheritance accessor member functions for our model
-        (self.__class__) with our own versions.
-        We monkey patch them until a patch can be added to Django
-        (which would probably be very small and make all of this obsolete).
-
-        If we have inheritance of the form ModelA -> ModelB ->ModelC then
-        Django creates accessors like this:
-        - ModelA: modelb
-        - ModelB: modela_ptr, modelb, modelc
-        - ModelC: modela_ptr, modelb, modelb_ptr, modelc
-
-        These accessors allow Django (and everyone else) to travel up and down
-        the inheritance tree for the db object at hand.
-
-        The original Django accessors use our polymorphic manager.
-        But they should not. So we replace them with our own accessors that use
-        our appropriate base_objects manager.
-        """
-        super().__init__(*args, **kwargs)
-
-        if self.__class__.polymorphic_super_sub_accessors_replaced:
-            return
-        self.__class__.polymorphic_super_sub_accessors_replaced = True
-
-        def create_accessor_function_for_model(model, field):
-            def accessor_function(self):
-                try:
-                    rel_obj = field.get_cached_value(self)
-                except KeyError:
-                    objects = getattr(model, "_base_objects", model.objects)
-                    rel_obj = objects.using(self._state.db or DEFAULT_DB_ALIAS).get(pk=self.pk)
-                    field.set_cached_value(self, rel_obj)
-                return rel_obj
-
-            return accessor_function
-
-        subclasses_and_superclasses_accessors = self._get_inheritance_relation_fields_and_models()
-
-        for name, model in subclasses_and_superclasses_accessors.items():
-            # Here be dragons.
-            orig_accessor = getattr(self.__class__, name, None)
-            if issubclass(
-                type(orig_accessor),
-                (ReverseOneToOneDescriptor, ForwardManyToOneDescriptor),
-            ):
-                field = (
-                    orig_accessor.related
-                    if isinstance(orig_accessor, ReverseOneToOneDescriptor)
-                    else orig_accessor.field
-                )
-
-                setattr(
-                    self.__class__,
-                    name,
-                    property(create_accessor_function_for_model(model, field)),
-                )
-
     @classmethod
     @lru_cache(maxsize=None)
     def _route_to_ancestor(cls, ancestor_model):
@@ -337,56 +278,6 @@ class PolymorphicModel(models.Model, metaclass=PolymorphicModelBase):
 
         result = []
         add_concrete_descendants(cls, result)
-        return result
-
-    def _get_inheritance_relation_fields_and_models(self):
-        """helper function for __init__:
-        determine names of all Django inheritance accessor member functions for type(self)"""
-
-        def add_model(model, field_name, result):
-            result[field_name] = model
-
-        def add_model_if_regular(model, field_name, result):
-            if (
-                issubclass(model, models.Model)
-                and model != models.Model
-                and model != self.__class__
-                and model != PolymorphicModel
-            ):
-                add_model(model, field_name, result)
-
-        def add_all_super_models(model, result):
-            for super_cls, field_to_super in model._meta.parents.items():
-                if field_to_super is not None:
-                    # if not a link to a proxy model, the field on model can have
-                    # a different name to super_cls._meta.module_name, when the field
-                    # is created manually using 'parent_link'
-                    field_name = field_to_super.name
-                    add_model_if_regular(super_cls, field_name, result)
-                    add_all_super_models(super_cls, result)
-
-        def add_all_sub_models(super_cls, result):
-            # go through all subclasses of model
-            for sub_cls in super_cls.__subclasses__():
-                # super_cls may not be in sub_cls._meta.parents if super_cls is a proxy model
-                if super_cls in sub_cls._meta.parents:
-                    # get the field that links sub_cls to super_cls
-                    field_to_super = sub_cls._meta.parents[super_cls]
-                    # if filed_to_super is not a link to a proxy model
-                    if field_to_super is not None:
-                        super_to_sub_related_field = field_to_super.remote_field
-                        if super_to_sub_related_field.related_name is None:
-                            # if related name is None the related field is the name of the subclass
-                            to_subclass_fieldname = sub_cls.__name__.lower()
-                        else:
-                            # otherwise use the given related name
-                            to_subclass_fieldname = super_to_sub_related_field.related_name
-
-                        add_model_if_regular(sub_cls, to_subclass_fieldname, result)
-
-        result = {}
-        add_all_super_models(self.__class__, result)
-        add_all_sub_models(self.__class__, result)
         return result
 
     def delete(self, using=None, keep_parents=False):
