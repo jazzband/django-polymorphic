@@ -389,6 +389,7 @@ def polymorphic_modelformset_factory(
     FormSet = modelformset_factory(**kwargs)
 
     child_kwargs = {
+        "fields": fields,
         # 'exclude': exclude,
     }
     if child_form_kwargs:
@@ -472,6 +473,7 @@ def polymorphic_inlineformset_factory(
     FormSet = inlineformset_factory(**kwargs)
 
     child_kwargs = {
+        "fields": fields,
         # 'exclude': exclude,
     }
     if child_form_kwargs:

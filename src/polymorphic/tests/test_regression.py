@@ -260,7 +260,7 @@ class RegressionTests(TestCase):
         self.assertEqual(Model2B.objects.count(), 2)
         self.assertEqual(Model2C.objects.count(), 1)
         self.assertEqual(obj3, Model2B.objects.order_by("pk").last())
-        
+
     def test_double_underscore_in_related_name(self):
         """
         Test filtering on a related field when the relation name itself contains '__'.
@@ -393,4 +393,3 @@ class TestFormsetExclude(TestCase):
         form_ct = formset.forms[0]
         self.assertIsInstance(form_ct.initial["polymorphic_ctype"], int)
         self.assertEqual(form_ct.initial["polymorphic_ctype"], ct.pk)
-
