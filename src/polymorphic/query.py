@@ -18,6 +18,7 @@ from .query_translate import (
     translate_polymorphic_filter_definitions_in_kwargs,
     translate_polymorphic_Q_object,
 )
+from .utils import concrete_descendants, route_to_ancestor
 
 Polymorphic_QuerySet_objects_per_request = 2000
 """
@@ -412,7 +413,7 @@ class PolymorphicQuerySet(QuerySet):
 
         class_priorities = {
             mdl: idx + 1
-            for idx, mdl in enumerate((*reversed(self.model._concrete_descendants), self.model))
+            for idx, mdl in enumerate((*reversed(concrete_descendants(self.model)), self.model))
         }
 
         for i, base_object in enumerate(base_result_objects):
@@ -505,7 +506,7 @@ class PolymorphicQuerySet(QuerySet):
                 if real_object is None:
                     # Our content type is pointing to a row that does not exist anymore
                     # We try to find the next best available parent row
-                    inheritance_path = real_concrete_class._route_to_ancestor(self.model)
+                    inheritance_path = route_to_ancestor(real_concrete_class, self.model)
                     if not inheritance_path or inheritance_path[0].model is self.model:
                         resultlist[result_idx] = base_object
                     else:
