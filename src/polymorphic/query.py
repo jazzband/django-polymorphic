@@ -392,14 +392,9 @@ class PolymorphicQuerySet(QuerySet):
         # classes if child class retrieval fails
         classes_to_query = []
 
-        # django's automatic ".pk" field does not always work correctly for
-        # custom fields in derived objects (unclear yet who to put the blame on).
-        # We get different type(o.pk) in this case.
-        # We work around this by using the real name of the field directly
-        # for accessing the primary key of the the derived objects.
-        # We might assume that self.model._meta.pk.name gives us the name of the primary key field,
-        # but it doesn't. Therefore we use polymorphic_primary_key_name, which we set up in base.py.
-        pk_name = self.model.polymorphic_primary_key_name
+        # use the pk attribute for the base model type used in the query to identify
+        # objects
+        pk_name = self.model._meta.pk.attname
 
         # - sort base_result_object ids into idlist_per_model lists, depending on their real class;
         # - store objects that already have the correct class into "results"
@@ -444,7 +439,7 @@ class PolymorphicQuerySet(QuerySet):
                             classes_to_query,
                             (class_priorities.get(real_concrete_class, 0), real_concrete_class),
                         )
-                    idlist_per_model[real_concrete_class].append(base_object.pk)
+                    idlist_per_model[real_concrete_class].append(getattr(base_object, pk_name))
                     indexlist_per_model[real_concrete_class].append((i, len(resultlist)))
                     resultlist.append(None)
 

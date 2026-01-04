@@ -1,3 +1,4 @@
+import warnings
 import pytest
 import uuid
 
@@ -1659,8 +1660,15 @@ class PolymorphicTests(TransactionTestCase):
 
     def test_one_to_one_primary_key(self):
         # check pk name resolution
-        for mdl in [Account, SpecialAccount1, SpecialAccount1_1, SpecialAccount2]:
-            assert mdl.polymorphic_primary_key_name == mdl._meta.pk.attname
+
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+
+            for mdl in [Account, SpecialAccount1, SpecialAccount1_1, SpecialAccount2]:
+                assert mdl.polymorphic_primary_key_name == Account._meta.pk.attname
+
+            assert w[0].category is DeprecationWarning
+            assert "polymorphic_primary_key_name" in str(w[0].message)
 
         user1 = get_user_model().objects.create(
             username="user1", email="user1@example.com", password="password"
