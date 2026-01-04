@@ -508,13 +508,41 @@ class PolymorphicTests(TransactionTestCase):
         object2b = Model2B.objects.get(field1="C1")
         assert object2b.model2c.__class__ == Model2C
 
+    def test_parentage_links_are_non_polymorphic(self):
+        """
+        OneToOne parent links should return non-polymorphic instances
+        """
+        d = Model2D.objects.create(field1="D1", field2="D2", field3="D3", field4="D4")
+        c = Model2C.objects.non_polymorphic().get(pk=d.pk)
+        b = Model2B.objects.non_polymorphic().get(pk=d.pk)
+        a = Model2A.objects.non_polymorphic().get(pk=d.pk)
+        assert d.model2a_ptr.__class__ == Model2A
+        assert d.model2b_ptr.__class__ == Model2B
+        assert d.model2c_ptr.__class__ == Model2C
+        assert d.model2c_ptr == c
+        assert d.model2b_ptr == b
+        assert d.model2a_ptr == a
+        assert c.model2d == d
+        assert c.model2d.__class__ == Model2D
+        assert c.model2b_ptr.__class__ == Model2B
+        assert c.model2a_ptr.__class__ == Model2A
+        assert c.model2b_ptr == b
+        assert c.model2a_ptr == a
+        assert b.model2c == c
+        assert b.model2c.__class__ == Model2C
+        assert b.model2a_ptr.__class__ == Model2A
+        assert b.model2a_ptr == a
+        assert a.model2b.__class__ == Model2B
+        assert a.model2b == b
+
     def test_onetoone_field(self):
         self.create_model2abcd()
 
         a = Model2A.objects.non_polymorphic().get(field1="C1")
         b = One2OneRelatingModelDerived.objects.create(one2one=a, field1="f1", field2="f2")
 
-        # FIXME: this result is basically wrong, probably due to Django cacheing (we used base_objects), but should not be a problem
+        # FIXME: this result is basically wrong, probably due to Django cacheing
+        # (we used base_objects), but should not be a problem
         assert b.one2one.__class__ == Model2A
         assert b.one2one_id == b.one2one.id
 
@@ -1305,6 +1333,13 @@ class PolymorphicTests(TransactionTestCase):
 
         assert obj.pk == queried_obj.pk
 
+    def test_intermediate_abstract_descriptors(self):
+        mdl = SubclassSelectorAbstractConcreteModel.objects.create()
+        base = SubclassSelectorAbstractBaseModel.objects.non_polymorphic().get(pk=mdl.pk)
+
+        assert mdl.subclassselectorabstractbasemodel_ptr == base
+        assert base.subclassselectorabstractconcretemodel == mdl
+
     def test_can_query_using_subclass_selector_on_proxy_model(self):
         obj = SubclassSelectorProxyConcreteModel.objects.create(concrete_field="abc")
 
@@ -1313,6 +1348,16 @@ class PolymorphicTests(TransactionTestCase):
         ).get()
 
         assert obj.pk == queried_obj.pk
+
+    def test_intermediate_proxy_descriptors(self):
+        mdl = SubclassSelectorProxyConcreteModel.objects.create()
+        base = SubclassSelectorProxyBaseModel.objects.non_polymorphic().get(pk=mdl.pk)
+
+        assert mdl.subclassselectorproxybasemodel_ptr == base
+        assert mdl.subclassselectorproxybasemodel_ptr.__class__ is SubclassSelectorProxyBaseModel
+        assert (
+            base.subclassselectorproxyconcretemodel.__class__ is SubclassSelectorProxyConcreteModel
+        )
 
     def test_prefetch_related_behaves_normally_with_polymorphic_model(self):
         b1 = RelatingModel.objects.create()
@@ -2392,3 +2437,99 @@ class PolymorphicTests(TransactionTestCase):
 
         assert "total" in result
         assert result["total"] >= 0
+
+    def test_disparate_pk_values_in_hierarchy(self):
+        """
+        Test that polymorphic models with different primary key field types and values
+        at different levels of the inheritance hierarchy can be created, queried, and
+        deleted without issues.
+        """
+        from polymorphic.tests.models import (
+            DisparateKeysParent,
+            RelatedKeyModel,
+            DisparateKeysChild1,
+            DisparateKeysChild2,
+            DisparateKeysGrandChild,
+            DisparateKeysGrandChild2,
+        )
+
+        extern_key1 = RelatedKeyModel.objects.create()
+        extern_key2 = RelatedKeyModel.objects.create()
+        extern_key3 = RelatedKeyModel.objects.create()
+
+        parent1 = DisparateKeysParent.objects.create(text="parent1")
+        parent2 = DisparateKeysParent.objects.create(text="parent2")
+        child1 = DisparateKeysChild1.objects.create(
+            text="child1", text_child1="child1 extra", key=extern_key1
+        )
+        child2 = DisparateKeysChild1.objects.create(
+            text="child2", text_child1="child2 extra", key=extern_key2
+        )
+
+        grandchild1 = DisparateKeysGrandChild.objects.create(
+            text="grandchild1",
+            text_child1="grandchild1 extra",
+            text_grand_child="grandchild1 extra extra",
+            key=extern_key3,
+        )
+        grandchild2 = DisparateKeysGrandChild2.objects.create(
+            text="grandchild2",
+            text_child2="grandchild2 extra",
+            text_grand_child="grandchild2 extra extra",
+            id=50,
+            key=100,
+        )
+
+        child2_1 = DisparateKeysChild2.objects.create(
+            text="child2_1", text_child2="child2_1 extra", key=101
+        )
+        child2_2 = DisparateKeysChild2.objects.create(
+            text="child2_2", text_child2="child2_2 extra", key=102
+        )
+
+        assert set(DisparateKeysParent.objects.all()) == {
+            parent1,
+            parent2,
+            child1,
+            child2,
+            grandchild1,
+            child2_1,
+            child2_2,
+            grandchild2,
+        }
+
+        assert set(DisparateKeysChild1.objects.all()) == {child1, child2, grandchild1}
+        assert set(DisparateKeysChild2.objects.all()) == {child2_1, child2_2, grandchild2}
+        assert set(DisparateKeysGrandChild.objects.all()) == {grandchild1}
+        assert set(DisparateKeysGrandChild2.objects.all()) == {grandchild2}
+
+        # test get_real_instance
+        real_instances = set()
+        for obj in DisparateKeysParent.objects.non_polymorphic().all():
+            real_instances.add(obj.get_real_instance())
+
+        assert real_instances == {
+            parent1,
+            parent2,
+            child1,
+            child2,
+            grandchild1,
+            child2_1,
+            child2_2,
+            grandchild2,
+        }
+
+        # test parentage links
+        assert grandchild2.disparatekeyschild2_ptr.__class__ == DisparateKeysChild2
+        assert (
+            grandchild2.disparatekeyschild2_ptr
+            == DisparateKeysChild2.objects.non_polymorphic().get(key=grandchild2.key)
+        )
+        assert grandchild2.disparatekeysparent_ptr.__class__ == DisparateKeysParent
+
+        assert (
+            grandchild2.disparatekeysparent_ptr
+            == DisparateKeysParent.objects.non_polymorphic().get(pk=grandchild2.id)
+        )
+
+        DisparateKeysGrandChild2.objects.all().delete()
