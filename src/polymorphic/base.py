@@ -85,9 +85,6 @@ class PolymorphicModelBase(ModelBase):
         if not new_class._meta.abstract and not new_class._meta.swapped:
             cls.validate_model_manager(new_class.objects, model_name, "objects")
 
-        # for __init__ function of this class (monkeypatching inheritance accessors)
-        new_class.polymorphic_super_sub_accessors_replaced = False
-
         # determine the name of the primary key field and store it into the class variable
         # polymorphic_primary_key_name (it is needed by query.py)
         if new_class._meta.pk:
