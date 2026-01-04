@@ -851,3 +851,30 @@ class Regression295Related(models.Model):
 
 class Regression295Parent(PolymorphicModel):
     related_object = models.ForeignKey(Regression295Related, on_delete=models.CASCADE)
+
+
+class RelatedKeyModel(models.Model):
+    custom_id = models.UUIDField(primary_key=True, default=uuid.uuid4)
+
+
+class DisparateKeysParent(PolymorphicModel):
+    text = models.CharField(max_length=30)
+
+
+class DisparateKeysChild1(DisparateKeysParent):
+    key = models.OneToOneField(RelatedKeyModel, primary_key=True, on_delete=models.CASCADE)
+
+    text_child1 = models.CharField(max_length=30)
+
+
+class DisparateKeysChild2(DisparateKeysParent):
+    text_child2 = models.CharField(max_length=30)
+    key = models.PositiveIntegerField(primary_key=True)
+
+
+class DisparateKeysGrandChild2(DisparateKeysChild2):
+    text_grand_child = models.CharField(max_length=30)
+
+
+class DisparateKeysGrandChild(DisparateKeysChild1):
+    text_grand_child = models.CharField(max_length=30)
