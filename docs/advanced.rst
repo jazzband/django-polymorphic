@@ -136,16 +136,23 @@ Working with Signals and Fixtures
 ----------------------------------
 
 When using Django's :django-admin:`loaddata` command with polymorphic models, you may notice that
-``post_save`` signal handlers receive instances that appear incomplete - parent class attributes
+``post_save`` signal handlers receive instances that appear incomplete – parent class attributes
 may be empty and ``pk``/``id`` fields may not match. **This is expected Django behavior** for
 multi-table inheritance during deserialization, not a bug in :pypi:`django-polymorphic`.
 
 Understanding the Issue
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-During fixture loading, Django deserializes parent and child table rows separately. When a child
-model's ``post_save`` signal fires, Django passes a ``raw=True`` parameter to indicate the data
-is being loaded from a fixture. At this point, parent attributes may not yet be fully accessible.
+During fixture loading, Django deserializes parent and child table rows separately
+(see :Django:`fixture loading <topics/db/fixtures/>`).
+
+When a child model's ``post_save`` signal fires, Django passes a ``raw=True`` parameter to indicate
+the data is being loaded from a fixture. At this point, parent attributes may not yet be fully
+accessible.
+
+Django’s :Django:`post_save <ref/signals/#post-save>` signal is called with ``raw=True`` during
+fixture loading, and signal handlers should not rely on related or inherited model data at this
+stage.
 
 For example, with this model hierarchy:
 
@@ -166,11 +173,12 @@ For example, with this model hierarchy:
 During ``loaddata``, the signal may fire before ``instance.name`` is populated, even though the
 fixture contains the correct data.
 
-Recommended Solution: Check for raw=True
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Recommended Solution: Check for ``raw=True``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The standard Django pattern is to check the ``raw`` parameter and skip custom logic during
-fixture loading:
+fixture loading, as recommended in Django’s signal documentation
+(:Django:`post_save <ref/signals/#post-save>`):
 
 .. code-block:: python
 
@@ -182,19 +190,19 @@ fixture loading:
         # Skip signal logic during fixture loading
         if raw:
             return
-        
+
         if created:
             # This logic only runs during normal saves, not loaddata
             print(f"New switch created: {instance.name}")
             setup_monitoring(instance)
 
-This is the recommended approach in Django's documentation and prevents issues with incomplete
-data during deserialization.
+This approach prevents issues caused by incomplete data during fixture deserialization.
 
-Alternative: Use post_migrate Signal
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Alternative: Use ``post_migrate`` Signal
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If you need to perform setup tasks after loading fixtures, use the ``post_migrate`` signal instead:
+If you need to perform setup tasks after loading fixtures, use the ``post_migrate`` signal instead,
+which runs after migrations and fixture loading have completed:
 
 .. code-block:: python
 
@@ -205,7 +213,7 @@ If you need to perform setup tasks after loading fixtures, use the ``post_migrat
     def setup_switches(sender, **kwargs):
         """Run after migrations and fixtures are loaded"""
         from myapp.models import Switch
-        
+
         for switch in Switch.objects.filter(monitoring_configured=False):
             # Now all attributes are fully loaded
             setup_monitoring(switch)
