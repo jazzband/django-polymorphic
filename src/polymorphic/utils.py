@@ -72,6 +72,7 @@ def sort_by_subclass(*classes):
     return sorted(classes, key=cmp_to_key(_compare_mro))
 
 
+@lru_cache(maxsize=None)
 def get_base_polymorphic_model(ChildModel, allow_abstract=False):
     """
     First the first concrete model in the inheritance chain that inherited from the

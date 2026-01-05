@@ -2,13 +2,17 @@
 Seamless Polymorphic Inheritance for Django Models
 """
 
+import warnings
+
 from django.contrib.contenttypes.models import ContentType
 from django.db import models, transaction
 from django.db.utils import DEFAULT_DB_ALIAS
+from django.utils.functional import classproperty
 
 from .base import PolymorphicModelBase
 from .managers import PolymorphicManager
 from .query_translate import translate_polymorphic_Q_object
+from .utils import get_base_polymorphic_model
 
 ###################################################################################
 # PolymorphicModel
@@ -57,6 +61,20 @@ class PolymorphicModel(models.Model, metaclass=PolymorphicModelBase):
     class Meta:
         abstract = True
         base_manager_name = "objects"
+
+    @classproperty
+    def polymorphic_primary_key_name(cls):
+        """
+        The name of the root primary key field of this polymorphic inheritance chain.
+        """
+        warnings.warn(
+            "polymorphic_primary_key_name is deprecated and will be removed in "
+            "version 5.0, use get_base_polymorphic_model(Model)._meta.pk.attname "
+            "instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return get_base_polymorphic_model(cls, allow_abstract=True)._meta.pk.attname
 
     @classmethod
     def translate_polymorphic_Q_object(cls, q):
