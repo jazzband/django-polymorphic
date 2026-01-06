@@ -643,3 +643,63 @@ class AdminRecentActionsTests(_GenericAdminFormTest):
                 assert values == ["2D1", "2D2", "2D4"]
             else:
                 assert False, f"Unexpected change url: {action_url}"
+
+
+class AdminPreservedFiltersTests(_GenericAdminFormTest):
+    def test_changelist_filter_persists_after_edit(self):
+        """
+        Test that changelist filters are preserved after editing an object.
+
+        Regression test for:
+        - #356: Filters are not preserved in polymorphic parent admin
+        - #125: Admin change form doesn't preserve changelist filter
+        """
+        # Arrange: create 1 instance for each concrete polymorphic child model
+        # so the changelist has something to filter and something to click into.
+        obj_b = Model2B.objects.create(field1="B1", field2="B2")
+        obj_c = Model2C.objects.create(field1="C1", field2="C2", field3="C3")
+
+        # Get the ContentType for Model2B to verify the filter later.
+        ct_b = ContentType.objects.get_for_model(Model2B)
+
+        # Act: Navigate to the changelist and apply the polymorphic content type filter
+        # by clicking the filter link in the admin UI.
+        self.page.goto(self.list_url(Model2A))
+
+        # Click the filter link for Model2B in the polymorphic child model filter sidebar.
+        # Clicking a filter link navigates to a new URL, so we wait for navigation.
+        with self.page.expect_navigation(timeout=10000):
+            self.page.click("text=model2b")
+
+        # Click the first row's object link in the results table to go to its change form.
+        with self.page.expect_navigation(timeout=10000):
+            self.page.click("table#result_list tbody tr th a")
+
+        # Edit a field on the change form.
+        self.page.fill("input[name='field1']", "B1-edited")
+
+        # Click Save and explicitly wait for navigation caused by form submission.
+        # Capturing the navigation response lets us assert the HTTP status.
+        with self.page.expect_navigation(timeout=10000) as nav_info:
+            self.page.click("input[name='_save']")
+        response = nav_info.value
+
+        # Assert: request succeeded (admin returned a normal page load).
+        expected_status_code = 200
+        assert response.status == expected_status_code
+
+        # Assert: after saving, the redirected URL still contains the original filter,
+        # meaning the changelist preserved the querystring across edit/save.
+        assert f"polymorphic_ctype={ct_b.pk}" in self.page.url
+
+        # Assert: the changelist is actually filtered - only Model2B objects should be shown.
+        # Model2C (which is a subclass of Model2B) should also appear since the filter
+        # matches the polymorphic content type of Model2B and its subclasses.
+        displayed_ids = [
+            int(id_str)
+            for id_str in self.page.eval_on_selector_all(
+                "input[name='_selected_action']", "elements => elements.map(e => e.value)"
+            )
+        ]
+        # Only obj_b should be displayed (obj_c has a different content type)
+        assert displayed_ids == [obj_b.pk]
