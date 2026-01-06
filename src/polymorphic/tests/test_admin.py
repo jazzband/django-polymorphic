@@ -647,24 +647,33 @@ class AdminRecentActionsTests(_GenericAdminFormTest):
 
 class AdminPreservedFiltersTests(_GenericAdminFormTest):
     def test_changelist_filter_persists_after_edit(self):
+        """
+        Test that changelist filters are preserved after editing an object.
+
+        Regression test for:
+        - #356: Filters are not preserved in polymorphic parent admin
+        - #125: Admin change form doesn't preserve changelist filter
+        """
         # Arrange: create 1 instance for each concrete polymorphic child model
         # so the changelist has something to filter and something to click into.
-        Model2B.objects.create(field1="B1", field2="B2")
-        Model2C.objects.create(field1="C1", field2="C2", field3="C3")
+        obj_b = Model2B.objects.create(field1="B1", field2="B2")
+        obj_c = Model2C.objects.create(field1="C1", field2="C2", field3="C3")
 
-        # Get the ContentType for Model2B. The admin filter uses this PK to
-        # restrict the polymorphic changelist to only "B" rows.
+        # Get the ContentType for Model2B to verify the filter later.
         ct_b = ContentType.objects.get_for_model(Model2B)
 
-        # Build a changelist URL for the polymorphic parent (Model2A) with the
-        # polymorphic content-type filter applied via querystring.
-        filtered_url = f"{self.list_url(Model2A)}?polymorphic_ctype__id__exact={ct_b.pk}"
+        # Act: Navigate to the changelist and apply the polymorphic content type filter
+        # by clicking the filter link in the admin UI.
+        self.page.goto(self.list_url(Model2A))
 
-        # Act: open the filtered changelist page in the browser.
-        self.page.goto(filtered_url)
+        # Click the filter link for Model2B in the polymorphic child model filter sidebar.
+        # Clicking a filter link navigates to a new URL, so we wait for navigation.
+        with self.page.expect_navigation(timeout=10000):
+            self.page.click("text=model2b")
 
         # Click the first row's object link in the results table to go to its change form.
-        self.page.click("table#result_list tbody tr th a")
+        with self.page.expect_navigation(timeout=10000):
+            self.page.click("table#result_list tbody tr th a")
 
         # Edit a field on the change form.
         self.page.fill("input[name='field1']", "B1-edited")
@@ -681,4 +690,16 @@ class AdminPreservedFiltersTests(_GenericAdminFormTest):
 
         # Assert: after saving, the redirected URL still contains the original filter,
         # meaning the changelist preserved the querystring across edit/save.
-        assert f"polymorphic_ctype__id__exact={ct_b.pk}" in self.page.url
+        assert f"polymorphic_ctype={ct_b.pk}" in self.page.url
+
+        # Assert: the changelist is actually filtered - only Model2B objects should be shown.
+        # Model2C (which is a subclass of Model2B) should also appear since the filter
+        # matches the polymorphic content type of Model2B and its subclasses.
+        displayed_ids = [
+            int(id_str)
+            for id_str in self.page.eval_on_selector_all(
+                "input[name='_selected_action']", "elements => elements.map(e => e.value)"
+            )
+        ]
+        # Only obj_b should be displayed (obj_c has a different content type)
+        assert displayed_ids == [obj_b.pk]
