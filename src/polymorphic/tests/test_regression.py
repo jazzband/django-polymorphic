@@ -324,6 +324,7 @@ class RegressionTests(TestCase):
         self.assertIsInstance(relations[1], RelationA)
         self.assertIsInstance(relations[2], RelationB)
 
+
 class Author(models.Model):
     pass
 
