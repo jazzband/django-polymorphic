@@ -1,18 +1,70 @@
 ci:
   # Don't run these in pre-commit.ci at all
-  skip: [lint, format]
+  skip: [lint, format, check-lint-strict, check-format-strict, check-package, check-readme, run-tests]
 
 repos:
   - repo: local
     hooks:
+      # Auto-fixing hooks (run first) - runs on changed files only
       - id: lint
-        name: Lint
-        entry: just lint
+        name: Lint (auto-fix)
+        entry: bash -c 'uv run ruff check --fix --select I "$@" && uv run ruff check --fix "$@"' --
         language: system
-        pass_filenames: false
+        pass_filenames: true
+        types: [python]
+        stages: [pre-commit]
+        verbose: true
 
       - id: format
-        name: Format
-        entry: just format
+        name: Format (auto-fix)
+        entry: uv run ruff format
+        language: system
+        pass_filenames: true
+        types: [python]
+        stages: [pre-commit]
+        verbose: true
+
+      # Validation hooks - runs on changed files only
+      - id: check-lint-strict
+        name: Check Lint (CI match)
+        entry: bash -c 'uv run ruff check --select I "$@" && uv run ruff check "$@"' --
+        language: system
+        pass_filenames: true
+        types: [python]
+        stages: [pre-commit]
+        verbose: true
+
+      - id: check-format-strict
+        name: Check Format (CI match)
+        entry: uv run ruff format --check
+        language: system
+        pass_filenames: true
+        types: [python]
+        stages: [pre-commit]
+        verbose: true
+
+      # Global checks (must run on whole project/env)
+      - id: check-package
+        name: Check Package (CI match)
+        entry: uv pip check
         language: system
         pass_filenames: false
+        stages: [pre-commit]
+        verbose: true
+
+      - id: check-readme
+        name: Check README (CI match)
+        entry: uv run -m readme_renderer ./README.md -o /tmp/README.html
+        language: system
+        pass_filenames: false
+        stages: [pre-commit]
+        verbose: true
+
+      # Optional: Run tests with coverage (manual stage only)
+      - id: run-tests
+        name: Run Tests with Coverage
+        entry: uv run pytest --cov-append
+        language: system
+        pass_filenames: false
+        stages: [manual]
+        verbose: true

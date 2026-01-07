@@ -80,12 +80,16 @@ max-line-length = 100
 sphinx = true
 
 [tool.ruff]
+force-exclude = true
 line-length = 99
 
 exclude = [
     "**/migrations/*.py",
     "**/migrations/**",
 ]
+
+[tool.ruff.format]
+exclude = ["**/migrations/**"]
 
 [tool.ruff.lint]
 extend-ignore = [
