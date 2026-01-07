@@ -24,6 +24,7 @@ from polymorphic.tests.models import (
     Model2C,
     Model2D,
     NoChildren,
+    ModelWithPolyFK,
 )
 
 from playwright.sync_api import expect
@@ -536,42 +537,60 @@ class PolymorphicFormTests(_GenericAdminFormTest):
     def test_admin_popup_validation_error(self):
         """
         Test that popup functionality works correctly after validation errors.
+
+        Scenario:
+        1. Open admin page with FK field to polymorphic model
+        2. Click green "+" button to add new object in popup
+        3. Select polymorphic type
+        4. Submit form with validation error (missing required fields)
+        5. Fix the error and submit again
+
+        Expected: Object is added, popup closes, FK field is populated
+        Actual (bug #612): Popup parameters lost during validation
+
         Regression test for issue #612.
         """
         model2d_ct = ContentType.objects.get_for_model(Model2D)
 
-        # Navigate to add page with popup parameters
-        add_url = self.add_url(Model2A)
-        popup_url = f"{add_url}?_popup=1&_to_field=id"
+        # Navigate to the add page for ModelWithPolyFK
+        self.page.goto(self.add_url(ModelWithPolyFK))
 
-        self.page.goto(popup_url)
+        # Fill in the name field
+        self.page.fill("input[name='name']", "Test Related Object")
 
-        # Select Model2D type
-        self.page.locator(f"input[type=radio][value='{model2d_ct.pk}']").check()
-        with self.page.expect_navigation(timeout=10000) as nav_info:
-            self.page.click("input[name='_save']")
+        # Click the "+" button next to the FK field to open popup
+        with self.page.expect_popup(timeout=10000) as popup_info:
+            self.page.click("a#add_id_poly_fk")
+
+        popup = popup_info.value
+        popup.wait_for_load_state("networkidle")
+
+        # In the popup, select Model2D type
+        popup.locator(f"input[type=radio][value='{model2d_ct.pk}']").check()
+        with popup.expect_navigation(timeout=10000) as nav_info:
+            popup.click("input[name='_save']")
 
         response = nav_info.value
         assert response.status < 400
 
-        # Verify we're still on the add page with popup parameters
-        current_url = self.page.url
+        # Verify popup parameters are preserved after type selection
+        current_url = popup.url
         assert "_popup=1" in current_url, (
             f"_popup parameter lost after type selection. URL: {current_url}"
         )
 
         # Submit form with validation error (missing required fields)
-        # Only fill field1, leave field2 and field4 empty to trigger validation error
-        self.page.fill("input[name='field1']", "Test1")
+        # Only fill field1, leave field2 and field4 empty
+        popup.fill("input[name='field1']", "PopupTest1")
 
-        with self.page.expect_navigation(timeout=10000) as nav_info:
-            self.page.click("input[name='_save']")
+        with popup.expect_navigation(timeout=10000) as nav_info:
+            popup.click("input[name='_save']")
 
         response = nav_info.value
         assert response.status < 400
 
-        # CRITICAL: Verify popup parameters are still present after validation error
-        current_url = self.page.url
+        # CRITICAL: Verify popup parameters preserved after validation error
+        current_url = popup.url
         assert "_popup=1" in current_url, (
             f"_popup parameter lost after validation error. URL: {current_url}"
         )
@@ -580,22 +599,33 @@ class PolymorphicFormTests(_GenericAdminFormTest):
         )
 
         # Verify error messages are displayed
-        error_list = self.page.locator(".errorlist").first
+        error_list = popup.locator(".errorlist").first
         expect(error_list).to_be_visible()
 
         # Fix validation errors by filling all required fields
-        self.page.fill("input[name='field1']", "Test1")
-        self.page.fill("input[name='field2']", "Test2")
-        self.page.fill("input[name='field4']", "Test4")
+        popup.fill("input[name='field1']", "PopupTest1")
+        popup.fill("input[name='field2']", "PopupTest2")
+        popup.fill("input[name='field4']", "PopupTest4")
 
-        with self.page.expect_navigation(timeout=10000) as nav_info:
-            self.page.click("input[name='_save']")
+        # Submit the form - this should close the popup
+        with popup.expect_event("close", timeout=10000):
+            popup.click("input[name='_save']")
 
-        response = nav_info.value
-        assert response.status < 400
+        # Verify the popup closed
+        assert popup.is_closed(), "Popup should have closed after successful submit"
 
-        # Verify the object was created successfully
-        assert Model2D.objects.filter(field1="Test1", field2="Test2", field4="Test4").exists()
+        # Verify the object was created
+        created_obj = Model2D.objects.filter(
+            field1="PopupTest1", field2="PopupTest2", field4="PopupTest4"
+        ).first()
+        assert created_obj is not None, "Model2D object should have been created"
+
+        # Verify the FK field was populated on the main page
+        # The popup should have called window.opener and set the value
+        selected_value = self.page.locator("select#id_poly_fk").input_value()
+        assert selected_value == str(created_obj.pk), (
+            f"FK field should be populated with {created_obj.pk}, got {selected_value}"
+        )
 
 
 class PolymorphicNoChildrenTests(_GenericAdminFormTest):

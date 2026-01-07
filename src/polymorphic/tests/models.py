@@ -730,6 +730,13 @@ class NoChildren(PolymorphicModel):
     field1 = models.CharField(max_length=12)
 
 
+class ModelWithPolyFK(models.Model):
+    """Model with FK to polymorphic model for popup testing."""
+
+    name = models.CharField(max_length=100)
+    poly_fk = models.ForeignKey(Model2A, on_delete=models.CASCADE, null=True, blank=True)
+
+
 class NormalBase(models.Model):
     nb_field = models.IntegerField()
 
