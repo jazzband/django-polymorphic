@@ -31,7 +31,6 @@ from playwright.sync_api import expect
 from urllib.parse import urljoin
 
 from .utils import _GenericUITest
-from django import forms
 
 
 class FileFieldInlineA(StackedPolymorphicInline.Child):
@@ -295,27 +294,37 @@ class PolymorphicAdminTests(AdminTestCase):
         """
         Test that render_change_form correctly sets has_file_field
         when a polymorphic inline contains a FileField.
+
+        This tests the fix for issue #380 where file uploads don't work
+        in polymorphic inlines because the form lacks multipart encoding.
+
+        The issue occurs because Django's default admin checks formset.is_multipart()
+        but polymorphic formsets may not have all child forms instantiated at that point,
+        so the check can miss file fields in child inlines.
         """
         # Register the admin for testing
         self.register(InlineParent)(FileFieldParentAdmin)
 
         parent = InlineParent.objects.create(title="Parent with file inline")
 
-        # Add a file field dynamically to simulate file upload
-        FileFieldInlineB.form = type(
-            "DynamicFileForm",
-            (forms.ModelForm,),
-            {
-                "Meta": type("Meta", (), {"model": InlineModelB, "fields": "__all__"}),
-                "file_field": forms.FileField(required=False),
-            },
-        )
-
         # Go to the change page
         response = self.admin_get_change(InlineParent, parent.pk)
         response.render()  # Force TemplateResponse to render
+
+        # Verify has_file_field is set in context
         self.assertIn("has_file_field", response.context_data)
-        self.assertTrue(response.context_data["has_file_field"])
+        self.assertTrue(
+            response.context_data["has_file_field"],
+            "has_file_field should be True when polymorphic inline has FileField",
+        )
+
+        # Verify the rendered HTML contains multipart encoding
+        content = response.content.decode("utf-8")
+        self.assertIn(
+            'enctype="multipart/form-data"',
+            content,
+            "Form should have multipart/form-data encoding when file fields present",
+        )
 
 
 class _GenericAdminFormTest(_GenericUITest):
@@ -456,6 +465,107 @@ class StackedInlineTests(_GenericAdminFormTest):
 
         inline0.locator("a.inline-deletelink").click()
         inline0.wait_for(state="detached")
+
+    def test_polymorphic_inline_file_upload(self):
+        """
+        Test that file uploads work correctly in polymorphic inlines.
+
+        This is a comprehensive end-to-end test for issue #380 where
+        file uploads don't work in polymorphic inlines because the form
+        lacks multipart encoding.
+
+        Scenario:
+        1. Navigate to InlineParent change page
+        2. Add a polymorphic InlineModelB inline
+        3. Upload a file to the file_upload field
+        4. Save the form
+        5. Verify file was uploaded and saved correctly
+        """
+        import tempfile
+        import os
+
+        # Create a parent object
+        parent = InlineParent.objects.create(title="Parent for file upload test")
+
+        # Navigate to change page
+        self.page.goto(self.change_url(InlineParent, parent.pk))
+
+        # Verify form has multipart encoding
+        form_element = self.page.locator("form#inlineparent_form")
+        expect(form_element).to_have_attribute("enctype", "multipart/form-data")
+
+        # Click add button to show polymorphic menu
+        polymorphic_menu = self.page.locator(
+            "div.polymorphic-add-choice div.polymorphic-type-menu"
+        )
+        expect(polymorphic_menu).to_be_hidden()
+
+        self.page.click("div.polymorphic-add-choice a")
+        expect(polymorphic_menu).to_be_visible()
+
+        # Select InlineModelB from polymorphic menu
+        self.page.click("div.polymorphic-type-menu a[data-type='inlinemodelb']")
+        polymorphic_menu.wait_for(state="hidden")
+
+        # Wait for the inline form to appear
+        inline_form = self.page.locator("div#inline_children-0")
+        inline_form.wait_for(state="visible")
+
+        # Fill in required fields
+        self.page.fill("input[name='inline_children-0-field1']", "FileTest1")
+        self.page.fill("input[name='inline_children-0-field2']", "FileTest2")
+
+        # Create a temporary test file to upload
+        with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".txt") as temp_file:
+            temp_file.write("This is a test file for polymorphic inline upload")
+            temp_file_path = temp_file.name
+
+        try:
+            # Upload the file
+            file_input = self.page.locator("input[name='inline_children-0-file_upload']")
+            file_input.set_input_files(temp_file_path)
+
+            # Save the form
+            with self.page.expect_navigation(timeout=10000) as nav_info:
+                self.page.click("input[name='_save']")
+
+            response = nav_info.value
+            assert response.status < 400, f"Form submission failed with status {response.status}"
+
+            # Verify the inline was created
+            parent.refresh_from_db()
+            inlines = list(parent.inline_children.all())
+            assert len(inlines) == 1, "Should have created one inline"
+
+            inline = inlines[0]
+            assert inline.__class__ == InlineModelB, "Inline should be InlineModelB instance"
+            assert inline.field1 == "FileTest1"
+            assert inline.field2 == "FileTest2"
+
+            # Verify the file was uploaded
+            assert inline.file_upload, "file_upload field should not be empty"
+            assert inline.file_upload.name, "Uploaded file should have a name"
+            assert "test_uploads/" in inline.file_upload.name, (
+                "File should be in test_uploads directory"
+            )
+
+            # Verify file exists and has correct content
+            file_path = inline.file_upload.path
+            assert os.path.exists(file_path), f"Uploaded file should exist at {file_path}"
+
+            with open(file_path, "r") as uploaded_file:
+                content = uploaded_file.read()
+                assert content == "This is a test file for polymorphic inline upload", (
+                    "Uploaded file should have correct content"
+                )
+
+            # Clean up uploaded file
+            os.remove(file_path)
+
+        finally:
+            # Clean up temp file
+            if os.path.exists(temp_file_path):
+                os.remove(temp_file_path)
 
 
 class PolymorphicFormTests(_GenericAdminFormTest):

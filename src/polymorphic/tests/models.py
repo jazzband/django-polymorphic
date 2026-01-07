@@ -493,6 +493,9 @@ class InlineModelB(InlineModelA):
         related_name="inline_bs",
     )
 
+    # File field for testing multipart encoding in polymorphic inlines (issue #380)
+    file_upload = models.FileField(upload_to="test_uploads/", null=True, blank=True, default=None)
+
 
 class AbstractProject(PolymorphicModel):
     topic = models.CharField(max_length=30)
