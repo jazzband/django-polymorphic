@@ -493,6 +493,9 @@ class InlineModelB(InlineModelA):
         related_name="inline_bs",
     )
 
+    # File field for testing multipart encoding in polymorphic inlines (issue #380)
+    file_upload = models.FileField(upload_to="test_uploads/", null=True, blank=True, default=None)
+
 
 class AbstractProject(PolymorphicModel):
     topic = models.CharField(max_length=30)
@@ -728,6 +731,13 @@ class FKTest(models.Model):
 
 class NoChildren(PolymorphicModel):
     field1 = models.CharField(max_length=12)
+
+
+class ModelWithPolyFK(models.Model):
+    """Model with FK to polymorphic model for popup testing."""
+
+    name = models.CharField(max_length=100)
+    poly_fk = models.ForeignKey(Model2A, on_delete=models.CASCADE, null=True, blank=True)
 
 
 class NormalBase(models.Model):

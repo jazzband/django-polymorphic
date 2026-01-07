@@ -20,6 +20,7 @@ from polymorphic.tests.models import (
     InlineModelB,
     InlineParent,
     NoChildren,
+    ModelWithPolyFK,
 )
 
 
@@ -73,3 +74,8 @@ class InlineParentAdmin(PolymorphicInlineSupportMixin, ModelAdmin):
 @register(NoChildren)
 class NoChildrenAdmin(PolymorphicParentModelAdmin):
     child_models = (NoChildren,)
+
+
+@register(ModelWithPolyFK)
+class ModelWithPolyFKAdmin(ModelAdmin):
+    fields = ["name", "poly_fk"]

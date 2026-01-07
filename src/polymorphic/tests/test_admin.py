@@ -1,8 +1,5 @@
-import os
-from time import sleep
 import pytest
 from django.urls import reverse
-from django.contrib.auth import get_user_model
 from django.contrib import admin
 from django.contrib.contenttypes.models import ContentType
 from django.utils.html import escape
@@ -27,12 +24,30 @@ from polymorphic.tests.models import (
     Model2C,
     Model2D,
     NoChildren,
+    ModelWithPolyFK,
 )
 
-from playwright.sync_api import sync_playwright, expect
+from playwright.sync_api import expect
 from urllib.parse import urljoin
 
 from .utils import _GenericUITest
+
+
+class FileFieldInlineA(StackedPolymorphicInline.Child):
+    model = InlineModelA
+
+
+class FileFieldInlineB(StackedPolymorphicInline.Child):
+    model = InlineModelB
+
+
+class FileFieldInline(StackedPolymorphicInline):
+    model = InlineModelA
+    child_inlines = (FileFieldInlineA, FileFieldInlineB)
+
+
+class FileFieldParentAdmin(PolymorphicInlineSupportMixin, admin.ModelAdmin):
+    inlines = (FileFieldInline,)
 
 
 class PolymorphicAdminTests(AdminTestCase):
@@ -275,6 +290,42 @@ class PolymorphicAdminTests(AdminTestCase):
         assert child.field1 == "A2"
         assert child.field2 == "B2"
 
+    def test_render_change_form_sets_has_file_field(self):
+        """
+        Test that render_change_form correctly sets has_file_field
+        when a polymorphic inline contains a FileField.
+
+        This tests the fix for issue #380 where file uploads don't work
+        in polymorphic inlines because the form lacks multipart encoding.
+
+        The issue occurs because Django's default admin checks formset.is_multipart()
+        but polymorphic formsets may not have all child forms instantiated at that point,
+        so the check can miss file fields in child inlines.
+        """
+        # Register the admin for testing
+        self.register(InlineParent)(FileFieldParentAdmin)
+
+        parent = InlineParent.objects.create(title="Parent with file inline")
+
+        # Go to the change page
+        response = self.admin_get_change(InlineParent, parent.pk)
+        response.render()  # Force TemplateResponse to render
+
+        # Verify has_file_field is set in context
+        self.assertIn("has_file_field", response.context_data)
+        self.assertTrue(
+            response.context_data["has_file_field"],
+            "has_file_field should be True when polymorphic inline has FileField",
+        )
+
+        # Verify the rendered HTML contains multipart encoding
+        content = response.content.decode("utf-8")
+        self.assertIn(
+            'enctype="multipart/form-data"',
+            content,
+            "Form should have multipart/form-data encoding when file fields present",
+        )
+
 
 class _GenericAdminFormTest(_GenericUITest):
     """Generic admin form test using Playwright."""
@@ -415,6 +466,107 @@ class StackedInlineTests(_GenericAdminFormTest):
         inline0.locator("a.inline-deletelink").click()
         inline0.wait_for(state="detached")
 
+    def test_polymorphic_inline_file_upload(self):
+        """
+        Test that file uploads work correctly in polymorphic inlines.
+
+        This is a comprehensive end-to-end test for issue #380 where
+        file uploads don't work in polymorphic inlines because the form
+        lacks multipart encoding.
+
+        Scenario:
+        1. Navigate to InlineParent change page
+        2. Add a polymorphic InlineModelB inline
+        3. Upload a file to the file_upload field
+        4. Save the form
+        5. Verify file was uploaded and saved correctly
+        """
+        import tempfile
+        import os
+
+        # Create a parent object
+        parent = InlineParent.objects.create(title="Parent for file upload test")
+
+        # Navigate to change page
+        self.page.goto(self.change_url(InlineParent, parent.pk))
+
+        # Verify form has multipart encoding
+        form_element = self.page.locator("form#inlineparent_form")
+        expect(form_element).to_have_attribute("enctype", "multipart/form-data")
+
+        # Click add button to show polymorphic menu
+        polymorphic_menu = self.page.locator(
+            "div.polymorphic-add-choice div.polymorphic-type-menu"
+        )
+        expect(polymorphic_menu).to_be_hidden()
+
+        self.page.click("div.polymorphic-add-choice a")
+        expect(polymorphic_menu).to_be_visible()
+
+        # Select InlineModelB from polymorphic menu
+        self.page.click("div.polymorphic-type-menu a[data-type='inlinemodelb']")
+        polymorphic_menu.wait_for(state="hidden")
+
+        # Wait for the inline form to appear
+        inline_form = self.page.locator("div#inline_children-0")
+        inline_form.wait_for(state="visible")
+
+        # Fill in required fields
+        self.page.fill("input[name='inline_children-0-field1']", "FileTest1")
+        self.page.fill("input[name='inline_children-0-field2']", "FileTest2")
+
+        # Create a temporary test file to upload
+        with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".txt") as temp_file:
+            temp_file.write("This is a test file for polymorphic inline upload")
+            temp_file_path = temp_file.name
+
+        try:
+            # Upload the file
+            file_input = self.page.locator("input[name='inline_children-0-file_upload']")
+            file_input.set_input_files(temp_file_path)
+
+            # Save the form
+            with self.page.expect_navigation(timeout=10000) as nav_info:
+                self.page.click("input[name='_save']")
+
+            response = nav_info.value
+            assert response.status < 400, f"Form submission failed with status {response.status}"
+
+            # Verify the inline was created
+            parent.refresh_from_db()
+            inlines = list(parent.inline_children.all())
+            assert len(inlines) == 1, "Should have created one inline"
+
+            inline = inlines[0]
+            assert inline.__class__ == InlineModelB, "Inline should be InlineModelB instance"
+            assert inline.field1 == "FileTest1"
+            assert inline.field2 == "FileTest2"
+
+            # Verify the file was uploaded
+            assert inline.file_upload, "file_upload field should not be empty"
+            assert inline.file_upload.name, "Uploaded file should have a name"
+            assert "test_uploads/" in inline.file_upload.name, (
+                "File should be in test_uploads directory"
+            )
+
+            # Verify file exists and has correct content
+            file_path = inline.file_upload.path
+            assert os.path.exists(file_path), f"Uploaded file should exist at {file_path}"
+
+            with open(file_path, "r") as uploaded_file:
+                content = uploaded_file.read()
+                assert content == "This is a test file for polymorphic inline upload", (
+                    "Uploaded file should have correct content"
+                )
+
+            # Clean up uploaded file
+            os.remove(file_path)
+
+        finally:
+            # Clean up temp file
+            if os.path.exists(temp_file_path):
+                os.remove(temp_file_path)
+
 
 class PolymorphicFormTests(_GenericAdminFormTest):
     def test_admin_polymorphic_add(self):
@@ -491,6 +643,99 @@ class PolymorphicFormTests(_GenericAdminFormTest):
         assert Model2D.objects.first().field2 == "2D2"
         assert Model2D.objects.first().field3 == ""
         assert Model2D.objects.first().field4 == "2D4"
+
+    def test_admin_popup_validation_error(self):
+        """
+        Test that popup functionality works correctly after validation errors.
+
+        Scenario:
+        1. Open admin page with FK field to polymorphic model
+        2. Click green "+" button to add new object in popup
+        3. Select polymorphic type
+        4. Submit form with validation error (missing required fields)
+        5. Fix the error and submit again
+
+        Expected: Object is added, popup closes, FK field is populated
+        Actual (bug #612): Popup parameters lost during validation
+
+        Regression test for issue #612.
+        """
+        model2d_ct = ContentType.objects.get_for_model(Model2D)
+
+        # Navigate to the add page for ModelWithPolyFK
+        self.page.goto(self.add_url(ModelWithPolyFK))
+
+        # Fill in the name field
+        self.page.fill("input[name='name']", "Test Related Object")
+
+        # Click the "+" button next to the FK field to open popup
+        with self.page.expect_popup(timeout=10000) as popup_info:
+            self.page.click("a#add_id_poly_fk")
+
+        popup = popup_info.value
+        popup.wait_for_load_state("networkidle")
+
+        # In the popup, select Model2D type
+        popup.locator(f"input[type=radio][value='{model2d_ct.pk}']").check()
+        with popup.expect_navigation(timeout=10000) as nav_info:
+            popup.click("input[name='_save']")
+
+        response = nav_info.value
+        assert response.status < 400
+
+        # Verify popup parameters are preserved after type selection
+        current_url = popup.url
+        assert "_popup=1" in current_url, (
+            f"_popup parameter lost after type selection. URL: {current_url}"
+        )
+
+        # Submit form with validation error (missing required fields)
+        # Only fill field1, leave field2 and field4 empty
+        popup.fill("input[name='field1']", "PopupTest1")
+
+        with popup.expect_navigation(timeout=10000) as nav_info:
+            popup.click("input[name='_save']")
+
+        response = nav_info.value
+        assert response.status < 400
+
+        # CRITICAL: Verify popup parameters preserved after validation error
+        current_url = popup.url
+        assert "_popup=1" in current_url, (
+            f"_popup parameter lost after validation error. URL: {current_url}"
+        )
+        assert "ct_id=" in current_url, (
+            f"ct_id parameter lost after validation error. URL: {current_url}"
+        )
+
+        # Verify error messages are displayed
+        error_list = popup.locator(".errorlist").first
+        expect(error_list).to_be_visible()
+
+        # Fix validation errors by filling all required fields
+        popup.fill("input[name='field1']", "PopupTest1")
+        popup.fill("input[name='field2']", "PopupTest2")
+        popup.fill("input[name='field4']", "PopupTest4")
+
+        # Submit the form - this should close the popup
+        with popup.expect_event("close", timeout=10000):
+            popup.click("input[name='_save']")
+
+        # Verify the popup closed
+        assert popup.is_closed(), "Popup should have closed after successful submit"
+
+        # Verify the object was created
+        created_obj = Model2D.objects.filter(
+            field1="PopupTest1", field2="PopupTest2", field4="PopupTest4"
+        ).first()
+        assert created_obj is not None, "Model2D object should have been created"
+
+        # Verify the FK field was populated on the main page
+        # The popup should have called window.opener and set the value
+        selected_value = self.page.locator("select#id_poly_fk").input_value()
+        assert selected_value == str(created_obj.pk), (
+            f"FK field should be populated with {created_obj.pk}, got {selected_value}"
+        )
 
 
 class PolymorphicNoChildrenTests(_GenericAdminFormTest):
