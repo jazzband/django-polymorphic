@@ -888,3 +888,22 @@ class DisparateKeysGrandChild2(DisparateKeysChild2):
 
 class DisparateKeysGrandChild(DisparateKeysChild1):
     text_grand_child = models.CharField(max_length=30)
+
+
+class M2MAdminTest(PolymorphicModel):
+    name = models.CharField(max_length=30)
+
+    def __str__(self):
+        return self.name
+
+
+class M2MAdminTestChildA(M2MAdminTest):
+    child_bs = models.ManyToManyField("M2MAdminTestChildB", related_name="related_as", blank=True)
+
+
+class M2MAdminTestChildB(M2MAdminTest):
+    child_as = models.ManyToManyField("M2MAdminTestChildA", related_name="related_bs", blank=True)
+
+
+class M2MAdminTestChildC(M2MAdminTestChildB):
+    pass

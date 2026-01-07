@@ -898,3 +898,147 @@ class AdminPreservedFiltersTests(_GenericAdminFormTest):
         ]
         # Only obj_b should be displayed (obj_c has a different content type)
         assert displayed_ids == [obj_b.pk]
+
+
+class M2MAdminTests(_GenericAdminFormTest):
+    def test_m2m_admin_raw_id_fields(self):
+        """
+        Test M2M relationships in polymorphic admin using raw_id_fields.
+
+        This test verifies that:
+        1. M2M relationships can be created between polymorphic child models
+        2. Raw ID field lookups display the correct polymorphic instances
+        3. M2M relationships are properly saved and displayed
+        """
+        from polymorphic.tests.models import (
+            M2MAdminTestChildA,
+            M2MAdminTestChildB,
+            M2MAdminTestChildC,
+        )
+
+        # Create test instances
+        a1 = M2MAdminTestChildA.objects.create(name="A1")
+        b1 = M2MAdminTestChildB.objects.create(name="B1")
+        c1 = M2MAdminTestChildC.objects.create(name="C1")
+
+        # Navigate to A1's change page
+        self.page.goto(self.change_url(M2MAdminTestChildA, a1.pk))
+
+        # Verify the page loaded correctly
+        assert self.page.locator("input[name='name']").input_value() == "A1"
+
+        # Test adding B1 to A1's child_bs field using the raw ID lookup
+        # Click the lookup button (magnifying glass icon) for child_bs
+        with self.page.expect_popup(timeout=10000) as popup_info:
+            self.page.click("a#lookup_id_child_bs")
+
+        popup = popup_info.value
+        popup.wait_for_load_state("networkidle")
+
+        # In the popup, we should see both B1 and C1 (since C1 is a subclass of B)
+        # Verify B1 is present in the list
+        b1_link = popup.locator("table#result_list a:has-text('B1')")
+        expect(b1_link).to_be_visible()
+
+        # Verify C1 is present in the list
+        c1_link = popup.locator("table#result_list a:has-text('C1')")
+        expect(c1_link).to_be_visible()
+
+        # Verify that A1 is not present
+        expect(popup.locator("table#result_list a:has-text('A1')")).to_have_count(0)
+
+        # Click B1 to select it
+        with popup.expect_event("close", timeout=10000):
+            b1_link.click()
+
+        # Wait a moment for the popup to close and value to be set
+        self.page.wait_for_timeout(500)
+
+        # Verify B1's ID was added to the raw ID field
+        child_bs_value = self.page.locator("input[name='child_bs']").input_value()
+        assert str(b1.pk) in child_bs_value
+
+        # Now add C1 as well by clicking the lookup again
+        with self.page.expect_popup(timeout=10000) as popup_info:
+            self.page.click("a#lookup_id_child_bs")
+
+        popup = popup_info.value
+        popup.wait_for_load_state("networkidle")
+
+        # Click C1 to add it
+        c1_link = popup.locator("table#result_list a:has-text('C1')")
+        with popup.expect_event("close", timeout=10000):
+            c1_link.click()
+
+        self.page.wait_for_timeout(500)
+
+        # Verify both B1 and C1 are in the raw ID field (comma-separated)
+        child_bs_value = self.page.locator("input[name='child_bs']").input_value()
+        assert str(b1.pk) in child_bs_value
+        assert str(c1.pk) in child_bs_value
+
+        # Save the changes to A1
+        with self.page.expect_navigation(timeout=10000) as nav_info:
+            self.page.click("input[name='_save']")
+
+        response = nav_info.value
+        assert response.status < 400
+
+        # Verify the relationships were saved
+        a1.refresh_from_db()
+        child_bs_ids = set(a1.child_bs.values_list("pk", flat=True))
+        assert b1.pk in child_bs_ids
+        assert c1.pk in child_bs_ids
+        assert len(child_bs_ids) == 2
+
+        # Now test the reverse relationship: add A1 to B1's child_as
+        self.page.goto(self.change_url(M2MAdminTestChildB, b1.pk))
+
+        # Verify the page loaded correctly
+        assert self.page.locator("input[name='name']").input_value() == "B1"
+
+        # Click the lookup button for child_as
+        with self.page.expect_popup(timeout=10000) as popup_info:
+            self.page.click("a#lookup_id_child_as")
+
+        popup = popup_info.value
+        popup.wait_for_load_state("networkidle")
+
+        # In the popup, we should see A1
+        a1_link = popup.locator("table#result_list a:has-text('A1')")
+        expect(a1_link).to_be_visible()
+
+        # Verify that AB is not present
+        expect(popup.locator("table#result_list a:has-text('B1')")).to_have_count(0)
+        expect(popup.locator("table#result_list a:has-text('C1')")).to_have_count(0)
+
+        # Click A1 to select it
+        with popup.expect_event("close", timeout=10000):
+            a1_link.click()
+
+        self.page.wait_for_timeout(500)
+
+        # Verify A1's ID was added to the raw ID field
+        child_as_value = self.page.locator("input[name='child_as']").input_value()
+        assert str(a1.pk) in child_as_value
+
+        # Save the changes to B1
+        with self.page.expect_navigation(timeout=10000) as nav_info:
+            self.page.click("input[name='_save']")
+
+        response = nav_info.value
+        assert response.status < 400
+
+        # Verify the relationship was saved
+        b1.refresh_from_db()
+        child_as_ids = set(b1.child_as.values_list("pk", flat=True))
+        assert a1.pk in child_as_ids
+        assert len(child_as_ids) == 1
+
+        # Verify the relationships display correctly when we go back to the change page
+        self.page.goto(self.change_url(M2MAdminTestChildA, a1.pk))
+
+        # The raw ID field should show both B1 and C1
+        child_bs_value = self.page.locator("input[name='child_bs']").input_value()
+        assert str(b1.pk) in child_bs_value
+        assert str(c1.pk) in child_bs_value
