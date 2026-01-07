@@ -9,8 +9,6 @@ from django.utils.html import escape
 from django.test import RequestFactory
 from django.urls import resolve
 
-from django.contrib.staticfiles.testing import StaticLiveServerTestCase
-
 from polymorphic.admin import (
     PolymorphicChildModelAdmin,
     PolymorphicChildModelFilter,
@@ -18,7 +16,6 @@ from polymorphic.admin import (
     PolymorphicParentModelAdmin,
     StackedPolymorphicInline,
 )
-from polymorphic import tests
 from polymorphic.tests.admintestcase import AdminTestCase
 from polymorphic.tests.models import (
     PlainA,
@@ -34,6 +31,8 @@ from polymorphic.tests.models import (
 
 from playwright.sync_api import sync_playwright, expect
 from urllib.parse import urljoin
+
+from .utils import _GenericUITest
 
 
 class PolymorphicAdminTests(AdminTestCase):
@@ -277,14 +276,8 @@ class PolymorphicAdminTests(AdminTestCase):
         assert child.field2 == "B2"
 
 
-class _GenericAdminFormTest(StaticLiveServerTestCase):
+class _GenericAdminFormTest(_GenericUITest):
     """Generic admin form test using Playwright."""
-
-    HEADLESS = tests.HEADLESS
-
-    admin_username = "admin"
-    admin_password = "password"
-    admin = None
 
     def admin_url(self):
         return f"{self.live_server_url}{reverse('admin:index')}"
@@ -309,49 +302,6 @@ class _GenericAdminFormTest(StaticLiveServerTestCase):
         return self.page.eval_on_selector_all(
             "input[name='_selected_action']", "elements => elements.map(e => e.value)"
         )
-
-    @classmethod
-    def setUpClass(cls):
-        """Set up the test class with a live server and Playwright instance."""
-        os.environ["DJANGO_ALLOW_ASYNC_UNSAFE"] = "1"
-        super().setUpClass()
-        try:
-            cls.playwright = sync_playwright().start()
-            cls.browser = cls.playwright.chromium.launch(headless=cls.HEADLESS)
-        except Exception as e:
-            if "asyncio loop" in str(e) or "executable" in str(e).lower():
-                raise RuntimeError(
-                    "Playwright failed to start. This often happens if browser drivers are missing. "
-                    "Please run 'just install-playwright' to install them."
-                ) from e
-            raise
-
-    @classmethod
-    def tearDownClass(cls):
-        """Clean up Playwright instance after tests."""
-        cls.browser.close()
-        cls.playwright.stop()
-        super().tearDownClass()
-        del os.environ["DJANGO_ALLOW_ASYNC_UNSAFE"]
-
-    def setUp(self):
-        """Create an admin user before running tests."""
-        self.admin = get_user_model().objects.create_superuser(
-            username=self.admin_username, email="admin@example.com", password=self.admin_password
-        )
-        self.page = self.browser.new_page()
-        # Log in to the Django admin
-        self.page.goto(f"{self.live_server_url}/admin/login/")
-        self.page.fill("input[name='username']", self.admin_username)
-        self.page.fill("input[name='password']", self.admin_password)
-        self.page.click("input[type='submit']")
-
-        # Ensure login is successful
-        expect(self.page).to_have_url(f"{self.live_server_url}/admin/")
-
-    def tearDown(self):
-        if self.page:
-            self.page.close()
 
 
 class StackedInlineTests(_GenericAdminFormTest):
