@@ -21,6 +21,10 @@ from polymorphic.tests.models import (
     InlineParent,
     NoChildren,
     ModelWithPolyFK,
+    M2MAdminTest,
+    M2MAdminTestChildA,
+    M2MAdminTestChildB,
+    M2MAdminTestChildC,
 )
 
 
@@ -79,3 +83,24 @@ class NoChildrenAdmin(PolymorphicParentModelAdmin):
 @register(ModelWithPolyFK)
 class ModelWithPolyFKAdmin(ModelAdmin):
     fields = ["name", "poly_fk"]
+
+
+@register(M2MAdminTest)
+class M2MAdminTestAdmin(PolymorphicParentModelAdmin):
+    list_filter = (PolymorphicChildModelFilter,)
+    child_models = (M2MAdminTestChildA, M2MAdminTestChildB, M2MAdminTestChildC)
+
+
+@register(M2MAdminTestChildA)
+class M2MAdminTestChildA(PolymorphicChildModelAdmin):
+    raw_id_fields = ("child_bs",)
+
+
+@register(M2MAdminTestChildB)
+class M2MAdminTestChildB(PolymorphicChildModelAdmin):
+    raw_id_fields = ("child_as",)
+
+
+@register(M2MAdminTestChildC)
+class M2MAdminTestChildC(PolymorphicChildModelAdmin):
+    raw_id_fields = ("child_as",)
