@@ -907,3 +907,84 @@ class M2MAdminTestChildB(M2MAdminTest):
 
 class M2MAdminTestChildC(M2MAdminTestChildB):
     pass
+
+
+# Models for testing Issue #182 and #375: M2M with through tables to/from polymorphic models
+class M2MThroughBase(PolymorphicModel):
+    """Base polymorphic model for M2M through table tests."""
+
+    name = models.CharField(max_length=50)
+
+    def __str__(self):
+        return self.name
+
+
+class M2MThroughPerson(M2MThroughBase):
+    """Polymorphic child representing a person who can be on teams."""
+
+    email = models.EmailField(blank=True)
+
+
+class M2MThroughSpecialPerson(M2MThroughPerson):
+    """Polymorphic child representing a special person."""
+
+    special_code = models.CharField(max_length=20, blank=True)
+
+
+class M2MThroughProject(M2MThroughBase):
+    """Polymorphic child representing a project."""
+
+    description = models.TextField(blank=True)
+
+
+class M2MThroughProjectWithTeam(M2MThroughProject):
+    """
+    Polymorphic child with M2M to Person through Membership.
+    Tests Issue #375: M2M with through table on polymorphic model.
+    """
+
+    pass
+
+
+class M2MThroughMembership(PolymorphicModel):
+    """Polymorphic through model for M2M relationship between ProjectWithTeam and Person."""
+
+    project = models.ForeignKey("M2MThroughProjectWithTeam", on_delete=models.CASCADE)
+    person = models.ForeignKey(M2MThroughPerson, on_delete=models.CASCADE)
+    role = models.CharField(max_length=50)
+    joined_date = models.DateField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.person.name} - {self.role} on {self.project.name}"
+
+
+class M2MThroughMembershipWithPerson(M2MThroughMembership):
+    """Membership for regular Person instances."""
+
+    pass
+
+
+class M2MThroughMembershipWithSpecialPerson(M2MThroughMembership):
+    """Membership for SpecialPerson instances with additional tracking."""
+
+    special_notes = models.TextField(blank=True, default="")
+
+
+# Add the M2M field after the through model is defined
+M2MThroughProjectWithTeam.add_to_class(
+    "team",
+    models.ManyToManyField(
+        M2MThroughPerson, through=M2MThroughMembership, related_name="projects", blank=True
+    ),
+)
+
+
+# Additional models for Issue #182: Direct M2M to polymorphic model
+class DirectM2MContainer(models.Model):
+    """Non-polymorphic model with direct M2M to polymorphic model."""
+
+    name = models.CharField(max_length=50)
+    items = models.ManyToManyField(M2MThroughBase, related_name="containers", blank=True)
+
+    def __str__(self):
+        return self.name
