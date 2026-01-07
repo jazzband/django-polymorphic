@@ -12,7 +12,6 @@ from django.http import Http404, HttpResponseRedirect
 from django.template.response import TemplateResponse
 from django.urls import URLResolver
 from django.utils.encoding import force_str
-from django.utils.http import urlencode
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 
@@ -201,15 +200,9 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
             # rebuild form_url, otherwise libraries below will override it.
             # Preserve popup-related parameters to ensure popup functionality works
             # correctly even after validation errors (issue #612)
-            preserved_params = {"ct_id": ct_id}
-            if "_popup" in request.GET:
-                preserved_params["_popup"] = request.GET["_popup"]
-            if "_to_field" in request.GET:
-                preserved_params["_to_field"] = request.GET["_to_field"]
-
             form_url = add_preserved_filters(
                 {
-                    "preserved_filters": urlencode(preserved_params),
+                    "preserved_filters": request.GET.urlencode(),
                     "opts": self.model._meta,
                 },
                 form_url,
