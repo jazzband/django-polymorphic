@@ -1,6 +1,16 @@
 Changelog
 =========
 
+v4.7.0 (2026-01-07)
+-------------------
+
+Fixed a few outstanding admin bugs, updated documentation and added more admin tests for things like m2m relationships.
+
+* Documented `How to handle non-admin polymorphic forms? <https://github.com/jazzband/django-polymorphic/issues/346>`_
+* Fixed `Admin: add view popup breaks if initial submit has validation error <https://github.com/jazzband/django-polymorphic/issues/612>`_
+* Fixed `Filters are not preserved in polymorphic parent admin <https://github.com/jazzband/django-polymorphic/issues/356>`_
+* Fixed `Admin change form doesn't preserve changelist filter <https://github.com/jazzband/django-polymorphic/issues/125>`_
+
 v4.6.0 (2026-01-05)
 -------------------
 
