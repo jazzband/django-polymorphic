@@ -312,6 +312,13 @@ jobs:
           - 3306:3306
 
     steps:
+      # make text comparisons case sensitive (some tests)
+      - name: Set default collation for MySQL
+        run: |
+          mysql -h 127.0.0.1 -u root -proot <<EOF
+          SET GLOBAL character_set_server='utf8mb4';
+          SET GLOBAL collation_server='utf8mb4_0900_as_cs';
+          EOF
       - uses: actions/checkout@v5
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
@@ -417,7 +424,7 @@ jobs:
             mariadb-healthcheck: "healthcheck.sh --connect --innodb_initialized"
 
     services:
-      mysql:
+      mariadb:
         # Docker Hub image
         image: mariadb:${{ matrix.mariadb-version }}
         # Provide the password for mysql
@@ -435,6 +442,13 @@ jobs:
           - 3306:3306
 
     steps:
+      # make text comparisons case sensitive (some tests)
+      - name: Set default collation for MariaDB
+        run: |
+          mysql -h 127.0.0.1 -u root -proot <<EOF
+          SET GLOBAL character_set_server='utf8mb4';
+          SET GLOBAL collation_server='utf8mb4_bin';
+          EOF
       - uses: actions/checkout@v5
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
