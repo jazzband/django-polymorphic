@@ -15,6 +15,8 @@ from polymorphic.tests.models import (
     RelationBase,
     RelationA,
     RelationB,
+    SpecialBook,
+    Book,
 )
 from django.test import TestCase
 from django.contrib.contenttypes.models import ContentType
@@ -323,18 +325,6 @@ class RegressionTests(TestCase):
         self.assertIsInstance(relations[0], RelationBase)
         self.assertIsInstance(relations[1], RelationA)
         self.assertIsInstance(relations[2], RelationB)
-
-
-class Author(models.Model):
-    pass
-
-
-class Book(PolymorphicModel):
-    author = models.ForeignKey(Author, on_delete=models.CASCADE)
-
-
-class SpecialBook(Book):
-    pass
 
 
 class SpecialBookForm(forms.ModelForm):
