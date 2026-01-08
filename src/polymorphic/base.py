@@ -13,6 +13,10 @@ from django.db.models.base import ModelBase
 from .deletion import PolymorphicGuard
 from .managers import PolymorphicManager
 from .query import PolymorphicQuerySet
+from .related_descriptors import (
+    NonPolymorphicForwardOneToOneDescriptor,
+    NonPolymorphicReverseOneToOneDescriptor,
+)
 
 # PolymorphicQuerySet Q objects (and filter()) support these additional key words.
 # These are forbidden as field names (a descriptive exception is raised)
@@ -51,6 +55,19 @@ class PolymorphicModelBase(ModelBase):
     We also require that _default_manager as well as any user defined
     polymorphic managers produce querysets that are derived from
     PolymorphicQuerySet.
+
+    We also replace the parent/child relation field descriptors with versions that will
+    use non-polymorphic querysets.
+
+    If we have inheritance of the form ModelA -> ModelB ->ModelC then
+    Django creates accessors like this:
+    - ModelA: modelb
+    - ModelB: modela_ptr, modelb, modelc
+    - ModelC: modela_ptr, modelb, modelb_ptr, modelc
+
+    These accessors allow Django (and everyone else) to travel up and down
+    the inheritance tree for the db object at hand. This is important for deletion among
+    other things.
     """
 
     def __new__(cls, model_name, bases, attrs, **kwargs):
@@ -68,14 +85,6 @@ class PolymorphicModelBase(ModelBase):
         if not new_class._meta.abstract and not new_class._meta.swapped:
             cls.validate_model_manager(new_class.objects, model_name, "objects")
 
-        # for __init__ function of this class (monkeypatching inheritance accessors)
-        new_class.polymorphic_super_sub_accessors_replaced = False
-
-        # determine the name of the primary key field and store it into the class variable
-        # polymorphic_primary_key_name (it is needed by query.py)
-        if new_class._meta.pk:
-            new_class.polymorphic_primary_key_name = new_class._meta.pk.attname
-
         # wrap on_delete handlers of reverse relations back to this model with the
         # polymorphic deletion guard
         for fk in new_class._meta.fields:
@@ -83,6 +92,37 @@ class PolymorphicModelBase(ModelBase):
                 fk.remote_field.on_delete, PolymorphicGuard
             ):
                 fk.remote_field.on_delete = PolymorphicGuard(fk.remote_field.on_delete)
+
+        # replace the parent/child descriptors
+        if new_class._meta.parents and not (new_class._meta.abstract or new_class._meta.proxy):
+            # PolymorphicModel is guaranteed to be defined here
+            from .models import PolymorphicModel
+
+            def replace_inheritance_descriptors(model):
+                for super_cls, field_to_super in model._meta.parents.items():
+                    if issubclass(super_cls, PolymorphicModel):
+                        if field_to_super is not None:
+                            setattr(
+                                new_class,
+                                field_to_super.name,
+                                NonPolymorphicForwardOneToOneDescriptor(field_to_super),
+                            )
+                            setattr(
+                                super_cls,
+                                field_to_super.remote_field.related_name
+                                or field_to_super.remote_field.name,
+                                NonPolymorphicReverseOneToOneDescriptor(
+                                    field_to_super.remote_field
+                                ),
+                            )
+                        else:  # pragma: no cover
+                            # proxy models have no field_to_super because the relations
+                            # are to the parent model - the else here should never
+                            # happen b/c we filter out proxy models above
+                            pass
+                        replace_inheritance_descriptors(super_cls)
+
+            replace_inheritance_descriptors(new_class)
 
         return new_class
 

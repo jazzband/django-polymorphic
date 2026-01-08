@@ -2,31 +2,20 @@
 Seamless Polymorphic Inheritance for Django Models
 """
 
-from dataclasses import dataclass
-from functools import lru_cache
+import warnings
 
 from django.contrib.contenttypes.models import ContentType
 from django.db import models, transaction
-from django.db.models.fields.related import ForwardManyToOneDescriptor, ReverseOneToOneDescriptor
 from django.db.utils import DEFAULT_DB_ALIAS
 from django.utils.functional import classproperty
 
 from .base import PolymorphicModelBase
 from .managers import PolymorphicManager
 from .query_translate import translate_polymorphic_Q_object
+from .utils import get_base_polymorphic_model
 
 ###################################################################################
 # PolymorphicModel
-
-
-@dataclass(frozen=True)
-class ParentLinkInfo:
-    """
-    Information about a parent table link in a polymorphic model.
-    """
-
-    model: models.Model
-    link: models.Field
 
 
 class PolymorphicTypeUndefined(LookupError):
@@ -73,6 +62,20 @@ class PolymorphicModel(models.Model, metaclass=PolymorphicModelBase):
         abstract = True
         base_manager_name = "objects"
 
+    @classproperty
+    def polymorphic_primary_key_name(cls):
+        """
+        The name of the root primary key field of this polymorphic inheritance chain.
+        """
+        warnings.warn(
+            "polymorphic_primary_key_name is deprecated and will be removed in "
+            "version 5.0, use get_base_polymorphic_model(Model)._meta.pk.attname "
+            "instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return get_base_polymorphic_model(cls, allow_abstract=True)._meta.pk.attname
+
     @classmethod
     def translate_polymorphic_Q_object(cls, q):
         return translate_polymorphic_Q_object(cls, q)
@@ -107,8 +110,6 @@ class PolymorphicModel(models.Model, metaclass=PolymorphicModelBase):
                 self, for_concrete_model=False
             )
             self.polymorphic_ctype_id = ctype.pk
-
-    pre_save_polymorphic.alters_data = True
 
     def save(self, *args, **kwargs):
         """Calls :meth:`pre_save_polymorphic` and saves the model."""
@@ -214,180 +215,6 @@ class PolymorphicModel(models.Model, metaclass=PolymorphicModelBase):
                 f"#{self.pk} does not have a corresponding model!"
             )
         return self.__class__.objects.db_manager(self._state.db).get(pk=self.pk)
-
-    def __init__(self, *args, **kwargs):
-        """Replace Django's inheritance accessor member functions for our model
-        (self.__class__) with our own versions.
-        We monkey patch them until a patch can be added to Django
-        (which would probably be very small and make all of this obsolete).
-
-        If we have inheritance of the form ModelA -> ModelB ->ModelC then
-        Django creates accessors like this:
-        - ModelA: modelb
-        - ModelB: modela_ptr, modelb, modelc
-        - ModelC: modela_ptr, modelb, modelb_ptr, modelc
-
-        These accessors allow Django (and everyone else) to travel up and down
-        the inheritance tree for the db object at hand.
-
-        The original Django accessors use our polymorphic manager.
-        But they should not. So we replace them with our own accessors that use
-        our appropriate base_objects manager.
-        """
-        super().__init__(*args, **kwargs)
-
-        if self.__class__.polymorphic_super_sub_accessors_replaced:
-            return
-        self.__class__.polymorphic_super_sub_accessors_replaced = True
-
-        def create_accessor_function_for_model(model, field):
-            def accessor_function(self):
-                try:
-                    rel_obj = field.get_cached_value(self)
-                except KeyError:
-                    objects = getattr(model, "_base_objects", model.objects)
-                    rel_obj = objects.using(self._state.db or DEFAULT_DB_ALIAS).get(pk=self.pk)
-                    field.set_cached_value(self, rel_obj)
-                return rel_obj
-
-            return accessor_function
-
-        subclasses_and_superclasses_accessors = self._get_inheritance_relation_fields_and_models()
-
-        for name, model in subclasses_and_superclasses_accessors.items():
-            # Here be dragons.
-            orig_accessor = getattr(self.__class__, name, None)
-            if issubclass(
-                type(orig_accessor),
-                (ReverseOneToOneDescriptor, ForwardManyToOneDescriptor),
-            ):
-                field = (
-                    orig_accessor.related
-                    if isinstance(orig_accessor, ReverseOneToOneDescriptor)
-                    else orig_accessor.field
-                )
-
-                setattr(
-                    self.__class__,
-                    name,
-                    property(create_accessor_function_for_model(model, field)),
-                )
-
-    @classmethod
-    @lru_cache(maxsize=None)
-    def _route_to_ancestor(cls, ancestor_model):
-        """
-        Returns the first (highest mro precedence - depth first on parents) model
-        inheritance route to the given ancestor model - or an empty list if no such
-        route exists.
-
-        .. warning::
-
-            This is a private method subject to unannounced changes. This only works for
-            concrete ancestors!
-
-        Returns a :class:`list` of :class:`ParentLinkInfo`
-        """
-        route = []
-
-        def find_route(model, target_model, current_route):
-            if model is target_model:
-                return current_route
-
-            for parent_model, field_to_parent in model._meta.parents.items():
-                if field_to_parent is not None:
-                    new_route = current_route + [ParentLinkInfo(parent_model, field_to_parent)]
-                    found_route = find_route(parent_model, target_model, new_route)
-                    if found_route is not None:
-                        return found_route
-            return None
-
-        found_route = find_route(cls, ancestor_model, route)
-        if found_route is None:
-            return []
-        return found_route
-
-    @classproperty
-    def _concrete_descendants(cls):
-        """
-        A list of all concrete (non-abstract, non-proxy) descendant
-        model classes in tree order with leaf descendants last.
-
-        .. warning::
-
-            This is a private method subject to unannounced changes. Also do not call
-            it before all models are loaded or its results will be incomplete!
-        """
-        from django.apps import apps
-
-        apps.check_models_ready()
-
-        def add_concrete_descendants(model, result):
-            """Add concrete descendants in tree order (ancestors before descendants)."""
-            for sub_cls in model.__subclasses__():
-                if not issubclass(sub_cls, models.Model):
-                    continue
-
-                # Add concrete models in pre-order (parent before children)
-                if not sub_cls._meta.abstract and not sub_cls._meta.proxy:
-                    result.append(sub_cls)
-
-                # Always recurse to find descendants through abstract and proxy models
-                add_concrete_descendants(sub_cls, result)
-
-        result = []
-        add_concrete_descendants(cls, result)
-        return result
-
-    def _get_inheritance_relation_fields_and_models(self):
-        """helper function for __init__:
-        determine names of all Django inheritance accessor member functions for type(self)"""
-
-        def add_model(model, field_name, result):
-            result[field_name] = model
-
-        def add_model_if_regular(model, field_name, result):
-            if (
-                issubclass(model, models.Model)
-                and model != models.Model
-                and model != self.__class__
-                and model != PolymorphicModel
-            ):
-                add_model(model, field_name, result)
-
-        def add_all_super_models(model, result):
-            for super_cls, field_to_super in model._meta.parents.items():
-                if field_to_super is not None:
-                    # if not a link to a proxy model, the field on model can have
-                    # a different name to super_cls._meta.module_name, when the field
-                    # is created manually using 'parent_link'
-                    field_name = field_to_super.name
-                    add_model_if_regular(super_cls, field_name, result)
-                    add_all_super_models(super_cls, result)
-
-        def add_all_sub_models(super_cls, result):
-            # go through all subclasses of model
-            for sub_cls in super_cls.__subclasses__():
-                # super_cls may not be in sub_cls._meta.parents if super_cls is a proxy model
-                if super_cls in sub_cls._meta.parents:
-                    # get the field that links sub_cls to super_cls
-                    field_to_super = sub_cls._meta.parents[super_cls]
-                    # if filed_to_super is not a link to a proxy model
-                    if field_to_super is not None:
-                        super_to_sub_related_field = field_to_super.remote_field
-                        if super_to_sub_related_field.related_name is None:
-                            # if related name is None the related field is the name of the subclass
-                            to_subclass_fieldname = sub_cls.__name__.lower()
-                        else:
-                            # otherwise use the given related name
-                            to_subclass_fieldname = super_to_sub_related_field.related_name
-
-                        add_model_if_regular(sub_cls, to_subclass_fieldname, result)
-
-        result = {}
-        add_all_super_models(self.__class__, result)
-        add_all_sub_models(self.__class__, result)
-        return result
 
     def delete(self, using=None, keep_parents=False):
         """

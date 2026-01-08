@@ -117,6 +117,7 @@ Advanced topics
    :maxdepth: 2
 
    formsets
+   views
    migrating
    managers
    deletion

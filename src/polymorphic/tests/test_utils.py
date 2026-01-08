@@ -11,7 +11,13 @@ from polymorphic.tests.models import (
     Model2C,
     Model2D,
 )
-from polymorphic.utils import get_base_polymorphic_model, reset_polymorphic_ctype, sort_by_subclass
+from polymorphic.utils import (
+    get_base_polymorphic_model,
+    reset_polymorphic_ctype,
+    sort_by_subclass,
+    route_to_ancestor,
+    concrete_descendants,
+)
 
 
 class UtilsTests(TransactionTestCase):
@@ -119,7 +125,7 @@ class UtilsTests(TransactionTestCase):
         )
 
         # Model2A hierarchy (with manager variants)
-        assert Model2A._concrete_descendants == [
+        assert concrete_descendants(Model2A) == [
             Model2B,
             Model2C,
             Model2D,
@@ -128,55 +134,59 @@ class UtilsTests(TransactionTestCase):
             ModelWithMyManagerDefault,
             ModelWithMyManager2,
         ]
-        assert Model2B._concrete_descendants == [Model2C, Model2D]
-        assert Model2C._concrete_descendants == [Model2D]
-        assert len(Model2D._concrete_descendants) == 0
+        assert concrete_descendants(Model2B) == [Model2C, Model2D]
+        assert concrete_descendants(Model2C) == [Model2D]
+        assert len(concrete_descendants(Model2D)) == 0
 
         # ModelWithMyManager variants (no further descendants)
-        assert len(ModelWithMyManager._concrete_descendants) == 0
-        assert len(ModelWithMyManagerNoDefault._concrete_descendants) == 0
-        assert len(ModelWithMyManagerDefault._concrete_descendants) == 0
-        assert len(ModelWithMyManager2._concrete_descendants) == 0
+        assert len(concrete_descendants(ModelWithMyManager)) == 0
+        assert len(concrete_descendants(ModelWithMyManagerNoDefault)) == 0
+        assert len(concrete_descendants(ModelWithMyManagerDefault)) == 0
+        assert len(concrete_descendants(ModelWithMyManager2)) == 0
 
         # Base hierarchy (tree order: ModelX defined before ModelY)
-        assert Base._concrete_descendants == [ModelX, ModelY, FKTestChild]
-        assert len(ModelX._concrete_descendants) == 0
-        assert len(ModelY._concrete_descendants) == 0
+        assert concrete_descendants(Base) == [ModelX, ModelY, FKTestChild]
+        assert len(concrete_descendants(ModelX)) == 0
+        assert len(concrete_descendants(ModelY)) == 0
 
         # BlogBase hierarchy (tree order: BlogA defined before BlogB)
-        assert BlogBase._concrete_descendants == [BlogA, BlogB]
-        assert len(BlogA._concrete_descendants) == 0
-        assert len(BlogB._concrete_descendants) == 0
+        assert concrete_descendants(BlogBase) == [BlogA, BlogB]
+        assert len(concrete_descendants(BlogA)) == 0
+        assert len(concrete_descendants(BlogB)) == 0
 
         # RelationBase hierarchy (tree order: RelationA before RelationB, RelationBC is child of RelationB)
-        assert RelationBase._concrete_descendants == [RelationA, RelationB, RelationBC]
-        assert len(RelationA._concrete_descendants) == 0
-        assert RelationB._concrete_descendants == [RelationBC]
-        assert len(RelationBC._concrete_descendants) == 0
+        assert concrete_descendants(RelationBase) == [
+            RelationA,
+            RelationB,
+            RelationBC,
+        ]
+        assert len(concrete_descendants(RelationA)) == 0
+        assert concrete_descendants(RelationB) == [RelationBC]
+        assert len(concrete_descendants(RelationBC)) == 0
 
         # ProxyBase hierarchy (ProxyChild is proxy, so excluded)
-        assert ProxyBase._concrete_descendants == [NonProxyChild]
-        assert len(NonProxyChild._concrete_descendants) == 0
+        assert concrete_descendants(ProxyBase) == [NonProxyChild]
+        assert len(concrete_descendants(NonProxyChild)) == 0
 
         # ProxiedBase hierarchy (tree order: ProxyModelA defined before ProxyModelB)
         # ProxyModelBase is proxy, but has concrete children
-        assert ProxiedBase._concrete_descendants == [ProxyModelA, ProxyModelB]
+        assert concrete_descendants(ProxiedBase) == [ProxyModelA, ProxyModelB]
         # ProxyModelBase is proxy but should still return its concrete descendants
-        assert ProxyModelBase._concrete_descendants == [ProxyModelA, ProxyModelB]
-        assert len(ProxyModelA._concrete_descendants) == 0
-        assert len(ProxyModelB._concrete_descendants) == 0
+        assert concrete_descendants(ProxyModelBase) == [ProxyModelA, ProxyModelB]
+        assert len(concrete_descendants(ProxyModelA)) == 0
+        assert len(concrete_descendants(ProxyModelB)) == 0
 
         # CustomPkBase hierarchy
-        assert CustomPkBase._concrete_descendants == [CustomPkInherit]
-        assert len(CustomPkInherit._concrete_descendants) == 0
+        assert concrete_descendants(CustomPkBase) == [CustomPkInherit]
+        assert len(concrete_descendants(CustomPkInherit)) == 0
 
         # MultiTableBase hierarchy
-        assert MultiTableBase._concrete_descendants == [MultiTableDerived]
-        assert len(MultiTableDerived._concrete_descendants) == 0
+        assert concrete_descendants(MultiTableBase) == [MultiTableDerived]
+        assert len(concrete_descendants(MultiTableDerived)) == 0
 
         # Enhance_Base hierarchy
-        assert Enhance_Base._concrete_descendants == [Enhance_Inherit]
-        assert len(Enhance_Inherit._concrete_descendants) == 0
+        assert concrete_descendants(Enhance_Base) == [Enhance_Inherit]
+        assert len(concrete_descendants(Enhance_Inherit)) == 0
 
     def test_route_to_ancestor(self):
         """
@@ -198,16 +208,18 @@ class UtilsTests(TransactionTestCase):
             RelationBC,
             Enhance_Base,
             Enhance_Inherit,
+            PurpleHeadDuck,
+            Duck,
         )
 
         # Test direct parent (one hop)
-        route = Model2B._route_to_ancestor(Model2A)
+        route = route_to_ancestor(Model2B, Model2A)
         assert len(route) == 1
         assert route[0].model == Model2A
         assert route[0].link.name == "model2a_ptr"
 
         # Test grandparent (two hops)
-        route = Model2C._route_to_ancestor(Model2A)
+        route = route_to_ancestor(Model2C, Model2A)
         assert len(route) == 2
         assert route[0].model == Model2B
         assert route[0].link.name == "model2b_ptr"
@@ -215,7 +227,7 @@ class UtilsTests(TransactionTestCase):
         assert route[1].link.name == "model2a_ptr"
 
         # Test great-grandparent (three hops)
-        route = Model2D._route_to_ancestor(Model2A)
+        route = route_to_ancestor(Model2D, Model2A)
         assert len(route) == 3
         assert route[0].model == Model2C
         assert route[0].link.name == "model2c_ptr"
@@ -225,74 +237,79 @@ class UtilsTests(TransactionTestCase):
         assert route[2].link.name == "model2a_ptr"
 
         # Test intermediate ancestor (skip one level)
-        route = Model2D._route_to_ancestor(Model2B)
+        route = route_to_ancestor(Model2D, Model2B)
         assert len(route) == 2
         assert route[0].model == Model2C
         assert route[0].link.name == "model2c_ptr"
         assert route[1].model == Model2B
         assert route[1].link.name == "model2b_ptr"
 
-        route = Model2D._route_to_ancestor(Model2C)
+        route = route_to_ancestor(Model2D, Model2C)
         assert len(route) == 1
         assert route[0].model == Model2C
         assert route[0].link.name == "model2c_ptr"
 
         # Test self (should return empty)
-        assert Model2A._route_to_ancestor(Model2A) == []
-        assert Model2B._route_to_ancestor(Model2B) == []
-        assert Model2D._route_to_ancestor(Model2D) == []
+        assert route_to_ancestor(Model2A, Model2A) == []
+        assert route_to_ancestor(Model2B, Model2B) == []
+        assert route_to_ancestor(Model2D, Model2D) == []
 
         # Test non-ancestor (should return empty)
-        assert Model2A._route_to_ancestor(Model2B) == []
-        assert Model2B._route_to_ancestor(Model2C) == []
-        assert Model2C._route_to_ancestor(Model2D) == []
+        assert route_to_ancestor(Model2A, Model2B) == []
+        assert route_to_ancestor(Model2B, Model2C) == []
+        assert route_to_ancestor(Model2C, Model2D) == []
 
         # Test unrelated models (should return empty)
-        assert ModelX._route_to_ancestor(Model2A) == []
-        assert Model2A._route_to_ancestor(ModelX) == []
-        assert BlogA._route_to_ancestor(RelationA) == []
+        assert route_to_ancestor(ModelX, Model2A) == []
+        assert route_to_ancestor(Model2A, ModelX) == []
+        assert route_to_ancestor(BlogA, RelationA) == []
 
         # Test different hierarchy - Base -> ModelX
-        route = ModelX._route_to_ancestor(Base)
+        route = route_to_ancestor(ModelX, Base)
         assert len(route) == 1
         assert route[0].model == Base
         assert route[0].link.name == "base_ptr"
 
         # Test different hierarchy - Base -> ModelY
-        route = ModelY._route_to_ancestor(Base)
+        route = route_to_ancestor(ModelY, Base)
         assert len(route) == 1
         assert route[0].model == Base
         assert route[0].link.name == "base_ptr"
 
         # Test BlogBase hierarchy
-        route = BlogA._route_to_ancestor(BlogBase)
+        route = route_to_ancestor(BlogA, BlogBase)
         assert len(route) == 1
         assert route[0].model == BlogBase
         assert route[0].link.name == "blogbase_ptr"
 
         # Test multi-level RelationBase hierarchy
-        route = RelationBC._route_to_ancestor(RelationBase)
+        route = route_to_ancestor(RelationBC, RelationBase)
         assert len(route) == 2
         assert route[0].model == RelationB
         assert route[0].link.name == "relationb_ptr"
         assert route[1].model == RelationBase
         assert route[1].link.name == "relationbase_ptr"
 
-        route = RelationBC._route_to_ancestor(RelationB)
+        route = route_to_ancestor(RelationBC, RelationB)
         assert len(route) == 1
         assert route[0].model == RelationB
         assert route[0].link.name == "relationb_ptr"
 
-        route = RelationB._route_to_ancestor(RelationBase)
+        route = route_to_ancestor(RelationB, RelationBase)
         assert len(route) == 1
         assert route[0].model == RelationBase
         assert route[0].link.name == "relationbase_ptr"
 
         # Test multiple inheritance - Enhance_Inherit
-        route = Enhance_Inherit._route_to_ancestor(Enhance_Base)
+        route = route_to_ancestor(Enhance_Inherit, Enhance_Base)
         assert len(route) == 1
         assert route[0].model == Enhance_Base
         assert route[0].link.name == "enhance_base_ptr"
+
+        route = route_to_ancestor(PurpleHeadDuck, Duck)
+        assert len(route) == 1
+        assert route[0].model == Duck
+        assert route[0].link.name == "duck_ptr"
 
 
 class PrepareForCopyTests(TransactionTestCase):

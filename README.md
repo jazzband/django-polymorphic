@@ -75,14 +75,20 @@ ForeignKeys, ManyToManyFields or OneToOneFields.
 
 **Note:** While [django-polymorphic](https://pypi.python.org/pypi/django-polymorphic) makes subclassed models easy to use in Django, we still encourage to use them with caution. Each subclassed model will require Django to perform an ``INNER JOIN`` to fetch the model fields from the database. While taking this in mind, there are valid reasons for using subclassed models. That's what this library is designed for!
 
-The current release of [django-polymorphic](https://pypi.python.org/pypi/django-polymorphic) supports Django 2.2 - 5.2 on Python 3.9+.
-
 For more information, see the [documentation at Read the Docs](https://django-polymorphic.readthedocs.io).
 
 ### Installation
 
 ```bash
     $ pip install django-polymorphic
+```
+
+```python
+INSTALLED_APPS = [
+  ...
+  "django.contrib.contenttypes",  # we rely on the contenttypes framework
+  "polymorphic"
+]
 ```
 
 ## License
