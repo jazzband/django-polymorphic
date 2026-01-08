@@ -103,6 +103,7 @@ INSTALLED_APPS = (
     "polymorphic.tests.deletion",
     "polymorphic.tests.test_migrations",
     "polymorphic.tests.examples.views",
+    "polymorphic.tests.examples.managers",
 )
 
 MIDDLEWARE = (
