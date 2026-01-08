@@ -383,7 +383,12 @@ class TestFormsetExclude(TestCase):
         self.assertIsInstance(form.fields["polymorphic_ctype"].initial, int)
 
     def test_formset_with_none_instance(self):
-        """Test that formset handles None instance without AttributeError (issue #363)."""
+        """Test that formset handles None instance without AttributeError (issue #363).
+
+        This occurs when a bound formset has a pk that doesn't exist in the queryset,
+        causing Django's _existing_object to return None. The polymorphic formset
+        must handle this gracefully instead of calling get_real_instance_class() on None.
+        """
         from django.contrib.contenttypes.models import ContentType
 
         ct = ContentType.objects.get_for_model(SpecialBook, for_concrete_model=False)
@@ -394,21 +399,25 @@ class TestFormsetExclude(TestCase):
             formset_children=(PolymorphicFormSetChild(SpecialBook, form=SpecialBookForm),),
         )
 
-        # Simulate nested formset scenario where instance can be None
-        # This happens when creating a new form in a nested formset
-        formset = SpecialBookFormSet(
-            queryset=SpecialBook.objects.none(),
-        )
+        # Simulate the scenario where _existing_object returns None:
+        # - Bound formset with data
+        # - Claims to have an initial form (INITIAL_FORMS > 0)
+        # - But the pk doesn't exist in queryset, so _existing_object returns None
+        data = {
+            "form-TOTAL_FORMS": "1",
+            "form-INITIAL_FORMS": "1",
+            "form-MIN_NUM_FORMS": "0",
+            "form-MAX_NUM_FORMS": "1000",
+            "form-0-id": "99999",  # Non-existent pk - _existing_object will return None
+            "form-0-polymorphic_ctype": str(ct.pk),
+        }
 
-        # Access the form - this should not raise AttributeError
-        # even though the instance might be None
-        try:
-            form = formset.forms[0]
-            # Verify the form was created successfully
-            self.assertIsNotNone(form)
-            self.assertIn("polymorphic_ctype", form.fields)
-        except AttributeError as e:
-            self.fail(f"Formset with None instance raised AttributeError: {e}")
+        formset = SpecialBookFormSet(data=data, queryset=SpecialBook.objects.none())
+
+        # This should not raise AttributeError when instance is None
+        forms = formset.forms
+        self.assertEqual(len(forms), 1)
+        self.assertIn("polymorphic_ctype", forms[0].fields)
 
     def test_combined_formset_behaviors(self):
         # 1. __init__ exclude handling
