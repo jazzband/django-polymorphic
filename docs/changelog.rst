@@ -1,6 +1,13 @@
 Changelog
 =========
 
+v4.8.0 (2026-01-08)
+-------------------
+
+* Fixed `PolymorphicFormSetChild overrides form exclude <https://github.com/jazzband/django-polymorphic/issues/578>`_
+* Fixed `Issue with polymorphic_ctype when populating polymorphic inline formsets. <https://github.com/jazzband/django-polymorphic/issues/549>`_
+* Fixed `Nested polymorphic_inline_formsets gives AttributeError: 'NoneType' object has no attribute 'get_real_instance_class' <https://github.com/jazzband/django-polymorphic/issues/363>`_
+
 v4.7.0 (2026-01-07)
 -------------------
 

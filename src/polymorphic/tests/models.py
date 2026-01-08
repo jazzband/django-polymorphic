@@ -988,3 +988,15 @@ class DirectM2MContainer(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class Author(models.Model):
+    pass
+
+
+class Book(PolymorphicModel):
+    author = models.ForeignKey(Author, on_delete=models.CASCADE)
+
+
+class SpecialBook(Book):
+    pass

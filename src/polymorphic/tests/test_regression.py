@@ -1,8 +1,7 @@
-from django.test import TestCase
-
+from django import forms
 from django.db import models
 from django.db.models import functions
-from polymorphic.models import PolymorphicTypeInvalid
+from polymorphic.models import PolymorphicModel, PolymorphicTypeInvalid
 from polymorphic.tests.models import (
     Bottom,
     Middle,
@@ -16,7 +15,12 @@ from polymorphic.tests.models import (
     RelationBase,
     RelationA,
     RelationB,
+    SpecialBook,
+    Book,
 )
+from django.test import TestCase
+from django.contrib.contenttypes.models import ContentType
+from polymorphic.formsets import polymorphic_modelformset_factory, PolymorphicFormSetChild
 
 
 class RegressionTests(TestCase):
@@ -321,3 +325,118 @@ class RegressionTests(TestCase):
         self.assertIsInstance(relations[0], RelationBase)
         self.assertIsInstance(relations[1], RelationA)
         self.assertIsInstance(relations[2], RelationB)
+
+
+class SpecialBookForm(forms.ModelForm):
+    class Meta:
+        model = SpecialBook
+        exclude = ("author",)
+
+
+class TestFormsetExclude(TestCase):
+    def test_formset_child_respects_exclude(self):
+        SpecialBookFormSet = polymorphic_modelformset_factory(
+            Book,
+            fields=[],
+            formset_children=(PolymorphicFormSetChild(SpecialBook, form=SpecialBookForm),),
+        )
+        formset = SpecialBookFormSet(queryset=SpecialBook.objects.none())
+        self.assertNotIn("author", formset.forms[0].fields)
+
+    def test_formset_initial_with_contenttype_instance(self):
+        """Test that polymorphic_ctype can be set as ContentType instance in initial data (issue #549)"""
+        from django.contrib.contenttypes.models import ContentType
+
+        ct = ContentType.objects.get_for_model(SpecialBook, for_concrete_model=False)
+
+        SpecialBookFormSet = polymorphic_modelformset_factory(
+            Book,
+            fields="__all__",
+            formset_children=(PolymorphicFormSetChild(SpecialBook, form=SpecialBookForm),),
+        )
+
+        # Set initial data with ContentType instance (as users do in issue #549)
+        formset = SpecialBookFormSet(
+            queryset=SpecialBook.objects.none(),
+            initial=[{"polymorphic_ctype": ct}],
+        )
+
+        # Should not raise an error when creating the formset
+        form = formset.forms[0]
+
+        # Verify the polymorphic_ctype field is properly set up with the ID
+        self.assertIn("polymorphic_ctype", form.fields)
+
+        # The critical assertion: the field's initial value should be the ID (int),
+        # not the ContentType instance. This proves the normalization worked.
+        self.assertEqual(form.fields["polymorphic_ctype"].initial, ct.pk)
+        self.assertIsInstance(form.fields["polymorphic_ctype"].initial, int)
+
+    def test_formset_with_none_instance(self):
+        """Test that formset handles None instance without AttributeError (issue #363).
+
+        This occurs when a bound formset has a pk that doesn't exist in the queryset,
+        causing Django's _existing_object to return None. The polymorphic formset
+        must handle this gracefully instead of calling get_real_instance_class() on None.
+        """
+        from django.contrib.contenttypes.models import ContentType
+
+        ct = ContentType.objects.get_for_model(SpecialBook, for_concrete_model=False)
+
+        SpecialBookFormSet = polymorphic_modelformset_factory(
+            Book,
+            fields="__all__",
+            formset_children=(PolymorphicFormSetChild(SpecialBook, form=SpecialBookForm),),
+        )
+
+        # Simulate the scenario where _existing_object returns None:
+        # - Bound formset with data
+        # - Claims to have an initial form (INITIAL_FORMS > 0)
+        # - But the pk doesn't exist in queryset, so _existing_object returns None
+        data = {
+            "form-TOTAL_FORMS": "1",
+            "form-INITIAL_FORMS": "1",
+            "form-MIN_NUM_FORMS": "0",
+            "form-MAX_NUM_FORMS": "1000",
+            "form-0-id": "99999",  # Non-existent pk - _existing_object will return None
+            "form-0-polymorphic_ctype": str(ct.pk),
+        }
+
+        formset = SpecialBookFormSet(data=data, queryset=SpecialBook.objects.none())
+
+        # This should not raise AttributeError when instance is None
+        forms = formset.forms
+        self.assertEqual(len(forms), 1)
+        self.assertIn("polymorphic_ctype", forms[0].fields)
+
+    def test_combined_formset_behaviors(self):
+        # 1. __init__ exclude handling
+        child_none = PolymorphicFormSetChild(Book, form=SpecialBookForm, exclude=None)
+        self.assertEqual(child_none.exclude, ())
+
+        child_list = PolymorphicFormSetChild(Book, form=SpecialBookForm, exclude=["author"])
+        self.assertIn("author", child_list.exclude)
+
+        # 2. get_form exclude merging
+        form = child_list.get_form(extra_exclude=["field1"])
+        self.assertIn("author", form._meta.exclude)
+        self.assertIn("field1", form._meta.exclude)
+
+        form_meta_default = child_none.get_form()
+        self.assertIn("author", form_meta_default._meta.exclude)
+
+        # 3. polymorphic_ctype normalization
+        ct = ContentType.objects.get_for_model(SpecialBook, for_concrete_model=False)
+        SpecialBookFormSet = polymorphic_modelformset_factory(
+            Book,
+            fields="__all__",
+            formset_children=(PolymorphicFormSetChild(SpecialBook, form=SpecialBookForm),),
+        )
+        formset = SpecialBookFormSet(
+            queryset=SpecialBook.objects.none(),
+            initial=[{"polymorphic_ctype": ct}],
+        )
+        # The formset should normalize the ContentType instance to its ID
+        form_ct = formset.forms[0]
+        self.assertIsInstance(form_ct.initial["polymorphic_ctype"], int)
+        self.assertEqual(form_ct.initial["polymorphic_ctype"], ct.pk)
