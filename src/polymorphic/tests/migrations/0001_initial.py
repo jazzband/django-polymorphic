@@ -326,6 +326,18 @@ class Migration(migrations.Migration):
             },
         ),
         migrations.CreateModel(
+            name='NatKeyParent',
+            fields=[
+                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('slug', models.SlugField(unique=True)),
+                ('content', models.CharField(blank=True, max_length=100)),
+                ('polymorphic_ctype', models.ForeignKey(editable=False, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='polymorphic_%(app_label)s.%(class)s_set+', to='contenttypes.contenttype')),
+            ],
+            options={
+                'abstract': False,
+            },
+        ),
+        migrations.CreateModel(
             name='NormalBase',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
@@ -836,6 +848,17 @@ class Migration(migrations.Migration):
                 'abstract': False,
             },
             bases=('tests.mybasemodel',),
+        ),
+        migrations.CreateModel(
+            name='NatKeyChild',
+            fields=[
+                ('foo', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, parent_link=True, primary_key=True, serialize=False, to='tests.natkeyparent')),
+                ('val', models.IntegerField(default=0)),
+            ],
+            options={
+                'abstract': False,
+            },
+            bases=('tests.natkeyparent',),
         ),
         migrations.CreateModel(
             name='NonProxyChild',
