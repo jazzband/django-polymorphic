@@ -155,6 +155,8 @@ dev = [
     "tomlkit>=0.13.3",
     "tox>=4.24.1",
     "tox-uv>=1.13.1",
+    'djangorestframework',
+    'six',
 ]
 docs = [
     "django-extra-views>=0.15.0",

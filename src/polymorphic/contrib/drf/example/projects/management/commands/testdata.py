@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
 
-from projects.models import Project, ArtProject, ResearchProject
+from projects.models import ArtProject, Project, ResearchProject
 
 
 class Command(BaseCommand):
@@ -9,11 +9,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         Project.objects.all().delete()
         Project.objects.create(topic="Project title #1")
-        ArtProject.objects.create(
-            topic="Art project title #1",
-            artist="T. Artist"
-        )
+        ArtProject.objects.create(topic="Art project title #1", artist="T. Artist")
         ResearchProject.objects.create(
-            topic="Research project title #1",
-            supervisor="Dr. Research"
+            topic="Research project title #1", supervisor="Dr. Research"
         )
