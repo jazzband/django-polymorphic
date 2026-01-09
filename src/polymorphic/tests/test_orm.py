@@ -106,6 +106,10 @@ from polymorphic.tests.models import (
     SpecialAccount1,
     SpecialAccount1_1,
     SpecialAccount2,
+    Model2BFiltered,
+    Model2CFiltered,
+    Model2CNamedManagers,
+    Model2CNamedDefault,
 )
 from django.db.models.signals import post_delete
 
@@ -455,11 +459,22 @@ class PolymorphicTests(TransactionTestCase):
         # Test with a list of models
         q = query_translate.create_instanceof_q([Model2B])
         expected = sorted(
-            ContentType.objects.get_for_model(m).pk for m in [Model2B, Model2C, Model2D]
+            ContentType.objects.get_for_model(m).pk
+            for m in [
+                Model2B,
+                Model2C,
+                Model2D,
+                Model2BFiltered,
+                Model2CFiltered,
+                Model2CNamedManagers,
+                Model2CNamedDefault,
+            ]
         )
         assert dict(q.children) == dict(polymorphic_ctype__in=expected)
 
     def test_base_manager(self):
+        from .models import CustomBaseManager
+
         def base_manager(model):
             return (type(model._base_manager), model._base_manager.model)
 
@@ -477,7 +492,20 @@ class PolymorphicTests(TransactionTestCase):
             One2OneRelatingModelDerived,
         )
 
-    def test_instance_default_manager(self):
+        # unless the user provides a manager the default_manager and base_manager are
+        # the same
+        assert Model2A._default_manager is Model2A._base_manager
+        assert Model2B._default_manager is Model2B._base_manager
+        assert Model2C._default_manager is Model2C._base_manager
+
+        assert type(Model2BFiltered._base_manager) is PolymorphicManager
+        assert type(Model2CFiltered._base_manager) is PolymorphicManager
+        assert type(Model2CNamedManagers._base_manager) is CustomBaseManager
+        assert type(Model2CNamedDefault._base_manager) is PolymorphicManager
+
+    def test_default_manager(self):
+        from .models import FilteredManager, FilteredManager2
+
         def default_manager(instance):
             return (
                 type(instance.__class__._default_manager),
@@ -499,6 +527,15 @@ class PolymorphicTests(TransactionTestCase):
         assert default_manager(model_2a) == (PolymorphicManager, Model2A)
         assert default_manager(model_2b) == (PolymorphicManager, Model2B)
         assert default_manager(model_2c) == (PolymorphicManager, Model2C)
+
+        assert type(Model2BFiltered._default_manager) is FilteredManager
+        assert type(Model2CFiltered._default_manager) is FilteredManager
+        assert type(Model2CNamedManagers._default_manager) is FilteredManager2
+        assert type(Model2CNamedDefault._default_manager) is FilteredManager2
+        assert Model2BFiltered._default_manager is not Model2BFiltered._base_manager
+        assert Model2CFiltered._default_manager is not Model2CFiltered._base_manager
+        assert Model2CNamedDefault._default_manager is not Model2CNamedDefault._base_manager
+        assert Model2CNamedManagers._default_manager is not Model2CNamedManagers._base_manager
 
     def test_foreignkey_field(self):
         self.create_model2abcd()

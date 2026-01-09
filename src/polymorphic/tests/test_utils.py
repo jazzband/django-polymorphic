@@ -122,6 +122,10 @@ class UtilsTests(TransactionTestCase):
             MultiTableBase,
             MultiTableDerived,
             FKTestChild,
+            Model2BFiltered,
+            Model2CFiltered,
+            Model2CNamedDefault,
+            Model2CNamedManagers,
         )
 
         # Model2A hierarchy (with manager variants)
@@ -129,12 +133,23 @@ class UtilsTests(TransactionTestCase):
             Model2B,
             Model2C,
             Model2D,
+            Model2BFiltered,
+            Model2CFiltered,
+            Model2CNamedManagers,
+            Model2CNamedDefault,
             ModelWithMyManager,
             ModelWithMyManagerNoDefault,
             ModelWithMyManagerDefault,
             ModelWithMyManager2,
         ]
-        assert concrete_descendants(Model2B) == [Model2C, Model2D]
+        assert concrete_descendants(Model2B) == [
+            Model2C,
+            Model2D,
+            Model2BFiltered,
+            Model2CFiltered,
+            Model2CNamedManagers,
+            Model2CNamedDefault,
+        ]
         assert concrete_descendants(Model2C) == [Model2D]
         assert len(concrete_descendants(Model2D)) == 0
 

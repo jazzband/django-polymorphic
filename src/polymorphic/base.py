@@ -75,15 +75,28 @@ class PolymorphicModelBase(ModelBase):
         new_class = super().__new__(cls, model_name, bases, attrs, **kwargs)
 
         if new_class._meta.base_manager_name is None:
-            # by default, use polymorphic manager as the base manager - i.e. for
-            # related fields etc. This could happen in multi-inheritance scenarios
-            # where one parent is polymorphic and the other not and the non poly parent
-            # is higher in the MRO
-            new_class._meta.base_manager_name = "objects"
+            # by default, use polymorphic manager as the base manager
+            new_class._meta.base_manager_name = new_class._meta.default_manager_name or "objects"
+
+        # ensure base_manager is a plain PolymorphicManager by resetting it if it
+        # was not explicitly set and it defaults to a changed default_manager
+        # the base class manager determination logic is complex enough that we prefer
+        # to observe its application and correct rather than preempting it
+        if (
+            type(new_class._meta.default_manager) is not PolymorphicManager
+            and new_class._meta.base_manager is new_class._meta.default_manager
+        ):
+            manager = PolymorphicManager()
+            manager.name = "_base_manager"
+            manager.model = new_class
+            manager.auto_created = True
+            new_class._meta.base_manager_name = None
+            # write new manager to property cache
+            new_class._meta.__dict__["base_manager"] = manager
 
         # validate resulting default manager
         if not new_class._meta.abstract and not new_class._meta.swapped:
-            cls.validate_model_manager(new_class.objects, model_name, "objects")
+            cls.validate_model_manager(new_class._default_manager, model_name, "objects")
 
         # wrap on_delete handlers of reverse relations back to this model with the
         # polymorphic deletion guard
@@ -187,11 +200,4 @@ class PolymorphicModelBase(ModelBase):
             if DUMPDATA_COMMAND in frm[1]:
                 return self._base_objects
 
-        manager = super()._default_manager
-        if not isinstance(manager, PolymorphicManager):
-            warnings.warn(
-                f"{self.__class__.__name__}._default_manager is not a PolymorphicManager",
-                ManagerInheritanceWarning,
-            )
-
-        return manager
+        return super()._default_manager

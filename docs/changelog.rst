@@ -1,6 +1,24 @@
 Changelog
 =========
 
+v4.9.0 (2026-01-09)
+-------------------
+
+.. note::
+
+  This update may generate new migrations for your polymorphic models, similar to the following.
+  This is ok and an expected side effect of fixing `#815
+  <https://github.com/jazzband/django-polymorphic/issues/815>`_
+
+  .. code-block:: python
+
+      migrations.AlterModelOptions(
+          name='modelname',
+          options={},
+      )
+
+* Fixed `PolymorphicModel.base_manager is the same as default_manager when custom default manager is supplied. <https://github.com/jazzband/django-polymorphic/issues/815>`_
+
 v4.8.0 (2026-01-08)
 -------------------
 
