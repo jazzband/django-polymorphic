@@ -157,6 +157,7 @@ dev = [
     "tox-uv>=1.13.1",
     'djangorestframework',
     'six',
+    'pytest-mock',
 ]
 docs = [
     "django-extra-views>=0.15.0",
