@@ -133,6 +133,51 @@ that resets all necessary fields on a model instance to prepare it for copying:
     obj.save()
     # obj is now a copy of the original ModelB instance
 
+
+Working with Fixtures
+---------------------
+
+Polymorphic models work with Django's :django-admin:`dumpdata` and :django-admin:`loaddata` 
+commands just as regular models do. There are two important considerations:
+
+1. Polymorphic models are multi-table models and :django-admin:`dumpdata` serializes each table 
+   separately. :pypi:`django-polymorphic` `does it's best 
+   <https://github.com/jazzband/django-polymorphic/pull/814>`_ to ensure non-polymorphic managers
+   are used when creating fixtures but there may be edge cases where this fails. If you override
+   :django-admin:`dumpdata` you must make sure any polymorphic managers encountered
+   :meth:`toggle polymorphism off <polymorphic.managers.PolymorphicQuerySet.non_polymorphic>`. Other
+   usual multi-table model caveats apply. If you serialize a subset of tables in the model
+   inheritance you may generate corrupt data or "upcast" your models if child tables were omitted.
+2. Polymorphic models rely on the :class:`~django.contrib.contenttypes.models.ContentType`
+   framework. When serializing and deserializing polymorphic models, the
+   ``polymorphic_ctype`` field must be handled correctly. If there is any question about if the
+   content type primary keys are or will be different between the source and target database you
+   should use the :option:`--natural-foreign <dumpdata.--natural-foreign>` flag to serialize those
+   relations by-value. Polymorphism introduces no special consideration here - any model using
+   contenttypes, polymorphic or not, must handle this correctly.
+
+.. note::
+
+    Prior documentation urged users to use both :option:`--natural-primary <dumpdata.--natural-primary>`
+    and :option:`--natural-foreign <dumpdata.--natural-foreign>` flags when dumping polymorphic
+    models. This is not necessary and only needs to be done when the primary keys are not guaranteed
+    to match or be available at the target database.
+
+Loading Fixtures (loaddata)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Fixtures should be loadable as normal with :django-admin:`loaddata`. However, if there are problems
+with the ``polymorphic_ctype`` references, you may fix them using
+:func:`~polymorphic.utils.reset_polymorphic_ctype`:
+
+.. code-block:: python
+
+    from polymorphic.utils import reset_polymorphic_ctype
+    from myapp.models import Animal, Dog, Cat
+
+    # Reset polymorphic_ctype for all models in the inheritance tree
+    reset_polymorphic_ctype(Animal, Dog, Cat)
+
 Using Third Party Models (without modifying them)
 -------------------------------------------------
 
