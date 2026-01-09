@@ -1,12 +1,77 @@
 import os
 import shutil
+import re
 from pathlib import Path
-import io
+from functools import lru_cache
 
 from django.core.management import call_command
-
 from django_test_migrations.migrator import Migrator
+from django.contrib.auth import get_user_model
+from django.contrib.staticfiles.testing import StaticLiveServerTestCase
+from django.db import connections
+from django.urls import reverse
 from django.apps import apps
+
+from playwright.sync_api import sync_playwright, expect
+from polymorphic import tests
+
+
+DSN_RE = re.compile(r"^(?P<host>[^:/]+)(:(?P<port>\d+))?/(?P<service>.+)$")
+
+
+@lru_cache()
+def is_sqlite_in_memory(db_name: str = "default") -> bool:
+    from django.conf import settings
+
+    return (
+        settings.DATABASES[db_name]["ENGINE"] == "django.db.backends.sqlite3"
+        and settings.DATABASES[db_name]["NAME"] == ":memory:"
+    )
+
+
+@lru_cache()
+def is_oracle(db_name: str = "default") -> bool:
+    from django.conf import settings
+
+    return settings.DATABASES[db_name]["ENGINE"] == "django.db.backends.oracle"
+
+
+def get_subprocess_test_db_env(db_name: str = "default") -> dict[str, str]:
+    """
+    If you need to run a test in a subprocess that accesses the active test database
+    (e.g. to call management commands), you need to set up the environment variables
+    so that the subprocess can connect to the correct test database.
+    This function returns a copy of os.environ with the necessary variables set.
+    """
+    env = os.environ.copy()
+    db = connections[db_name].settings_dict
+    # this is where django's renaming of test databases gets very annoying - we need
+    # to make sure our subprocess invocation uses the test database - which it wont
+    # do by default because it thinks we aren't in test mode.
+    if is_oracle(db_name):
+        dsn = db["NAME"]
+        m = DSN_RE.match(dsn)
+
+        if not m:
+            raise AssertionError(
+                f"Can't parse Oracle DSN from NAME={dsn!r}. "
+                "Expected format like 'host:1521/service' or 'host/service'."
+            )
+
+        host = m.group("host")
+        port = m.group("port") or "1521"
+        service = m.group("service")
+
+        env["ORACLE_DATABASES"] = service
+        env["ORACLE_USER"] = db["USER"]
+        env["ORACLE_PASSWORD"] = db["PASSWORD"]
+
+        # Only set non-empty values
+        env["ORACLE_HOST"] = host
+        env["ORACLE_PORTS"] = port
+    else:
+        env["PYTEST_DB_NAME"] = db["NAME"]
+    return env
 
 
 class GeneratedMigrationsPerClassMixin:
@@ -85,3 +150,80 @@ class GeneratedMigrationsPerClassMixin:
         if not candidates:
             raise RuntimeError(f"No migrations generated for {app_label}")
         return candidates[-1].stem
+
+
+class _GenericUITest(StaticLiveServerTestCase):
+    """Generic admin form test using Playwright."""
+
+    HEADLESS = tests.HEADLESS
+
+    admin_username = "admin"
+    admin_password = "password"
+    admin = None
+
+    def admin_url(self):
+        return f"{self.live_server_url}{reverse('admin:index')}"
+
+    def add_url(self, model):
+        path = reverse(f"admin:{model._meta.label_lower.replace('.', '_')}_add")
+        return f"{self.live_server_url}{path}"
+
+    def change_url(self, model, id):
+        path = reverse(
+            f"admin:{model._meta.label_lower.replace('.', '_')}_change",
+            args=[id],
+        )
+        return f"{self.live_server_url}{path}"
+
+    def list_url(self, model):
+        path = reverse(f"admin:{model._meta.label_lower.replace('.', '_')}_changelist")
+        return f"{self.live_server_url}{path}"
+
+    def get_object_ids(self, model):
+        self.page.goto(self.list_url(model))
+        return self.page.eval_on_selector_all(
+            "input[name='_selected_action']", "elements => elements.map(e => e.value)"
+        )
+
+    @classmethod
+    def setUpClass(cls):
+        """Set up the test class with a live server and Playwright instance."""
+        os.environ["DJANGO_ALLOW_ASYNC_UNSAFE"] = "1"
+        super().setUpClass()
+        try:
+            cls.playwright = sync_playwright().start()
+            cls.browser = cls.playwright.chromium.launch(headless=cls.HEADLESS)
+        except Exception as e:
+            if "asyncio loop" in str(e) or "executable" in str(e).lower():
+                raise RuntimeError(
+                    "Playwright failed to start. This often happens if browser drivers are missing. "
+                    "Please run 'just install-playwright' to install them."
+                ) from e
+            raise
+
+    @classmethod
+    def tearDownClass(cls):
+        """Clean up Playwright instance after tests."""
+        cls.browser.close()
+        cls.playwright.stop()
+        super().tearDownClass()
+        del os.environ["DJANGO_ALLOW_ASYNC_UNSAFE"]
+
+    def setUp(self):
+        """Create an admin user before running tests."""
+        self.admin = get_user_model().objects.create_superuser(
+            username=self.admin_username, email="admin@example.com", password=self.admin_password
+        )
+        self.page = self.browser.new_page()
+        # Log in to the Django admin
+        self.page.goto(f"{self.live_server_url}/admin/login/")
+        self.page.fill("input[name='username']", self.admin_username)
+        self.page.fill("input[name='password']", self.admin_password)
+        self.page.click("input[type='submit']")
+
+        # Ensure login is successful
+        expect(self.page).to_have_url(f"{self.live_server_url}/admin/")
+
+    def tearDown(self):
+        if self.page:
+            self.page.close()

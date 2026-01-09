@@ -2,7 +2,6 @@ polymorphic.models
 ==================
 
 .. automodule:: polymorphic.models
-
-.. autoclass:: polymorphic.models.PolymorphicModel
-    :members:
+    :members: 
     :show-inheritance:
+    :private-members:

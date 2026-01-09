@@ -1,5 +1,5 @@
-polymorphic.models
-==================
+polymorphic.deletion
+====================
 
 .. automodule:: polymorphic.deletion
 

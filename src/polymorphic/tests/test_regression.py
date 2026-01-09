@@ -1,9 +1,26 @@
-from django.test import TestCase
-
+from django import forms
 from django.db import models
 from django.db.models import functions
-from polymorphic.models import PolymorphicTypeInvalid
-from polymorphic.tests.models import Bottom, Middle, Top, Team, UserProfile, Model2A, Model2B
+from polymorphic.models import PolymorphicModel, PolymorphicTypeInvalid
+from polymorphic.tests.models import (
+    Bottom,
+    Middle,
+    Top,
+    Team,
+    UserProfile,
+    Model2A,
+    Model2B,
+    Regression295Parent,
+    Regression295Related,
+    RelationBase,
+    RelationA,
+    RelationB,
+    SpecialBook,
+    Book,
+)
+from django.test import TestCase
+from django.contrib.contenttypes.models import ContentType
+from polymorphic.formsets import polymorphic_modelformset_factory, PolymorphicFormSetChild
 
 
 class RegressionTests(TestCase):
@@ -248,3 +265,178 @@ class RegressionTests(TestCase):
         self.assertEqual(Model2B.objects.count(), 2)
         self.assertEqual(Model2C.objects.count(), 1)
         self.assertEqual(obj3, Model2B.objects.order_by("pk").last())
+
+    def test_double_underscore_in_related_name(self):
+        """
+        Test filtering on a related field when the relation name itself contains '__'.
+        This reproduces the issue in #295, where 'my__relation___real_field' was
+        being incorrectly parsed as a polymorphic lookup.
+        """
+
+        related = Regression295Related.objects.create(_real_field="test_value")
+        Regression295Parent.objects.create(related_object=related)
+
+        # The following filter would be translated to 'related_object___real_field'
+        # by Django's query machinery.
+        qs = Regression295Parent.objects.filter(related_object___real_field="test_value")
+        self.assertEqual(qs.count(), 1)
+
+    def test_issue_252_abstract_base_class(self):
+        """
+        Test that polymorphic models inheriting from both an abstract model
+        and PolymorphicModel can be created and saved without IndexError.
+
+        This reproduces issue #252:
+        https://github.com/jazzband/django-polymorphic/issues/252
+
+        The issue reported an IndexError when trying to create an Event object
+        that inherited from both an abstract model (AbstractDateInfo) and
+        PolymorphicModel. The error occurred in Django's query_utils.py when
+        accessing polymorphic_ctype_id.
+
+        We use RelationBase which inherits from RelationAbstractModel (abstract)
+        and PolymorphicModel, demonstrating the same pattern.
+        """
+        # Test creating base polymorphic model with abstract parent
+        # RelationBase inherits from RelationAbstractModel (abstract) and PolymorphicModel
+        base = RelationBase(field_base="test_base")
+        # This should not raise IndexError
+        base.save()
+
+        # Verify the object was saved correctly
+        self.assertIsNotNone(base.pk)
+        self.assertEqual(base.field_base, "test_base")
+        self.assertIsNotNone(base.polymorphic_ctype_id)
+
+        # Test creating child models
+        relation_a = RelationA.objects.create(field_base="base_a", field_a="field_a_value")
+        self.assertIsNotNone(relation_a.pk)
+        self.assertEqual(relation_a.field_a, "field_a_value")
+
+        relation_b = RelationB.objects.create(field_base="base_b", field_b="field_b_value")
+        self.assertIsNotNone(relation_b.pk)
+        self.assertEqual(relation_b.field_b, "field_b_value")
+
+        # Test querying polymorphic objects
+        relations = RelationBase.objects.all().order_by("pk")
+        self.assertEqual(relations.count(), 3)
+
+        # Verify polymorphic behavior - objects should be returned as their actual types
+        self.assertIsInstance(relations[0], RelationBase)
+        self.assertIsInstance(relations[1], RelationA)
+        self.assertIsInstance(relations[2], RelationB)
+
+
+class SpecialBookForm(forms.ModelForm):
+    class Meta:
+        model = SpecialBook
+        exclude = ("author",)
+
+
+class TestFormsetExclude(TestCase):
+    def test_formset_child_respects_exclude(self):
+        SpecialBookFormSet = polymorphic_modelformset_factory(
+            Book,
+            fields=[],
+            formset_children=(PolymorphicFormSetChild(SpecialBook, form=SpecialBookForm),),
+        )
+        formset = SpecialBookFormSet(queryset=SpecialBook.objects.none())
+        self.assertNotIn("author", formset.forms[0].fields)
+
+    def test_formset_initial_with_contenttype_instance(self):
+        """Test that polymorphic_ctype can be set as ContentType instance in initial data (issue #549)"""
+        from django.contrib.contenttypes.models import ContentType
+
+        ct = ContentType.objects.get_for_model(SpecialBook, for_concrete_model=False)
+
+        SpecialBookFormSet = polymorphic_modelformset_factory(
+            Book,
+            fields="__all__",
+            formset_children=(PolymorphicFormSetChild(SpecialBook, form=SpecialBookForm),),
+        )
+
+        # Set initial data with ContentType instance (as users do in issue #549)
+        formset = SpecialBookFormSet(
+            queryset=SpecialBook.objects.none(),
+            initial=[{"polymorphic_ctype": ct}],
+        )
+
+        # Should not raise an error when creating the formset
+        form = formset.forms[0]
+
+        # Verify the polymorphic_ctype field is properly set up with the ID
+        self.assertIn("polymorphic_ctype", form.fields)
+
+        # The critical assertion: the field's initial value should be the ID (int),
+        # not the ContentType instance. This proves the normalization worked.
+        self.assertEqual(form.fields["polymorphic_ctype"].initial, ct.pk)
+        self.assertIsInstance(form.fields["polymorphic_ctype"].initial, int)
+
+    def test_formset_with_none_instance(self):
+        """Test that formset handles None instance without AttributeError (issue #363).
+
+        This occurs when a bound formset has a pk that doesn't exist in the queryset,
+        causing Django's _existing_object to return None. The polymorphic formset
+        must handle this gracefully instead of calling get_real_instance_class() on None.
+        """
+        from django.contrib.contenttypes.models import ContentType
+
+        ct = ContentType.objects.get_for_model(SpecialBook, for_concrete_model=False)
+
+        SpecialBookFormSet = polymorphic_modelformset_factory(
+            Book,
+            fields="__all__",
+            formset_children=(PolymorphicFormSetChild(SpecialBook, form=SpecialBookForm),),
+        )
+
+        # Simulate the scenario where _existing_object returns None:
+        # - Bound formset with data
+        # - Claims to have an initial form (INITIAL_FORMS > 0)
+        # - But the pk doesn't exist in queryset, so _existing_object returns None
+        data = {
+            "form-TOTAL_FORMS": "1",
+            "form-INITIAL_FORMS": "1",
+            "form-MIN_NUM_FORMS": "0",
+            "form-MAX_NUM_FORMS": "1000",
+            "form-0-id": "99999",  # Non-existent pk - _existing_object will return None
+            "form-0-polymorphic_ctype": str(ct.pk),
+        }
+
+        formset = SpecialBookFormSet(data=data, queryset=SpecialBook.objects.none())
+
+        # This should not raise AttributeError when instance is None
+        forms = formset.forms
+        self.assertEqual(len(forms), 1)
+        self.assertIn("polymorphic_ctype", forms[0].fields)
+
+    def test_combined_formset_behaviors(self):
+        # 1. __init__ exclude handling
+        child_none = PolymorphicFormSetChild(Book, form=SpecialBookForm, exclude=None)
+        self.assertEqual(child_none.exclude, ())
+
+        child_list = PolymorphicFormSetChild(Book, form=SpecialBookForm, exclude=["author"])
+        self.assertIn("author", child_list.exclude)
+
+        # 2. get_form exclude merging
+        form = child_list.get_form(extra_exclude=["field1"])
+        self.assertIn("author", form._meta.exclude)
+        self.assertIn("field1", form._meta.exclude)
+
+        form_meta_default = child_none.get_form()
+        self.assertIn("author", form_meta_default._meta.exclude)
+
+        # 3. polymorphic_ctype normalization
+        ct = ContentType.objects.get_for_model(SpecialBook, for_concrete_model=False)
+        SpecialBookFormSet = polymorphic_modelformset_factory(
+            Book,
+            fields="__all__",
+            formset_children=(PolymorphicFormSetChild(SpecialBook, form=SpecialBookForm),),
+        )
+        formset = SpecialBookFormSet(
+            queryset=SpecialBook.objects.none(),
+            initial=[{"polymorphic_ctype": ct}],
+        )
+        # The formset should normalize the ContentType instance to its ID
+        form_ct = formset.forms[0]
+        self.assertIsInstance(form_ct.initial["polymorphic_ctype"], int)
+        self.assertEqual(form_ct.initial["polymorphic_ctype"], ct.pk)

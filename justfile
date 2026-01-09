@@ -102,6 +102,7 @@ build: build-docs-html
 make-test-migrations:
     - rm src/polymorphic/tests/migrations/00*.py
     - rm src/polymorphic/tests/deletion/migrations/00*.py
+    - rm src/polymorphic/tests/examples/**/migrations/00*.py
     uv run --isolated --resolution lowest-direct --script ./manage.py makemigrations
 
 # open the html documentation
@@ -190,13 +191,13 @@ test-lock +PACKAGES: _lock-python
 
 # run tests
 test *TESTS: install-playwright
-    @just run pytest --cov-append {{ TESTS }}
+    @just run pytest {{ TESTS }} --cov 
 
 test-db DB_CLIENT="dev" *TESTS: install-playwright
     # No Optional Dependency Unit Tests
     # todo clean this up, rerunning a lot of tests
     uv sync --group {{ DB_CLIENT }}
-    @just run pytest --cov-append {{ TESTS }}
+    @just run pytest {{ TESTS }} --cov 
 
 # debug a test - (break at test start/run in headed mode)
 debug-test *TESTS:

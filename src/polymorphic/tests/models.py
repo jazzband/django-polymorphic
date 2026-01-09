@@ -6,6 +6,8 @@ from django.contrib.contenttypes.models import ContentType
 from django.db.models import Manager
 from django.db import models
 from django.db.models.query import QuerySet
+from django.db.models import F
+from django.db.models.functions import Upper
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 
 from polymorphic.managers import PolymorphicManager
@@ -29,16 +31,30 @@ class PlainC(PlainB):
     field3 = models.CharField(max_length=30)
 
 
+class PlainD(PlainA):
+    field2 = models.CharField(max_length=30)
+
+
 class Model2A(ShowFieldType, PolymorphicModel):
     field1 = models.CharField(max_length=30)
     polymorphic_showfield_deferred = True
 
 
-class Model2B(Model2A):
+class RandomMixinB:
+    def random_method(self):
+        return "random b"
+
+
+class Model2B(RandomMixinB, Model2A):
     field2 = models.CharField(max_length=30)
 
 
-class Model2C(Model2B):
+class RandomMixinC:
+    def random_method(self):
+        return "random c"
+
+
+class Model2C(RandomMixinC, Model2B):
     field3 = models.CharField(max_length=30, blank=True, default="")
 
 
@@ -479,6 +495,9 @@ class InlineModelB(InlineModelA):
         related_name="inline_bs",
     )
 
+    # File field for testing multipart encoding in polymorphic inlines (issue #380)
+    file_upload = models.FileField(upload_to="test_uploads/", null=True, blank=True, default=None)
+
 
 class AbstractProject(PolymorphicModel):
     topic = models.CharField(max_length=30)
@@ -716,6 +735,13 @@ class NoChildren(PolymorphicModel):
     field1 = models.CharField(max_length=12)
 
 
+class ModelWithPolyFK(models.Model):
+    """Model with FK to polymorphic model for popup testing."""
+
+    name = models.CharField(max_length=100)
+    poly_fk = models.ForeignKey(Model2A, on_delete=models.CASCADE, null=True, blank=True)
+
+
 class NormalBase(models.Model):
     nb_field = models.IntegerField()
 
@@ -829,3 +855,213 @@ class Bookmark(PolymorphicModel):
 
 class Assignment(Bookmark):
     assigned_to = models.CharField(max_length=100)
+
+
+class Regression295Related(models.Model):
+    _real_field = models.CharField(max_length=10)
+
+
+class Regression295Parent(PolymorphicModel):
+    related_object = models.ForeignKey(Regression295Related, on_delete=models.CASCADE)
+
+
+class RelatedKeyModel(models.Model):
+    custom_id = models.UUIDField(primary_key=True, default=uuid.uuid4)
+
+
+class DisparateKeysParent(PolymorphicModel):
+    text = models.CharField(max_length=30)
+
+
+class DisparateKeysChild1(DisparateKeysParent):
+    key = models.OneToOneField(RelatedKeyModel, primary_key=True, on_delete=models.CASCADE)
+
+    text_child1 = models.CharField(max_length=30)
+
+
+class DisparateKeysChild2(DisparateKeysParent):
+    text_child2 = models.CharField(max_length=30)
+    key = models.PositiveIntegerField(primary_key=True)
+
+
+class DisparateKeysGrandChild2(DisparateKeysChild2):
+    text_grand_child = models.CharField(max_length=30)
+
+
+class DisparateKeysGrandChild(DisparateKeysChild1):
+    text_grand_child = models.CharField(max_length=30)
+
+
+class M2MAdminTest(PolymorphicModel):
+    name = models.CharField(max_length=30)
+
+    def __str__(self):
+        return self.name
+
+
+class M2MAdminTestChildA(M2MAdminTest):
+    child_bs = models.ManyToManyField("M2MAdminTestChildB", related_name="related_as", blank=True)
+
+
+class M2MAdminTestChildB(M2MAdminTest):
+    child_as = models.ManyToManyField("M2MAdminTestChildA", related_name="related_bs", blank=True)
+
+
+class M2MAdminTestChildC(M2MAdminTestChildB):
+    pass
+
+
+# Models for testing Issue #182 and #375: M2M with through tables to/from polymorphic models
+class M2MThroughBase(PolymorphicModel):
+    """Base polymorphic model for M2M through table tests."""
+
+    name = models.CharField(max_length=50)
+
+    def __str__(self):
+        return self.name
+
+
+class M2MThroughPerson(M2MThroughBase):
+    """Polymorphic child representing a person who can be on teams."""
+
+    email = models.EmailField(blank=True)
+
+
+class M2MThroughSpecialPerson(M2MThroughPerson):
+    """Polymorphic child representing a special person."""
+
+    special_code = models.CharField(max_length=20, blank=True)
+
+
+class M2MThroughProject(M2MThroughBase):
+    """Polymorphic child representing a project."""
+
+    description = models.TextField(blank=True)
+
+
+class M2MThroughProjectWithTeam(M2MThroughProject):
+    """
+    Polymorphic child with M2M to Person through Membership.
+    Tests Issue #375: M2M with through table on polymorphic model.
+    """
+
+    pass
+
+
+class M2MThroughMembership(PolymorphicModel):
+    """Polymorphic through model for M2M relationship between ProjectWithTeam and Person."""
+
+    project = models.ForeignKey("M2MThroughProjectWithTeam", on_delete=models.CASCADE)
+    person = models.ForeignKey(M2MThroughPerson, on_delete=models.CASCADE)
+    role = models.CharField(max_length=50)
+    joined_date = models.DateField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.person.name} - {self.role} on {self.project.name}"
+
+
+class M2MThroughMembershipWithPerson(M2MThroughMembership):
+    """Membership for regular Person instances."""
+
+    pass
+
+
+class M2MThroughMembershipWithSpecialPerson(M2MThroughMembership):
+    """Membership for SpecialPerson instances with additional tracking."""
+
+    special_notes = models.TextField(blank=True, default="")
+
+
+# Add the M2M field after the through model is defined
+M2MThroughProjectWithTeam.add_to_class(
+    "team",
+    models.ManyToManyField(
+        M2MThroughPerson, through=M2MThroughMembership, related_name="projects", blank=True
+    ),
+)
+
+
+# Additional models for Issue #182: Direct M2M to polymorphic model
+class DirectM2MContainer(models.Model):
+    """Non-polymorphic model with direct M2M to polymorphic model."""
+
+    name = models.CharField(max_length=50)
+    items = models.ManyToManyField(M2MThroughBase, related_name="containers", blank=True)
+
+    def __str__(self):
+        return self.name
+
+
+class Author(models.Model):
+    pass
+
+
+class Book(PolymorphicModel):
+    author = models.ForeignKey(Author, on_delete=models.CASCADE)
+
+
+class SpecialBook(Book):
+    pass
+
+
+class FilteredManager(PolymorphicManager):
+    def get_queryset(self):
+        return super().get_queryset().exclude(field2=Upper(F("field2")))
+
+
+class Model2BFiltered(Model2B):
+    objects = FilteredManager()
+
+
+class Model2CFiltered(Model2BFiltered):
+    field3 = models.CharField(max_length=30, blank=True, default="")
+
+
+class CustomBaseManager(PolymorphicManager):
+    pass
+
+
+class FilteredManager2(FilteredManager):
+    pass
+
+
+class Model2CNamedManagers(Model2CFiltered):
+    all_objects = CustomBaseManager()
+    filtered_objects = FilteredManager2()
+
+    class Meta:
+        base_manager_name = "all_objects"
+        default_manager_name = "filtered_objects"
+
+
+class Model2CNamedDefault(Model2CFiltered):
+    custom_objects = FilteredManager2()
+
+    class Meta:
+        default_manager_name = "custom_objects"
+
+
+# serialization natural key tests #517
+class NatKeyManager(PolymorphicManager):
+    def get_by_natural_key(self, slug):
+        return self.get(slug=slug)
+
+
+class NatKeyParent(PolymorphicModel):
+    slug = models.SlugField(unique=True)
+    content = models.CharField(blank=True, max_length=100)
+
+    objects = NatKeyManager()
+
+    def natural_key(self):
+        return (self.slug,)
+
+
+class NatKeyChild(NatKeyParent):
+    foo = models.OneToOneField(NatKeyParent, models.CASCADE, parent_link=True, primary_key=True)
+    val = models.IntegerField(default=0)
+
+    def natural_key(self):
+        return self.foo.natural_key()
+
+    natural_key.dependencies = ["tests.natkeyparent"]

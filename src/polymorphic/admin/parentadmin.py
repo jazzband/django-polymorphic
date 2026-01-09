@@ -12,7 +12,6 @@ from django.http import Http404, HttpResponseRedirect
 from django.template.response import TemplateResponse
 from django.urls import URLResolver
 from django.utils.encoding import force_str
-from django.utils.http import urlencode
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 
@@ -199,9 +198,11 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
         else:
             real_admin = self._get_real_admin_by_ct(ct_id)
             # rebuild form_url, otherwise libraries below will override it.
+            # Preserve popup-related parameters to ensure popup functionality works
+            # correctly even after validation errors (issue #612)
             form_url = add_preserved_filters(
                 {
-                    "preserved_filters": urlencode({"ct_id": ct_id}),
+                    "preserved_filters": request.GET.urlencode(),
                     "opts": self.model._meta,
                 },
                 form_url,
@@ -233,17 +234,6 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
         """Redirect the delete view to the real admin."""
         real_admin = self._get_real_admin(object_id)
         return real_admin.delete_view(request, object_id, extra_context)
-
-    def get_preserved_filters(self, request):
-        if "_changelist_filters" in request.GET:
-            request.GET = request.GET.copy()
-            filters = request.GET.get("_changelist_filters")
-            f = filters.split("&")
-            for x in f:
-                c = x.split("=")
-                request.GET[c[0]] = c[1]
-            del request.GET["_changelist_filters"]
-        return super().get_preserved_filters(request)
 
     def get_urls(self):
         """

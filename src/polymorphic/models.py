@@ -2,14 +2,17 @@
 Seamless Polymorphic Inheritance for Django Models
 """
 
+import warnings
+
 from django.contrib.contenttypes.models import ContentType
-from django.db import models
-from django.db.models.fields.related import ForwardManyToOneDescriptor, ReverseOneToOneDescriptor
+from django.db import models, transaction
 from django.db.utils import DEFAULT_DB_ALIAS
+from django.utils.functional import classproperty
 
 from .base import PolymorphicModelBase
 from .managers import PolymorphicManager
 from .query_translate import translate_polymorphic_Q_object
+from .utils import get_base_polymorphic_model
 
 ###################################################################################
 # PolymorphicModel
@@ -51,13 +54,24 @@ class PolymorphicModel(models.Model, metaclass=PolymorphicModelBase):
     # some applications want to know the name of the fields that are added to its models
     polymorphic_internal_model_fields = ["polymorphic_ctype"]
 
-    # Note that Django 1.5 removes these managers because the model is abstract.
-    # They are pretended to be there by the metaclass in PolymorphicModelBase.get_inherited_managers()
     objects = PolymorphicManager()
 
     class Meta:
         abstract = True
-        base_manager_name = "objects"
+
+    @classproperty
+    def polymorphic_primary_key_name(cls):
+        """
+        The name of the root primary key field of this polymorphic inheritance chain.
+        """
+        warnings.warn(
+            "polymorphic_primary_key_name is deprecated and will be removed in "
+            "version 5.0, use get_base_polymorphic_model(Model)._meta.pk.attname "
+            "instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return get_base_polymorphic_model(cls, allow_abstract=True)._meta.pk.attname
 
     @classmethod
     def translate_polymorphic_Q_object(cls, q):
@@ -93,8 +107,6 @@ class PolymorphicModel(models.Model, metaclass=PolymorphicModelBase):
                 self, for_concrete_model=False
             )
             self.polymorphic_ctype_id = ctype.pk
-
-    pre_save_polymorphic.alters_data = True
 
     def save(self, *args, **kwargs):
         """Calls :meth:`pre_save_polymorphic` and saves the model."""
@@ -192,119 +204,45 @@ class PolymorphicModel(models.Model, metaclass=PolymorphicModelBase):
             to upcast a complete list in a single efficient query.
         """
         real_model = self.get_real_instance_class()
-        if real_model == self.__class__:
+        if real_model is self.__class__:
             return self
         if real_model is None:
             raise PolymorphicTypeInvalid(
                 f"ContentType {self.polymorphic_ctype_id} for {self.__class__} "
                 f"#{self.pk} does not have a corresponding model!"
             )
-        return real_model.objects.db_manager(self._state.db).get(pk=self.pk)
+        return self.__class__.objects.db_manager(self._state.db).get(pk=self.pk)
 
-    def __init__(self, *args, **kwargs):
-        """Replace Django's inheritance accessor member functions for our model
-        (self.__class__) with our own versions.
-        We monkey patch them until a patch can be added to Django
-        (which would probably be very small and make all of this obsolete).
-
-        If we have inheritance of the form ModelA -> ModelB ->ModelC then
-        Django creates accessors like this:
-        - ModelA: modelb
-        - ModelB: modela_ptr, modelb, modelc
-        - ModelC: modela_ptr, modelb, modelb_ptr, modelc
-
-        These accessors allow Django (and everyone else) to travel up and down
-        the inheritance tree for the db object at hand.
-
-        The original Django accessors use our polymorphic manager.
-        But they should not. So we replace them with our own accessors that use
-        our appropriate base_objects manager.
+    def delete(self, using=None, keep_parents=False):
         """
-        super().__init__(*args, **kwargs)
+        Behaves the same as Django's default :meth:`~django.db.models.Model.delete()`,
+        but with support for upcasting when ``keep_parents`` is True. When keeping
+        parents (upcasting the row) the ``polymorphic_ctype`` fields of the parent rows
+        are updated accordingly in a transaction with the child row deletion.
+        """
+        # if we are keeping parents, we must first determine which polymorphic_ctypes we
+        # need to update
+        parent_updates = (
+            [
+                (parent_model, getattr(self, parent_field.get_attname()))
+                for parent_model, parent_field in self._meta.parents.items()
+                if issubclass(parent_model, PolymorphicModel)
+            ]
+            if keep_parents
+            else []
+        )
+        if parent_updates:
+            with transaction.atomic(using=using):
+                # If keeping the parents (upcasting) we need to update the relevant
+                # content types for all parent inheritance paths.
+                ret = super().delete(using=using, keep_parents=keep_parents)
+                for parent_model, pk in parent_updates:
+                    parent_model.objects.non_polymorphic().filter(pk=pk).update(
+                        polymorphic_ctype=ContentType.objects.db_manager(
+                            using=using
+                        ).get_for_model(parent_model, for_concrete_model=False)
+                    )
+                return ret
+        return super().delete(using=using, keep_parents=keep_parents)
 
-        if self.__class__.polymorphic_super_sub_accessors_replaced:
-            return
-        self.__class__.polymorphic_super_sub_accessors_replaced = True
-
-        def create_accessor_function_for_model(model, field):
-            def accessor_function(self):
-                try:
-                    rel_obj = field.get_cached_value(self)
-                except KeyError:
-                    objects = getattr(model, "_base_objects", model.objects)
-                    rel_obj = objects.using(self._state.db or DEFAULT_DB_ALIAS).get(pk=self.pk)
-                    field.set_cached_value(self, rel_obj)
-                return rel_obj
-
-            return accessor_function
-
-        subclasses_and_superclasses_accessors = self._get_inheritance_relation_fields_and_models()
-
-        for name, model in subclasses_and_superclasses_accessors.items():
-            # Here be dragons.
-            orig_accessor = getattr(self.__class__, name, None)
-            if issubclass(
-                type(orig_accessor),
-                (ReverseOneToOneDescriptor, ForwardManyToOneDescriptor),
-            ):
-                field = (
-                    orig_accessor.related
-                    if isinstance(orig_accessor, ReverseOneToOneDescriptor)
-                    else orig_accessor.field
-                )
-
-                setattr(
-                    self.__class__,
-                    name,
-                    property(create_accessor_function_for_model(model, field)),
-                )
-
-    def _get_inheritance_relation_fields_and_models(self):
-        """helper function for __init__:
-        determine names of all Django inheritance accessor member functions for type(self)"""
-
-        def add_model(model, field_name, result):
-            result[field_name] = model
-
-        def add_model_if_regular(model, field_name, result):
-            if (
-                issubclass(model, models.Model)
-                and model != models.Model
-                and model != self.__class__
-                and model != PolymorphicModel
-            ):
-                add_model(model, field_name, result)
-
-        def add_all_super_models(model, result):
-            for super_cls, field_to_super in model._meta.parents.items():
-                if field_to_super is not None:
-                    # if not a link to a proxy model, the field on model can have
-                    # a different name to super_cls._meta.module_name, when the field
-                    # is created manually using 'parent_link'
-                    field_name = field_to_super.name
-                    add_model_if_regular(super_cls, field_name, result)
-                    add_all_super_models(super_cls, result)
-
-        def add_all_sub_models(super_cls, result):
-            # go through all subclasses of model
-            for sub_cls in super_cls.__subclasses__():
-                # super_cls may not be in sub_cls._meta.parents if super_cls is a proxy model
-                if super_cls in sub_cls._meta.parents:
-                    # get the field that links sub_cls to super_cls
-                    field_to_super = sub_cls._meta.parents[super_cls]
-                    # if filed_to_super is not a link to a proxy model
-                    if field_to_super is not None:
-                        super_to_sub_related_field = field_to_super.remote_field
-                        if super_to_sub_related_field.related_name is None:
-                            # if related name is None the related field is the name of the subclass
-                            to_subclass_fieldname = sub_cls.__name__.lower()
-                        else:
-                            # otherwise use the given related name
-                            to_subclass_fieldname = super_to_sub_related_field.related_name
-
-                        add_model_if_regular(sub_cls, to_subclass_fieldname, result)
-
-        result = {}
-        add_all_super_models(self.__class__, result)
-        add_all_sub_models(self.__class__, result)
-        return result
+    delete.alters_data = True

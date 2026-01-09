@@ -1,6 +1,67 @@
 Changelog
 =========
 
+v4.9.0 (2026-01-09)
+-------------------
+
+.. note::
+
+  This update may generate new migrations for your polymorphic models, similar to the following.
+  This is ok and an expected side effect of fixing `#815
+  <https://github.com/jazzband/django-polymorphic/issues/815>`_
+
+  .. code-block:: python
+
+      migrations.AlterModelOptions(
+          name='modelname',
+          options={},
+      )
+
+* Fixed `PolymorphicModel.base_manager is the same as default_manager when custom default manager is supplied. <https://github.com/jazzband/django-polymorphic/issues/815>`_
+* Fixed `Use non-polymorphic managers for all invocations of dumpdata <https://github.com/jazzband/django-polymorphic/pull/814>`_
+* Documented `Fixture usage <https://github.com/jazzband/django-polymorphic/pull/791>`_
+
+v4.8.0 (2026-01-08)
+-------------------
+
+* Fixed `PolymorphicFormSetChild overrides form exclude <https://github.com/jazzband/django-polymorphic/issues/578>`_
+* Fixed `Issue with polymorphic_ctype when populating polymorphic inline formsets. <https://github.com/jazzband/django-polymorphic/issues/549>`_
+* Fixed `Nested polymorphic_inline_formsets gives AttributeError: 'NoneType' object has no attribute 'get_real_instance_class' <https://github.com/jazzband/django-polymorphic/issues/363>`_
+
+v4.7.0 (2026-01-07)
+-------------------
+
+Fixed a few outstanding admin bugs, updated documentation and added more admin tests for things like m2m relationships.
+
+* Documented `How to handle non-admin polymorphic forms? <https://github.com/jazzband/django-polymorphic/issues/346>`_
+* Fixed `Admin: add view popup breaks if initial submit has validation error <https://github.com/jazzband/django-polymorphic/issues/612>`_
+* Fixed `Filters are not preserved in polymorphic parent admin <https://github.com/jazzband/django-polymorphic/issues/356>`_
+* Fixed `Admin change form doesn't preserve changelist filter <https://github.com/jazzband/django-polymorphic/issues/125>`_
+
+v4.6.0 (2026-01-05)
+-------------------
+
+The release fixes longstanding bugs with respect to expected ORM behavior. For a complete list of
+changes see the `v4.6.0 release
+<https://github.com/jazzband/django-polymorphic/releases/tag/v4.6.0>`_.
+
+* Fixed `get_real_instance() should also gracefully retry parents on failure (best effort) <https://github.com/jazzband/django-polymorphic/issues/784>`_
+* Fixed `polymorphic_primary_key_name no longer points to base classes polymorphic field <https://github.com/jazzband/django-polymorphic/issues/758>`_
+* Fixed `create_from_super needs to run atomically. <https://github.com/jazzband/django-polymorphic/issues/744>`_
+* Fixed `Support polymorphic models that have different pk fields/values at different levels of the hierarchy. <https://github.com/jazzband/django-polymorphic/issues/686>`_
+* Fixed `Issue with .delete(keep_parents=True) <https://github.com/jazzband/django-polymorphic/issues/645>`_
+* Fixed `PolymorphicChildModelAdmin with show_in_index=False in Django Admin with nav_sidebar <https://github.com/jazzband/django-polymorphic/issues/497>`_
+* Fixed `ForeignKeyViolation when trying to save an entity when using a non-default db <https://github.com/jazzband/django-polymorphic/issues/486>`_
+* Fixed `Content types pulled from wrong database when using database routers <https://github.com/jazzband/django-polymorphic/issues/446>`_
+* Fixed `Copying Polymorphic objects for below the first level not working <https://github.com/jazzband/django-polymorphic/issues/414>`_
+* Fixed `Getting a specific element from a queryset in an post_delete returns None <https://github.com/jazzband/django-polymorphic/issues/347>`_
+* Fixed `Reverse related object descriptor is overwritten on class <https://github.com/jazzband/django-polymorphic/issues/71>`_
+
+v4.3.1, v4.4.2, v4.5.2 (2026-01-01)
+-----------------------------------
+
+* Fixed `Significant performance regression on polymorphic queryset iteration <https://github.com/jazzband/django-polymorphic/pull/781>`_
+
 v4.5.1 (2025-12-24)
 -------------------
 
@@ -10,6 +71,8 @@ v4.5.1 (2025-12-24)
 
 v4.5.0 (2025-12-22)
 -------------------
+
+The release fixes longstanding bugs with respect to deletion of polymorphic models.
 
 .. warning::
 

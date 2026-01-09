@@ -745,9 +745,8 @@ class TestDeletion(TestCase):
         Test what happens when you delete a child row with raw SQL then try to access
         polymorphic objects.
 
-        If a polymorphic_ctype_id points to a non existing row, those models will be
-        ellided from polymorphic queryset results. This test monitors that behavior
-        so if fixed in future we can remove the warning from the docs.
+        With best effort approach, when a polymorphic_ctype_id points to a non-existing
+        derived row, the parent object is returned instead of being filtered out.
         """
         from .models import Poly1, A1
 
@@ -760,9 +759,57 @@ class TestDeletion(TestCase):
                 f"DELETE FROM {A1._meta.db_table} WHERE {A1._meta.pk.column} = %s", [a1.pk]
             )
 
-        assert set(Poly1.objects.all()) == {p2}
+        # Best effort: parent object is returned when child is deleted via raw SQL
+        result = list(Poly1.objects.all())
+        assert len(result) == 2
+        assert p2 in result
+        # p1 is returned as Poly1 (parent) since A1 (child) was deleted
+        assert any(
+            obj.pk == p1.pk and isinstance(obj, Poly1) and not isinstance(obj, A1)
+            for obj in result
+        )
+
         assert set(Poly1.objects.non_polymorphic().all()) == {p1, p2}
 
         p1_fetched = Poly1.objects.non_polymorphic().get(pk=a1.pk)
-        with self.assertRaises(A1.DoesNotExist):
-            p1_fetched.get_real_instance()
+        assert p1_fetched.get_real_instance().__class__ is Poly1
+
+    def test_delete_keep_parents(self):
+        """
+        Test that delete(keep_parents=True) works as expected in polymorphic models
+        by updating the relevant parent row ctypes.
+        """
+        from .models import Poly3, A3, B3, Normal3
+
+        a1 = A3.objects.create()
+        b1 = B3.objects.create()
+        p1 = Poly3.objects.create()
+        Normal3.objects.create()
+        a1_pk = a1.pk
+        b1_pk = b1.pk
+        p1_pk = p1.pk
+
+        a1.delete(keep_parents=True)
+        assert A3.objects.count() == 0
+        assert B3.objects.count() == 1
+        assert Poly3.objects.count() == 3
+        assert Normal3.objects.count() == 4
+        assert Poly3.objects.get(pk=a1_pk).__class__ is Poly3
+
+        p1.delete(keep_parents=True)
+        assert A3.objects.count() == 0
+        assert B3.objects.count() == 1
+        assert Poly3.objects.count() == 2
+        assert Normal3.objects.count() == 4
+        assert Normal3.objects.get(pk=p1_pk).__class__ is Normal3
+
+        # deleting an instance with more derived tables from a class higher up in its
+        # hierarchy will delete all child rows below that level.
+        b1_base = Poly3.objects.non_polymorphic().get(pk=b1_pk)
+        b1_base.delete(keep_parents=True)
+        assert A3.objects.count() == 0
+        assert B3.objects.count() == 0
+        assert Poly3.objects.count() == 1
+        assert Normal3.objects.count() == 4
+        assert Normal3.objects.get(pk=b1_pk).__class__ is Normal3
+        assert not Poly3.objects.filter(pk=b1_pk).exists()

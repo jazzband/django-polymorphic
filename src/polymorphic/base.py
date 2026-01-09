@@ -2,8 +2,6 @@
 PolymorphicModel Meta Class
 """
 
-import inspect
-import os
 import sys
 import warnings
 
@@ -13,16 +11,22 @@ from django.db.models.base import ModelBase
 from .deletion import PolymorphicGuard
 from .managers import PolymorphicManager
 from .query import PolymorphicQuerySet
+from .related_descriptors import (
+    NonPolymorphicForwardOneToOneDescriptor,
+    NonPolymorphicReverseOneToOneDescriptor,
+)
 
 # PolymorphicQuerySet Q objects (and filter()) support these additional key words.
 # These are forbidden as field names (a descriptive exception is raised)
 POLYMORPHIC_SPECIAL_Q_KWORDS = {"instance_of", "not_instance_of"}
 
-DUMPDATA_COMMAND = os.path.join("django", "core", "management", "commands", "dumpdata.py")
-
 
 class ManagerInheritanceWarning(RuntimeWarning):
     pass
+
+
+# check that we're on cpython to enable dumpdata frame inspection guard
+check_dump = hasattr(sys, "_getframe")
 
 
 ###################################################################################
@@ -51,6 +55,19 @@ class PolymorphicModelBase(ModelBase):
     We also require that _default_manager as well as any user defined
     polymorphic managers produce querysets that are derived from
     PolymorphicQuerySet.
+
+    We also replace the parent/child relation field descriptors with versions that will
+    use non-polymorphic querysets.
+
+    If we have inheritance of the form ModelA -> ModelB ->ModelC then
+    Django creates accessors like this:
+    - ModelA: modelb
+    - ModelB: modela_ptr, modelb, modelc
+    - ModelC: modela_ptr, modelb, modelb_ptr, modelc
+
+    These accessors allow Django (and everyone else) to travel up and down
+    the inheritance tree for the db object at hand. This is important for deletion among
+    other things.
     """
 
     def __new__(cls, model_name, bases, attrs, **kwargs):
@@ -58,23 +75,28 @@ class PolymorphicModelBase(ModelBase):
         new_class = super().__new__(cls, model_name, bases, attrs, **kwargs)
 
         if new_class._meta.base_manager_name is None:
-            # by default, use polymorphic manager as the base manager - i.e. for
-            # related fields etc. This could happen in multi-inheritance scenarios
-            # where one parent is polymorphic and the other not and the non poly parent
-            # is higher in the MRO
-            new_class._meta.base_manager_name = "objects"
+            # by default, use polymorphic manager as the base manager
+            new_class._meta.base_manager_name = new_class._meta.default_manager_name or "objects"
+
+        # ensure base_manager is a plain PolymorphicManager by resetting it if it
+        # was not explicitly set and it defaults to a changed default_manager
+        # the base class manager determination logic is complex enough that we prefer
+        # to observe its application and correct rather than preempting it
+        if (
+            type(new_class._meta.default_manager) is not PolymorphicManager
+            and new_class._meta.base_manager is new_class._meta.default_manager
+        ):
+            manager = PolymorphicManager()
+            manager.name = "_base_manager"
+            manager.model = new_class
+            manager.auto_created = True
+            new_class._meta.base_manager_name = None
+            # write new manager to property cache
+            new_class._meta.__dict__["base_manager"] = manager
 
         # validate resulting default manager
         if not new_class._meta.abstract and not new_class._meta.swapped:
-            cls.validate_model_manager(new_class.objects, model_name, "objects")
-
-        # for __init__ function of this class (monkeypatching inheritance accessors)
-        new_class.polymorphic_super_sub_accessors_replaced = False
-
-        # determine the name of the primary key field and store it into the class variable
-        # polymorphic_primary_key_name (it is needed by query.py)
-        if new_class._meta.pk:
-            new_class.polymorphic_primary_key_name = new_class._meta.pk.name
+            cls.validate_model_manager(new_class._default_manager, model_name, "objects")
 
         # wrap on_delete handlers of reverse relations back to this model with the
         # polymorphic deletion guard
@@ -83,6 +105,37 @@ class PolymorphicModelBase(ModelBase):
                 fk.remote_field.on_delete, PolymorphicGuard
             ):
                 fk.remote_field.on_delete = PolymorphicGuard(fk.remote_field.on_delete)
+
+        # replace the parent/child descriptors
+        if new_class._meta.parents and not (new_class._meta.abstract or new_class._meta.proxy):
+            # PolymorphicModel is guaranteed to be defined here
+            from .models import PolymorphicModel
+
+            def replace_inheritance_descriptors(model):
+                for super_cls, field_to_super in model._meta.parents.items():
+                    if issubclass(super_cls, PolymorphicModel):
+                        if field_to_super is not None:
+                            setattr(
+                                new_class,
+                                field_to_super.name,
+                                NonPolymorphicForwardOneToOneDescriptor(field_to_super),
+                            )
+                            setattr(
+                                super_cls,
+                                field_to_super.remote_field.related_name
+                                or field_to_super.remote_field.name,
+                                NonPolymorphicReverseOneToOneDescriptor(
+                                    field_to_super.remote_field
+                                ),
+                            )
+                        else:  # pragma: no cover
+                            # proxy models have no field_to_super because the relations
+                            # are to the parent model - the else here should never
+                            # happen b/c we filter out proxy models above
+                            pass
+                        replace_inheritance_descriptors(super_cls)
+
+            replace_inheritance_descriptors(new_class)
 
         return new_class
 
@@ -132,26 +185,49 @@ class PolymorphicModelBase(ModelBase):
         return manager
 
     @property
-    def _default_manager(self):
-        if len(sys.argv) > 1 and sys.argv[1] == "dumpdata":
-            # TODO: investigate Django how this can be avoided
-            # hack: a small patch to Django would be a better solution.
-            # Django's management command 'dumpdata' relies on non-polymorphic
-            # behaviour of the _default_manager. Therefore, we catch any access to _default_manager
-            # here and return the non-polymorphic default manager instead if we are called from 'dumpdata.py'
-            # Otherwise, the base objects will be upcasted to polymorphic models, and be outputted as such.
-            # (non-polymorphic default manager is 'base_objects' for polymorphic models).
-            # This way we don't need to patch django.core.management.commands.dumpdata
-            # for all supported Django versions.
-            frm = inspect.stack()[1]  # frm[1] is caller file name, frm[3] is caller function name
-            if DUMPDATA_COMMAND in frm[1]:
-                return self._base_objects
+    def _default_manager(cls):
+        mgr = super()._default_manager
+        if (
+            check_dump
+            and sys._getframe(1).f_globals.get("__name__")
+            == "django.core.management.commands.dumpdata"
+        ):
+            # The downcasting of polymorphic querysets breaks dumpdata because it
+            # expects to serialize multi-table models at each inheritance level.
+            # dumpdata uses Model._default_manager to retrieve the objects by default
+            # and uses Model._base_manager to retrieve objects if the --all flag is
+            # specified. We need to make both of these managers polymorphic to satisfy
+            # our contract that both Model.objects (_default_manager) is polymorphic and
+            # reverse relations Other.related (_base_manager) to our polymorphic models
+            # are also polymorphic.
+            #
+            # It would be best if load/dump data constructed its own managers like
+            # migrations do, but it doesn't. The only way to get around this is to
+            # detect when dumpdata is running and return the non-polymorphic manager in
+            # that case. We do this here by inspecting the call stack and checking if
+            # it came from the dumpdata command module. We use a CPython specific API
+            # sys._getframe to inspect the call stack because it is very fast
+            # (10s of nanoseconds) and disable the check if not on CPython
+            # conceding that dumpdata will just not work in that case. It is important
+            # that this check be fast because _default_manager is accessed very often.
+            # inspect.stack() builds the entire stack frame and a bunch of complicated
+            # datastructures - its use here should be avoided.
+            #
+            # Note that if you are stepping through this code in the debugger it will
+            # be looking at the wrong frame because a bunch of debugging frames will be
+            # on the top of the stack.
+            return mgr.non_polymorphic() if isinstance(mgr, PolymorphicManager) else mgr
+        return mgr
 
-        manager = super()._default_manager
-        if not isinstance(manager, PolymorphicManager):
-            warnings.warn(
-                f"{self.__class__.__name__}._default_manager is not a PolymorphicManager",
-                ManagerInheritanceWarning,
-            )
-
-        return manager
+    @property
+    def _base_manager(cls):
+        mgr = super()._base_manager
+        if (
+            check_dump
+            and sys._getframe(1).f_globals.get("__name__")
+            == "django.core.management.commands.dumpdata"
+        ):
+            # base manager is used when the --all flag is passed - see analogous comment
+            # for _default_manager
+            return mgr.non_polymorphic() if isinstance(mgr, PolymorphicManager) else mgr
+        return mgr
