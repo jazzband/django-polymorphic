@@ -138,69 +138,37 @@ Working with Fixtures
 ---------------------
 
 Polymorphic models work with Django's :django-admin:`dumpdata` and :django-admin:`loaddata` 
-commands, but require special attention to the ``polymorphic_ctype`` field, which references 
-:class:`~django.contrib.contenttypes.models.ContentType`.
+commands just as regular models do. There are two important considerations:
 
-Creating Fixtures (dumpdata)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+1. Polymorphic models are multi-table models and :django-admin:`dumpdata` serializes each table 
+   separately. :pypi:`django-polymorphic` `does it's best 
+   <https://github.com/jazzband/django-polymorphic/pull/814>`_ to ensure non-polymorphic managers
+   are used when creating fixtures but there may be edge cases where this fails. If you override
+   :django-admin:`dumpdata` you must make sure any polymorphic managers encountered
+   :meth:`toggle polymorphism off <polymorphic.managers.PolymorphicQuerySet.non_polymorphic>`. Other
+   usual multi-table model caveats apply. If you serialize a subset of tables in the model
+   inheritance you may generate corrupt data or "upcast" your models if child tables were omitted.
+2. Polymorphic models rely on the :class:`~django.contrib.contenttypes.models.ContentType`
+   framework. When serializing and deserializing polymorphic models, the
+   ``polymorphic_ctype`` field must be handled correctly. If there is any question about if the
+   content type primary keys are or will be different between the source and target database you
+   should use the :option:`--natural-foreign <dumpdata.--natural-foreign>` flag to serialize those
+   relations by-value. Polymorphism introduces no special consideration here - any model using
+   contenttypes, polymorphic or not, must handle this correctly.
 
-**Always use natural keys** when creating fixtures for polymorphic models:
+.. note::
 
-.. code-block:: bash
-
-    python manage.py dumpdata myapp.MyModel --natural-primary --natural-foreign --indent 2 > fixture.json
-
-The :option:`--natural-primary <dumpdata.--natural-primary>` and 
-:option:`--natural-foreign <dumpdata.--natural-foreign>` flags ensure that 
-:class:`~django.contrib.contenttypes.models.ContentType` references use natural keys 
-(app label and model name) instead of database-specific primary keys.
-
-**Example fixture with natural keys:**
-
-.. code-block:: json
-
-    [
-      {
-        "model": "animals.dogbreed",
-        "pk": 1,
-        "fields": {
-          "polymorphic_ctype": ["animals", "dogbreed"],
-          "name": "Affenpinscher",
-          "weight": "3-6 kg"
-        }
-      },
-      {
-        "model": "animals.catbreed",
-        "pk": 2,
-        "fields": {
-          "polymorphic_ctype": ["animals", "catbreed"],
-          "name": "Abyssinian",
-          "temperament": "Active"
-        }
-      }
-    ]
+    Prior documentation urged users to use both :option:`--natural-primary <dumpdata.--natural-primary>`
+    and :option:`--natural-foreign <dumpdata.--natural-foreign>` flags when dumping polymorphic
+    models. This is not necessary and only needs to be done when the primary keys are not guaranteed
+    to match or be available at the target database.
 
 Loading Fixtures (loaddata)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Load fixtures normally with :django-admin:`loaddata`:
-
-.. code-block:: bash
-
-    python manage.py loaddata fixture.json
-
-As long as the fixture was created with natural keys, it will work correctly across 
-different databases and Django instances.
-
-Fixing Incorrect polymorphic_ctype References
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-If you've imported data without natural keys (e.g., from a database dump or manually 
-created fixtures with hardcoded IDs), the ``polymorphic_ctype`` field may reference 
-incorrect :class:`~django.contrib.contenttypes.models.ContentType` objects. This will 
-cause polymorphic queries to fail or return incorrect object types.
-
-Use :func:`~polymorphic.utils.reset_polymorphic_ctype` to fix this:
+Fixtures should be loadable as normal with :django-admin:`loaddata`. However, if there are problems
+with the ``polymorphic_ctype`` references, you may fix them using
+:func:`~polymorphic.utils.reset_polymorphic_ctype`:
 
 .. code-block:: python
 
@@ -209,45 +177,6 @@ Use :func:`~polymorphic.utils.reset_polymorphic_ctype` to fix this:
 
     # Reset polymorphic_ctype for all models in the inheritance tree
     reset_polymorphic_ctype(Animal, Dog, Cat)
-
-This utility function:
-
-- Automatically sorts models by inheritance order
-- Sets the correct :class:`~django.contrib.contenttypes.models.ContentType` for each model
-- Works with models in any order
-
-**When to use reset_polymorphic_ctype:**
-
-- After importing data from another database
-- After manually creating objects with raw SQL
-- When fixtures were created without ``--natural-foreign``
-- After restoring from a database backup from a different Django instance
-
-**Example: Data Migration**
-
-.. code-block:: python
-
-    from django.db import migrations
-    from polymorphic.utils import reset_polymorphic_ctype
-
-    def fix_polymorphic_ctypes(apps, schema_editor):
-        # Get models from the historical state
-        Animal = apps.get_model('myapp', 'Animal')
-        Dog = apps.get_model('myapp', 'Dog')
-        Cat = apps.get_model('myapp', 'Cat')
-        
-        # Reset polymorphic_ctype for all instances
-        reset_polymorphic_ctype(Animal, Dog, Cat)
-
-    class Migration(migrations.Migration):
-        dependencies = [
-            ('myapp', '0001_initial'),
-        ]
-
-        operations = [
-            migrations.RunPython(fix_polymorphic_ctypes),
-        ]
-
 
 Using Third Party Models (without modifying them)
 -------------------------------------------------

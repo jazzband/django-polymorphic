@@ -98,33 +98,6 @@ This is basically all you need to know, as *django-polymorphic* mostly
 works fully automatic and just delivers the expected results.
 
 .. note::
-
-    **Working with Fixtures**
-
-    When using the :django-admin:`dumpdata` management command on polymorphic tables
-    (or any table that has a reference to :class:`~django.contrib.contenttypes.models.ContentType`),
-    **always** include the :option:`--natural-primary <dumpdata.--natural-primary>` and
-    :option:`--natural-foreign <dumpdata.--natural-foreign>` flags in the arguments:
-
-    .. code-block:: bash
-
-        python manage.py dumpdata myapp --natural-primary --natural-foreign > fixture.json
-
-    This ensures that :class:`~django.contrib.contenttypes.models.ContentType` models will be 
-    referenced by name instead of their primary key, which changes between Django instances.
-
-    You can then load the fixture normally with :django-admin:`loaddata`:
-
-    .. code-block:: bash
-
-        python manage.py loaddata fixture.json
-
-    For more details on working with fixtures, including how to fix incorrect ``polymorphic_ctype``
-    references and use the :func:`~polymorphic.utils.reset_polymorphic_ctype` utility, 
-    see :ref:`Working with Fixtures <advanced-features>` in the advanced documentation.
-
-
-.. note::
     While :pypi:`django-polymorphic` makes subclassed models easy to use in Django,
     we still encourage to use them with caution. Each subclassed model will require
     Django to perform an ``INNER JOIN`` to fetch the model fields from the database.
