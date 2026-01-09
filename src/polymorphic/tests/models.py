@@ -1037,19 +1037,3 @@ class Model2CNamedDefault(Model2CFiltered):
 
     class Meta:
         default_manager_name = "custom_objects"
-
-
-class BlogOne(BlogBase):
-    info = models.CharField(max_length=10)
-
-
-class BlogTwo(BlogBase):
-    pass
-
-
-class BlogThree(BlogBase):
-    info = models.CharField(max_length=255)
-    about = models.CharField(max_length=255)
-
-    class Meta:
-        unique_together = (("info", "about"),)

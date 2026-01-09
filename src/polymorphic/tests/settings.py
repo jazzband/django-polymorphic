@@ -101,6 +101,7 @@ INSTALLED_APPS = (
     "polymorphic",
     "polymorphic.tests",
     "polymorphic.tests.deletion",
+    "polymorphic.tests.drf",
     "polymorphic.tests.test_migrations",
     "polymorphic.tests.examples.views",
 )

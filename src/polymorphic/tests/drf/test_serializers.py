@@ -4,7 +4,7 @@ import pytest
 
 from polymorphic.contrib.drf.rest_polymorphic.serializers import PolymorphicSerializer
 
-from polymorphic.tests.models import BlogBase, BlogOne, BlogTwo
+from .models import BlogBase, BlogOne, BlogTwo
 from .serializers import BlogPolymorphicSerializer
 
 pytestmark = pytest.mark.django_db
