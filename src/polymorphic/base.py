@@ -2,8 +2,6 @@
 PolymorphicModel Meta Class
 """
 
-import inspect
-import os
 import sys
 import warnings
 
@@ -22,11 +20,13 @@ from .related_descriptors import (
 # These are forbidden as field names (a descriptive exception is raised)
 POLYMORPHIC_SPECIAL_Q_KWORDS = {"instance_of", "not_instance_of"}
 
-DUMPDATA_COMMAND = os.path.join("django", "core", "management", "commands", "dumpdata.py")
-
 
 class ManagerInheritanceWarning(RuntimeWarning):
     pass
+
+
+# check that we're on cpython to enable dumpdata frame inspection guard
+check_dump = hasattr(sys, "_getframe")
 
 
 ###################################################################################
@@ -185,19 +185,49 @@ class PolymorphicModelBase(ModelBase):
         return manager
 
     @property
-    def _default_manager(self):
-        if len(sys.argv) > 1 and sys.argv[1] == "dumpdata":
-            # TODO: investigate Django how this can be avoided
-            # hack: a small patch to Django would be a better solution.
-            # Django's management command 'dumpdata' relies on non-polymorphic
-            # behaviour of the _default_manager. Therefore, we catch any access to _default_manager
-            # here and return the non-polymorphic default manager instead if we are called from 'dumpdata.py'
-            # Otherwise, the base objects will be upcasted to polymorphic models, and be outputted as such.
-            # (non-polymorphic default manager is 'base_objects' for polymorphic models).
-            # This way we don't need to patch django.core.management.commands.dumpdata
-            # for all supported Django versions.
-            frm = inspect.stack()[1]  # frm[1] is caller file name, frm[3] is caller function name
-            if DUMPDATA_COMMAND in frm[1]:
-                return self._base_objects
+    def _default_manager(cls):
+        mgr = super()._default_manager
+        if (
+            check_dump
+            and sys._getframe(1).f_globals.get("__name__")
+            == "django.core.management.commands.dumpdata"
+        ):
+            # The downcasting of polymorphic querysets breaks dumpdata because it
+            # expects to serialize multi-table models at each inheritance level.
+            # dumpdata uses Model._default_manager to retrieve the objects by default
+            # and uses Model._base_manager to retrieve objects if the --all flag is
+            # specified. We need to make both of these managers polymorphic to satisfy
+            # our contract that both Model.objects (_default_manager) is polymorphic and
+            # reverse relations Other.related (_base_manager) to our polymorphic models
+            # are also polymorphic.
+            #
+            # It would be best if load/dump data constructed its own managers like
+            # migrations do, but it doesn't. The only way to get around this is to
+            # detect when dumpdata is running and return the non-polymorphic manager in
+            # that case. We do this here by inspecting the call stack and checking if
+            # it came from the dumpdata command module. We use a CPython specific API
+            # sys._getframe to inspect the call stack because it is very fast
+            # (10s of nanoseconds) and disable the check if not on CPython
+            # conceding that dumpdata will just not work in that case. It is important
+            # that this check be fast because _default_manager is accessed very often.
+            # inspect.stack() builds the entire stack frame and a bunch of complicated
+            # datastructures - its use here should be avoided.
+            #
+            # Note that if you are stepping through this code in the debugger it will
+            # be looking at the wrong frame because a bunch of debugging frames will be
+            # on the top of the stack.
+            return mgr.non_polymorphic() if isinstance(mgr, PolymorphicManager) else mgr
+        return mgr
 
-        return super()._default_manager
+    @property
+    def _base_manager(cls):
+        mgr = super()._base_manager
+        if (
+            check_dump
+            and sys._getframe(1).f_globals.get("__name__")
+            == "django.core.management.commands.dumpdata"
+        ):
+            # base manager is used when the --all flag is passed - see analogous comment
+            # for _default_manager
+            return mgr.non_polymorphic() if isinstance(mgr, PolymorphicManager) else mgr
+        return mgr
