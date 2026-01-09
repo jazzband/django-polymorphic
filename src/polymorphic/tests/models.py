@@ -1000,3 +1000,40 @@ class Book(PolymorphicModel):
 
 class SpecialBook(Book):
     pass
+
+
+class FilteredManager(PolymorphicManager):
+    def get_queryset(self):
+        return super().get_queryset().exclude(field2__regex=r"^[A-Z\d]+$")
+
+
+class Model2BFiltered(Model2B):
+    objects = FilteredManager()
+
+
+class Model2CFiltered(Model2BFiltered):
+    field3 = models.CharField(max_length=30, blank=True, default="")
+
+
+class CustomBaseManager(PolymorphicManager):
+    pass
+
+
+class FilteredManager2(FilteredManager):
+    pass
+
+
+class Model2CNamedManagers(Model2CFiltered):
+    all_objects = CustomBaseManager()
+    filtered_objects = FilteredManager2()
+
+    class Meta:
+        base_manager_name = "all_objects"
+        default_manager_name = "filtered_objects"
+
+
+class Model2CNamedDefault(Model2CFiltered):
+    custom_objects = FilteredManager2()
+
+    class Meta:
+        default_manager_name = "custom_objects"

@@ -54,13 +54,10 @@ class PolymorphicModel(models.Model, metaclass=PolymorphicModelBase):
     # some applications want to know the name of the fields that are added to its models
     polymorphic_internal_model_fields = ["polymorphic_ctype"]
 
-    # Note that Django 1.5 removes these managers because the model is abstract.
-    # They are pretended to be there by the metaclass in PolymorphicModelBase.get_inherited_managers()
     objects = PolymorphicManager()
 
     class Meta:
         abstract = True
-        base_manager_name = "objects"
 
     @classproperty
     def polymorphic_primary_key_name(cls):

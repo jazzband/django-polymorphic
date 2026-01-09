@@ -102,6 +102,7 @@ build: build-docs-html
 make-test-migrations:
     - rm src/polymorphic/tests/migrations/00*.py
     - rm src/polymorphic/tests/deletion/migrations/00*.py
+    - rm src/polymorphic/tests/examples/**/migrations/00*.py
     uv run --isolated --resolution lowest-direct --script ./manage.py makemigrations
 
 # open the html documentation
