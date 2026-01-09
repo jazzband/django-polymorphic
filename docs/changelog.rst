@@ -18,6 +18,8 @@ v4.9.0 (2026-01-09)
       )
 
 * Fixed `PolymorphicModel.base_manager is the same as default_manager when custom default manager is supplied. <https://github.com/jazzband/django-polymorphic/issues/815>`_
+* Fixed `Use non-polymorphic managers for all invocations of dumpdata <https://github.com/jazzband/django-polymorphic/pull/814>`_
+* Documented `Fixture usage <https://github.com/jazzband/django-polymorphic/pull/791>`_
 
 v4.8.0 (2026-01-08)
 -------------------
