@@ -6,6 +6,8 @@ from django.contrib.contenttypes.models import ContentType
 from django.db.models import Manager
 from django.db import models
 from django.db.models.query import QuerySet
+from django.db.models import F
+from django.db.models.functions import Upper
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 
 from polymorphic.managers import PolymorphicManager
@@ -1004,7 +1006,7 @@ class SpecialBook(Book):
 
 class FilteredManager(PolymorphicManager):
     def get_queryset(self):
-        return super().get_queryset().exclude(field2__regex=r"^[A-Z\d]+$")
+        return super().get_queryset().exclude(field2=Upper(F("field2")))
 
 
 class Model2BFiltered(Model2B):
@@ -1037,3 +1039,29 @@ class Model2CNamedDefault(Model2CFiltered):
 
     class Meta:
         default_manager_name = "custom_objects"
+
+
+# serialization natural key tests #517
+class NatKeyManager(PolymorphicManager):
+    def get_by_natural_key(self, slug):
+        return self.get(slug=slug)
+
+
+class NatKeyParent(PolymorphicModel):
+    slug = models.SlugField(unique=True)
+    content = models.CharField(blank=True, max_length=100)
+
+    objects = NatKeyManager()
+
+    def natural_key(self):
+        return (self.slug,)
+
+
+class NatKeyChild(NatKeyParent):
+    foo = models.OneToOneField(NatKeyParent, models.CASCADE, parent_link=True, primary_key=True)
+    val = models.IntegerField(default=0)
+
+    def natural_key(self):
+        return self.foo.natural_key()
+
+    natural_key.dependencies = ["tests.natkeyparent"]

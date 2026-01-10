@@ -4,8 +4,14 @@ DEBUG = False
 
 rdbms = os.environ.get("RDBMS", "sqlite")
 
+PYTEST_DB_NAME = os.environ.get("PYTEST_DB_NAME", None)
+
+DEFAULT_DBS = f"{PYTEST_DB_NAME or 'test1'},test2"
+
 if rdbms == "sqlite":  # pragma: no cover
-    sqlite_dbs = os.environ.get("SQLITE_DATABASES", ":memory:,:memory:").split(",")
+    sqlite_dbs = os.environ.get(
+        "SQLITE_DATABASES", f"{PYTEST_DB_NAME or ':memory:'},:memory:"
+    ).split(",")
     DATABASES = {
         "default": {"ENGINE": "django.db.backends.sqlite3", "NAME": sqlite_dbs[0]},
         "secondary": {"ENGINE": "django.db.backends.sqlite3", "NAME": sqlite_dbs[1]},
@@ -20,7 +26,7 @@ elif rdbms == "postgres":  # pragma: no cover
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.postgresql",
-            "NAME": "test1",
+            "NAME": PYTEST_DB_NAME or "test1",
             **creds,
         },
         "secondary": {
@@ -30,7 +36,7 @@ elif rdbms == "postgres":  # pragma: no cover
         },
     }
 elif rdbms == "mysql":  # pragma: no cover
-    dbs = os.environ.get("MYSQL_MULTIPLE_DATABASES", "test1,test2").split(",")
+    dbs = os.environ.get("MYSQL_MULTIPLE_DATABASES", DEFAULT_DBS).split(",")
     creds = {
         "USER": os.environ.get("MYSQL_USER", "root"),
         "PASSWORD": os.environ.get("MYSQL_PASSWORD", "root"),
@@ -50,7 +56,7 @@ elif rdbms == "mysql":  # pragma: no cover
         },
     }
 elif rdbms == "mariadb":  # pragma: no cover
-    dbs = os.environ.get("MYSQL_MULTIPLE_DATABASES", "test1,test2").split(",")
+    dbs = os.environ.get("MYSQL_MULTIPLE_DATABASES", DEFAULT_DBS).split(",")
     creds = {
         "USER": os.environ.get("MYSQL_USER", "root"),
         "PASSWORD": os.environ.get("MYSQL_ROOT_PASSWORD", "root"),
@@ -70,7 +76,7 @@ elif rdbms == "mariadb":  # pragma: no cover
         },
     }
 elif rdbms == "oracle":  # pragma: no cover
-    dbs = os.environ.get("ORACLE_DATABASES", "test1,test2").split(",")
+    dbs = os.environ.get("ORACLE_DATABASES", DEFAULT_DBS).split(",")
     ports = os.environ.get("ORACLE_PORTS", "1521,1522").split(",")
     creds = {
         "USER": os.environ.get("ORACLE_USER", "system"),
@@ -81,14 +87,14 @@ elif rdbms == "oracle":  # pragma: no cover
             "ENGINE": "django.db.backends.oracle",
             "NAME": f"{os.environ.get('ORACLE_HOST', 'localhost')}:{ports[0]}/{dbs[0]}",
             **creds,
-        },
-        "secondary": {
+        }
+    }
+    if len(dbs) > 1:
+        DATABASES["secondary"] = {
             "ENGINE": "django.db.backends.oracle",
             "NAME": f"{os.environ.get('ORACLE_HOST', 'localhost')}:{ports[1]}/{dbs[1]}",
             **creds,
-        },
-    }
-
+        }
 DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 INSTALLED_APPS = (
     "django.contrib.staticfiles",

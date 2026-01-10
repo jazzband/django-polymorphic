@@ -98,16 +98,6 @@ This is basically all you need to know, as *django-polymorphic* mostly
 works fully automatic and just delivers the expected results.
 
 .. note::
-
-    When using the :django-admin:`dumpdata` management command on polymorphic tables
-    (or any table that has a reference to :class:`~django.contrib.contenttypes.models.ContentType`),
-    include the :option:`--natural-primary <dumpdata.--natural-primary>` and
-    :option:`--natural-foreign <dumpdata.--natural-foreign>` flag in the arguments. This makes sure
-    the :class:`~django.contrib.contenttypes.models.ContentType` models will be referenced by name
-    instead of their primary key as that changes between Django instances.
-
-
-.. note::
     While :pypi:`django-polymorphic` makes subclassed models easy to use in Django,
     we still encourage to use them with caution. Each subclassed model will require
     Django to perform an ``INNER JOIN`` to fetch the model fields from the database.
