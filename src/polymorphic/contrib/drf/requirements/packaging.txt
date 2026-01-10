@@ -1,2 +1,0 @@
-# Twine for secured PyPI uploads.
-twine==3.1.1

@@ -21,4 +21,4 @@ class BlogThree(BlogBase):
     about = models.CharField(max_length=255)
 
     class Meta:
-        unique_together = (('info', 'about'),)
+        unique_together = (("info", "about"),)

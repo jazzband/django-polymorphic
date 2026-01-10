@@ -72,3 +72,15 @@
 * Diederik van der Boor
 * Charlie Denton
 * Jerome Leclanche
+
+## django-rest-polymorphic
+
+* Denis Orehovsky <denis.orehovsky@gmail.com>
+* Jeff Hackshaw <jeffrey.hackshaw@gmail.com>
+* TFranzel
+* Ignacio Losiggio <iglosiggio@gmail.com>
+
+
+
+
+
