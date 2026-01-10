@@ -10,7 +10,6 @@ from django.db.models.base import ModelBase
 
 from .deletion import PolymorphicGuard
 from .managers import PolymorphicManager
-from .query import PolymorphicQuerySet
 from .related_descriptors import (
     NonPolymorphicForwardOneToOneDescriptor,
     NonPolymorphicReverseOneToOneDescriptor,
@@ -94,10 +93,6 @@ class PolymorphicModelBase(ModelBase):
             # write new manager to property cache
             new_class._meta.__dict__["base_manager"] = manager
 
-        # validate resulting default manager
-        if not new_class._meta.abstract and not new_class._meta.swapped:
-            cls.validate_model_manager(new_class._default_manager, model_name, "objects")
-
         # wrap on_delete handlers of reverse relations back to this model with the
         # polymorphic deletion guard
         for fk in new_class._meta.fields:
@@ -138,30 +133,6 @@ class PolymorphicModelBase(ModelBase):
             replace_inheritance_descriptors(new_class)
 
         return new_class
-
-    @classmethod
-    def validate_model_manager(cls, manager, model_name, manager_name):
-        """check if the manager is derived from PolymorphicManager
-        and its querysets from PolymorphicQuerySet - throw AssertionError if not"""
-
-        if not issubclass(type(manager), PolymorphicManager):
-            extra = ""
-            e = (
-                f'PolymorphicModel: "{model_name}.{manager_name}" manager is of type "{type(manager).__name__}", '
-                f"but must be a subclass of PolymorphicManager.{extra} to support retrieving subclasses"
-            )
-            warnings.warn(e, ManagerInheritanceWarning, stacklevel=3)
-            return manager
-
-        if not getattr(manager, "queryset_class", None) or not issubclass(
-            manager.queryset_class, PolymorphicQuerySet
-        ):
-            e = (
-                f'PolymorphicModel: "{model_name}.{manager_name}" has been instantiated with a queryset class '
-                f"which is not a subclass of PolymorphicQuerySet (which is required)"
-            )
-            warnings.warn(e, ManagerInheritanceWarning, stacklevel=3)
-        return manager
 
     @property
     def base_objects(self):

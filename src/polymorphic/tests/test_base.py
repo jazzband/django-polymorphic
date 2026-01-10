@@ -16,64 +16,6 @@ from polymorphic.models import PolymorphicModel
 from polymorphic.query import PolymorphicQuerySet
 
 
-class PolymorphicModelBaseTest(TestCase):
-    """Test edge cases in PolymorphicModelBase metaclass for manager validation."""
-
-    def test_validate_model_manager_with_non_polymorphic_manager(self):
-        """Test warning when manager is not a PolymorphicManager subclass"""
-        # Create a regular Django manager (not PolymorphicManager)
-        regular_manager = models.Manager()
-
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always")
-            PolymorphicModelBase.validate_model_manager(regular_manager, "TestModel", "objects")
-
-            # Should have emitted ManagerInheritanceWarning
-            assert len(w) == 1
-            assert issubclass(w[0].category, ManagerInheritanceWarning)
-            assert "must be a subclass of PolymorphicManager" in str(w[0].message)
-            assert "TestModel.objects" in str(w[0].message)
-
-    def test_validate_model_manager_with_wrong_queryset_class(self):
-        """Test warning when manager has non-Polymorphic QuerySet queryset_class"""
-
-        # Create a PolymorphicManager with wrong queryset_class
-        class BadQuerySet(models.QuerySet):
-            pass
-
-        class BadManager(PolymorphicManager):
-            queryset_class = BadQuerySet
-
-        bad_manager = BadManager()
-
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always")
-            PolymorphicModelBase.validate_model_manager(bad_manager, "TestModel", "objects")
-
-            # Should have emitted ManagerInheritanceWarning
-            assert len(w) == 1
-            assert issubclass(w[0].category, ManagerInheritanceWarning)
-            assert "not a subclass of PolymorphicQuerySet" in str(w[0].message)
-            assert "TestModel.objects" in str(w[0].message)
-
-    def test_validate_model_manager_with_no_queryset_class(self):
-        """Test warning when manager has no queryset_class attribute"""
-
-        class ManagerWithoutQuerySet(PolymorphicManager):
-            queryset_class = None  # Set to None instead of deleting
-
-        manager = ManagerWithoutQuerySet()
-
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always")
-            PolymorphicModelBase.validate_model_manager(manager, "TestModel", "objects")
-
-            # Should have emitted ManagerInheritanceWarning
-            assert len(w) == 1
-            assert issubclass(w[0].category, ManagerInheritanceWarning)
-            assert "not a subclass of PolymorphicQuerySet" in str(w[0].message)
-
-
 class PrimaryKeyNameTest(TestCase):
     def test_polymorphic_primary_key_name_correctness(self):
         """
