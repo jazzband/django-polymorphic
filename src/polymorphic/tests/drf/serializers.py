@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from polymorphic.contrib.drf.rest_polymorphic.serializers import PolymorphicSerializer
+from polymorphic.contrib.drf import PolymorphicSerializer
 
 from polymorphic.tests.drf.models import BlogBase, BlogOne, BlogTwo, BlogThree
 

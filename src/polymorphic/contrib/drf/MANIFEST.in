@@ -1,5 +1,0 @@
-include AUTHORS.rst
-include HISTORY.rst
-include LICENSE
-include README.rst
-recursive-include rest_polymorphic *.html *.png *.gif *js *.css *jpg *jpeg *svg *py

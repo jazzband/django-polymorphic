@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from rest_polymorphic.serializers import PolymorphicSerializer
+from polymorphic.contrib.drf import PolymorphicSerializer
 
 from .models import ArtProject, Project, ResearchProject
 

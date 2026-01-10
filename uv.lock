@@ -634,6 +634,11 @@ dependencies = [
     { name = "django", version = "6.0.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
 ]
 
+[package.optional-dependencies]
+rest = [
+    { name = "djangorestframework" },
+]
+
 [package.dev-dependencies]
 cx-oracle = [
     { name = "cx-oracle" },
@@ -685,7 +690,11 @@ psycopg3 = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "django", specifier = ">=4.2" }]
+requires-dist = [
+    { name = "django", specifier = ">=4.2" },
+    { name = "djangorestframework", marker = "extra == 'rest'" },
+]
+provides-extras = ["rest"]
 
 [package.metadata.requires-dev]
 cx-oracle = [{ name = "cx-oracle", specifier = ">=8.3.0" }]

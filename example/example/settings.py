@@ -85,6 +85,8 @@ INSTALLED_APPS = (
     "polymorphic",  # needed if you want to use the polymorphic admin
     "pexp",  # this Django app is for testing and experimentation; not needed otherwise
     "orders",
+    "rest_framework",
+    "api_example",
 )
 
 TEST_RUNNER = "django.test.runner.DiscoverRunner"  # silence system checks

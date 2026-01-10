@@ -1,35 +1,25 @@
-.. image:: https://travis-ci.org/apirobot/django-rest-polymorphic.svg?branch=master
-    :target: https://travis-ci.org/apirobot/django-rest-polymorphic
-
-.. image:: https://codecov.io/gh/apirobot/django-rest-polymorphic/branch/master/graph/badge.svg
-    :target: https://codecov.io/gh/apirobot/django-rest-polymorphic
-
-.. image:: https://badge.fury.io/py/django-rest-polymorphic.svg
-    :target: https://badge.fury.io/py/django-rest-polymorphic
-
-
 =======================
 Django REST Polymorphic
 =======================
 
 Polymorphic serializers for Django REST Framework.
 
-
 Overview
 --------
 
 ``django-rest-polymorphic`` allows you to easily define serializers for your inherited models that you have created using ``django-polymorphic`` library.
 
+.. note::
+   This functionality was previously available as a separate package ``django-rest-polymorphic`` and has been merged into ``django-polymorphic`` as of version 3.2.0 (check actual version).
 
 Installation
 ------------
 
-Install using ``pip``:
+The functionality is included in ``django-polymorphic``, but requires ``django-rest-framework`` to be installed.
 
 .. code-block:: bash
 
-    $ pip install django-rest-polymorphic
-
+    $ pip install django-polymorphic[rest]
 
 Usage
 -----
@@ -90,7 +80,7 @@ Then you have to create a polymorphic serializer that serves as a mapper between
 .. code-block:: python
 
     # serializers.py
-    from rest_polymorphic.serializers import PolymorphicSerializer
+    from polymorphic.contrib.drf import PolymorphicSerializer
 
 
     class ProjectPolymorphicSerializer(PolymorphicSerializer):
@@ -190,3 +180,11 @@ Now, the request for creating new object will look like this:
 .. code-block:: bash
 
     $ http POST "http://localhost:8000/projects/" projecttype="artproject" topic="Guernica" artist="Picasso"
+
+History
+-------
+
+.. toctree::
+   :maxdepth: 1
+
+   rest_framework_history

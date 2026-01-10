@@ -16,6 +16,10 @@ authors = [
   {name = "Bert Constantin", email = "bert.constantin@gmx.de"},
   {name = "Diederik van der Boor", email = "vdboor@edoburu.nl"},
   {name = "Christopher Glass", email = "tribaal@ubuntu.com"},
+  {name = "Denis Orehovsky", email = "denis.orehovsky@gmail.com"},
+  {name = "Jeff Hackshaw", email = "jeffrey.hackshaw@gmail.com"},
+  {name = "TFranzel"},
+  {name = "Ignacio Losiggio", email = "iglosiggio@gmail.com"},
 ]
 maintainers = [
   {name = "Brian Kohan", email = "bckohan@gmail.com"}
@@ -51,6 +55,9 @@ classifiers = [
 dependencies = [
     "Django >= 4.2",
 ]
+
+[project.optional-dependencies]
+rest = ["djangorestframework"]
 
 [project.urls]
 "Download" = "https://github.com/jazzband/django-polymorphic/tarball/master"

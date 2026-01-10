@@ -109,6 +109,7 @@ Getting started
    admin
    performance
    integrations
+   rest_framework
 
 Advanced topics
 ---------------

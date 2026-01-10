@@ -2,7 +2,7 @@ from django.core.exceptions import ImproperlyConfigured
 
 import pytest
 
-from polymorphic.contrib.drf.rest_polymorphic.serializers import PolymorphicSerializer
+from polymorphic.contrib.drf.serializers import PolymorphicSerializer
 
 from .models import BlogBase, BlogOne, BlogTwo
 from .serializers import BlogPolymorphicSerializer

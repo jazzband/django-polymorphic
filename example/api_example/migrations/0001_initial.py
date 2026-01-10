@@ -28,28 +28,28 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='ArtProject',
             fields=[
-                ('project_ptr', models.OneToOneField(auto_created=True, on_delete=django.db.models.deletion.CASCADE, parent_link=True, primary_key=True, serialize=False, to='projects.Project')),
+                ('project_ptr', models.OneToOneField(auto_created=True, on_delete=django.db.models.deletion.CASCADE, parent_link=True, primary_key=True, serialize=False, to='api_example.Project')),
                 ('artist', models.CharField(max_length=30)),
             ],
             options={
                 'abstract': False,
             },
-            bases=('projects.project',),
+            bases=('api_example.project',),
         ),
         migrations.CreateModel(
             name='ResearchProject',
             fields=[
-                ('project_ptr', models.OneToOneField(auto_created=True, on_delete=django.db.models.deletion.CASCADE, parent_link=True, primary_key=True, serialize=False, to='projects.Project')),
+                ('project_ptr', models.OneToOneField(auto_created=True, on_delete=django.db.models.deletion.CASCADE, parent_link=True, primary_key=True, serialize=False, to='api_example.Project')),
                 ('supervisor', models.CharField(max_length=30)),
             ],
             options={
                 'abstract': False,
             },
-            bases=('projects.project',),
+            bases=('api_example.project',),
         ),
         migrations.AddField(
             model_name='project',
             name='polymorphic_ctype',
-            field=models.ForeignKey(editable=False, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='polymorphic_projects.project_set+', to='contenttypes.ContentType'),
+            field=models.ForeignKey(editable=False, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='polymorphic_api_example.project_set+', to='contenttypes.ContentType'),
         ),
     ]
