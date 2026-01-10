@@ -10,7 +10,7 @@ Overview
 ``django-rest-polymorphic`` allows you to easily define serializers for your inherited models that you have created using ``django-polymorphic`` library.
 
 .. note::
-   This functionality was previously available as a separate package ``django-rest-polymorphic`` and has been merged into ``django-polymorphic`` as of version 3.2.0 (check actual version).
+   This functionality was previously available as a separate package ``django-rest-polymorphic`` and has been merged into ``django-polymorphic`` as of version 4.10.
 
 Installation
 ------------
