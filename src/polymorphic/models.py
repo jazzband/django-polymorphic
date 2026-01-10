@@ -161,7 +161,8 @@ class PolymorphicModel(models.Model, metaclass=PolymorphicModelBase):
             )
         ):
             raise PolymorphicTypeInvalid(
-                f"ContentType {self.polymorphic_ctype_id} for {model} #{self.pk} does not point to a subclass!"
+                f"ContentType {self.polymorphic_ctype_id} for {model} #{self.pk} does "
+                "not point to a subclass!"
             )
 
         return model

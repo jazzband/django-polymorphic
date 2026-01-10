@@ -1,6 +1,12 @@
 Changelog
 =========
 
+.. v4.10.0 (2026-XX-XX)
+.. --------------------
+
+.. * Implemented `System check error for PolymorphicManager marked as use_in_migrations <https://github.com/jazzband/django-polymorphic/issues/820>`_
+.. * Implemented `Manager warnings should be system checks instead. <https://github.com/jazzband/django-polymorphic/issues/819>`_
+
 v4.9.0 (2026-01-09)
 -------------------
 
