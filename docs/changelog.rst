@@ -411,7 +411,7 @@ v0.9.0 (2016-02-17)
 * Fix setting an extra custom manager without overriding the ``_default_manager``.
 * Fix missing ``history_view()`` redirection to the child admin, which is important for
   django-reversion_ support. See the documentation for hints for
-  :ref:`django-reversion-compare support <django-reversion-compare-support>`.
+  `django-reversion-compare support <https://github.com/jazzband/django-polymorphic/discussions/831>_`.
 
 
 v0.8.1 (2015-12-29)

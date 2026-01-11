@@ -3,6 +3,29 @@
 Integrations
 ============
 
+When integrating polymorphic models into third party apps you have three primary options:
+
+0. Hope it just works (it might!).
+1. Ensure the querysets the third party apps see are
+   :meth:`not polymorphic <polymorphic.query.PolymorphicQuerySet.non_polymorphic>`.
+2. Override or extend relevant third party app code to work with polymorphic querysets.
+
+If it does not just work, option 1 is usually the easiest. We provide some integrations in
+:mod:`polymorphic.contrib` for popular third party apps and provide guidance for others below.
+
+This page does not exhaustively cover all integrations. If you feel your integration need is
+very common you may consider opening a PR to either provide support in code or documentation here.
+
+This page covers supported and tested integration advice. For all other integration advice please
+refer to `our integrations discussion page
+<https://github.com/jazzband/django-polymorphic/discussions/categories/integrations>`_.
+
+For the integration examples on this page, we use the following polymorphic model hierarchy:
+
+.. literalinclude:: ../src/polymorphic/tests/examples/integrations/models.py
+    :language: python
+    :linenos:
+
 .. _django-django-guardian-support:
 
 django-guardian
@@ -97,104 +120,47 @@ using the classes from :pypi:`django-extra-views`. See the documentation of:
 * :class:`~polymorphic.contrib.extra_views.PolymorphicInlineFormSetView`
 * :class:`~polymorphic.contrib.extra_views.PolymorphicInlineFormSet`
 
-
-.. _django-mptt-support:
-
-django-mptt
------------
-
-Combining polymorphic with :pypi:`django-mptt` is certainly possible, but not straightforward.
-It involves combining both managers, querysets, models, meta-classes and admin classes
-using multiple inheritance.
-
-The :pypi:`django-polymorphic-tree` package provides this out of the box.
-
-
 .. _django-reversion-support:
 
 django-reversion
 ----------------
 
-Support for :pypi:`django-reversion` works as expected with polymorphic models.
-However, they require more setup than standard models. That's become:
+Support for :pypi:`django-reversion` works as expected with polymorphic models. We just need to
+do two things:
 
-* Manually register the child models with :pypi:`django-reversion`, so their ``follow`` parameter
-  can be set.
-* Polymorphic models use :ref:`django:multi-table-inheritance`.
-  See the :doc:`django-reversion:api` for how to deal with this by adding a ``follow`` field for the
-  primary key.
-* Both admin classes redefine ``object_history_template``.
+1. Inherit our admin classes from both :class:`~polymorphic.admin.PolymorphicParentModelAdmin` /
+   :class:`~polymorphic.admin.PolymorphicChildModelAdmin` and
+   :ref:`VersionAdmin <django-reversion:versionadmin>`.
+2. Override the ``admin/polymorphic/object_history.html`` template.
 
+.. tip::
 
-Example
-~~~~~~~
-
-The admin :ref:`admin example <admin-example>` becomes:
-
-.. code-block:: python
-
-    from django.contrib import admin
-    from polymorphic.admin import PolymorphicParentModelAdmin, PolymorphicChildModelAdmin
-    from reversion.admin import VersionAdmin
-    from reversion import revisions
-    from .models import ModelA, ModelB, ModelC
+    The complete working code for this example can be found `here
+    <https://github.com/jazzband/django-polymorphic/tree/HEAD/src/polymorphic/tests/examples/integrations/reversion>`_.
 
 
-    class ModelAChildAdmin(PolymorphicChildModelAdmin, VersionAdmin):
-        base_model = ModelA  # optional, explicitly set here.
-        base_form = ...
-        base_fieldsets = (
-            ...
-        )
+Admin Configuration
+~~~~~~~~~~~~~~~~~~~
 
-    class ModelBAdmin(ModelAChildAdmin, VersionAdmin):
-        # define custom features here
+The admin configuration combines :class:`~polymorphic.admin.PolymorphicParentModelAdmin` and
+:class:`~polymorphic.admin.PolymorphicChildModelAdmin` with
+:ref:`VersionAdmin <django-reversion:versionadmin>`:
 
-    class ModelCAdmin(ModelBAdmin):
-        # define custom features here
+.. literalinclude:: ../src/polymorphic/tests/examples/integrations/reversion/admin.py
+    :language: python
+    :linenos:
 
 
-    class ModelAParentAdmin(VersionAdmin, PolymorphicParentModelAdmin):
-        base_model = ModelA  # optional, explicitly set here.
-        child_models = (
-            (ModelB, ModelBAdmin),
-            (ModelC, ModelCAdmin),
-        )
+Custom Template
+~~~~~~~~~~~~~~~
 
-    revisions.register(ModelB, follow=['modela_ptr'])
-    revisions.register(ModelC, follow=['modelb_ptr'])
-    admin.site.register(ModelA, ModelAParentAdmin)
+Since both :class:`~polymorphic.admin.PolymorphicParentModelAdmin` and
+:ref:`VersionAdmin <django-reversion:versionadmin>`. define ``object_history.html`` template, you
+need to create a custom template that combines both:
 
-Redefine a :file:`admin/polymorphic/object_history.html` template, so it combines both worlds:
-
-.. code-block:: html+django
-
-    {% extends 'reversion/object_history.html' %}
-    {% load polymorphic_admin_tags %}
-
-    {% block breadcrumbs %}
-        {% breadcrumb_scope base_opts %}{{ block.super }}{% endbreadcrumb_scope %}
-    {% endblock %}
+.. literalinclude:: ../src/polymorphic/tests/examples/integrations/reversion/templates/admin/polymorphic/object_history.html
+    :language: html+django
 
 This makes sure both the reversion template is used, and the breadcrumb is corrected for the
-polymorphic model.
-
-.. _django-reversion-compare-support:
-
-django-reversion-compare
-------------------------
-
-The :pypi:`django-reversion-compare` views work as expected, the admin requires a little tweak.
-In your parent admin, include the following method:
-
-.. code-block:: python
-
-    def compare_view(self, request, object_id, extra_context=None):
-        """Redirect the reversion-compare view to the child admin."""
-        real_admin = self._get_real_admin(object_id)
-        return real_admin.compare_view(request, object_id, extra_context=extra_context)
-
-As the compare view resolves the the parent admin, it uses it's base model to find revisions.
-This doesn't work, since it needs to look for revisions of the child model. Using this tweak,
-the view of the actual child model is used, similar to the way the regular change and delete views
-are redirected.
+polymorphic model using the :templatetag:`breadcrumb_scope`
+tag.

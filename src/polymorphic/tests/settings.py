@@ -96,7 +96,14 @@ elif rdbms == "oracle":  # pragma: no cover
             **creds,
         }
 DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
-INSTALLED_APPS = (
+INSTALLED_APPS = [
+    "polymorphic.tests.examples.integrations",
+    "polymorphic.tests",
+    "polymorphic.tests.deletion",
+    "polymorphic.tests.other",
+    "polymorphic.tests.test_migrations",
+    "polymorphic.tests.examples.views",
+    "polymorphic",
     "django.contrib.staticfiles",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -104,13 +111,17 @@ INSTALLED_APPS = (
     "django.contrib.sessions",
     "django.contrib.sites",
     "django.contrib.admin",
-    "polymorphic",
-    "polymorphic.tests",
-    "polymorphic.tests.deletion",
-    "polymorphic.tests.other",
-    "polymorphic.tests.test_migrations",
-    "polymorphic.tests.examples.views",
-)
+]
+
+# Add reversion if installed
+try:
+    import reversion  # noqa: F401
+
+    INSTALLED_APPS.insert(0, "reversion")
+    INSTALLED_APPS.insert(0, "polymorphic.tests.examples.integrations.reversion")
+except ImportError:
+    pass
+
 
 MIDDLEWARE = (
     "django.middleware.common.CommonMiddleware",

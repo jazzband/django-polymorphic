@@ -123,8 +123,12 @@ python_files = "test*.py"
 python_classes = "Test*"
 python_functions = "test_*"
 norecursedirs = "*.egg .eggs dist build docs .tox .git __pycache__"
+markers = [
+  "integration: tests under examples/integrations (opt-in)",
+]
 addopts = [
     "--strict-markers",
+   "-m", "not integration",
 ]
 
 [tool.coverage.run]
@@ -155,6 +159,9 @@ dev = [
     "tomlkit>=0.13.3",
     "tox>=4.24.1",
     "tox-uv>=1.13.1",
+]
+reversion = [
+    "django-reversion>=6.1.0",
 ]
 docs = [
     "django-extra-views>=0.15.0",

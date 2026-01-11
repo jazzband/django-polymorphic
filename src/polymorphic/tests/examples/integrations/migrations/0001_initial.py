@@ -14,10 +14,12 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='Project',
+            name='Article',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('topic', models.CharField(max_length=30)),
+                ('title', models.CharField(max_length=100)),
+                ('content', models.TextField()),
+                ('created', models.DateTimeField(auto_now_add=True)),
                 ('polymorphic_ctype', models.ForeignKey(editable=False, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='polymorphic_%(app_label)s.%(class)s_set+', to='contenttypes.contenttype')),
             ],
             options={
@@ -25,25 +27,25 @@ class Migration(migrations.Migration):
             },
         ),
         migrations.CreateModel(
-            name='ArtProject',
+            name='BlogPost',
             fields=[
-                ('project_ptr', models.OneToOneField(auto_created=True, on_delete=django.db.models.deletion.CASCADE, parent_link=True, primary_key=True, serialize=False, to='views.project')),
-                ('artist', models.CharField(max_length=30)),
+                ('article_ptr', models.OneToOneField(auto_created=True, on_delete=django.db.models.deletion.CASCADE, parent_link=True, primary_key=True, serialize=False, to='integrations.article')),
+                ('author', models.CharField(max_length=100)),
             ],
             options={
                 'abstract': False,
             },
-            bases=('views.project',),
+            bases=('integrations.article',),
         ),
         migrations.CreateModel(
-            name='ResearchProject',
+            name='NewsArticle',
             fields=[
-                ('project_ptr', models.OneToOneField(auto_created=True, on_delete=django.db.models.deletion.CASCADE, parent_link=True, primary_key=True, serialize=False, to='views.project')),
-                ('supervisor', models.CharField(max_length=30)),
+                ('article_ptr', models.OneToOneField(auto_created=True, on_delete=django.db.models.deletion.CASCADE, parent_link=True, primary_key=True, serialize=False, to='integrations.article')),
+                ('source', models.CharField(max_length=100)),
             ],
             options={
                 'abstract': False,
             },
-            bases=('views.project',),
+            bases=('integrations.article',),
         ),
     ]

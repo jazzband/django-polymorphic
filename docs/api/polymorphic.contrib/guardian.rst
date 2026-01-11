@@ -1,5 +1,5 @@
-polymorphic.contrib.guardian
-============================
+guardian
+========
 
 .. automodule:: polymorphic.contrib.guardian
     :members:
