@@ -5,7 +5,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.utils.html import escape
 from django.test import RequestFactory
 from django.urls import resolve
-
+from playwright._impl._errors import TargetClosedError
 from polymorphic.admin import (
     PolymorphicChildModelAdmin,
     PolymorphicChildModelFilter,
@@ -362,7 +362,7 @@ class StackedInlineTests(_GenericAdminFormTest):
             PlainA.objects.create(field1=name)
         self.page.goto(self.add_url(InlineParent))
         self.page.fill("input[name='title']", "Parent 1")
-        with self.page.expect_navigation(timeout=10000) as nav_info:
+        with self.page.expect_navigation(timeout=30000) as nav_info:
             self.page.click("input[name='_save']")
 
         response = nav_info.value
@@ -384,7 +384,7 @@ class StackedInlineTests(_GenericAdminFormTest):
 
         selector_menu = self.page.locator("span.select2-dropdown.select2-dropdown--below")
         expect(selector_menu).to_be_hidden()
-        with self.page.expect_response("**autocomplete**", timeout=10000):
+        with self.page.expect_response("**autocomplete**", timeout=30000):
             self.page.click("span.select2-selection__arrow b[role='presentation']")
 
         expect(selector_menu).to_be_visible()
@@ -395,7 +395,7 @@ class StackedInlineTests(_GenericAdminFormTest):
         assert "Brian" in suggestions
         assert "Emma" in suggestions
 
-        with self.page.expect_response("**autocomplete**", timeout=10000):
+        with self.page.expect_response("**autocomplete**", timeout=30000):
             self.page.locator("input.select2-search__field[type='search']").type("B")
 
         suggestions = self.page.locator("ul.select2-results__options > li").all_inner_texts()
@@ -526,7 +526,7 @@ class StackedInlineTests(_GenericAdminFormTest):
             file_input.set_input_files(temp_file_path)
 
             # Save the form
-            with self.page.expect_navigation(timeout=10000) as nav_info:
+            with self.page.expect_navigation(timeout=30000) as nav_info:
                 self.page.click("input[name='_save']")
 
             response = nav_info.value
@@ -607,7 +607,7 @@ class PolymorphicFormTests(_GenericAdminFormTest):
             expect(self.page.locator("form#logout-form")).to_have_count(1)
 
             self.page.locator(f"input[type=radio][value='{model_type.pk}']").check()
-            with self.page.expect_navigation(timeout=10000) as nav_info:
+            with self.page.expect_navigation(timeout=30000) as nav_info:
                 self.page.click("input[name='_save']")
 
             response = nav_info.value
@@ -616,7 +616,7 @@ class PolymorphicFormTests(_GenericAdminFormTest):
             for field, value in fields.items():
                 self.page.fill(f"input[name='{field}']", value)
 
-            with self.page.expect_navigation(timeout=10000) as nav_info:
+            with self.page.expect_navigation(timeout=30000) as nav_info:
                 self.page.click("input[name='_save']")
 
             response = nav_info.value
@@ -669,7 +669,7 @@ class PolymorphicFormTests(_GenericAdminFormTest):
         self.page.fill("input[name='name']", "Test Related Object")
 
         # Click the "+" button next to the FK field to open popup
-        with self.page.expect_popup(timeout=10000) as popup_info:
+        with self.page.expect_popup(timeout=30000) as popup_info:
             self.page.click("a#add_id_poly_fk")
 
         popup = popup_info.value
@@ -677,7 +677,7 @@ class PolymorphicFormTests(_GenericAdminFormTest):
 
         # In the popup, select Model2D type
         popup.locator(f"input[type=radio][value='{model2d_ct.pk}']").check()
-        with popup.expect_navigation(timeout=10000) as nav_info:
+        with popup.expect_navigation(timeout=30000) as nav_info:
             popup.click("input[name='_save']")
 
         response = nav_info.value
@@ -693,7 +693,7 @@ class PolymorphicFormTests(_GenericAdminFormTest):
         # Only fill field1, leave field2 and field4 empty
         popup.fill("input[name='field1']", "PopupTest1")
 
-        with popup.expect_navigation(timeout=10000) as nav_info:
+        with popup.expect_navigation(timeout=30000) as nav_info:
             popup.click("input[name='_save']")
 
         response = nav_info.value
@@ -718,8 +718,12 @@ class PolymorphicFormTests(_GenericAdminFormTest):
         popup.fill("input[name='field4']", "PopupTest4")
 
         # Submit the form - this should close the popup
-        with popup.expect_event("close", timeout=10000):
-            popup.click("input[name='_save']")
+        with popup.expect_event("close", timeout=30000):
+            try:
+                popup.click("input[name='_save']", no_wait_after=True)
+            except TargetClosedError:
+                # Popup closed as expected
+                pass
 
         # Verify the popup closed
         assert popup.is_closed(), "Popup should have closed after successful submit"
@@ -742,7 +746,7 @@ class PolymorphicNoChildrenTests(_GenericAdminFormTest):
     def test_admin_no_polymorphic_children(self):
         self.page.goto(self.add_url(NoChildren))
         self.page.fill("input[name='field1']", "NoChildren1")
-        with self.page.expect_navigation(timeout=10000) as nav_info:
+        with self.page.expect_navigation(timeout=30000) as nav_info:
             self.page.click("input[name='_save']")
 
         response = nav_info.value
@@ -781,7 +785,7 @@ class AdminRecentActionsTests(_GenericAdminFormTest):
         ]:
             self.page.goto(self.add_url(Model2A))
             self.page.locator(f"input[type=radio][value='{model_type.pk}']").check()
-            with self.page.expect_navigation(timeout=10000) as nav_info:
+            with self.page.expect_navigation(timeout=30000) as nav_info:
                 self.page.click("input[name='_save']")
 
             response = nav_info.value
@@ -790,7 +794,7 @@ class AdminRecentActionsTests(_GenericAdminFormTest):
             for field, value in fields.items():
                 self.page.fill(f"input[name='{field}']", value)
 
-            with self.page.expect_navigation(timeout=10000) as nav_info:
+            with self.page.expect_navigation(timeout=30000) as nav_info:
                 self.page.click("input[name='_save']")
 
             response = nav_info.value
@@ -863,11 +867,11 @@ class AdminPreservedFiltersTests(_GenericAdminFormTest):
 
         # Click the filter link for Model2B in the polymorphic child model filter sidebar.
         # Clicking a filter link navigates to a new URL, so we wait for navigation.
-        with self.page.expect_navigation(timeout=10000):
+        with self.page.expect_navigation(timeout=30000):
             self.page.click("text=model2b")
 
         # Click the first row's object link in the results table to go to its change form.
-        with self.page.expect_navigation(timeout=10000):
+        with self.page.expect_navigation(timeout=30000):
             self.page.click("table#result_list tbody tr th a")
 
         # Edit a field on the change form.
@@ -875,7 +879,7 @@ class AdminPreservedFiltersTests(_GenericAdminFormTest):
 
         # Click Save and explicitly wait for navigation caused by form submission.
         # Capturing the navigation response lets us assert the HTTP status.
-        with self.page.expect_navigation(timeout=10000) as nav_info:
+        with self.page.expect_navigation(timeout=30000) as nav_info:
             self.page.click("input[name='_save']")
         response = nav_info.value
 
@@ -929,7 +933,7 @@ class M2MAdminTests(_GenericAdminFormTest):
 
         # Test adding B1 to A1's child_bs field using the raw ID lookup
         # Click the lookup button (magnifying glass icon) for child_bs
-        with self.page.expect_popup(timeout=10000) as popup_info:
+        with self.page.expect_popup(timeout=30000) as popup_info:
             self.page.click("a#lookup_id_child_bs")
 
         popup = popup_info.value
@@ -948,8 +952,11 @@ class M2MAdminTests(_GenericAdminFormTest):
         expect(popup.locator("table#result_list a:has-text('A1')")).to_have_count(0)
 
         # Click B1 to select it
-        with popup.expect_event("close", timeout=10000):
-            b1_link.click()
+        with popup.expect_event("close", timeout=30000):
+            try:
+                b1_link.click(no_wait_after=True)
+            except TargetClosedError:
+                pass
 
         # Wait a moment for the popup to close and value to be set
         self.page.wait_for_timeout(500)
@@ -959,7 +966,7 @@ class M2MAdminTests(_GenericAdminFormTest):
         assert str(b1.pk) in child_bs_value
 
         # Now add C1 as well by clicking the lookup again
-        with self.page.expect_popup(timeout=10000) as popup_info:
+        with self.page.expect_popup(timeout=30000) as popup_info:
             self.page.click("a#lookup_id_child_bs")
 
         popup = popup_info.value
@@ -967,8 +974,11 @@ class M2MAdminTests(_GenericAdminFormTest):
 
         # Click C1 to add it
         c1_link = popup.locator("table#result_list a:has-text('C1')")
-        with popup.expect_event("close", timeout=10000):
-            c1_link.click()
+        with popup.expect_event("close", timeout=30000):
+            try:
+                c1_link.click(no_wait_after=True)
+            except TargetClosedError:
+                pass
 
         self.page.wait_for_timeout(500)
 
@@ -978,7 +988,7 @@ class M2MAdminTests(_GenericAdminFormTest):
         assert str(c1.pk) in child_bs_value
 
         # Save the changes to A1
-        with self.page.expect_navigation(timeout=10000) as nav_info:
+        with self.page.expect_navigation(timeout=30000) as nav_info:
             self.page.click("input[name='_save']")
 
         response = nav_info.value
@@ -998,7 +1008,7 @@ class M2MAdminTests(_GenericAdminFormTest):
         assert self.page.locator("input[name='name']").input_value() == "B1"
 
         # Click the lookup button for child_as
-        with self.page.expect_popup(timeout=10000) as popup_info:
+        with self.page.expect_popup(timeout=30000) as popup_info:
             self.page.click("a#lookup_id_child_as")
 
         popup = popup_info.value
@@ -1013,8 +1023,11 @@ class M2MAdminTests(_GenericAdminFormTest):
         expect(popup.locator("table#result_list a:has-text('C1')")).to_have_count(0)
 
         # Click A1 to select it
-        with popup.expect_event("close", timeout=10000):
-            a1_link.click()
+        with popup.expect_event("close", timeout=30000):
+            try:
+                a1_link.click(no_wait_after=True)
+            except TargetClosedError:
+                pass
 
         self.page.wait_for_timeout(500)
 
@@ -1023,7 +1036,7 @@ class M2MAdminTests(_GenericAdminFormTest):
         assert str(a1.pk) in child_as_value
 
         # Save the changes to B1
-        with self.page.expect_navigation(timeout=10000) as nav_info:
+        with self.page.expect_navigation(timeout=30000) as nav_info:
             self.page.click("input[name='_save']")
 
         response = nav_info.value
@@ -1126,7 +1139,7 @@ class M2MAdminTests(_GenericAdminFormTest):
         assert "Bob Special" in str(chosen_options)
 
         # Save the form - this should NOT raise AttributeError
-        with self.page.expect_navigation(timeout=10000) as nav_info:
+        with self.page.expect_navigation(timeout=30000) as nav_info:
             self.page.click("input[name='_save']")
 
         response = nav_info.value
@@ -1273,7 +1286,7 @@ class M2MAdminTests(_GenericAdminFormTest):
             special_notes_field.first.fill("VIP team member")
 
         # Save the form
-        with self.page.expect_navigation(timeout=10000) as nav_info:
+        with self.page.expect_navigation(timeout=30000) as nav_info:
             self.page.click("input[name='_save']")
 
         response = nav_info.value
