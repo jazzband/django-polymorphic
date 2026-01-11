@@ -71,6 +71,8 @@ class PolymorphicGuard:
         return migration_fingerprint(self.action)
 
     def __eq__(self, other):
+        if self.action == other:
+            return True
         if (
             isinstance(other, tuple)
             and len(other) == 3
