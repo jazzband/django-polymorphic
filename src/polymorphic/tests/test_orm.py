@@ -7,7 +7,17 @@ from packaging.version import Version
 from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
 from django.db import models, connection
-from django.db.models import Case, Count, FilteredRelation, Q, Sum, When, Exists, OuterRef
+from django.db.models import (
+    Case,
+    Count,
+    FilteredRelation,
+    Q,
+    Sum,
+    When,
+    Exists,
+    OuterRef,
+    Subquery,
+)
 from django.db.utils import IntegrityError, NotSupportedError
 from django.test import TransactionTestCase
 from django.test.utils import CaptureQueriesContext
@@ -457,20 +467,51 @@ class PolymorphicTests(TransactionTestCase):
 
     def test_create_instanceof_q(self):
         # Test with a list of models
+        cached = [
+            Model2B,
+            Model2C,
+            Model2D,
+        ]
+        uncached = [
+            Model2BFiltered,
+            Model2CFiltered,
+            Model2CNamedManagers,
+            Model2CNamedDefault,
+        ]
+        ContentType.objects._cache.clear()
+
+        expected_cached = [ContentType.objects.get_for_model(m).pk for m in cached]
         q = query_translate.create_instanceof_q([Model2B])
-        expected = sorted(
-            ContentType.objects.get_for_model(m).pk
-            for m in [
-                Model2B,
-                Model2C,
-                Model2D,
-                Model2BFiltered,
-                Model2CFiltered,
-                Model2CNamedManagers,
-                Model2CNamedDefault,
-            ]
-        )
-        assert dict(q.children) == dict(polymorphic_ctype__in=expected)
+
+        assert q.children[0][0] == "polymorphic_ctype__in"
+        assert isinstance(q.children[0][1], Subquery)
+        for model in uncached:
+            assert model._meta.app_label in str(q.children[0][1].query)
+            assert model._meta.model_name in str(q.children[0][1].query)
+        assert q.children[1][0] == "polymorphic_ctype__in"
+        assert set(q.children[1][1]) == set(expected_cached)
+
+    def test_instance_of_single_lazy_query(self):
+        a = Model2A.objects.create(field1="A1")
+        b = Model2B.objects.create(field1="B1", field2="B2")
+        c1 = Model2C.objects.create(field1="C1", field2="C2")
+        c2 = Model2C.objects.create(field1="C1", field2="C2")
+
+        ContentType.objects._cache.clear()
+
+        with CaptureQueriesContext(connection) as captured_queries:
+            assert Model2A.objects.filter(instance_of=Model2C).count() == 2
+
+        assert len(captured_queries) == 1
+        assert set(Model2A.objects.filter(instance_of=Model2C)) == {c1, c2}
+
+        # warm up the cache
+        ContentType.objects.get_for_models(Model2A, Model2B, Model2C)
+
+        with CaptureQueriesContext(connection) as captured_queries:
+            assert Model2A.objects.filter(instance_of=Model2C).count() == 2
+
+        assert set(Model2A.objects.filter(instance_of=Model2C)) == {c1, c2}
 
     def test_base_manager(self):
         from .models import CustomBaseManager

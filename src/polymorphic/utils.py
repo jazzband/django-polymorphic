@@ -1,8 +1,10 @@
 from dataclasses import dataclass
 from functools import lru_cache
 
+from django.apps import apps
 from django.contrib.contenttypes.models import ContentType
 from django.db import DEFAULT_DB_ALIAS, models
+from django.db.models import Q, Subquery
 
 
 @dataclass(frozen=True)
@@ -215,3 +217,30 @@ def prepare_for_copy(obj):
 
     reset_parent_pointers(obj)
     obj._state.adding = True  # Mark as new object
+
+
+def _lazy_ctype(model, using=DEFAULT_DB_ALIAS):
+    """
+    Return the content type id for the given model class if it is in the cache,
+    otherwise return a subquery that can be used to match the content type as part
+    of a larger query. Safe to call before apps are fully loaded.
+
+    :param model: The model class to get the content type for.
+    :return: The content type for the model class.
+    :rtype: int or Subquery
+    """
+    mgr = ContentType.objects.db_manager(using=using)
+    if apps.models_ready and (
+        cid := mgr._cache.get(using, {}).get((model._meta.app_label, model._meta.model_name))
+    ):
+        return cid
+    return Q(app_label=model._meta.app_label) & Q(model=model._meta.model_name)
+
+
+def lazy_ctype(model, using=DEFAULT_DB_ALIAS):
+    ctype = _lazy_ctype(model, using=using)
+    return (
+        ctype
+        if isinstance(ctype, ContentType)
+        else Subquery(ContentType.objects.db_manager(using=using).filter(ctype).values("pk")[:1])
+    )
