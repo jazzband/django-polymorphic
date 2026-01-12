@@ -14,6 +14,7 @@ from .related_descriptors import (
     NonPolymorphicForwardOneToOneDescriptor,
     NonPolymorphicReverseOneToOneDescriptor,
 )
+from .utils import _clear_utility_caches
 
 # PolymorphicQuerySet Q objects (and filter()) support these additional key words.
 # These are forbidden as field names (a descriptive exception is raised)
@@ -131,7 +132,7 @@ class PolymorphicModelBase(ModelBase):
                         replace_inheritance_descriptors(super_cls)
 
             replace_inheritance_descriptors(new_class)
-
+        _clear_utility_caches()
         return new_class
 
     @property

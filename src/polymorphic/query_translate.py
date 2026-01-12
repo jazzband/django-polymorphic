@@ -3,19 +3,18 @@ PolymorphicQuerySet support functions
 """
 
 import copy
-from collections import deque
 from functools import reduce
 from operator import or_
 
 from django.apps import apps
 from django.contrib.contenttypes.models import ContentType
-from django.core.exceptions import FieldDoesNotExist, FieldError
+from django.core.exceptions import FieldDoesNotExist
 from django.db import models
 from django.db.models import Q, Subquery
 from django.db.models.fields.related import ForeignObjectRel, RelatedField
 from django.db.utils import DEFAULT_DB_ALIAS
 
-from .utils import _lazy_ctype
+from .utils import _lazy_ctype, _map_queryname_to_class, concrete_descendants
 
 # These functions implement the additional filter- and Q-object functionality.
 # They form a kind of small framework for easily adding more
@@ -185,11 +184,7 @@ def translate_polymorphic_field_path(queryset_model, field_path):
         except FieldDoesNotExist:
             pass
 
-        submodels = _get_all_sub_models(queryset_model)
-        model = submodels.get(classname, None)
-        assert model, (
-            f"PolymorphicModel: model {classname} not found (not a subclass of {queryset_model.__name__})!"
-        )
+        model = _map_queryname_to_class(queryset_model, classname)
 
     basepath = _create_base_path(queryset_model, model)
 
@@ -204,31 +199,6 @@ def translate_polymorphic_field_path(queryset_model, field_path):
 
     newpath += pure_field_path
     return newpath
-
-
-def _get_all_sub_models(base_model):
-    """#Collect all sub-models, this should be optimized (cached)"""
-    result = {}
-    queue = deque([base_model])
-
-    while queue:
-        model = queue.popleft()
-        if issubclass(model, models.Model) and model != models.Model:
-            # model name is occurring twice in submodel inheritance tree => Error
-            if model.__name__ in result and model != result[model.__name__]:
-                name1 = f"{model._meta.app_label}.{model.__name__}"
-                name2 = (
-                    f"{result[model.__name__]._meta.app_label}.{result[model.__name__].__name__}"
-                )
-                raise FieldError(
-                    f"PolymorphicModel: model name alone is ambiguous: {name1} and {name2} match!\n"
-                    f"In this case, please use the syntax: applabel__ModelName___field"
-                )
-
-            result[model.__name__] = model
-        queue.extend(model.__subclasses__())
-
-    return result
 
 
 def _create_base_path(baseclass, myclass):
@@ -305,9 +275,7 @@ def _get_mro_content_type_ids(models, using):
     for model in models:
         cid = _lazy_ctype(model, using=using)
         ids.append(cid.pk) if isinstance(cid, ContentType) else lazy.append(cid)
-        subclasses = model.__subclasses__()
-        if subclasses:
-            lazy_sub, ids_sub = _get_mro_content_type_ids(subclasses, using)
-            lazy.extend(lazy_sub)
-            ids.extend(ids_sub)
+        for descendent in concrete_descendants(model, include_proxy=True):
+            cid = _lazy_ctype(descendent, using=using)
+            ids.append(cid.pk) if isinstance(cid, ContentType) else lazy.append(cid)
     return lazy, ids

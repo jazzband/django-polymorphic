@@ -121,7 +121,6 @@ from polymorphic.tests.models import (
     Model2CNamedManagers,
     Model2CNamedDefault,
 )
-from django.db.models.signals import post_delete
 
 
 class PolymorphicTests(TransactionTestCase):

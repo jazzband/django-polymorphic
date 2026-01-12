@@ -20,12 +20,6 @@ from polymorphic.tests.models import Model2C
 DSN_RE = re.compile(r"^(?P<host>[^:/]+)(:(?P<port>\d+))?/(?P<service>.+)$")
 
 
-class UnregisteredModel(Model2C):
-    """
-    Subclass a model without django knowing about it just to see if anything breaks
-    """
-
-
 @lru_cache()
 def is_sqlite_in_memory(db_name: str = "default") -> bool:
     from django.conf import settings

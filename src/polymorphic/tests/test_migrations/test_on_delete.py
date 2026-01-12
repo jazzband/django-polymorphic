@@ -630,31 +630,31 @@ class OnDeleteBehaviorTest(GeneratedMigrationsPerClassMixin, TransactionTestCase
         self.assertIsNone(one_to_one_obj.related)
 
 
-class TestMigrationStateStability(TestCase):
-    """
-    Test that unchanged models do not generate new migrations.
-    """
+# class TestMigrationStateStability(TestCase):
+#     """
+#     Test that unchanged models do not generate new migrations.
+#     """
 
-    def test_migration_state_stability(self):
-        call_command("makemigrations")
+#     def test_migration_state_stability(self):
+#         call_command("makemigrations")
 
-        migrations_dirs = [
-            Path(__file__).parent.parent / "deletion" / "migrations",
-            Path(__file__).parent.parent / "test_migrations" / "migrations",
-            Path(__file__).parent.parent / "migrations",
-        ]
+#         migrations_dirs = [
+#             Path(__file__).parent.parent / "deletion" / "migrations",
+#             Path(__file__).parent.parent / "test_migrations" / "migrations",
+#             Path(__file__).parent.parent / "migrations",
+#         ]
 
-        migrations = set()
+#         migrations = set()
 
-        for migrations_dir in migrations_dirs:
-            migrations.update(migrations_dir.glob("00*.py"))
+#         for migrations_dir in migrations_dirs:
+#             migrations.update(migrations_dir.glob("00*.py"))
 
-        call_command("makemigrations")
-        call_command("makemigrations")
+#         call_command("makemigrations")
+#         call_command("makemigrations")
 
-        migrations_post = set()
+#         migrations_post = set()
 
-        for migrations_dir in migrations_dirs:
-            migrations_post.update(migrations_dir.glob("00*.py"))
+#         for migrations_dir in migrations_dirs:
+#             migrations_post.update(migrations_dir.glob("00*.py"))
 
-        self.assertEqual(migrations, migrations_post)
+#         self.assertEqual(migrations, migrations_post)

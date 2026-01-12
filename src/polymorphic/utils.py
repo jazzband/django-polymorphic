@@ -1,8 +1,10 @@
+from collections import defaultdict
 from dataclasses import dataclass
 from functools import lru_cache
 
 from django.apps import apps
 from django.contrib.contenttypes.models import ContentType
+from django.core.exceptions import FieldError
 from django.db import DEFAULT_DB_ALIAS, models
 from django.db.models import Q, Subquery
 
@@ -127,7 +129,6 @@ def route_to_ancestor(model_class, ancestor_model):
     return found_route
 
 
-@lru_cache(maxsize=None)
 def is_model_loaded(model):
     try:
         apps.get_model(model._meta.app_label, model._meta.model_name)
@@ -254,3 +255,35 @@ def lazy_ctype(model, using=DEFAULT_DB_ALIAS):
         if isinstance(ctype, ContentType)
         else Subquery(ContentType.objects.db_manager(using=using).filter(ctype).values("pk")[:1])
     )
+
+
+@lru_cache(maxsize=None)
+def _map_queryname_to_class(base_model, qry_name):
+    """Try to match a model name in a query to a model class"""
+    name_map = defaultdict(list)
+    name_map[base_model.__name__.lower()].append(base_model)
+    for cls in concrete_descendants(base_model, include_proxy=True):
+        name_map[cls.__name__.lower()].append(cls)
+
+    matches = name_map.get(qry_name.lower(), [])
+    if len(matches) == 1:
+        return matches[0]
+    elif len(matches) > 1:
+        raise FieldError(
+            f"{qry_name} could refer to any of {[m._meta.label for m in matches]}. In "
+            f"this case, please use the syntax: applabel__ModelName___field"
+        )
+
+    # FIXME: raise a FieldError - upstream code currently relies on this AssertionError
+    # and it will be thrown in legitimate cases because this function ends up being
+    # called on subclasses of the original query model in _get_real_instances. That
+    # code should be refactored to avoiid this.
+    raise AssertionError(f"{qry_name} is not a subclass of {base_model._meta.label}")
+
+
+def _clear_utility_caches():
+    """Clear all lru_cache caches in this module."""
+    get_base_polymorphic_model.cache_clear()
+    route_to_ancestor.cache_clear()
+    concrete_descendants.cache_clear()
+    _map_queryname_to_class.cache_clear()
