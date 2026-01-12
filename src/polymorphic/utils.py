@@ -128,6 +128,15 @@ def route_to_ancestor(model_class, ancestor_model):
 
 
 @lru_cache(maxsize=None)
+def is_model_loaded(model):
+    try:
+        apps.get_model(model._meta.app_label, model._meta.model_name)
+        return True
+    except LookupError:
+        return False
+
+
+@lru_cache(maxsize=None)
 def concrete_descendants(model_class):
     """
     Get a list of all concrete (non-abstract, non-proxy) descendant model classes in
@@ -142,7 +151,8 @@ def concrete_descendants(model_class):
         for sub_cls in model.__subclasses__():
             # Add concrete models in pre-order (parent before children)
             if not sub_cls._meta.abstract and not sub_cls._meta.proxy:
-                result.append(sub_cls)
+                if is_model_loaded(sub_cls):
+                    result.append(sub_cls)
 
             # Always recurse to find descendants through abstract and proxy models
             add_concrete_descendants(sub_cls, result)
