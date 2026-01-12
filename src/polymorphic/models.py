@@ -12,7 +12,7 @@ from django.utils.functional import classproperty
 from .base import PolymorphicModelBase
 from .managers import PolymorphicManager
 from .query_translate import translate_polymorphic_Q_object
-from .utils import get_base_polymorphic_model
+from .utils import get_base_polymorphic_model, lazy_ctype
 
 ###################################################################################
 # PolymorphicModel
@@ -238,11 +238,9 @@ class PolymorphicModel(models.Model, metaclass=PolymorphicModelBase):
                 # content types for all parent inheritance paths.
                 ret = super().delete(using=using, keep_parents=keep_parents)
                 for parent_model, pk in parent_updates:
-                    parent_model.objects.non_polymorphic().filter(pk=pk).update(
-                        polymorphic_ctype=ContentType.objects.db_manager(
-                            using=using
-                        ).get_for_model(parent_model, for_concrete_model=False)
-                    )
+                    parent_model.objects.db_manager(using=using).non_polymorphic().filter(
+                        pk=pk
+                    ).update(polymorphic_ctype=lazy_ctype(parent_model, using=using))
                 return ret
         return super().delete(using=using, keep_parents=keep_parents)
 

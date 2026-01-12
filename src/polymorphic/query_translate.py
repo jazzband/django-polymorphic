@@ -4,14 +4,18 @@ PolymorphicQuerySet support functions
 
 import copy
 from collections import deque
+from functools import reduce
+from operator import or_
 
 from django.apps import apps
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import FieldDoesNotExist, FieldError
 from django.db import models
-from django.db.models import Q
+from django.db.models import Q, Subquery
 from django.db.models.fields.related import ForeignObjectRel, RelatedField
 from django.db.utils import DEFAULT_DB_ALIAS
+
+from .utils import _lazy_ctype
 
 # These functions implement the additional filter- and Q-object functionality.
 # They form a kind of small framework for easily adding more
@@ -279,19 +283,31 @@ def create_instanceof_q(modellist, not_instance_of=False, using=DEFAULT_DB_ALIAS
                 "models or a single (polymorphic) model"
             )
 
-    contenttype_ids = _get_mro_content_type_ids(modellist, using)
-    q = Q(polymorphic_ctype__in=sorted(contenttype_ids))
+    lazy_cts, ct_ids = _get_mro_content_type_ids(modellist, using)
+    q = Q()
+    if lazy_cts:
+        q |= Q(
+            polymorphic_ctype__in=Subquery(
+                # no need to pass using here
+                ContentType.objects.filter(reduce(or_, lazy_cts)).values("pk")
+            )
+        )
+    if ct_ids:
+        q |= Q(polymorphic_ctype__in=ct_ids)
     if not_instance_of:
         q = ~q
     return q
 
 
 def _get_mro_content_type_ids(models, using):
-    contenttype_ids = set()
+    lazy = []
+    ids = []
     for model in models:
-        ct = ContentType.objects.db_manager(using).get_for_model(model, for_concrete_model=False)
-        contenttype_ids.add(ct.pk)
+        cid = _lazy_ctype(model, using=using)
+        ids.append(cid.pk) if isinstance(cid, ContentType) else lazy.append(cid)
         subclasses = model.__subclasses__()
         if subclasses:
-            contenttype_ids.update(_get_mro_content_type_ids(subclasses, using))
-    return contenttype_ids
+            lazy_sub, ids_sub = _get_mro_content_type_ids(subclasses, using)
+            lazy.extend(lazy_sub)
+            ids.extend(ids_sub)
+    return lazy, ids
