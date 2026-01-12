@@ -1,6 +1,7 @@
 from django.core.checks import Error, run_checks
 from django.test.utils import override_settings
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, TestCase
+from django.core.exceptions import FieldError
 
 
 @override_settings(
@@ -57,3 +58,17 @@ class TestErrata(SimpleTestCase):
                 )
             else:
                 assert False, f"Expected TypeError when initializing PolymorphicGuard with {value}"
+
+
+class TestFilterErrata(TestCase):
+    def test_invalid_field_lookup_raises_field_error(self):
+        from polymorphic.tests.models import Participant
+
+        with self.assertRaises(FieldError):
+            Participant.objects.get(tests__Model2C___field3="userprofile1")
+
+        with self.assertRaises(FieldError):
+            Participant.objects.get(notreal__Model2C___field3="userprofile1")
+
+        with self.assertRaises(FieldError):
+            Participant.objects.get(tests__NotReal___field3="userprofile1")

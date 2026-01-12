@@ -8,7 +8,7 @@ from operator import or_
 
 from django.apps import apps
 from django.contrib.contenttypes.models import ContentType
-from django.core.exceptions import FieldDoesNotExist
+from django.core.exceptions import FieldDoesNotExist, FieldError
 from django.db import models
 from django.db.models import Q, Subquery
 from django.db.models.fields.related import ForeignObjectRel, RelatedField
@@ -139,13 +139,9 @@ def translate_polymorphic_field_path(queryset_model, field_path):
     into modela__modelb__modelc__field3.
     Returns: translated path (unchanged, if no translation needed)
     """
-    if not isinstance(field_path, str):
-        raise ValueError(f"Expected field name as string: {field_path}")
-
     classname, sep, pure_field_path = field_path.partition("___")
-    if not sep:
+    if not sep or not classname:
         return field_path
-    assert classname, f"PolymorphicModel: {field_path}: bad field specification"
 
     negated = False
     if classname[0] == "-":
@@ -155,17 +151,14 @@ def translate_polymorphic_field_path(queryset_model, field_path):
     if "__" in classname:
         # the user has app label prepended to class name via __ => use Django's get_model function
         appname, sep, classname = classname.partition("__")
-        model = apps.get_model(appname, classname)
-        assert model, f"PolymorphicModel: model {model.__name__} (in app {appname}) not found!"
+        try:
+            model = apps.get_model(appname, classname)
+        except LookupError as le:
+            raise FieldError(f"Model {appname}.{classname} does not exist") from le
         if not issubclass(model, queryset_model):
-            e = (
-                'PolymorphicModel: queryset filter error: "'
-                + model.__name__
-                + '" is not derived from "'
-                + queryset_model.__name__
-                + '"'
+            raise FieldError(
+                f"{model._meta.label} is not derived from {queryset_model._meta.label}"
             )
-            raise AssertionError(e)
 
     else:
         # the user has only given us the class name via ___
