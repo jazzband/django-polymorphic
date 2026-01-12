@@ -634,3 +634,29 @@ class PrepareForCopyTests(TransactionTestCase):
         assert PurpleHeadDuck.objects.count() == 2
         assert Duck.objects.filter(name="daffy").count() == 3
         assert set(Duck.objects.all()) == {daffy1, daffy2, daffy3}
+
+    def test_model_registration_and_utils_caches(self):
+        """
+        Test that a polymorphic model that is not registered with Django does not
+        appear in our subclass trees.
+        """
+        from django.apps import apps
+        from ..utils import concrete_descendants
+
+        # warm up the cache
+        assert concrete_descendants(Model2C)
+
+        class UnregisteredModel(Model2C):
+            pass
+
+        # dynamic registration works (model meta class invalidates the\
+        # concrete_descendants cache)
+        assert UnregisteredModel in concrete_descendants(Model2C)
+
+        # this is a weird thing to do - we just do it for coverage
+        apps.get_app_config(UnregisteredModel._meta.app_label).models.pop(
+            UnregisteredModel._meta.model_name
+        )
+
+        concrete_descendants.cache_clear()
+        assert UnregisteredModel not in concrete_descendants(Model2C)
