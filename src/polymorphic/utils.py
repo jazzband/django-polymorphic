@@ -137,7 +137,7 @@ def is_model_loaded(model):
 
 
 @lru_cache(maxsize=None)
-def concrete_descendants(model_class):
+def concrete_descendants(model_class, include_proxy=False):
     """
     Get a list of all concrete (non-abstract, non-proxy) descendant model classes in
     tree order with leaf descendants last. Results are cached.
@@ -150,7 +150,7 @@ def concrete_descendants(model_class):
         """Add concrete descendants in tree order (ancestors before descendants)."""
         for sub_cls in model.__subclasses__():
             # Add concrete models in pre-order (parent before children)
-            if not sub_cls._meta.abstract and not sub_cls._meta.proxy:
+            if not sub_cls._meta.abstract and (include_proxy or not sub_cls._meta.proxy):
                 if is_model_loaded(sub_cls):
                     result.append(sub_cls)
 
