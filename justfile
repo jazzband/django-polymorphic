@@ -99,10 +99,12 @@ build: build-docs-html
     uv build
 
 # regenerate test migrations using the lowest version of Django
-make-test-migrations:
+remake-test-migrations:
     - rm src/polymorphic/tests/migrations/00*.py
     - rm src/polymorphic/tests/deletion/migrations/00*.py
+    - rm src/polymorphic/tests/other/migrations/00*.py
     - rm src/polymorphic/tests/examples/**/migrations/00*.py
+    - rm src/polymorphic/tests/examples/integrations/**/migrations/00*.py
     uv run --isolated --resolution lowest-direct --script ./manage.py makemigrations
 
 # open the html documentation
@@ -199,9 +201,23 @@ test-db DB_CLIENT="dev" *TESTS: install-playwright
     uv sync --group {{ DB_CLIENT }}
     @just run pytest {{ TESTS }} --cov 
 
-# debug a test - (break at test start/run in headed mode)
+# run django-reversion integration tests
+test-reversion *TESTS: install-playwright
+    uv sync --group reversion
+    @just run pytest -m integration src/polymorphic/tests/examples/integrations/reversion {{ TESTS }}
+
+# run all third party integration tests
+test-integrations DB_CLIENT="dev": install-playwright
+    # Integration Tests
+    uv sync --group {{ DB_CLIENT }} --group reversion
+    @just run pytest -m integration
+
+# debug an test
 debug-test *TESTS:
-    @just run pytest -s --trace --pdbcls=IPython.terminal.debugger:Pdb --headed {{ TESTS }}
+    @just run pytest \
+      -o addopts='-ra -q' \
+      -s --trace --pdbcls=IPython.terminal.debugger:Pdb \
+      --headed {{ TESTS }}
 
 # run the pre-commit checks
 precommit:

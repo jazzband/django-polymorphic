@@ -11,13 +11,12 @@ API Documentation
 .. toctree::
 
    polymorphic.admin
-   polymorphic.contrib.extra_views
-   polymorphic.contrib.guardian
+   polymorphic.contrib/index
    polymorphic.formsets
    polymorphic.managers
    polymorphic.models
    polymorphic.deletion
    polymorphic.query
    polymorphic.showfields
-   polymorphic.templatetags
+   polymorphic.templatetags/index
    polymorphic.utils
