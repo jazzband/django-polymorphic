@@ -1,7 +1,12 @@
 Changelog
 =========
 
-v4.10.0 (2026-XX-XX)
+v4.10.1 (2026-01-13)
+--------------------
+
+* Fixed `Django-polymorphic does not update the PolymorphicSerializer's validated_data after running the child's validation method <https://github.com/jazzband/django-polymorphic/pull/378>`_
+
+v4.10.0 (2026-01-13)
 --------------------
 
 This release is primarily an integrations release. Many tests were added for the documented

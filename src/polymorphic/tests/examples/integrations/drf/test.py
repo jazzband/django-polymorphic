@@ -3,6 +3,7 @@ from django.core.exceptions import ImproperlyConfigured
 import pytest
 
 try:
+    from rest_framework import serializers
     from rest_framework.test import APIClient
 
     from polymorphic.contrib.drf.serializers import PolymorphicSerializer
@@ -301,6 +302,71 @@ class TestPolymorphicSerializer:
 
         assert "resourcetype" in excinfo.value.detail
         assert "Invalid resourcetype" in str(excinfo.value.detail["resourcetype"])
+
+    def test_validate_method_modifications_are_preserved(self):
+        """Test that modifications made in child serializer's validate() method are preserved."""
+        # Track whether the extra_field was present during create
+        created_with_extra_field = []
+
+        # Create a custom serializer that adds a field in validate()
+        class CustomBlogOneSerializer(BlogOneSerializer):
+            extra_field = serializers.CharField(required=False, allow_null=True)
+
+            class Meta(BlogOneSerializer.Meta):
+                fields = BlogOneSerializer.Meta.fields + ("extra_field",)
+
+            def validate(self, attrs):
+                attrs = super().validate(attrs)
+                # Simulate adding data in validate(), like adding the current user
+                attrs["extra_field"] = "added_in_validate"
+                return attrs
+
+            def create(self, validated_data):
+                # Record whether extra_field was in validated_data
+                created_with_extra_field.append("extra_field" in validated_data)
+                # Remove extra_field before creating the model instance
+                validated_data.pop("extra_field", None)
+                return super().create(validated_data)
+
+        class CustomBlogPolymorphicSerializer(PolymorphicSerializer):
+            model_serializer_mapping = {
+                BlogBase: BlogBaseSerializer,
+                BlogOne: CustomBlogOneSerializer,
+            }
+
+        # Create data without the extra_field
+        data = {
+            "name": "test",
+            "slug": "test-slug",
+            "info": "test-info",
+            "resourcetype": "BlogOne",
+        }
+
+        serializer = CustomBlogPolymorphicSerializer(data=data)
+        assert serializer.is_valid(), f"Validation errors: {serializer.errors}"
+
+        # Verify that the extra_field added in validate() is in validated_data
+        assert "extra_field" in serializer.validated_data
+        assert serializer.validated_data["extra_field"] == "added_in_validate"
+
+        # Verify that resource_type field is still preserved in parent's validated_data
+        assert "resourcetype" in serializer.validated_data
+        assert serializer.validated_data["resourcetype"] == "BlogOne"
+
+        # Save and verify that the field was present during create
+        # Note: This would fail before the fix because the parent's _validated_data
+        # wasn't updated with the child's _validated_data after calling child.is_valid()
+        instance = serializer.save()
+
+        # Verify that extra_field was indeed present when create() was called
+        assert created_with_extra_field == [True], (
+            "extra_field should have been in validated_data when create() was called"
+        )
+
+        # Verify the instance was created successfully
+        assert instance.name == "test"
+        assert instance.slug == "test-slug"
+        assert instance.info == "test-info"
 
 
 class TestProjectViewSet:
