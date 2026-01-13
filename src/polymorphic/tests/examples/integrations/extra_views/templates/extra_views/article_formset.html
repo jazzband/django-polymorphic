@@ -1,0 +1,21 @@
+{% load extra_views_tags %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Article Formset</title>
+</head>
+<body>
+    <h1>Article Formset</h1>
+    <form method="post">
+        {% csrf_token %}
+        {{ formset.management_form }}
+        {% for form in formset %}
+            <div class="formset-form">
+                <h3>{{ form.instance|model_name }}</h3>
+                {{ form.as_p }}
+            </div>
+        {% endfor %}
+        <button type="submit">Save</button>
+    </form>
+</body>
+</html>

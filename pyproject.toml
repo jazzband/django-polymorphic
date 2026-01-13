@@ -124,8 +124,12 @@ python_files = "test*.py"
 python_classes = "Test*"
 python_functions = "test_*"
 norecursedirs = "*.egg .eggs dist build docs .tox .git __pycache__"
+markers = [
+  "integration: tests under examples/integrations (opt-in)",
+]
 addopts = [
     "--strict-markers",
+   "-m", "not integration",
 ]
 
 [tool.coverage.run]
@@ -159,7 +163,7 @@ dev = [
     "tox-uv>=1.13.1",
 ]
 docs = [
-    "django-extra-views>=0.15.0",
+    "django-extra-views>=0.16.0",
     "doc8>=1.1.2",
     "furo>=2025.7.19",
     "readme-renderer[md]>=43.0",
@@ -182,4 +186,10 @@ cx_oracle = [
 ]
 oracledb = [
     "oracledb>=2.3.0",
+]
+reversion = [
+    "django-reversion>=6.1.0",
+]
+extra-views = [
+    "django-extra-views>=0.16.0",
 ]

@@ -1,6 +1,7 @@
 from django.core.checks import Error, run_checks
 from django.test.utils import override_settings
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, TestCase
+from django.core.exceptions import FieldError
 
 
 @override_settings(
@@ -11,26 +12,34 @@ from django.test import SimpleTestCase
     ]
 )
 class TestErrata(SimpleTestCase):
-    def test_reserved_field_name_triggers_system_check(self):
+    def test_system_checks(self):
         """Test that using reserved field names triggers polymorphic.E001 system check."""
 
         # Run the check function directly on the model
         errors = run_checks()
 
-        assert len(errors) == 2, f"Expected 2 system check errors but got {len(errors)}: {errors}"
+        assert len(errors) == 5, f"Expected 12 system check errors but got {len(errors)}: {errors}"
 
-        # Verify all errors are the correct type
-        assert all(isinstance(err, Error) and err.id == "polymorphic.E001" for err in errors), (
-            f"Expected all errors to have ID 'polymorphic.E001' but got: {errors}"
+        assert errors[0].id == "polymorphic.E001"
+        assert errors[0].msg == "Field 'instance_of' on model 'BadModel' is a reserved name."
+        assert errors[1].id == "polymorphic.E001"
+        assert errors[1].msg == "Field 'not_instance_of' on model 'BadModel' is a reserved name."
+
+        assert errors[2].id == "polymorphic.E002"
+        assert (
+            errors[2].msg
+            == "The migration manager 'errata.BadMigrationManager.objects' is polymorphic."
         )
 
-        # Verify the error messages mention the correct field names
-        error_messages = [err.msg for err in errors]
-        assert any("instance_of" in msg for msg in error_messages), (
-            f"Expected error for 'instance_of' field but got: {error_messages}"
+        assert errors[3].id == "polymorphic.W001"
+        assert (
+            errors[3].msg == "The default manager errata.BadManager.objects' is not polymorphic."
         )
-        assert any("not_instance_of" in msg for msg in error_messages), (
-            f"Expected error for 'not_instance_of' field but got: {error_messages}"
+
+        assert errors[4].id == "polymorphic.W002"
+        assert (
+            errors[4].msg
+            == "The default manager errata.BadManager.objects' is not using a PolymorphicQuerySet."
         )
 
     def test_polymorphic_guard_requires_callable(self):
@@ -49,3 +58,17 @@ class TestErrata(SimpleTestCase):
                 )
             else:
                 assert False, f"Expected TypeError when initializing PolymorphicGuard with {value}"
+
+
+class TestFilterErrata(TestCase):
+    def test_invalid_field_lookup_raises_field_error(self):
+        from polymorphic.tests.models import Participant
+
+        with self.assertRaises(FieldError):
+            Participant.objects.get(tests__Model2C___field3="userprofile1")
+
+        with self.assertRaises(FieldError):
+            Participant.objects.get(notreal__Model2C___field3="userprofile1")
+
+        with self.assertRaises(FieldError):
+            Participant.objects.get(tests__NotReal___field3="userprofile1")

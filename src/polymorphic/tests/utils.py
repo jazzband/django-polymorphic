@@ -14,6 +14,7 @@ from django.apps import apps
 
 from playwright.sync_api import sync_playwright, expect
 from polymorphic import tests
+from polymorphic.tests.models import Model2C
 
 
 DSN_RE = re.compile(r"^(?P<host>[^:/]+)(:(?P<port>\d+))?/(?P<service>.+)$")

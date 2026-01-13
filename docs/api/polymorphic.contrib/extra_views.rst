@@ -1,5 +1,5 @@
-polymorphic.contrib.extra_views
-===============================
+extra_views
+===========
 
 .. automodule:: polymorphic.contrib.extra_views
     :members:
