@@ -12,7 +12,14 @@ try:
         BlogPolymorphicSerializer,
     )
 
-    from .models import BlogBase, BlogOne, BlogTwo, Project, ArtProject, ResearchProject
+    from .models import (
+        BlogBase,
+        BlogOne,
+        BlogTwo,
+        Project,
+        ArtProject,
+        ResearchProject,
+    )
 except ImportError:
     pytest.skip("djangorestframework is not installed", allow_module_level=True)
 
@@ -439,3 +446,139 @@ class TestProjectViewSet:
         data = {"topic": "Test", "resourcetype": "InvalidType"}
         response = client.post("/examples/integrations/drf/projects/", data, format="json")
         assert response.status_code == 400
+
+
+class TestDjangoFiltersViewSet:
+    """Test django-filter integration with polymorphic models (issue #520)."""
+
+    @pytest.fixture
+    def client(self):
+        return APIClient()
+
+    @pytest.fixture
+    def user(self, django_user_model):
+        return django_user_model.objects.create_user(username="testuser", password="testpass")
+
+    @pytest.fixture
+    def user_annotator(self, user):
+        from .models import UserAnnotator
+
+        return UserAnnotator.objects.create(user=user)
+
+    @pytest.fixture
+    def ai_annotator_gpt4(self):
+        from .models import AiModelAnnotator
+
+        return AiModelAnnotator.objects.create(ai_model="gpt-4", version="1.0")
+
+    @pytest.fixture
+    def ai_annotator_claude(self):
+        from .models import AiModelAnnotator
+
+        return AiModelAnnotator.objects.create(ai_model="claude-3", version="2.0")
+
+    @pytest.fixture
+    def data_by_user(self, user_annotator):
+        from .models import Data
+
+        return Data.objects.create(annotator=user_annotator)
+
+    @pytest.fixture
+    def data_by_gpt4(self, ai_annotator_gpt4):
+        from .models import Data
+
+        return Data.objects.create(annotator=ai_annotator_gpt4)
+
+    @pytest.fixture
+    def data_by_claude(self, ai_annotator_claude):
+        from .models import Data
+
+        return Data.objects.create(annotator=ai_annotator_claude)
+
+    def test_list_all_annotations(self, client, data_by_user, data_by_gpt4, data_by_claude):
+        """Test listing all annotation data without filters."""
+        response = client.get("/examples/integrations/drf/annotations/")
+        assert response.status_code == 200
+        assert len(response.data) == 3
+
+    def test_filter_by_annotator(self, client, data_by_user, data_by_gpt4, ai_annotator_gpt4):
+        """Test filtering by annotator ID."""
+        response = client.get(
+            f"/examples/integrations/drf/annotations/?annotator={ai_annotator_gpt4.pk}"
+        )
+        assert response.status_code == 200
+        assert len(response.data) == 1
+        assert response.data[0]["id"] == data_by_gpt4.pk
+
+    def test_filter_by_ai_model(self, client, data_by_user, data_by_gpt4, data_by_claude):
+        """Test filtering by annotator__ai_model field (issue #520)."""
+        # This is the key test - filtering by a field on the polymorphic child model
+        response = client.get("/examples/integrations/drf/annotations/?annotator__ai_model=gpt-4")
+        assert response.status_code == 200
+        assert len(response.data) == 1
+        assert response.data[0]["id"] == data_by_gpt4.pk
+
+    def test_filter_by_different_ai_model(
+        self, client, data_by_user, data_by_gpt4, data_by_claude
+    ):
+        """Test filtering by a different AI model."""
+        response = client.get(
+            "/examples/integrations/drf/annotations/?annotator__ai_model=claude-3"
+        )
+        assert response.status_code == 200
+        assert len(response.data) == 1
+        assert response.data[0]["id"] == data_by_claude.pk
+
+    def test_filter_by_nonexistent_ai_model(
+        self, client, data_by_user, data_by_gpt4, data_by_claude
+    ):
+        """Test filtering by an AI model that doesn't exist."""
+        response = client.get(
+            "/examples/integrations/drf/annotations/?annotator__ai_model=nonexistent"
+        )
+        assert response.status_code == 200
+        assert len(response.data) == 0
+
+    def test_filter_excludes_non_ai_annotators(
+        self, client, data_by_user, data_by_gpt4, data_by_claude
+    ):
+        """Test that filtering by ai_model excludes UserAnnotator instances."""
+        # When filtering by annotator__ai_model, only AiModelAnnotator results should be returned
+        # UserAnnotator doesn't have ai_model field, so data_by_user should not appear
+        response = client.get("/examples/integrations/drf/annotations/?annotator__ai_model=gpt-4")
+        assert response.status_code == 200
+        assert len(response.data) == 1
+        # Verify the user-annotated data is not in results
+        assert all(item["id"] != data_by_user.pk for item in response.data)
+
+    def test_retrieve_annotation(self, client, data_by_gpt4):
+        """Test retrieving a single annotation."""
+        response = client.get(f"/examples/integrations/drf/annotations/{data_by_gpt4.pk}/")
+        assert response.status_code == 200
+        assert response.data["id"] == data_by_gpt4.pk
+
+    def test_create_annotation_with_user_annotator(self, client, user_annotator):
+        """Test creating annotation data with a UserAnnotator."""
+        data = {"annotator": user_annotator.pk}
+        response = client.post("/examples/integrations/drf/annotations/", data, format="json")
+        assert response.status_code == 201
+        assert response.data["annotator"] == user_annotator.pk
+
+        from .models import Data
+
+        assert Data.objects.count() == 1
+        created = Data.objects.first()
+        assert created.annotator.pk == user_annotator.pk
+
+    def test_create_annotation_with_ai_annotator(self, client, ai_annotator_gpt4):
+        """Test creating annotation data with an AiModelAnnotator."""
+        data = {"annotator": ai_annotator_gpt4.pk}
+        response = client.post("/examples/integrations/drf/annotations/", data, format="json")
+        assert response.status_code == 201
+        assert response.data["annotator"] == ai_annotator_gpt4.pk
+
+        from .models import Data
+
+        assert Data.objects.count() == 1
+        created = Data.objects.first()
+        assert created.annotator.pk == ai_annotator_gpt4.pk
