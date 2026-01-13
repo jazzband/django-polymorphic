@@ -1,17 +1,37 @@
 Changelog
 =========
 
-.. v4.10.0 (2026-XX-XX)
-.. --------------------
+v4.10.0 (2026-XX-XX)
+--------------------
 
-.. * Implemented `Bring django-rest-polymorphic into this package. <https://github.com/jazzband/django-polymorphic/issues/655>`_
+This release is primarily an integrations release. Many tests were added for the documented
+intergrations and a few bugs were fixed. Some warnings were converted to system checks. The two most
+notable changes are:
 
-    ..  :pypi:`django-rest-polymorphic` is now part of :pypi:`django-polymorphic`. You must update
-    ..  your import paths from ``rest_polymorphic.serializers`` to
-    .. ``polymorphic.contrib.drf.serializers``.
+1. The :pypi:`django-rest-polymorphic` package is now part of :pypi:`django-polymorphic`.
+2. In queries that need content types that are not cached those fetches are `now embedded as
+   subqueries <https://github.com/jazzband/django-polymorphic/pull/828>`_. This reduces the total
+   number of queries needed but most importantly it eliminates `a class of errors 
+   <https://github.com/jazzband/django-polymorphic/issues/383>`_ that could happen if
+   Manager/QuerySet methods that should not but do generate database queries are called before
+   models are loaded (e.g. get_queryset()).
 
-.. * Implemented `System check error for PolymorphicManager marked as use_in_migrations <https://github.com/jazzband/django-polymorphic/issues/820>`_
-.. * Implemented `Manager warnings should be system checks instead. <https://github.com/jazzband/django-polymorphic/issues/819>`_
+Issues
+~~~~~~
+
+* Implemented `Bring django-rest-polymorphic into this package. <https://github.com/jazzband/django-polymorphic/issues/655>`_
+
+  .. tip::
+
+     :pypi:`django-rest-polymorphic` is now part of :pypi:`django-polymorphic`. You must update
+     your import paths from ``rest_polymorphic.serializers`` to
+     :mod:`polymorphic.contrib.drf.serializers`.
+
+* Fixed `Guardian contenttype integraton hook is extremely brittle <https://github.com/jazzband/django-polymorphic/issues/836>`_
+* Fixed `Models defined after load break inheritance utility caches <https://github.com/jazzband/django-polymorphic/issues/827>`_
+* Fixed `get_queryset() results in db queries for proxy models <https://github.com/jazzband/django-polymorphic/issues/824>`_
+* Implemented `System check error for PolymorphicManager marked as use_in_migrations <https://github.com/jazzband/django-polymorphic/issues/820>`_
+* Implemented `Manager warnings should be system checks instead. <https://github.com/jazzband/django-polymorphic/issues/819>`_
 
 v4.9.0 (2026-01-09)
 -------------------
