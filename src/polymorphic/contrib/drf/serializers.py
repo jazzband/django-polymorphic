@@ -93,6 +93,10 @@ class PolymorphicSerializer(serializers.Serializer):
             child_valid = False
         else:
             child_valid = serializer.is_valid(*args, **kwargs)
+            # Update parent's validated_data with child's validated_data
+            # to preserve any modifications made in child's validate() method
+            if child_valid and hasattr(self, "_validated_data"):
+                self._validated_data.update(serializer._validated_data)
             self._errors.update(serializer.errors)
         return valid and child_valid
 
