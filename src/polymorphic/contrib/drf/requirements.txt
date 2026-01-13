@@ -1,0 +1,4 @@
+-e .
+-r requirements/codestyle.txt
+-r requirements/packaging.txt
+-r requirements/testing.txt
