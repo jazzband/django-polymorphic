@@ -33,13 +33,16 @@ django-guardian
 
 .. versionadded:: 1.0.2
 
-You can configure :pypi:`django-guardian` to use the base model for object level permissions.
-Add this option to your settings:
+No special modifications are required to integrate with :pypi:`django-guardian`. However, if you
+would like all object level permissions to be managed at the base model level, rather than have
+unique permissions for each polymorphic subclass, then you can use the helper function
+:func:`polymorphic.contrib.guardian.get_polymorphic_base_content_type` to unify the permissions
+for your entire polymorphic model tree into a single namespace a the base level:
 
 .. code-block:: python
 
     GUARDIAN_GET_CONTENT_TYPE = \
-        'polymorphic.contrib.guardian.get_polymorphic_base_content_type'
+        "polymorphic.contrib.guardian.get_polymorphic_base_content_type"
 
 This option requires :pypi:`django-guardian` >= 1.4.6. Details about how this option works are
 available in the `django-guardian documentation

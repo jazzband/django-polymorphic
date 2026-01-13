@@ -138,6 +138,16 @@ try:
 except ImportError:
     pass
 
+try:
+    import guardian  # noqa: F401
+
+    INSTALLED_APPS.insert(0, "guardian")
+    INSTALLED_APPS.insert(0, "polymorphic.tests.examples.integrations.guardian")
+    GUARDIAN_GET_CONTENT_TYPE = "polymorphic.contrib.guardian.get_polymorphic_base_content_type"
+except ImportError:
+    pass
+
+
 MIDDLEWARE = (
     "django.middleware.common.CommonMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",

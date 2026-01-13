@@ -199,3 +199,6 @@ extra-views = [
 drf = [
     "djangorestframework>=3.16.1",
 ]
+guardian = [
+    "django-guardian>=2.4.0",
+]

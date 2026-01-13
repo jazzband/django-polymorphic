@@ -626,6 +626,20 @@ wheels = [
 ]
 
 [[package]]
+name = "django-guardian"
+version = "3.2.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "django", version = "5.2.10", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
+    { name = "django", version = "6.0.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+    { name = "typing-extensions", marker = "python_full_version < '3.13'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/e2/f9/bcff6a931298b9eb55e1550b55ab964fab747f594ba6d2d81cbe19736c5f/django_guardian-3.2.0.tar.gz", hash = "sha256:9e18ecd2e211b665972690c2d03d27bce0ea4932b5efac24a4bb9d526950a69e", size = 99940, upload-time = "2025-09-16T10:35:53.609Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/2f/23/63a7d868373a73d25c4a5c2dd3cce3aaeb22fbee82560d42b6e93ba01403/django_guardian-3.2.0-py3-none-any.whl", hash = "sha256:0768565a057988a93fc4a1d93649c4a794abfd7473a8408a079cfbf83c559d77", size = 134674, upload-time = "2025-09-16T10:35:51.69Z" },
+]
+
+[[package]]
 name = "django-polymorphic"
 version = "4.9.0"
 source = { editable = "." }
@@ -675,6 +689,9 @@ drf = [
 ]
 extra-views = [
     { name = "django-extra-views" },
+]
+guardian = [
+    { name = "django-guardian" },
 ]
 mysql = [
     { name = "mysqlclient" },
@@ -727,6 +744,7 @@ docs = [
 ]
 drf = [{ name = "djangorestframework", specifier = ">=3.16.1" }]
 extra-views = [{ name = "django-extra-views", specifier = ">=0.16.0" }]
+guardian = [{ name = "django-guardian", specifier = ">=2.4.0" }]
 mysql = [{ name = "mysqlclient", specifier = ">=1.4.0" }]
 oracledb = [{ name = "oracledb", specifier = ">=2.3.0" }]
 psycopg2 = [{ name = "psycopg2", specifier = ">=2.9.10" }]

@@ -214,10 +214,14 @@ test-drf *TESTS:
     uv sync --group drf
     @just run pytest -m integration src/polymorphic/tests/examples/integrations/drf {{ TESTS }}
 
+test-guardian *TESTS:
+    uv sync --group guardian
+    @just run pytest -m integration src/polymorphic/tests/examples/integrations/guardian {{ TESTS }}
+
 # run all third party integration tests
 test-integrations DB_CLIENT="dev": install-playwright
     # Integration Tests
-    uv sync --group {{ DB_CLIENT }} --group reversion --group extra-views --group drf
+    uv sync --group {{ DB_CLIENT }} --group reversion --group extra-views --group drf --group guardian
     @just run pytest -m integration --cov --cov-append
 
 # debug an test
