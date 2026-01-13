@@ -131,10 +131,16 @@ except ImportError:
     pass
 
 try:
+    import django_filters
+
+    INSTALLED_APPS.insert(0, "django_filters")
+except ImportError:
+    pass
+
+try:
     import rest_framework  # noqa: F401
 
     INSTALLED_APPS.insert(0, "rest_framework")
-    INSTALLED_APPS.insert(0, "django_filters")
     INSTALLED_APPS.insert(0, "polymorphic.tests.examples.integrations.drf")
 except ImportError:
     pass
