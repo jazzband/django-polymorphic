@@ -197,6 +197,7 @@ extra-views = [
     "django-extra-views>=0.16.0",
 ]
 drf = [
+    "django-filter>=24.0",
     "djangorestframework>=3.16.1",
 ]
 guardian = [

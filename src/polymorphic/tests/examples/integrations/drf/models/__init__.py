@@ -4,6 +4,12 @@ from .example_models import (
     ArtProject,
     ResearchProject,
 )
+from .filters import (
+    Annotator,
+    UserAnnotator,
+    AiModelAnnotator,
+    Data,
+)
 
 __all__ = [
     "BlogBase",
@@ -13,4 +19,8 @@ __all__ = [
     "Project",
     "ArtProject",
     "ResearchProject",
+    "Annotator",
+    "UserAnnotator",
+    "AiModelAnnotator",
+    "Data",
 ]
