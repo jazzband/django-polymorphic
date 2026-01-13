@@ -122,6 +122,14 @@ try:
 except ImportError:
     pass
 
+# Add extra_views if installed
+try:
+    import extra_views  # noqa: F401
+
+    INSTALLED_APPS.insert(0, "polymorphic.tests.examples.integrations.extra_views")
+except ImportError:
+    pass
+
 
 MIDDLEWARE = (
     "django.middleware.common.CommonMiddleware",
