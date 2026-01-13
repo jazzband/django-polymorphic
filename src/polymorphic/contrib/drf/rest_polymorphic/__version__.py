@@ -1,7 +1,0 @@
-__version__ = '0.1.10'
-__title__ = 'django-rest-polymorphic'
-__description__ = 'Polymorphic serializers for Django REST Framework.'
-__url__ = 'https://github.com/denisorehovsky/django-rest-polymorphic'
-__author__ = 'Denis Orehovsky'
-__author_email__ = 'denis.orehovsky@gmail.com'
-__license__ = 'MIT License'

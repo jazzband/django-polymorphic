@@ -20,3 +20,15 @@ try:
     )
 except ImportError:
     pass
+
+try:
+    import rest_framework  # noqa: F401
+
+    urlpatterns.append(
+        path(
+            "examples/integrations/drf/",
+            include("polymorphic.tests.examples.integrations.drf.urls", namespace="drf"),
+        )
+    )
+except ImportError:
+    pass
