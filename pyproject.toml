@@ -160,11 +160,8 @@ dev = [
     "tox>=4.24.1",
     "tox-uv>=1.13.1",
 ]
-reversion = [
-    "django-reversion>=6.1.0",
-]
 docs = [
-    "django-extra-views>=0.15.0",
+    "django-extra-views>=0.16.0",
     "doc8>=1.1.2",
     "furo>=2025.7.19",
     "readme-renderer[md]>=43.0",
@@ -187,4 +184,10 @@ cx_oracle = [
 ]
 oracledb = [
     "oracledb>=2.3.0",
+]
+reversion = [
+    "django-reversion>=6.1.0",
+]
+extra-views = [
+    "django-extra-views>=0.16.0",
 ]

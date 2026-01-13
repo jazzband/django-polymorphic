@@ -206,11 +206,15 @@ test-reversion *TESTS: install-playwright
     uv sync --group reversion
     @just run pytest -m integration src/polymorphic/tests/examples/integrations/reversion {{ TESTS }}
 
+test-extra-views *TESTS:
+    uv sync --group extra-views
+    @just run pytest -m integration src/polymorphic/tests/examples/integrations/extra_views {{ TESTS }}
+
 # run all third party integration tests
 test-integrations DB_CLIENT="dev": install-playwright
     # Integration Tests
-    uv sync --group {{ DB_CLIENT }} --group reversion
-    @just run pytest -m integration
+    uv sync --group {{ DB_CLIENT }} --group reversion --group extra-views
+    @just run pytest -m integration --cov --cov-append
 
 # debug an test
 debug-test *TESTS:

@@ -120,6 +120,47 @@ using the classes from :pypi:`django-extra-views`. See the documentation of:
 * :class:`~polymorphic.contrib.extra_views.PolymorphicInlineFormSetView`
 * :class:`~polymorphic.contrib.extra_views.PolymorphicInlineFormSet`
 
+.. tip::
+
+    The complete working code for this example can be found `in the extra_views integration test
+    <https://github.com/jazzband/django-polymorphic/tree/HEAD/src/polymorphic/tests/examples/integrations/extra_views>`_.
+
+
+Example View
+~~~~~~~~~~~~
+
+Here's how to create a view using :class:`~polymorphic.contrib.extra_views.PolymorphicFormSetView`
+to handle polymorphic formsets:
+
+.. literalinclude:: ../src/polymorphic/tests/examples/integrations/extra_views/views.py
+    :language: python
+    :linenos:
+
+
+URL Configuration
+~~~~~~~~~~~~~~~~~
+
+Configure the URL patterns to route to your formset view:
+
+.. literalinclude:: ../src/polymorphic/tests/examples/integrations/extra_views/urls.py
+    :language: python
+    :linenos:
+
+
+Template
+~~~~~~~~
+
+The template for rendering the formset:
+
+.. literalinclude:: ../src/polymorphic/tests/examples/integrations/extra_views/templates/extra_views/article_formset.html
+    :language: html+django
+
+``model_name`` is a template tag implemented like so:
+
+.. literalinclude:: ../src/polymorphic/tests/examples/integrations/extra_views/templatetags/extra_views_tags.py
+    :language: python
+    :lines: 6-
+
 .. _django-reversion-support:
 
 django-reversion
@@ -135,7 +176,7 @@ do two things:
 
 .. tip::
 
-    The complete working code for this example can be found `here
+    The complete working code for this example can be found `in the reversion integration test
     <https://github.com/jazzband/django-polymorphic/tree/HEAD/src/polymorphic/tests/examples/integrations/reversion>`_.
 
 
