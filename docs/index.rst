@@ -108,7 +108,7 @@ Getting started
    quickstart
    admin
    performance
-   integrations
+   integrations/index
 
 Advanced topics
 ---------------
@@ -122,7 +122,7 @@ Advanced topics
    managers
    deletion
    advanced
-   changelog
+   changelog/index
    api/index
 
 

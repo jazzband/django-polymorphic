@@ -8,7 +8,10 @@ version = "4.9.0"
 description = "Seamless polymorphic inheritance for Django models."
 readme = "README.md"
 license = "BSD-3-Clause"
-license-files = [ "LICENSE" ]
+license-files = [
+    "LICENSE",
+    "src/polymorphic/contrib/drf/LICENSE"
+]
 requires-python = ">=3.10,<4.0"
 repository = "https://github.com/jazzband/django-polymorphic"
 homepage = "https://django-polymorphic.rtfd.io"
@@ -154,6 +157,7 @@ dev = [
     "pytest>=8.3.4",
     "pytest-cov>=5.0.0",
     "pytest-django>=4.10.0",
+    "pytest-mock>=3.15.1",
     "pytest-playwright>=0.7.2",
     "ruff>=0.9.8",
     "tomlkit>=0.13.3",
@@ -162,6 +166,7 @@ dev = [
 ]
 docs = [
     "django-extra-views>=0.16.0",
+    "djangorestframework>=3.16.1",
     "doc8>=1.1.2",
     "furo>=2025.7.19",
     "readme-renderer[md]>=43.0",
@@ -190,4 +195,7 @@ reversion = [
 ]
 extra-views = [
     "django-extra-views>=0.16.0",
+]
+drf = [
+    "djangorestframework>=3.16.1",
 ]

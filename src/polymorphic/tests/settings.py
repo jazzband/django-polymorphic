@@ -130,6 +130,13 @@ try:
 except ImportError:
     pass
 
+try:
+    import rest_framework  # noqa: F401
+
+    INSTALLED_APPS.insert(0, "rest_framework")
+    INSTALLED_APPS.insert(0, "polymorphic.tests.examples.integrations.drf")
+except ImportError:
+    pass
 
 MIDDLEWARE = (
     "django.middleware.common.CommonMiddleware",

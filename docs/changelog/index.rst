@@ -4,6 +4,12 @@ Changelog
 .. v4.10.0 (2026-XX-XX)
 .. --------------------
 
+.. * Implemented `Bring django-rest-polymorphic into this package. <https://github.com/jazzband/django-polymorphic/issues/655>`_
+
+    ..  :pypi:`django-rest-polymorphic` is now part of :pypi:`django-polymorphic`. You must update
+    ..  your import paths from ``rest_polymorphic.serializers`` to
+    .. ``polymorphic.contrib.drf.serializers``.
+
 .. * Implemented `System check error for PolymorphicManager marked as use_in_migrations <https://github.com/jazzband/django-polymorphic/issues/820>`_
 .. * Implemented `Manager warnings should be system checks instead. <https://github.com/jazzband/django-polymorphic/issues/819>`_
 
@@ -936,3 +942,9 @@ This should be the final DB schema now.
 Django's ContentType is now used instead of app-label and model-name
 This is a cleaner and more efficient solution
 Thanks to Ilya Semenov for the suggestion.
+
+
+.. toctree::
+
+   drf
+

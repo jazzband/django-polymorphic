@@ -22,7 +22,7 @@ refer to `our integrations discussion page
 
 For the integration examples on this page, we use the following polymorphic model hierarchy:
 
-.. literalinclude:: ../src/polymorphic/tests/examples/integrations/models.py
+.. literalinclude:: ../../src/polymorphic/tests/examples/integrations/models.py
     :language: python
     :linenos:
 
@@ -44,67 +44,6 @@ Add this option to your settings:
 This option requires :pypi:`django-guardian` >= 1.4.6. Details about how this option works are
 available in the `django-guardian documentation
 <https://django-guardian.readthedocs.io/en/stable/configuration>`_.
-
-
-.. _django-rest-framework-support:
-
-djangorestframework
--------------------
-
-The :pypi:`django-rest-polymorphic` package provides polymorphic serializers that help you integrate
-your polymorphic models with :pypi:`djangorestframework`.
-
-
-Example
-~~~~~~~
-
-Define serializers:
-
-.. code-block:: python
-
-    from rest_framework import serializers
-    from rest_polymorphic.serializers import PolymorphicSerializer
-    from .models import Project, ArtProject, ResearchProject
-
-
-    class ProjectSerializer(serializers.ModelSerializer):
-        class Meta:
-            model = Project
-            fields = ('topic', )
-
-
-    class ArtProjectSerializer(serializers.ModelSerializer):
-        class Meta:
-            model = ArtProject
-            fields = ('topic', 'artist')
-
-
-    class ResearchProjectSerializer(serializers.ModelSerializer):
-        class Meta:
-            model = ResearchProject
-            fields = ('topic', 'supervisor')
-
-
-    class ProjectPolymorphicSerializer(PolymorphicSerializer):
-        model_serializer_mapping = {
-            Project: ProjectSerializer,
-            ArtProject: ArtProjectSerializer,
-            ResearchProject: ResearchProjectSerializer
-        }
-
-Create viewset with serializer_class equals to your polymorphic serializer:
-
-.. code-block:: python
-
-    from rest_framework import viewsets
-    from .models import Project
-    from .serializers import ProjectPolymorphicSerializer
-
-
-    class ProjectViewSet(viewsets.ModelViewSet):
-        queryset = Project.objects.all()
-        serializer_class = ProjectPolymorphicSerializer
-
 
 .. _django-extra-views-support:
 
@@ -132,7 +71,7 @@ Example View
 Here's how to create a view using :class:`~polymorphic.contrib.extra_views.PolymorphicFormSetView`
 to handle polymorphic formsets:
 
-.. literalinclude:: ../src/polymorphic/tests/examples/integrations/extra_views/views.py
+.. literalinclude:: ../../src/polymorphic/tests/examples/integrations/extra_views/views.py
     :language: python
     :linenos:
 
@@ -142,7 +81,7 @@ URL Configuration
 
 Configure the URL patterns to route to your formset view:
 
-.. literalinclude:: ../src/polymorphic/tests/examples/integrations/extra_views/urls.py
+.. literalinclude:: ../../src/polymorphic/tests/examples/integrations/extra_views/urls.py
     :language: python
     :linenos:
 
@@ -152,12 +91,12 @@ Template
 
 The template for rendering the formset:
 
-.. literalinclude:: ../src/polymorphic/tests/examples/integrations/extra_views/templates/extra_views/article_formset.html
+.. literalinclude:: ../../src/polymorphic/tests/examples/integrations/extra_views/templates/extra_views/article_formset.html
     :language: html+django
 
 ``model_name`` is a template tag implemented like so:
 
-.. literalinclude:: ../src/polymorphic/tests/examples/integrations/extra_views/templatetags/extra_views_tags.py
+.. literalinclude:: ../../src/polymorphic/tests/examples/integrations/extra_views/templatetags/extra_views_tags.py
     :language: python
     :lines: 6-
 
@@ -187,7 +126,7 @@ The admin configuration combines :class:`~polymorphic.admin.PolymorphicParentMod
 :class:`~polymorphic.admin.PolymorphicChildModelAdmin` with
 :ref:`VersionAdmin <django-reversion:versionadmin>`:
 
-.. literalinclude:: ../src/polymorphic/tests/examples/integrations/reversion/admin.py
+.. literalinclude:: ../../src/polymorphic/tests/examples/integrations/reversion/admin.py
     :language: python
     :linenos:
 
@@ -199,9 +138,15 @@ Since both :class:`~polymorphic.admin.PolymorphicParentModelAdmin` and
 :ref:`VersionAdmin <django-reversion:versionadmin>`. define ``object_history.html`` template, you
 need to create a custom template that combines both:
 
-.. literalinclude:: ../src/polymorphic/tests/examples/integrations/reversion/templates/admin/polymorphic/object_history.html
+.. literalinclude:: ../../src/polymorphic/tests/examples/integrations/reversion/templates/admin/polymorphic/object_history.html
     :language: html+django
 
 This makes sure both the reversion template is used, and the breadcrumb is corrected for the
 polymorphic model using the :templatetag:`breadcrumb_scope`
 tag.
+
+
+.. toctree::
+
+   djangorestframework
+

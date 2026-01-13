@@ -72,3 +72,16 @@
 * Diederik van der Boor
 * Charlie Denton
 * Jerome Leclanche
+
+
+## django-rest-framework
+
+### Development Lead
+
+* Denis Orehovsky <denis.orehovsky@gmail.com>
+
+### Contributors
+
+* Jeff Hackshaw <jeffrey.hackshaw@gmail.com>
+* TFranzel
+* Ignacio Losiggio <iglosiggio@gmail.com>

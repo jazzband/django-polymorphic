@@ -105,7 +105,7 @@ remake-test-migrations:
     - rm src/polymorphic/tests/other/migrations/00*.py
     - rm src/polymorphic/tests/examples/**/migrations/00*.py
     - rm src/polymorphic/tests/examples/integrations/**/migrations/00*.py
-    uv run --isolated --resolution lowest-direct --script ./manage.py makemigrations
+    uv run --exact --isolated --resolution lowest-direct --group reversion --group extra-views --group drf --script ./manage.py makemigrations
 
 # open the html documentation
 [script]
@@ -193,27 +193,31 @@ test-lock +PACKAGES: _lock-python
 
 # run tests
 test *TESTS: install-playwright
-    @just run pytest {{ TESTS }} --cov 
+    @just run --exact pytest {{ TESTS }} --cov 
 
 test-db DB_CLIENT="dev" *TESTS: install-playwright
     # No Optional Dependency Unit Tests
     # todo clean this up, rerunning a lot of tests
-    uv sync --group {{ DB_CLIENT }}
+    uv sync --exact --group {{ DB_CLIENT }}
     @just run pytest {{ TESTS }} --cov 
 
 # run django-reversion integration tests
 test-reversion *TESTS: install-playwright
-    uv sync --group reversion
+    uv sync --exact --group reversion
     @just run pytest -m integration src/polymorphic/tests/examples/integrations/reversion {{ TESTS }}
 
 test-extra-views *TESTS:
     uv sync --group extra-views
     @just run pytest -m integration src/polymorphic/tests/examples/integrations/extra_views {{ TESTS }}
 
+test-drf *TESTS:
+    uv sync --group drf
+    @just run pytest -m integration src/polymorphic/tests/examples/integrations/drf {{ TESTS }}
+
 # run all third party integration tests
 test-integrations DB_CLIENT="dev": install-playwright
     # Integration Tests
-    uv sync --group {{ DB_CLIENT }} --group reversion --group extra-views
+    uv sync --group {{ DB_CLIENT }} --group reversion --group extra-views --group drf
     @just run pytest -m integration --cov --cov-append
 
 # debug an test

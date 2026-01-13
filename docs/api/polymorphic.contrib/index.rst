@@ -12,3 +12,4 @@ polymorphic.contrib
 
    extra_views
    guardian
+   drf
