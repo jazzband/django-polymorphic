@@ -1,6 +1,11 @@
 Changelog
 =========
 
+v4.10.2 (2026-01-14)
+--------------------
+
+* Fixed `changelog url on pypi is broken <https://github.com/jazzband/django-polymorphic/issues/842>`_
+
 v4.10.1 (2026-01-13)
 --------------------
 

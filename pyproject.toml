@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "django-polymorphic"
-version = "4.10.1"
+version = "4.10.2"
 description = "Seamless polymorphic inheritance for Django models."
 readme = "README.md"
 license = "BSD-3-Clause"
@@ -61,7 +61,7 @@ dependencies = [
 "Homepage" = "https://github.com/jazzband/django-polymorphic"
 "Repository" = "https://github.com/jazzband/django-polymorphic"
 "Issues" = "https://github.com/jazzband/django-polymorphic/issues"
-"Changelog" = "https://django-polymorphic.readthedocs.io/en/stable/changelog.html"
+"Changelog" = "https://django-polymorphic.readthedocs.io/en/stable/changelog/index.html"
 "Code_of_Conduct" = "https://jazzband.co/about/conduct"
 
 [tool.uv]
