@@ -2625,3 +2625,16 @@ class PolymorphicTests(TransactionTestCase):
         )
 
         DisparateKeysGrandChild2.objects.all().delete()
+
+    def test_init_recursion(self):
+        from polymorphic.tests.models import TriggerRecursion
+
+        t1 = TriggerRecursion.objects.create(field1=1, field2=2)
+        t2 = TriggerRecursion.objects.create(field1=3, field2=4)
+
+        assert set(TriggerRecursion.objects.only().all()) == {t1, t2}
+
+        try:
+            assert set(TriggerRecursion.base_manager.only().all()) == {t1, t2}
+        except RecursionError:
+            self.fail("RecursionError raised unexpectedly!")
