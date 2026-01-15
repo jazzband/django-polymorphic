@@ -1,6 +1,11 @@
 Changelog
 =========
 
+v4.9.1 (2026-01-15)
+-------------------
+
+* Fixed `Meta.base_manager_name is not respected <https://github.com/jazzband/django-polymorphic/issues/845>`_
+
 v4.9.0 (2026-01-09)
 -------------------
 

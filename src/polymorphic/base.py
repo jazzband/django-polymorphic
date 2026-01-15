@@ -71,28 +71,28 @@ class PolymorphicModelBase(ModelBase):
     """
 
     def __new__(cls, model_name, bases, attrs, **kwargs):
-        # create new model
+        # skip special setup for PolymorphicModel itself
+        if attrs.pop("_meta_skip", False):
+            return super().__new__(cls, model_name, bases, attrs, **kwargs)
+
+        from .models import PolymorphicModel
+
         new_class = super().__new__(cls, model_name, bases, attrs, **kwargs)
 
-        if new_class._meta.base_manager_name is None:
-            # by default, use polymorphic manager as the base manager
-            new_class._meta.base_manager_name = new_class._meta.default_manager_name or "objects"
-
-        # ensure base_manager is a plain PolymorphicManager by resetting it if it
-        # was not explicitly set and it defaults to a changed default_manager
-        # the base class manager determination logic is complex enough that we prefer
-        # to observe its application and correct rather than preempting it
-        if (
-            type(new_class._meta.default_manager) is not PolymorphicManager
-            and new_class._meta.base_manager is new_class._meta.default_manager
+        if not any(
+            parent._meta.base_manager_name
+            for parent in new_class.mro()
+            if issubclass(parent, PolymorphicModel)
         ):
-            manager = PolymorphicManager()
-            manager.name = "_base_manager"
-            manager.model = new_class
-            manager.auto_created = True
-            new_class._meta.base_manager_name = None
-            # write new manager to property cache
-            new_class._meta.__dict__["base_manager"] = manager
+            if new_class._meta.default_manager.__class__ is PolymorphicManager:
+                new_class._meta.__dict__["base_manager"] = new_class._meta.default_manager
+            else:
+                manager = PolymorphicManager()
+                manager.name = "_base_manager"
+                manager.model = new_class
+                manager.auto_created = True
+                # write new manager to property cache
+                new_class._meta.__dict__["base_manager"] = manager
 
         # validate resulting default manager
         if not new_class._meta.abstract and not new_class._meta.swapped:

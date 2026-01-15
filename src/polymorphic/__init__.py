@@ -19,7 +19,7 @@ r"""
 Seamless Polymorphic Inheritance for Django Models
 """
 
-VERSION = "4.9.0"
+VERSION = "4.9.1"
 
 __title__ = "Django Polymorphic"
 __version__ = VERSION  # version synonym for backwards compatibility

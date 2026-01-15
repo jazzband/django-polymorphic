@@ -473,7 +473,7 @@ class PolymorphicTests(TransactionTestCase):
         assert dict(q.children) == dict(polymorphic_ctype__in=expected)
 
     def test_base_manager(self):
-        from .models import CustomBaseManager
+        from .models import ManagerTest, CustomBaseManager, ManagerTestChild
 
         def base_manager(model):
             return (type(model._base_manager), model._base_manager.model)
@@ -502,6 +502,13 @@ class PolymorphicTests(TransactionTestCase):
         assert type(Model2CFiltered._base_manager) is PolymorphicManager
         assert type(Model2CNamedManagers._base_manager) is CustomBaseManager
         assert type(Model2CNamedDefault._base_manager) is PolymorphicManager
+
+        assert type(ManagerTest._base_manager) is CustomBaseManager
+        assert type(ManagerTest._default_manager) is CustomBaseManager
+        assert ManagerTest._base_manager is ManagerTest._default_manager
+        assert type(ManagerTestChild._base_manager) is CustomBaseManager
+        assert type(ManagerTestChild._default_manager) is CustomBaseManager
+        assert ManagerTestChild._base_manager is ManagerTestChild._default_manager
 
     def test_default_manager(self):
         from .models import FilteredManager, FilteredManager2
