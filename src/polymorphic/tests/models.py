@@ -1065,3 +1065,30 @@ class NatKeyChild(NatKeyParent):
         return self.foo.natural_key()
 
     natural_key.dependencies = ["tests.natkeyparent"]
+
+
+class ManagerTest(PolymorphicModel):
+    name = models.CharField(max_length=30)
+
+    objects = CustomBaseManager()
+
+    class Meta:
+        base_manager_name = "objects"
+
+
+class ManagerTestChild(ManagerTest):
+    pass
+
+
+class PlainManager(models.Manager): ...
+
+
+class ManagerTestPlain(models.Model):
+    objects = PlainManager()
+
+    class Meta:
+        base_manager_name = "objects"
+
+
+class ManagerTestChildPlain(ManagerTestPlain):
+    pass
