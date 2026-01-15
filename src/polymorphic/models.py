@@ -35,6 +35,8 @@ class PolymorphicModel(models.Model, metaclass=PolymorphicModelBase):
     and provides a polymorphic manager as the default manager (and as 'objects').
     """
 
+    _meta_skip = True
+
     # for PolymorphicModelBase, so it can tell which models are polymorphic and which are not (duck typing)
     polymorphic_model_marker = True
 
