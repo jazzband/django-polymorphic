@@ -1492,6 +1492,16 @@ class PolymorphicTests(TransactionTestCase):
 
         obj.refresh_from_db(fields=["field1"])
         assert obj.field1 == "aa1"
+        with self.assertNumQueries(0):
+            assert obj.field2 == "bb2"
+
+        inst = Model2B.objects.only("id").get(pk=obj.pk)
+        with self.assertNumQueries(1):
+            assert inst.field1 == "aa1"
+        with self.assertNumQueries(1):
+            inst.refresh_from_db(fields=["field2"])
+            assert inst.field2 == "bb2"
+            assert inst.field1 == "aa1"
 
     def test_non_polymorphic_parent(self):
         obj = NonPolymorphicParent.objects.create()
@@ -2638,3 +2648,14 @@ class PolymorphicTests(TransactionTestCase):
             assert set(TriggerRecursion.base_manager.only().all()) == {t1, t2}
         except RecursionError:
             self.fail("RecursionError raised unexpectedly!")
+
+    def test_init_recursion_refresh(self):
+        from polymorphic.tests.models import PlainRecursion
+
+        t1 = PlainRecursion.objects.create(field1=1, field2=2)
+
+        t2 = PlainRecursion.objects.only("field1").get(pk=t1.pk)
+        with self.assertNumQueries(1):
+            t2.refresh_from_db(fields=["field2"])
+            assert t2.field2 == 2
+            assert t2.field1 == 1

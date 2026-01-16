@@ -1094,14 +1094,6 @@ class ManagerTestChildPlain(ManagerTestPlain):
     pass
 
 
-class TestManagerReference(models.Model):
-    objects = PlainManager()
-    base_mgr = objects
-
-    class Meta:
-        base_manager_name = "base_mgr"
-
-
 class TriggerRecursionQuerySet(PolymorphicQuerySet):
     def only(self, *fields):
         fields = set(fields)
@@ -1128,5 +1120,15 @@ class TriggerRecursion(PolymorphicModel):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # Accessing field values in __init__ should not trigger recursion
+        _ = self.field1
+        _ = self.field2
+
+
+class PlainRecursion(models.Model):
+    field1 = models.IntegerField(blank=True, null=True)
+    field2 = models.IntegerField(blank=True, null=True)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         _ = self.field1
         _ = self.field2
