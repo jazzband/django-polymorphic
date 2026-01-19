@@ -26,10 +26,11 @@ For the integration examples on this page, we use the following polymorphic mode
     :language: python
     :linenos:
 
+
 .. _django-django-guardian-support:
 
-django-guardian
----------------
+:pypi:`django-guardian`
+-----------------------
 
 .. versionadded:: 1.0.2
 
@@ -50,8 +51,8 @@ available in the `django-guardian documentation
 
 .. _django-extra-views-support:
 
-django-extra-views
-------------------
+:pypi:`django-extra-views`
+--------------------------
 
 .. versionadded:: 1.1
 
@@ -105,8 +106,8 @@ The template for rendering the formset:
 
 .. _django-reversion-support:
 
-django-reversion
-----------------
+:pypi:`django-reversion`
+------------------------
 
 Support for :pypi:`django-reversion` works as expected with polymorphic models. We just need to
 do two things:
@@ -148,8 +149,55 @@ This makes sure both the reversion template is used, and the breadcrumb is corre
 polymorphic model using the :templatetag:`breadcrumb_scope`
 tag.
 
+.. _model-bakery:
+
+:pypi:`model-bakery`
+--------------------
+
+:pypi:`model-bakery` does not work without without special configuration for polymorphic models
+because it overrides the :attr:`~polymorphic.models.PolymorphicModel.polymorphic_ctype` field.
+The best option to make it work in all cases is to `supply a custom Baker
+<https://model-bakery.readthedocs.io/en/latest/how_bakery_behaves.html#customizing-baker>`_ class
+that fills in all fields except :attr:`~polymorphic.models.PolymorphicModel.polymorphic_ctype`:
+
+.. code-block:: python
+    :linenos:
+    :caption: yoursite/tests/baker.py
+
+    from polymorphic.models import PolymorphicModel
+    from model_bakery import baker
+
+
+    class PolymorphicAwareBaker(baker.Baker):
+        """
+        Our custom model baker ignores the polymorphic_ctype field on all polymorphic
+        models - this allows the base class to set it correctly.
+        See https://github.com/python/pythondotorg/issues/2567
+        """
+
+        def get_fields(self):
+            fields = super().get_fields()
+            if issubclass(self.model, PolymorphicModel):
+                fields = {field for field in fields if field.name != "polymorphic_ctype"}
+            return fields
+
+
+Then in your test settings file:
+
+.. code-block:: python
+
+    BAKER_CUSTOM_CLASS = "yoursite.tests.baker.PolymorphicAwareBaker"
+
+You may also simply pass the correct :class:`~django.contrib.contenttypes.models.ContentType`
+instance to the :attr:`~polymorphic.models.PolymorphicModel.polymorphic_ctype` field when creating
+polymorphic model instances with ``make()``
+
+
+Other Integrations
+------------------
 
 .. toctree::
+   :maxdepth: 1
+   :titlesonly:
 
-   djangorestframework
-
+   drf

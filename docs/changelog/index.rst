@@ -1,6 +1,11 @@
 Changelog
 =========
 
+v4.10.4 (2026-01-19)
+--------------------
+
+* Documented `model-bakery integration and test considerations <https://github.com/jazzband/django-polymorphic/issues/849>`_
+
 v4.9.1, v4.10.3 (2026-01-15)
 ----------------------------
 
