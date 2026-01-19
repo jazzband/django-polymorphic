@@ -8,13 +8,25 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.test import TestCase
 
+from polymorphic.formsets.generic import (
+    GenericPolymorphicFormSetChild,
+    generic_polymorphic_inlineformset_factory,
+)
 from polymorphic.formsets.models import (
     PolymorphicFormSetChild,
     UnsupportedChildType,
     polymorphic_inlineformset_factory,
     polymorphic_modelformset_factory,
 )
-from polymorphic.tests.models import Model2A, Model2B, Model2C
+from polymorphic.tests.models import (
+    GenericFKParent,
+    Model2A,
+    Model2B,
+    Model2C,
+    PolymorphicTagA,
+    PolymorphicTagB,
+    PolymorphicTagBase,
+)
 
 
 class PolymorphicFormSetChildTest(TestCase):
@@ -303,3 +315,335 @@ class PolymorphicInlineFormSetTest(TestCase):
         formset = InlineFormSet(instance=parent)
 
         assert "field1" not in formset.forms[0].fields
+
+
+class GenericPolymorphicFormSetChildTest(TestCase):
+    """Test GenericPolymorphicFormSetChild configuration"""
+
+    def test_content_type_property(self):
+        """ContentType is cached for generic child model"""
+        child = GenericPolymorphicFormSetChild(model=PolymorphicTagA)
+        ct = child.content_type
+
+        assert ct.model_class() == PolymorphicTagA
+        assert child.content_type is ct  # Verify caching
+
+    def test_ct_field_fk_field_defaults(self):
+        """Default ct_field and fk_field are 'content_type' and 'object_id'"""
+        child = GenericPolymorphicFormSetChild(model=PolymorphicTagA)
+        assert child.ct_field == "content_type"
+        assert child.fk_field == "object_id"
+
+    def test_custom_ct_field_fk_field(self):
+        """Custom ct_field and fk_field can be specified"""
+        child = GenericPolymorphicFormSetChild(
+            model=PolymorphicTagA, ct_field="content_type", fk_field="object_id"
+        )
+        assert child.ct_field == "content_type"
+        assert child.fk_field == "object_id"
+
+    def test_get_form_excludes_gfk_fields(self):
+        """get_form automatically excludes the GFK ct_field and fk_field"""
+        child = GenericPolymorphicFormSetChild(model=PolymorphicTagA)
+        form_class = child.get_form()
+        form = form_class()
+
+        # The GFK fields should be excluded
+        assert "content_type" not in form.fields
+        assert "object_id" not in form.fields
+        # But model-specific fields should be present
+        assert "tag" in form.fields
+        assert "priority" in form.fields
+
+    def test_get_form_with_extra_exclude(self):
+        """get_form with extra_exclude adds to existing excludes"""
+        child = GenericPolymorphicFormSetChild(model=PolymorphicTagA, exclude=["tag"])
+        form_class = child.get_form(extra_exclude=["priority"])
+        form = form_class()
+
+        assert "tag" not in form.fields
+        assert "priority" not in form.fields
+        # GFK fields also excluded
+        assert "content_type" not in form.fields
+        assert "object_id" not in form.fields
+
+    def test_get_form_invalid_ct_field_raises(self):
+        """get_form raises Exception if ct_field is not a ForeignKey to ContentType"""
+        child = GenericPolymorphicFormSetChild(
+            model=PolymorphicTagA, ct_field="tag", fk_field="object_id"
+        )
+
+        with pytest.raises(Exception, match="is not a ForeignKey to ContentType"):
+            child.get_form()
+
+
+class GenericPolymorphicInlineFormSetTest(TestCase):
+    """Test generic polymorphic inline formsets"""
+
+    def setUp(self):
+        self.parent = GenericFKParent.objects.create(name="Test Parent")
+        self.parent_ct = ContentType.objects.get_for_model(GenericFKParent)
+
+    def test_factory_creates_functional_formset(self):
+        """generic_polymorphic_inlineformset_factory creates functional formsets"""
+        FormSet = generic_polymorphic_inlineformset_factory(
+            model=PolymorphicTagBase,
+            formset_children=[
+                GenericPolymorphicFormSetChild(model=PolymorphicTagA),
+                GenericPolymorphicFormSetChild(model=PolymorphicTagB),
+            ],
+        )
+
+        formset = FormSet(instance=self.parent)
+
+        assert formset.instance == self.parent
+        assert len(formset.forms) > 0
+
+    def test_formset_gfk_fields_excluded(self):
+        """GFK fields are excluded from forms in the formset"""
+        FormSet = generic_polymorphic_inlineformset_factory(
+            model=PolymorphicTagBase,
+            formset_children=[
+                GenericPolymorphicFormSetChild(model=PolymorphicTagA),
+            ],
+        )
+
+        formset = FormSet(instance=self.parent)
+
+        # Check all forms have GFK fields excluded
+        for form in formset.forms:
+            assert "content_type" not in form.fields
+            assert "object_id" not in form.fields
+
+    def test_extra_forms_cycle_child_types(self):
+        """Extra forms cycle through registered child types"""
+        FormSet = generic_polymorphic_inlineformset_factory(
+            model=PolymorphicTagBase,
+            extra=3,
+            formset_children=[
+                GenericPolymorphicFormSetChild(model=PolymorphicTagA),
+                GenericPolymorphicFormSetChild(model=PolymorphicTagB),
+            ],
+        )
+
+        formset = FormSet(instance=self.parent)
+
+        # Forms cycle: A, B, A
+        assert "priority" in formset.forms[0].fields  # PolymorphicTagA
+        assert "color" in formset.forms[1].fields  # PolymorphicTagB
+        assert "priority" in formset.forms[2].fields  # PolymorphicTagA
+
+    def test_bound_formset_with_existing_objects(self):
+        """Bound formset processes existing polymorphic objects correctly"""
+        tag_a = PolymorphicTagA.objects.create(
+            tag="tag-a",
+            content_type=self.parent_ct,
+            object_id=self.parent.pk,
+            priority=5,
+        )
+        tag_b = PolymorphicTagB.objects.create(
+            tag="tag-b",
+            content_type=self.parent_ct,
+            object_id=self.parent.pk,
+            color="red",
+        )
+
+        FormSet = generic_polymorphic_inlineformset_factory(
+            model=PolymorphicTagBase,
+            formset_children=[
+                GenericPolymorphicFormSetChild(model=PolymorphicTagA),
+                GenericPolymorphicFormSetChild(model=PolymorphicTagB),
+            ],
+        )
+
+        ct_a = ContentType.objects.get_for_model(PolymorphicTagA, for_concrete_model=False)
+        ct_b = ContentType.objects.get_for_model(PolymorphicTagB, for_concrete_model=False)
+
+        data = {
+            "tests-polymorphictagbase-content_type-object_id-TOTAL_FORMS": "2",
+            "tests-polymorphictagbase-content_type-object_id-INITIAL_FORMS": "2",
+            "tests-polymorphictagbase-content_type-object_id-MIN_NUM_FORMS": "0",
+            "tests-polymorphictagbase-content_type-object_id-MAX_NUM_FORMS": "1000",
+            "tests-polymorphictagbase-content_type-object_id-0-id": str(tag_a.pk),
+            "tests-polymorphictagbase-content_type-object_id-0-tag": "tag-a-modified",
+            "tests-polymorphictagbase-content_type-object_id-0-priority": "10",
+            "tests-polymorphictagbase-content_type-object_id-0-polymorphic_ctype": str(ct_a.pk),
+            "tests-polymorphictagbase-content_type-object_id-1-id": str(tag_b.pk),
+            "tests-polymorphictagbase-content_type-object_id-1-tag": "tag-b-modified",
+            "tests-polymorphictagbase-content_type-object_id-1-color": "blue",
+            "tests-polymorphictagbase-content_type-object_id-1-polymorphic_ctype": str(ct_b.pk),
+        }
+
+        formset = FormSet(data=data, instance=self.parent)
+
+        assert formset.is_bound
+        assert formset.is_valid(), formset.errors
+        assert formset.forms[0].instance.pk == tag_a.pk
+        assert formset.forms[1].instance.pk == tag_b.pk
+
+    def test_formset_with_child_form_kwargs(self):
+        """child_form_kwargs passed to child form factory"""
+        FormSet = generic_polymorphic_inlineformset_factory(
+            model=PolymorphicTagBase,
+            formset_children=[
+                GenericPolymorphicFormSetChild(model=PolymorphicTagA),
+            ],
+            child_form_kwargs={"extra_exclude": ["tag"]},
+        )
+
+        formset = FormSet(instance=self.parent)
+        assert "tag" not in formset.forms[0].fields
+
+    def test_empty_forms_property(self):
+        """empty_forms returns all possible empty form types"""
+        FormSet = generic_polymorphic_inlineformset_factory(
+            model=PolymorphicTagBase,
+            formset_children=[
+                GenericPolymorphicFormSetChild(model=PolymorphicTagA),
+                GenericPolymorphicFormSetChild(model=PolymorphicTagB),
+            ],
+        )
+
+        formset = FormSet(instance=self.parent)
+        empty_forms = formset.empty_forms
+
+        assert len(empty_forms) == 2
+        # Check that different form types are represented
+        form_models = {form._meta.model for form in empty_forms}
+        assert PolymorphicTagA in form_models
+        assert PolymorphicTagB in form_models
+
+    def test_empty_form_raises_runtime_error(self):
+        """Accessing empty_form raises RuntimeError (use empty_forms instead)"""
+        FormSet = generic_polymorphic_inlineformset_factory(
+            model=PolymorphicTagBase,
+            formset_children=[
+                GenericPolymorphicFormSetChild(model=PolymorphicTagA),
+            ],
+        )
+
+        formset = FormSet(instance=self.parent)
+
+        with pytest.raises(RuntimeError, match="use 'empty_forms'"):
+            _ = formset.empty_form
+
+    def test_unsupported_child_type_in_bound_data(self):
+        """UnsupportedChildType when bound data has unregistered child type"""
+        FormSet = generic_polymorphic_inlineformset_factory(
+            model=PolymorphicTagBase,
+            formset_children=[
+                GenericPolymorphicFormSetChild(model=PolymorphicTagA),
+            ],
+        )
+
+        ct_b = ContentType.objects.get_for_model(PolymorphicTagB, for_concrete_model=False)
+        data = {
+            "tests-polymorphictagbase-content_type-object_id-TOTAL_FORMS": "1",
+            "tests-polymorphictagbase-content_type-object_id-INITIAL_FORMS": "0",
+            "tests-polymorphictagbase-content_type-object_id-MIN_NUM_FORMS": "0",
+            "tests-polymorphictagbase-content_type-object_id-MAX_NUM_FORMS": "1000",
+            "tests-polymorphictagbase-content_type-object_id-0-tag": "test",
+            "tests-polymorphictagbase-content_type-object_id-0-polymorphic_ctype": str(ct_b.pk),
+        }
+
+        formset = FormSet(data=data, instance=self.parent)
+
+        with pytest.raises(UnsupportedChildType, match="is not part of the formset"):
+            _ = formset.forms
+
+    def test_validation_error_missing_ctype(self):
+        """ValidationError raised when polymorphic_ctype missing in bound data"""
+        FormSet = generic_polymorphic_inlineformset_factory(
+            model=PolymorphicTagBase,
+            formset_children=[
+                GenericPolymorphicFormSetChild(model=PolymorphicTagA),
+            ],
+        )
+
+        data = {
+            "tests-polymorphictagbase-content_type-object_id-TOTAL_FORMS": "1",
+            "tests-polymorphictagbase-content_type-object_id-INITIAL_FORMS": "0",
+            "tests-polymorphictagbase-content_type-object_id-MIN_NUM_FORMS": "0",
+            "tests-polymorphictagbase-content_type-object_id-MAX_NUM_FORMS": "1000",
+            "tests-polymorphictagbase-content_type-object_id-0-tag": "test",
+        }
+
+        formset = FormSet(data=data, instance=self.parent)
+
+        with pytest.raises(ValidationError, match="has no 'polymorphic_ctype'"):
+            _ = formset.forms
+
+    def test_is_multipart_with_file_field(self):
+        """is_multipart returns True when form has FileField"""
+
+        class FileForm(forms.ModelForm):
+            file = forms.FileField()
+
+            class Meta:
+                model = PolymorphicTagA
+                fields = ["tag", "priority"]
+
+        FormSet = generic_polymorphic_inlineformset_factory(
+            model=PolymorphicTagBase,
+            formset_children=[
+                GenericPolymorphicFormSetChild(model=PolymorphicTagA, form=FileForm),
+            ],
+            extra=1,
+        )
+
+        formset = FormSet(instance=self.parent)
+        assert formset.is_multipart()
+
+    def test_media_aggregation(self):
+        """media property aggregates all child form media"""
+
+        class MediaForm(forms.ModelForm):
+            class Media:
+                js = ("generic_test.js",)
+
+            class Meta:
+                model = PolymorphicTagA
+                fields = ["tag", "priority"]
+
+        FormSet = generic_polymorphic_inlineformset_factory(
+            model=PolymorphicTagBase,
+            formset_children=[
+                GenericPolymorphicFormSetChild(model=PolymorphicTagA, form=MediaForm),
+            ],
+            extra=1,
+        )
+
+        formset = FormSet(instance=self.parent)
+        assert "generic_test.js" in str(formset.media)
+
+    def test_save_new_objects(self):
+        """Formset can save new polymorphic objects via generic relation"""
+        FormSet = generic_polymorphic_inlineformset_factory(
+            model=PolymorphicTagBase,
+            formset_children=[
+                GenericPolymorphicFormSetChild(model=PolymorphicTagA),
+                GenericPolymorphicFormSetChild(model=PolymorphicTagB),
+            ],
+        )
+
+        ct_a = ContentType.objects.get_for_model(PolymorphicTagA, for_concrete_model=False)
+
+        data = {
+            "tests-polymorphictagbase-content_type-object_id-TOTAL_FORMS": "1",
+            "tests-polymorphictagbase-content_type-object_id-INITIAL_FORMS": "0",
+            "tests-polymorphictagbase-content_type-object_id-MIN_NUM_FORMS": "0",
+            "tests-polymorphictagbase-content_type-object_id-MAX_NUM_FORMS": "1000",
+            "tests-polymorphictagbase-content_type-object_id-0-tag": "new-tag",
+            "tests-polymorphictagbase-content_type-object_id-0-priority": "99",
+            "tests-polymorphictagbase-content_type-object_id-0-polymorphic_ctype": str(ct_a.pk),
+        }
+
+        formset = FormSet(data=data, instance=self.parent)
+        assert formset.is_valid(), formset.errors
+
+        saved_objects = formset.save()
+        assert len(saved_objects) == 1
+        assert isinstance(saved_objects[0], PolymorphicTagA)
+        assert saved_objects[0].tag == "new-tag"
+        assert saved_objects[0].priority == 99
+        assert saved_objects[0].content_object == self.parent

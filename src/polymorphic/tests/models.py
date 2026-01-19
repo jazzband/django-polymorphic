@@ -1092,3 +1092,37 @@ class ManagerTestPlain(models.Model):
 
 class ManagerTestChildPlain(ManagerTestPlain):
     pass
+
+
+# Models for testing generic polymorphic formsets
+class GenericFKParent(models.Model):
+    """A parent model that generic polymorphic items can point to."""
+
+    name = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.name
+
+
+class PolymorphicTagBase(PolymorphicModel):
+    """Base polymorphic model with a GenericForeignKey for testing generic formsets."""
+
+    tag = models.SlugField()
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.PositiveIntegerField()
+    content_object = GenericForeignKey("content_type", "object_id")
+
+    def __str__(self):
+        return self.tag
+
+
+class PolymorphicTagA(PolymorphicTagBase):
+    """First child of PolymorphicTagBase with an extra field."""
+
+    priority = models.IntegerField(default=0)
+
+
+class PolymorphicTagB(PolymorphicTagBase):
+    """Second child of PolymorphicTagBase with a different extra field."""
+
+    color = models.CharField(max_length=20, default="")
