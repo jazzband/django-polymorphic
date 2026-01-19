@@ -654,7 +654,7 @@ wheels = [
 
 [[package]]
 name = "django-polymorphic"
-version = "4.10.3"
+version = "4.10.4"
 source = { editable = "." }
 dependencies = [
     { name = "django", version = "5.2.10", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
