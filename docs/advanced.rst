@@ -390,6 +390,12 @@ Restrictions & Caveats
     base row. If you must delete manually, ensure you also delete the corresponding row from the
     base table.
 
+*   There will be problems if the :class:`~django.contrib.contenttypes.models.ContentType` cache
+    becomes out of sync with the database. This can especially happen in tests. You should ensure
+    that the cache is cleared (:meth:`~django.contrib.contenttypes.models.ContentTypeManager.clear_cache`)
+    whenever this happens. In tests this happens when if :django-admin:`flush` is called by the teardown
+    sequence in :class:`~django.test.TransactionTestCase`.
+
 .. old links:
     - http://code.djangoproject.com/wiki/ModelInheritance
     - http://lazypython.blogspot.com/2009/02/second-look-at-inheritance-and.html

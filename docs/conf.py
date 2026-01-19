@@ -285,6 +285,7 @@ intersphinx_mapping = {
     "django-guardian": ("https://django-guardian.readthedocs.io/en/stable", None),
     "django-reversion": ("https://django-reversion.readthedocs.io/en/stable", None),
     "django-extra-views": ("https://django-extra-views.readthedocs.io/en/stable", None),
+    "model-bakery": ("https://model-bakery.readthedocs.io/en/stable", None),
 }
 
 # autodoc settings
