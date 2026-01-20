@@ -10,7 +10,6 @@ from django.core.exceptions import ImproperlyConfigured, PermissionDenied
 from django.db import models
 from django.http import Http404, HttpResponseRedirect
 from django.template.response import TemplateResponse
-from django.urls import URLResolver
 from django.utils.encoding import force_str
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
@@ -86,24 +85,6 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
 
         self._child_admin_site = self.admin_site
         self._is_setup = True
-
-    def register_child(self, model, model_admin):
-        """
-        Register a model with admin to display.
-        """
-        # After the get_urls() is called, the URLs of the child model can't be exposed anymore to the Django URLconf,
-        # which also means that a "Save and continue editing" button won't work.
-        if self._is_setup:
-            raise RegistrationClosed("The admin model can't be registered anymore at this point.")
-
-        if not issubclass(model, self.base_model):
-            raise TypeError(f"{model.__name__} should be a subclass of {self.base_model.__name__}")
-        if not issubclass(model_admin, admin.ModelAdmin):
-            raise TypeError(
-                f"{model_admin.__name__} should be a subclass of {admin.ModelAdmin.__name__}"
-            )
-
-        self._child_admin_site.register(model, model_admin)
 
     def get_child_models(self):
         """
@@ -245,36 +226,6 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
         self._lazy_setup()
 
         return urls
-
-    def subclass_view(self, request, path):
-        """
-        Forward any request to a custom view of the real admin.
-        """
-        ct_id = int(request.GET.get("ct_id", 0))
-        if not ct_id:
-            # See if the path started with an ID.
-            try:
-                pos = path.find("/")
-                if pos == -1:
-                    object_id = int(path)
-                else:
-                    object_id = int(path[0:pos])
-            except ValueError:
-                raise Http404(
-                    f"No ct_id parameter, unable to find admin subclass for path '{path}'."
-                )
-
-            ct_id = self.model.objects.values_list("polymorphic_ctype_id", flat=True).get(
-                pk=object_id
-            )
-
-        real_admin = self._get_real_admin_by_ct(ct_id)
-        resolver = URLResolver("^", real_admin.urls)
-        resolvermatch = resolver.resolve(path)  # May raise Resolver404
-        if not resolvermatch:
-            raise Http404(f"No match for path '{path}' in admin subclass.")
-
-        return resolvermatch.func(request, *resolvermatch.args, **resolvermatch.kwargs)
 
     def add_type_view(self, request, form_url=""):
         """
