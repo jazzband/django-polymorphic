@@ -1,3 +1,6 @@
+from typing import Any
+
+from django.db.models import QuerySet
 from django.db.models.fields.related_descriptors import (
     ForwardOneToOneDescriptor,
     ReverseOneToOneDescriptor,
@@ -11,7 +14,7 @@ class NonPolymorphicForwardOneToOneDescriptor(ForwardOneToOneDescriptor):
     in multi-table polymorphic models.
     """
 
-    def get_queryset(self, **hints):
+    def get_queryset(self, **hints: Any) -> QuerySet[Any]:
         return (
             (
                 getattr(
@@ -33,7 +36,7 @@ class NonPolymorphicReverseOneToOneDescriptor(ReverseOneToOneDescriptor):
     in multi-table polymorphic models.
     """
 
-    def get_queryset(self, **hints):
+    def get_queryset(self, **hints: Any) -> QuerySet[Any]:
         return (
             (
                 getattr(

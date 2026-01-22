@@ -1,5 +1,8 @@
+from typing import Any
+
 from django.contrib.contenttypes.admin import GenericInlineModelAdmin
 from django.contrib.contenttypes.models import ContentType
+from django.http import HttpRequest
 from django.utils.functional import cached_property
 
 from polymorphic.formsets import (
@@ -17,9 +20,11 @@ class GenericPolymorphicInlineModelAdmin(PolymorphicInlineModelAdmin, GenericInl
     """
 
     #: The formset class
-    formset = BaseGenericPolymorphicInlineFormSet
+    formset: type[BaseGenericPolymorphicInlineFormSet] = BaseGenericPolymorphicInlineFormSet  # type: ignore[assignment]
 
-    def get_formset(self, request, obj=None, **kwargs):
+    def get_formset(
+        self, request: HttpRequest, obj: Any = None, **kwargs: Any
+    ) -> type[BaseGenericPolymorphicInlineFormSet]:  # type: ignore[override]
         """
         Construct the generic inline formset class.
         """
@@ -39,19 +44,21 @@ class GenericPolymorphicInlineModelAdmin(PolymorphicInlineModelAdmin, GenericInl
         """
 
         # Make sure that the GFK fields are excluded from the child forms
-        formset_child = GenericPolymorphicFormSetChild
-        ct_field = "content_type"
-        ct_fk_field = "object_id"
+        formset_child: type[GenericPolymorphicFormSetChild] = GenericPolymorphicFormSetChild  # type: ignore[assignment]
+        ct_field: str = "content_type"
+        ct_fk_field: str = "object_id"
 
         @cached_property
-        def content_type(self):
+        def content_type(self) -> ContentType:
             """
             Expose the ContentType that the child relates to.
             This can be used for the ``polymorphic_ctype`` field.
             """
             return ContentType.objects.get_for_model(self.model, for_concrete_model=False)
 
-        def get_formset_child(self, request, obj=None, **kwargs):
+        def get_formset_child(
+            self, request: HttpRequest, obj: Any = None, **kwargs: Any
+        ) -> GenericPolymorphicFormSetChild:  # type: ignore[override]
             # Similar to GenericInlineModelAdmin.get_formset(),
             # make sure the GFK is automatically excluded from the form
             defaults = {"ct_field": self.ct_field, "fk_field": self.ct_fk_field}
@@ -67,4 +74,4 @@ class GenericStackedPolymorphicInline(GenericPolymorphicInlineModelAdmin):
     """
 
     #: The default template to use.
-    template = "admin/polymorphic/edit_inline/stacked.html"
+    template: str = "admin/polymorphic/edit_inline/stacked.html"

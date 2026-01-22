@@ -1,3 +1,6 @@
+from collections.abc import Callable, Iterable
+from typing import Any
+
 from django.contrib.contenttypes.forms import (
     BaseGenericInlineFormSet,
     generic_inlineformset_factory,
@@ -18,12 +21,23 @@ class GenericPolymorphicFormSetChild(PolymorphicFormSetChild):
     Formset child for generic inlines
     """
 
-    def __init__(self, *args, **kwargs):
+    ct_field: str
+    fk_field: str
+
+    def __init__(
+        self,
+        *args: Any,
+        ct_field: str = "content_type",
+        fk_field: str = "object_id",
+        **kwargs: Any,
+    ) -> None:
         self.ct_field = kwargs.pop("ct_field", "content_type")
         self.fk_field = kwargs.pop("fk_field", "object_id")
         super().__init__(*args, **kwargs)
 
-    def get_form(self, ct_field="content_type", fk_field="object_id", **kwargs):
+    def get_form(
+        self, ct_field: str = "content_type", fk_field: str = "object_id", **kwargs: Any
+    ) -> type[ModelForm[Any]]:
         """
         Construct the form class for the formset child.
         """
@@ -58,28 +72,28 @@ class BaseGenericPolymorphicInlineFormSet(BaseGenericInlineFormSet, BasePolymorp
 
 
 def generic_polymorphic_inlineformset_factory(
-    model,
-    formset_children,
-    form=ModelForm,
-    formset=BaseGenericPolymorphicInlineFormSet,
-    ct_field="content_type",
-    fk_field="object_id",
+    model: type[models.Model],
+    formset_children: Iterable[PolymorphicFormSetChild],
+    form: type[ModelForm[Any]] = ModelForm,
+    formset: type[BaseGenericPolymorphicInlineFormSet] = BaseGenericPolymorphicInlineFormSet,
+    ct_field: str = "content_type",
+    fk_field: str = "object_id",
     # Base form
     # TODO: should these fields be removed in favor of creating
     # the base form as a formset child too?
-    fields=None,
-    exclude=None,
-    extra=1,
-    can_order=False,
-    can_delete=True,
-    max_num=None,
-    formfield_callback=None,
-    validate_max=False,
-    for_concrete_model=True,
-    min_num=None,
-    validate_min=False,
-    child_form_kwargs=None,
-):
+    fields: list[str] | None = None,
+    exclude: list[str] | None = None,
+    extra: int = 1,
+    can_order: bool = False,
+    can_delete: bool = True,
+    max_num: int | None = None,
+    formfield_callback: Callable[..., Any] | None = None,
+    validate_max: bool = False,
+    for_concrete_model: bool = True,
+    min_num: int | None = None,
+    validate_min: bool = False,
+    child_form_kwargs: dict[str, Any] | None = None,
+) -> type[BaseGenericPolymorphicInlineFormSet]:
     """
     Construct the class for a generic inline polymorphic formset.
 

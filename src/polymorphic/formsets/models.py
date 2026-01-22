@@ -1,8 +1,12 @@
 from collections import OrderedDict
+from collections.abc import Callable, Iterable
+from typing import Any
 
 from django import forms
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ImproperlyConfigured, ValidationError
+from django.db import models
+from django.forms import BaseForm, Media
 from django.forms.models import (
     BaseInlineFormSet,
     BaseModelFormSet,
@@ -28,19 +32,29 @@ class PolymorphicFormSetChild:
     Provide this information in the :func:'polymorphic_inlineformset_factory' construction.
     """
 
+    model: type[models.Model]
+    fields: list[str] | None
+    exclude: tuple[str, ...] | list[str]
+    formfield_callback: Callable[..., Any] | None
+    widgets: dict[str, Any] | None
+    localized_fields: list[str] | None
+    labels: dict[str, str] | None
+    help_texts: dict[str, str] | None
+    error_messages: dict[str, dict[str, str]] | None
+
     def __init__(
         self,
-        model,
-        form=ModelForm,
-        fields=None,
-        exclude=None,
-        formfield_callback=None,
-        widgets=None,
-        localized_fields=None,
-        labels=None,
-        help_texts=None,
-        error_messages=None,
-    ):
+        model: type[models.Model],
+        form: type[ModelForm[Any]] = ModelForm,
+        fields: list[str] | None = None,
+        exclude: tuple[str, ...] | list[str] | None = None,
+        formfield_callback: Callable[..., Any] | None = None,
+        widgets: dict[str, Any] | None = None,
+        localized_fields: list[str] | None = None,
+        labels: dict[str, str] | None = None,
+        help_texts: dict[str, str] | None = None,
+        error_messages: dict[str, dict[str, str]] | None = None,
+    ) -> None:
         self.model = model
 
         # Instead of initializing the form here right away,
@@ -58,14 +72,14 @@ class PolymorphicFormSetChild:
         self.error_messages = error_messages
 
     @cached_property
-    def content_type(self):
+    def content_type(self) -> ContentType:
         """
         Expose the ContentType that the child relates to.
         This can be used for the ''polymorphic_ctype'' field.
         """
         return ContentType.objects.get_for_model(self.model, for_concrete_model=False)
 
-    def get_form(self, **kwargs):
+    def get_form(self, **kwargs: Any) -> type[ModelForm[Any]]:
         """
         Construct the form class for the formset child.
         """
@@ -118,7 +132,9 @@ class PolymorphicFormSetChild:
         return modelform_factory(self.model, **defaults)
 
 
-def polymorphic_child_forms_factory(formset_children, **kwargs):
+def polymorphic_child_forms_factory(
+    formset_children: Iterable[PolymorphicFormSetChild], **kwargs: Any
+) -> dict[type[models.Model], type[ModelForm[Any]]]:
     """
     Construct the forms for the formset children.
     This is mostly used internally, and rarely needs to be used by external projects.
@@ -146,13 +162,14 @@ class BasePolymorphicModelFormSet(BaseModelFormSet):
     """
 
     # Assigned by the factory
-    child_forms = OrderedDict()
+    child_forms: dict[type[models.Model], type[ModelForm[Any]]] = OrderedDict()
+    queryset_data: Any
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.queryset_data = self.get_queryset()
 
-    def _construct_form(self, i, **kwargs):
+    def _construct_form(self, i: int, **kwargs: Any) -> BaseForm:
         """
         Create the form, depending on the model that's behind it.
         """
@@ -253,7 +270,7 @@ class BasePolymorphicModelFormSet(BaseModelFormSet):
         self.add_fields(form, i)
         return form
 
-    def add_fields(self, form, index):
+    def add_fields(self, form: BaseForm, index: int | None) -> None:
         """Add a hidden field for the content type."""
         ct = ContentType.objects.get_for_model(form._meta.model, for_concrete_model=False)
         choices = [(ct.pk, ct)]  # Single choice, existing forms can't change the value.
@@ -266,7 +283,7 @@ class BasePolymorphicModelFormSet(BaseModelFormSet):
         )
         super().add_fields(form, index)
 
-    def get_form_class(self, model):
+    def get_form_class(self, model: type[models.Model]) -> type[ModelForm[Any]]:
         """
         Return the proper form class for the given model.
         """
@@ -284,7 +301,7 @@ class BasePolymorphicModelFormSet(BaseModelFormSet):
                 f"but no form class is registered to display it."
             )
 
-    def is_multipart(self):
+    def is_multipart(self) -> bool:
         """
         Returns True if the formset needs to be multipart, i.e. it
         has FileInput. Otherwise, False.
@@ -292,7 +309,7 @@ class BasePolymorphicModelFormSet(BaseModelFormSet):
         return any(f.is_multipart() for f in self.empty_forms)
 
     @property
-    def media(self):
+    def media(self) -> Media:
         # Include the media of all form types.
         # The form media includes all form widget media
         media = forms.Media()
@@ -301,7 +318,7 @@ class BasePolymorphicModelFormSet(BaseModelFormSet):
         return media
 
     @cached_property
-    def empty_forms(self):
+    def empty_forms(self) -> list[BaseForm]:
         """
         Return all possible empty forms
         """
@@ -321,7 +338,7 @@ class BasePolymorphicModelFormSet(BaseModelFormSet):
         return forms
 
     @property
-    def empty_form(self):
+    def empty_form(self) -> BaseForm:
         # TODO: make an exception when can_add_base is defined?
         raise RuntimeError(
             "'empty_form' is not used in polymorphic formsets, use 'empty_forms' instead."
@@ -329,31 +346,31 @@ class BasePolymorphicModelFormSet(BaseModelFormSet):
 
 
 def polymorphic_modelformset_factory(
-    model,
-    formset_children,
-    formset=BasePolymorphicModelFormSet,
+    model: type[models.Model],
+    formset_children: Iterable[PolymorphicFormSetChild],
+    formset: type[BasePolymorphicModelFormSet] = BasePolymorphicModelFormSet,
     # Base field
     # TODO: should these fields be removed in favor of creating
     # the base form as a formset child too?
-    form=ModelForm,
-    fields=None,
-    exclude=None,
-    extra=1,
-    can_order=False,
-    can_delete=True,
-    max_num=None,
-    formfield_callback=None,
-    widgets=None,
-    validate_max=False,
-    localized_fields=None,
-    labels=None,
-    help_texts=None,
-    error_messages=None,
-    min_num=None,
-    validate_min=False,
-    field_classes=None,
-    child_form_kwargs=None,
-):
+    form: type[ModelForm[Any]] = ModelForm,
+    fields: list[str] | None = None,
+    exclude: list[str] | None = None,
+    extra: int = 1,
+    can_order: bool = False,
+    can_delete: bool = True,
+    max_num: int | None = None,
+    formfield_callback: Callable[..., Any] | None = None,
+    widgets: dict[str, Any] | None = None,
+    validate_max: bool = False,
+    localized_fields: list[str] | None = None,
+    labels: dict[str, str] | None = None,
+    help_texts: dict[str, str] | None = None,
+    error_messages: dict[str, dict[str, str]] | None = None,
+    min_num: int | None = None,
+    validate_min: bool = False,
+    field_classes: dict[str, type[Any]] | None = None,
+    child_form_kwargs: dict[str, Any] | None = None,
+) -> type[BasePolymorphicModelFormSet]:
     """
     Construct the class for an polymorphic model formset.
 
@@ -404,38 +421,38 @@ class BasePolymorphicInlineFormSet(BaseInlineFormSet, BasePolymorphicModelFormSe
     Polymorphic formset variation for inline formsets
     """
 
-    def _construct_form(self, i, **kwargs):
+    def _construct_form(self, i: int, **kwargs: Any) -> BaseForm:
         return super()._construct_form(i, **kwargs)
 
 
 def polymorphic_inlineformset_factory(
-    parent_model,
-    model,
-    formset_children,
-    formset=BasePolymorphicInlineFormSet,
-    fk_name=None,
+    parent_model: type[models.Model],
+    model: type[models.Model],
+    formset_children: Iterable[PolymorphicFormSetChild],
+    formset: type[BasePolymorphicInlineFormSet] = BasePolymorphicInlineFormSet,
+    fk_name: str | None = None,
     # Base field
     # TODO: should these fields be removed in favor of creating
     # the base form as a formset child too?
-    form=ModelForm,
-    fields=None,
-    exclude=None,
-    extra=1,
-    can_order=False,
-    can_delete=True,
-    max_num=None,
-    formfield_callback=None,
-    widgets=None,
-    validate_max=False,
-    localized_fields=None,
-    labels=None,
-    help_texts=None,
-    error_messages=None,
-    min_num=None,
-    validate_min=False,
-    field_classes=None,
-    child_form_kwargs=None,
-):
+    form: type[ModelForm[Any]] = ModelForm,
+    fields: list[str] | None = None,
+    exclude: list[str] | None = None,
+    extra: int = 1,
+    can_order: bool = False,
+    can_delete: bool = True,
+    max_num: int | None = None,
+    formfield_callback: Callable[..., Any] | None = None,
+    widgets: dict[str, Any] | None = None,
+    validate_max: bool = False,
+    localized_fields: list[str] | None = None,
+    labels: dict[str, str] | None = None,
+    help_texts: dict[str, str] | None = None,
+    error_messages: dict[str, dict[str, str]] | None = None,
+    min_num: int | None = None,
+    validate_min: bool = False,
+    field_classes: dict[str, type[Any]] | None = None,
+    child_form_kwargs: dict[str, Any] | None = None,
+) -> type[BasePolymorphicInlineFormSet]:
     """
     Construct the class for an inline polymorphic formset.
 
