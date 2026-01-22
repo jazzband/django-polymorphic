@@ -5,6 +5,7 @@ PolymorphicQuerySet support functions
 import copy
 from functools import reduce
 from operator import or_
+from typing import Any
 
 from django.apps import apps
 from django.contrib.contenttypes.models import ContentType
@@ -26,8 +27,8 @@ from .utils import _lazy_ctype, _map_queryname_to_class, concrete_descendants
 
 
 def translate_polymorphic_filter_definitions_in_kwargs(
-    queryset_model, kwargs, using=DEFAULT_DB_ALIAS
-):
+    queryset_model: type[models.Model], kwargs: dict[str, Any], using: str = DEFAULT_DB_ALIAS
+) -> list[Q]:
     """
     Translate the keyword argument list for PolymorphicQuerySet.filter()
 
@@ -59,8 +60,10 @@ def translate_polymorphic_filter_definitions_in_kwargs(
     return additional_args
 
 
-def translate_polymorphic_Q_object(queryset_model, potential_q_object, using=DEFAULT_DB_ALIAS):
-    def tree_node_correct_field_specs(my_model, node):
+def translate_polymorphic_Q_object(
+    queryset_model: type[models.Model], potential_q_object: Q, using: str = DEFAULT_DB_ALIAS
+) -> Q:
+    def tree_node_correct_field_specs(my_model: type[models.Model], node: Q) -> Q:
         "process all children of this Q node"
         cpy = copy.copy(node)
         cpy.children = []
@@ -85,7 +88,9 @@ def translate_polymorphic_Q_object(queryset_model, potential_q_object, using=DEF
     return potential_q_object
 
 
-def translate_polymorphic_filter_definitions_in_args(queryset_model, args, using=DEFAULT_DB_ALIAS):
+def translate_polymorphic_filter_definitions_in_args(
+    queryset_model: type[models.Model], args: tuple[Q, ...], using: str = DEFAULT_DB_ALIAS
+) -> list[Q]:
     """
     Translate the non-keyword argument list for PolymorphicQuerySet.filter()
 
@@ -101,8 +106,11 @@ def translate_polymorphic_filter_definitions_in_args(queryset_model, args, using
 
 
 def _translate_polymorphic_filter_definition(
-    queryset_model, field_path, field_val, using=DEFAULT_DB_ALIAS
-):
+    queryset_model: type[models.Model],
+    field_path: str,
+    field_val: Any,
+    using: str = DEFAULT_DB_ALIAS,
+) -> tuple[str, Any] | Q | None:
     """
     Translate a keyword argument (field_path=field_val), as used for
     PolymorphicQuerySet.filter()-like functions (and Q objects).
@@ -129,7 +137,7 @@ def _translate_polymorphic_filter_definition(
     return (newpath, field_val)
 
 
-def translate_polymorphic_field_path(queryset_model, field_path):
+def translate_polymorphic_field_path(queryset_model: type[models.Model], field_path: str) -> str:
     """
     Translate a field path from a keyword argument, as used for
     PolymorphicQuerySet.filter()-like functions (and Q objects).
@@ -194,7 +202,7 @@ def translate_polymorphic_field_path(queryset_model, field_path):
     return newpath
 
 
-def _create_base_path(baseclass, myclass):
+def _create_base_path(baseclass: type[models.Model], myclass: type[models.Model]) -> str:
     # create new field path for expressions, e.g. for baseclass=ModelA, myclass=ModelC
     # 'modelb__modelc" is returned
     for b in myclass.__bases__:
@@ -210,7 +218,7 @@ def _create_base_path(baseclass, myclass):
     return ""
 
 
-def _get_query_related_name(myclass):
+def _get_query_related_name(myclass: type[models.Model]) -> str:
     for f in myclass._meta.local_fields:
         if isinstance(f, models.OneToOneField) and f.remote_field.parent_link:
             return f.related_query_name()
@@ -220,7 +228,11 @@ def _get_query_related_name(myclass):
     return myclass.__name__.lower()
 
 
-def create_instanceof_q(modellist, not_instance_of=False, using=DEFAULT_DB_ALIAS):
+def create_instanceof_q(
+    modellist: type[models.Model] | list[type[models.Model]] | tuple[type[models.Model], ...],
+    not_instance_of: bool = False,
+    using: str = DEFAULT_DB_ALIAS,
+) -> Q | None:
     """
     Helper function for instance_of / not_instance_of
     Creates and returns a Q object that filters for the models in modellist,
@@ -262,9 +274,11 @@ def create_instanceof_q(modellist, not_instance_of=False, using=DEFAULT_DB_ALIAS
     return q
 
 
-def _get_mro_content_type_ids(models, using):
-    lazy = []
-    ids = []
+def _get_mro_content_type_ids(
+    models: list[type[models.Model]] | tuple[type[models.Model], ...], using: str
+) -> tuple[list[Q], list[int]]:
+    lazy: list[Q] = []
+    ids: list[int] = []
     for model in models:
         cid = _lazy_ctype(model, using=using)
         ids.append(cid.pk) if isinstance(cid, ContentType) else lazy.append(cid)

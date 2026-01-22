@@ -18,13 +18,14 @@ r"""
 
 Seamless Polymorphic Inheritance for Django Models
 """
+from typing import Final
 
-VERSION = "4.10.5"
+VERSION: Final[str] = "4.10.5"
 
-__title__ = "Django Polymorphic"
+__title__: Final = "Django Polymorphic"
 __version__ = VERSION  # version synonym for backwards compatibility
-__author__ = "Brian Kohan"
-__license__ = "BSD-3-Clause"
-__copyright__ = (
+__author__: Final[str] = "Brian Kohan"
+__license__: Final = "BSD-3-Clause"
+__copyright__: Final[str] = (
     "Copyright 2010-2025, Bert Constantin, Chris Glass, Diederik van der Boor, Brian Kohan"
 )

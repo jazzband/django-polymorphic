@@ -5,8 +5,11 @@ This makes sure that admin fieldsets/layout settings are exported to the templat
 """
 
 import json
+from collections.abc import Iterator
+from typing import Any
 
 from django.contrib.admin.helpers import AdminField, InlineAdminForm, InlineAdminFormSet
+from django.http import HttpRequest
 from django.utils.encoding import force_str
 from django.utils.text import capfirst
 from django.utils.translation import gettext
@@ -19,11 +22,11 @@ class PolymorphicInlineAdminForm(InlineAdminForm):
     Expose the admin configuration for a form
     """
 
-    def polymorphic_ctype_field(self):
+    def polymorphic_ctype_field(self) -> AdminField:
         return AdminField(self.form, "polymorphic_ctype", False)
 
     @property
-    def is_empty(self):
+    def is_empty(self) -> bool:
         return "__prefix__" in self.form.prefix
 
 
@@ -32,13 +35,16 @@ class PolymorphicInlineAdminFormSet(InlineAdminFormSet):
     Internally used class to expose the formset in the template.
     """
 
-    def __init__(self, *args, **kwargs):
+    request: HttpRequest | None
+    obj: Any | None
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         # Assigned later via PolymorphicInlineSupportMixin later.
         self.request = kwargs.pop("request", None)
         self.obj = kwargs.pop("obj", None)
         super().__init__(*args, **kwargs)
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[PolymorphicInlineAdminForm]:
         """
         Output all forms using the proper subtype settings.
         """
@@ -73,18 +79,18 @@ class PolymorphicInlineAdminFormSet(InlineAdminFormSet):
                 model_admin=child_inline,
             )
 
-    def get_child_fieldsets(self, child_inline):
+    def get_child_fieldsets(self, child_inline: Any) -> list[tuple[str | None, dict[str, Any]]]:
         return list(child_inline.get_fieldsets(self.request, self.obj) or ())
 
-    def get_child_readonly_fields(self, child_inline):
+    def get_child_readonly_fields(self, child_inline: Any) -> list[str]:
         return list(child_inline.get_readonly_fields(self.request, self.obj))
 
-    def get_child_prepopulated_fields(self, child_inline):
+    def get_child_prepopulated_fields(self, child_inline: Any) -> dict[str, Any]:
         fields = self.prepopulated_fields.copy()
         fields.update(child_inline.get_prepopulated_fields(self.request, self.obj))
         return fields
 
-    def inline_formset_data(self):
+    def inline_formset_data(self) -> str:
         """
         A JavaScript data structure for the JavaScript code
         This overrides the default Django version to add the ``childTypes`` data.
@@ -123,7 +129,15 @@ class PolymorphicInlineSupportMixin:
     :class:`~django.contrib.admin.helpers.InlineAdminFormSet` for the polymorphic formsets.
     """
 
-    def get_inline_formsets(self, request, formsets, inline_instances, obj=None, *args, **kwargs):
+    def get_inline_formsets(
+        self,
+        request: HttpRequest,
+        formsets: list[Any],
+        inline_instances: list[Any],
+        obj: Any = None,
+        *args: Any,
+        **kwargs: Any,
+    ) -> list[InlineAdminFormSet]:
         """
         Overwritten version to produce the proper admin wrapping for the
         polymorphic inline formset. This fixes the media and form appearance

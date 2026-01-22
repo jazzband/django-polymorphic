@@ -1,15 +1,20 @@
-from django.template import Library, Node, TemplateSyntaxError
+from django.template import Context, Library, Node, NodeList, TemplateSyntaxError
+from django.template.base import FilterExpression, Parser, Token
+from typing_extensions import Self
 
-register = Library()
+register: Library = Library()
 
 
 class BreadcrumbScope(Node):
-    def __init__(self, base_opts, nodelist):
+    base_opts: FilterExpression
+    nodelist: NodeList
+
+    def __init__(self, base_opts: FilterExpression, nodelist: NodeList) -> None:
         self.base_opts = base_opts
         self.nodelist = nodelist  # Note, takes advantage of Node.child_nodelists
 
     @classmethod
-    def parse(cls, parser, token):
+    def parse(cls, parser: Parser, token: Token) -> Self:
         bits = token.split_contents()
         if len(bits) == 2:
             (tagname, base_opts) = bits
@@ -21,7 +26,7 @@ class BreadcrumbScope(Node):
         else:
             raise TemplateSyntaxError(f"{token.contents[0]} tag expects 1 argument")
 
-    def render(self, context):
+    def render(self, context: Context) -> str:
         # app_label is really hard to overwrite in the standard Django ModelAdmin.
         # To insert it in the template, the entire render_change_form() and delete_view() have to copied and adjusted.
         # Instead, have an assignment tag that inserts that in the template.
@@ -41,7 +46,7 @@ class BreadcrumbScope(Node):
 
 
 @register.tag
-def breadcrumb_scope(parser, token):
+def breadcrumb_scope(parser: Parser, token: Token) -> BreadcrumbScope:
     """
     .. templatetag:: breadcrumb_scope
 
