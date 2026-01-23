@@ -1,5 +1,12 @@
+from __future__ import annotations
+
+from collections.abc import Iterable
+from typing import Any
+
 from django.contrib import admin
 from django.core.exceptions import PermissionDenied
+from django.db.models import QuerySet
+from django.http import HttpRequest
 from django.utils.translation import gettext_lazy as _
 
 
@@ -15,13 +22,15 @@ class PolymorphicChildModelFilter(admin.SimpleListFilter):
         list_filter = (PolymorphicChildModelFilter,)
     """
 
-    title = _("Type")
-    parameter_name = "polymorphic_ctype"
+    title: str = _("Type")  # type: ignore[assignment]
+    parameter_name: str = "polymorphic_ctype"
 
-    def lookups(self, request, model_admin):
+    def lookups(
+        self, request: HttpRequest, model_admin: admin.ModelAdmin[Any]
+    ) -> Iterable[tuple[str, str]]:
         return model_admin.get_child_type_choices(request, "change")
 
-    def queryset(self, request, queryset):
+    def queryset(self, request: HttpRequest, queryset: QuerySet[Any]) -> QuerySet[Any]:
         try:
             value = int(self.value())
         except TypeError:

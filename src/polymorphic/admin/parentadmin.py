@@ -2,6 +2,10 @@
 The parent admin displays the list view of the base model.
 """
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any
+
 from django.contrib import admin
 from django.contrib.admin.helpers import AdminErrorList, AdminForm
 from django.contrib.admin.templatetags.admin_urls import add_preserved_filters
@@ -13,10 +17,18 @@ from django.template.response import TemplateResponse
 from django.utils.encoding import force_str
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
+from typing_extensions import TypeVar
 
 from polymorphic.utils import get_base_polymorphic_model
 
 from .forms import PolymorphicModelChoiceForm
+
+_ModelT = TypeVar("_ModelT", bound=models.Model, default=models.Model)
+
+if TYPE_CHECKING:
+    _ModelAdminBase = admin.ModelAdmin[_ModelT]
+else:
+    _ModelAdminBase = admin.ModelAdmin
 
 
 class RegistrationClosed(RuntimeError):
@@ -27,7 +39,7 @@ class ChildAdminNotRegistered(RuntimeError):
     "The admin site for the model is not registered."
 
 
-class PolymorphicParentModelAdmin(admin.ModelAdmin):
+class PolymorphicParentModelAdmin(_ModelAdminBase):
     """
     A admin interface that can displays different change/delete pages, depending on the polymorphic model.
     To use this class, one attribute need to be defined:
@@ -44,10 +56,10 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
     """
 
     #: The base model that the class uses (auto-detected if not set explicitly)
-    base_model = None
+    base_model: type[models.Model] | None = None
 
     #: The child models that should be displayed
-    child_models = None
+    child_models: list[type[models.Model]] | None = None
 
     #: Whether the list should be polymorphic too, leave to ``False`` to optimize
     polymorphic_list = False
@@ -60,7 +72,7 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
     #: If your primary key consists of string values, update this regular expression.
     pk_regex = r"(\d+|__fk__)"
 
-    def __init__(self, model, admin_site, *args, **kwargs):
+    def __init__(self, model: type[_ModelT], admin_site: Any, *args: Any, **kwargs: Any) -> None:
         super().__init__(model, admin_site, *args, **kwargs)
         self._is_setup = False
 
@@ -301,7 +313,7 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
         return self.admin_site.admin_view(TemplateResponse)(request, templates, context)
 
     @property
-    def change_list_template(self):
+    def change_list_template(self) -> list[str]:  # type: ignore[override]
         opts = self.model._meta
         app_label = opts.app_label
 

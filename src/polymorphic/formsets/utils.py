@@ -2,8 +2,10 @@
 Internal utils
 """
 
+from django.forms import Media
 
-def add_media(dest, media):
+
+def add_media(dest: Media, media: Media) -> None:
     """
     Optimized version of django.forms.Media.__add__() that doesn't create new objects.
     """

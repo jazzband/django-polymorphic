@@ -52,8 +52,14 @@ The following filters are provided;
     </div>
 """
 
-import json
+from __future__ import annotations
 
+import json
+from collections.abc import Generator
+from typing import Any
+
+from django.db import models
+from django.forms import BaseForm, BaseFormSet
 from django.template import Library
 from django.utils.encoding import force_str
 from django.utils.text import capfirst
@@ -61,11 +67,11 @@ from django.utils.translation import gettext
 
 from polymorphic.formsets import BasePolymorphicModelFormSet
 
-register = Library()
+register: Library = Library()
 
 
 @register.filter()
-def include_empty_form(formset):
+def include_empty_form(formset: BaseFormSet[Any]) -> Generator[BaseForm, None, None]:
     """
     .. templatetag:: include_empty_form
 
@@ -82,7 +88,7 @@ def include_empty_form(formset):
 
 
 @register.filter
-def as_script_options(formset):
+def as_script_options(formset: BaseFormSet[Any]) -> str:
     """
     .. templatetag:: as_script_options
 
@@ -119,7 +125,7 @@ def as_script_options(formset):
 
 
 @register.filter
-def as_form_type(form):
+def as_form_type(form: BaseForm) -> str:
     """
     .. templatetag:: as_form_type
 
@@ -129,7 +135,7 @@ def as_form_type(form):
 
 
 @register.filter
-def as_model_name(model):
+def as_model_name(model: type[models.Model]) -> str:
     """
     .. templatetag:: as_model_name
 
