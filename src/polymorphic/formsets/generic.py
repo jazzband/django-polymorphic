@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from collections.abc import Callable, Iterable
 from typing import Any
 
@@ -31,8 +33,8 @@ class GenericPolymorphicFormSetChild(PolymorphicFormSetChild):
         fk_field: str = "object_id",
         **kwargs: Any,
     ) -> None:
-        self.ct_field = kwargs.pop("ct_field", "content_type")
-        self.fk_field = kwargs.pop("fk_field", "object_id")
+        self.ct_field = ct_field
+        self.fk_field = fk_field
         super().__init__(*args, **kwargs)
 
     def get_form(

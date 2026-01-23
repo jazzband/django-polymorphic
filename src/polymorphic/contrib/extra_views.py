@@ -5,6 +5,8 @@ The ``extra_views.advanced`` provides a method to combine that with a create/upd
 This package provides classes that support both options for polymorphic formsets.
 """
 
+from __future__ import annotations
+
 from typing import Any
 
 import extra_views

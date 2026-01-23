@@ -53,6 +53,7 @@ classifiers = [
 ]
 dependencies = [
     "Django >= 4.2",
+    "typing_extensions >= 4.0.0",
 ]
 
 [project.urls]
