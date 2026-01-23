@@ -4,6 +4,8 @@ Django Admin support for polymorphic inlines.
 Each row in the inline can correspond with a different subclass.
 """
 
+from __future__ import annotations
+
 from functools import partial
 from typing import Any
 

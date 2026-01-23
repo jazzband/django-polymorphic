@@ -659,6 +659,7 @@ source = { editable = "." }
 dependencies = [
     { name = "django", version = "5.2.10", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
     { name = "django", version = "6.0.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+    { name = "typing-extensions" },
 ]
 
 [package.dev-dependencies]
@@ -726,7 +727,10 @@ reversion = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "django", specifier = ">=4.2" }]
+requires-dist = [
+    { name = "django", specifier = ">=4.2" },
+    { name = "typing-extensions", specifier = ">=4.0.0" },
+]
 
 [package.metadata.requires-dev]
 cx-oracle = [{ name = "cx-oracle", specifier = ">=8.3.0" }]
