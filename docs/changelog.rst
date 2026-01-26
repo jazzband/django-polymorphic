@@ -1,6 +1,13 @@
 Changelog
 =========
 
+v4.9.2 (2026-01-26)
+--------------------
+
+* Fixed `Bad warning messages polymorphic.W001 and polymorphic.W002 when deriving from PolymorphicModel <https://github.com/jazzband/django-polymorphic/issues/857>`_
+* Fixed `Unexpected return type of polymorphic data since 4.9.1 <https://github.com/jazzband/django-polymorphic/issues/855>`_
+* Fixed `related item missing <https://github.com/jazzband/django-polymorphic/issues/851>`_
+
 v4.9.1 (2026-01-15)
 -------------------
 

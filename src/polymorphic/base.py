@@ -7,6 +7,7 @@ import warnings
 
 from django.db import models
 from django.db.models.base import ModelBase
+from django.db.models.options import Options
 
 from .deletion import PolymorphicGuard
 from .managers import PolymorphicManager
@@ -29,8 +30,36 @@ class ManagerInheritanceWarning(RuntimeWarning):
 check_dump = hasattr(sys, "_getframe")
 
 
-###################################################################################
-# PolymorphicModel meta class
+# We wrap the base_manager property to return a PolymorphicManager
+# for polymorphic models when the base manager would otherwise
+# be the default auto-created manager. This ensures that
+# reverse relations to polymorphic models also use polymorphic
+# querysets by default.
+# https://github.com/jazzband/django-polymorphic/pull/858
+dj_base_manager = Options.base_manager.func
+
+
+def polymorphic_base_manager(self):
+    """
+    Return a polymorphic base manager for polymorphic models.
+    """
+    from polymorphic.models import PolymorphicModel
+
+    mgr = dj_base_manager(self)
+    if (
+        issubclass(self.model, PolymorphicModel)
+        and mgr.__class__ is models.Manager
+        and mgr.auto_created
+    ):
+        manager = PolymorphicManager()
+        manager.name = "_base_manager"
+        manager.model = self.model
+        manager.auto_created = True
+        return manager
+    return mgr
+
+
+Options.base_manager.func = polymorphic_base_manager
 
 
 class PolymorphicModelBase(ModelBase):
@@ -78,21 +107,6 @@ class PolymorphicModelBase(ModelBase):
         from .models import PolymorphicModel
 
         new_class = super().__new__(cls, model_name, bases, attrs, **kwargs)
-
-        if not any(
-            parent._meta.base_manager_name
-            for parent in new_class.mro()
-            if issubclass(parent, PolymorphicModel)
-        ):
-            if new_class._meta.default_manager.__class__ is PolymorphicManager:
-                new_class._meta.__dict__["base_manager"] = new_class._meta.default_manager
-            else:
-                manager = PolymorphicManager()
-                manager.name = "_base_manager"
-                manager.model = new_class
-                manager.auto_created = True
-                # write new manager to property cache
-                new_class._meta.__dict__["base_manager"] = manager
 
         # validate resulting default manager
         if not new_class._meta.abstract and not new_class._meta.swapped:
