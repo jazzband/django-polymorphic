@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections import OrderedDict
 from collections.abc import Callable, Iterable
-from typing import Any
+from typing import Any, cast
 
 from django import forms
 from django.contrib.contenttypes.models import ContentType
@@ -131,7 +131,7 @@ class PolymorphicFormSetChild:
 
         defaults.update(kwargs)
 
-        return modelform_factory(self.model, **defaults)
+        return modelform_factory(self.model, **defaults)  # type: ignore[arg-type]
 
 
 def polymorphic_child_forms_factory(
@@ -180,9 +180,9 @@ class BasePolymorphicModelFormSet(BaseModelFormSet):
             pk_key = f"{self.add_prefix(i)}-{self.model._meta.pk.name}"
             pk = self.data[pk_key]
             pk_field = self.model._meta.pk
-            to_python = self._get_to_python(pk_field)
+            to_python = self._get_to_python(pk_field)  # type: ignore[attr-defined]
             pk = to_python(pk)
-            kwargs["instance"] = self._existing_object(pk)
+            kwargs["instance"] = self._existing_object(pk)  # type: ignore[attr-defined]
         if i < self.initial_form_count() and "instance" not in kwargs:
             kwargs["instance"] = self.get_queryset()[i]
         if i >= self.initial_form_count() and self.initial_extra:
@@ -193,7 +193,7 @@ class BasePolymorphicModelFormSet(BaseModelFormSet):
                 pass
 
         # BaseFormSet logic, with custom formset_class
-        defaults = {
+        defaults: dict[str, Any] = {
             "auto_id": self.auto_id,
             "prefix": self.add_prefix(i),
             "error_class": self.error_class,
@@ -215,10 +215,13 @@ class BasePolymorphicModelFormSet(BaseModelFormSet):
 
         # Need to find the model that will be displayed in this form.
         # Hence, peeking in the self.queryset_data beforehand.
+        model: type[models.Model] | None
         if self.is_bound:
             if "instance" in defaults and defaults["instance"] is not None:
                 # Object is already bound to a model, won't change the content type
-                model = defaults["instance"].get_real_instance_class()  # allow proxy models
+                model = cast(
+                    PolymorphicModel, defaults["instance"]
+                ).get_real_instance_class()  # allow proxy models
             else:
                 # Extra or empty form, use the provided type.
                 # Note this completely tru
@@ -238,9 +241,11 @@ class BasePolymorphicModelFormSet(BaseModelFormSet):
                     )
         else:
             if "instance" in defaults and defaults["instance"] is not None:
-                model = defaults["instance"].get_real_instance_class()  # allow proxy models
-            elif "polymorphic_ctype" in defaults.get("initial", {}):
-                ct_value = defaults["initial"]["polymorphic_ctype"]
+                model = cast(
+                    PolymorphicModel, defaults["instance"]
+                ).get_real_instance_class()  # allow proxy models
+            elif "polymorphic_ctype" in cast(dict[str, Any], defaults.get("initial", {})):
+                ct_value = cast(dict[str, Any], defaults["initial"])["polymorphic_ctype"]
                 # Handle both ContentType instances and IDs
                 if isinstance(ct_value, ContentType):
                     model = ct_value.model_class()
@@ -259,14 +264,17 @@ class BasePolymorphicModelFormSet(BaseModelFormSet):
         # This allows users to set initial[i]['polymorphic_ctype'] = ct (ContentType instance)
         # while the form field expects an integer ID
         # We do this AFTER determining the model so the model determination can use the ContentType
-        if "initial" in defaults and "polymorphic_ctype" in defaults["initial"]:
-            ct_value = defaults["initial"]["polymorphic_ctype"]
+        if "initial" in defaults and "polymorphic_ctype" in cast(
+            dict[str, Any], defaults["initial"]
+        ):
+            ct_value = cast(dict[str, Any], defaults["initial"])["polymorphic_ctype"]
             if isinstance(ct_value, ContentType):
                 # Create a copy to avoid modifying the original formset.initial
-                defaults["initial"] = defaults["initial"].copy()
+                defaults["initial"] = cast(dict[str, Any], defaults["initial"]).copy()
                 # Convert ContentType instance to its ID
-                defaults["initial"]["polymorphic_ctype"] = ct_value.pk
+                cast(dict[str, Any], defaults["initial"])["polymorphic_ctype"] = ct_value.pk
 
+        assert model is not None, "Model must be determined before creating form"
         form_class = self.get_form_class(model)
         form = form_class(**defaults)
         self.add_fields(form, i)
@@ -274,7 +282,7 @@ class BasePolymorphicModelFormSet(BaseModelFormSet):
 
     def add_fields(self, form: BaseForm, index: int | None) -> None:
         """Add a hidden field for the content type."""
-        ct = ContentType.objects.get_for_model(form._meta.model, for_concrete_model=False)
+        ct = ContentType.objects.get_for_model(form._meta.model, for_concrete_model=False)  # type: ignore[attr-defined]
         choices = [(ct.pk, ct)]  # Single choice, existing forms can't change the value.
         form.fields["polymorphic_ctype"] = forms.TypedChoiceField(
             choices=choices,
@@ -324,8 +332,8 @@ class BasePolymorphicModelFormSet(BaseModelFormSet):
         """
         Return all possible empty forms
         """
-        forms = []
-        for model, form_class in self.child_forms.items():
+        forms: list[BaseForm] = []
+        for _model, form_class in self.child_forms.items():
             kwargs = self.get_form_kwargs(None)
 
             form = form_class(
@@ -405,7 +413,7 @@ def polymorphic_modelformset_factory(
         "error_messages": error_messages,
         "field_classes": field_classes,
     }
-    FormSet = modelformset_factory(**kwargs)
+    FormSet = modelformset_factory(**kwargs)  # type: ignore[arg-type]
 
     child_kwargs = {
         "fields": fields,
@@ -414,8 +422,8 @@ def polymorphic_modelformset_factory(
     if child_form_kwargs:
         child_kwargs.update(child_form_kwargs)
 
-    FormSet.child_forms = polymorphic_child_forms_factory(formset_children, **child_kwargs)
-    return FormSet
+    FormSet.child_forms = polymorphic_child_forms_factory(formset_children, **child_kwargs)  # type: ignore[attr-defined]
+    return cast(type[BasePolymorphicModelFormSet], FormSet)
 
 
 class BasePolymorphicInlineFormSet(BaseInlineFormSet, BasePolymorphicModelFormSet):
@@ -489,7 +497,7 @@ def polymorphic_inlineformset_factory(
         "error_messages": error_messages,
         "field_classes": field_classes,
     }
-    FormSet = inlineformset_factory(**kwargs)
+    FormSet = inlineformset_factory(**kwargs)  # type: ignore[arg-type]
 
     child_kwargs = {
         "fields": fields,
@@ -498,5 +506,5 @@ def polymorphic_inlineformset_factory(
     if child_form_kwargs:
         child_kwargs.update(child_form_kwargs)
 
-    FormSet.child_forms = polymorphic_child_forms_factory(formset_children, **child_kwargs)
-    return FormSet
+    FormSet.child_forms = polymorphic_child_forms_factory(formset_children, **child_kwargs)  # type: ignore[attr-defined]
+    return cast(type[BasePolymorphicInlineFormSet], FormSet)

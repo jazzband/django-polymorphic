@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 
 from django.contrib.contenttypes.admin import GenericInlineModelAdmin
 from django.contrib.contenttypes.models import ContentType
@@ -10,6 +10,7 @@ from django.utils.functional import cached_property
 from polymorphic.formsets import (
     BaseGenericPolymorphicInlineFormSet,
     GenericPolymorphicFormSetChild,
+    PolymorphicFormSetChild,
     polymorphic_child_forms_factory,
 )
 
@@ -24,9 +25,9 @@ class GenericPolymorphicInlineModelAdmin(PolymorphicInlineModelAdmin, GenericInl
     #: The formset class
     formset: type[BaseGenericPolymorphicInlineFormSet] = BaseGenericPolymorphicInlineFormSet  # type: ignore[assignment]
 
-    def get_formset(
+    def get_formset(  # type: ignore[override]
         self, request: HttpRequest, obj: Any = None, **kwargs: Any
-    ) -> type[BaseGenericPolymorphicInlineFormSet]:  # type: ignore[override]
+    ) -> type[BaseGenericPolymorphicInlineFormSet]:
         """
         Construct the generic inline formset class.
         """
@@ -35,10 +36,14 @@ class GenericPolymorphicInlineModelAdmin(PolymorphicInlineModelAdmin, GenericInl
         # NOTE that generic_inlineformset_factory() also makes sure the GFK fields are excluded in the form.
         FormSet = GenericInlineModelAdmin.get_formset(self, request, obj=obj, **kwargs)
 
-        FormSet.child_forms = polymorphic_child_forms_factory(
-            formset_children=self.get_formset_children(request, obj=obj)
+        setattr(
+            FormSet,
+            "child_forms",
+            polymorphic_child_forms_factory(
+                formset_children=self.get_formset_children(request, obj=obj)
+            ),
         )
-        return FormSet
+        return cast(type[BaseGenericPolymorphicInlineFormSet], FormSet)
 
     class Child(PolymorphicInlineModelAdmin.Child):
         """
@@ -46,7 +51,7 @@ class GenericPolymorphicInlineModelAdmin(PolymorphicInlineModelAdmin, GenericInl
         """
 
         # Make sure that the GFK fields are excluded from the child forms
-        formset_child: type[GenericPolymorphicFormSetChild] = GenericPolymorphicFormSetChild  # type: ignore[assignment]
+        formset_child: type[GenericPolymorphicFormSetChild] = GenericPolymorphicFormSetChild
         ct_field: str = "content_type"
         ct_fk_field: str = "object_id"
 
@@ -60,7 +65,7 @@ class GenericPolymorphicInlineModelAdmin(PolymorphicInlineModelAdmin, GenericInl
 
         def get_formset_child(
             self, request: HttpRequest, obj: Any = None, **kwargs: Any
-        ) -> GenericPolymorphicFormSetChild:  # type: ignore[override]
+        ) -> PolymorphicFormSetChild:
             # Similar to GenericInlineModelAdmin.get_formset(),
             # make sure the GFK is automatically excluded from the form
             defaults = {"ct_field": self.ct_field, "fk_field": self.ct_fk_field}

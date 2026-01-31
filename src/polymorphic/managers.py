@@ -5,7 +5,7 @@ The manager class for use in the models.
 from __future__ import annotations
 
 from collections.abc import Iterable
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 from django.contrib.contenttypes.models import ContentType
 from django.db import DEFAULT_DB_ALIAS, models, transaction
@@ -13,17 +13,15 @@ from typing_extensions import Self, TypeVar
 
 from polymorphic.query import PolymorphicQuerySet
 
+if TYPE_CHECKING:
+    from .models import PolymorphicModel  # noqa: F401
+
 __all__ = ["PolymorphicManager", "PolymorphicQuerySet"]
 
-_T = TypeVar("_T", bound=models.Model, default=models.Model)
-
-if TYPE_CHECKING:
-    _ManagerBase = models.Manager[_T]
-else:
-    _ManagerBase = models.Manager
+_T = TypeVar("_T", bound="PolymorphicModel", default="PolymorphicModel")
 
 
-class PolymorphicManager(_ManagerBase):
+class PolymorphicManager(models.Manager[_T]):
     """
     Manager for PolymorphicModel
 
@@ -31,7 +29,7 @@ class PolymorphicManager(_ManagerBase):
     a custom queryset class is to be used.
     """
 
-    queryset_class: type[PolymorphicQuerySet[_T]] = PolymorphicQuerySet  # type: ignore[assignment]
+    queryset_class: type[PolymorphicQuerySet[_T]] = PolymorphicQuerySet
 
     @classmethod
     def from_queryset(
@@ -55,16 +53,19 @@ class PolymorphicManager(_ManagerBase):
 
     # Proxied methods
     def non_polymorphic(self) -> PolymorphicQuerySet[_T]:
-        return self.all().non_polymorphic()  # type: ignore[no-any-return, attr-defined]
+        return cast(PolymorphicQuerySet[_T], self.all().non_polymorphic())  # type: ignore[attr-defined]
 
     def instance_of(self, *args: type[models.Model]) -> PolymorphicQuerySet[_T]:
-        return self.all().instance_of(*args)  # type: ignore[no-any-return, attr-defined]
+        return cast(PolymorphicQuerySet[_T], self.all().instance_of(*args))  # type: ignore[attr-defined]
 
     def not_instance_of(self, *args: type[models.Model]) -> PolymorphicQuerySet[_T]:
-        return self.all().not_instance_of(*args)  # type: ignore[no-any-return, attr-defined]
+        return cast(PolymorphicQuerySet[_T], self.all().not_instance_of(*args))  # type: ignore[attr-defined]
 
     def get_real_instances(self, base_result_objects: Iterable[_T] | None = None) -> list[_T]:
-        return self.all().get_real_instances(base_result_objects=base_result_objects)  # type: ignore[no-any-return, attr-defined]
+        return cast(
+            list[_T],
+            self.all().get_real_instances(base_result_objects=base_result_objects),  # type: ignore[attr-defined]
+        )
 
     def create_from_super(self, obj: models.Model, **kwargs: Any) -> _T:
         """
@@ -90,7 +91,7 @@ class PolymorphicManager(_ManagerBase):
                 raise TypeError(
                     f"{obj.__class__.__name__} is not a direct parent of {self.model.__name__}"
                 )
-            kwargs[parent_ptr.get_attname()] = obj.pk
+            kwargs[parent_ptr.get_attname()] = obj.pk  # type: ignore[union-attr]
 
             # create the new base class with only fields that apply to  it.
             ctype = ContentType.objects.db_manager(

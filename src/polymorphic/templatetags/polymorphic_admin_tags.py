@@ -17,8 +17,8 @@ class BreadcrumbScope(Node):
     def parse(cls, parser: Parser, token: Token) -> Self:
         bits = token.split_contents()
         if len(bits) == 2:
-            (tagname, base_opts) = bits
-            base_opts = parser.compile_filter(base_opts)
+            (_tagname, base_opts_str) = bits
+            base_opts = parser.compile_filter(base_opts_str)
             nodelist = parser.parse(("endbreadcrumb_scope",))
             parser.delete_first_token()
 

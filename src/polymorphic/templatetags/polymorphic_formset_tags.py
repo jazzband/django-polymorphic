@@ -56,7 +56,7 @@ from __future__ import annotations
 
 import json
 from collections.abc import Generator
-from typing import Any
+from typing import TYPE_CHECKING, Any, cast
 
 from django.db import models
 from django.forms import BaseForm, BaseFormSet
@@ -66,6 +66,9 @@ from django.utils.text import capfirst
 from django.utils.translation import gettext
 
 from polymorphic.formsets import BasePolymorphicModelFormSet
+
+if TYPE_CHECKING:
+    from django.forms import BaseModelFormSet, ModelForm
 
 register: Library = Library()
 
@@ -79,16 +82,17 @@ def include_empty_form(formset: BaseFormSet[Any]) -> Generator[BaseForm, None, N
     """
     yield from formset
 
-    if hasattr(formset, "empty_forms"):
+    empty_forms = getattr(formset, "empty_forms", None)
+    if empty_forms is not None:
         # BasePolymorphicModelFormSet
-        yield from formset.empty_forms
+        yield from empty_forms
     else:
         # Standard Django formset
         yield formset.empty_form
 
 
 @register.filter
-def as_script_options(formset: BaseFormSet[Any]) -> str:
+def as_script_options(formset: "BaseModelFormSet[Any, Any]") -> str:
     """
     .. templatetag:: as_script_options
 
@@ -125,13 +129,14 @@ def as_script_options(formset: BaseFormSet[Any]) -> str:
 
 
 @register.filter
-def as_form_type(form: BaseForm) -> str:
+def as_form_type(form: "ModelForm[Any]") -> str:
     """
     .. templatetag:: as_form_type
 
     Usage: ``{{ form|as_form_type }}``
     """
-    return form._meta.model._meta.model_name
+    # model_name is never None for a valid model, cast is safe
+    return cast(str, form._meta.model._meta.model_name)
 
 
 @register.filter
@@ -141,4 +146,5 @@ def as_model_name(model: type[models.Model]) -> str:
 
     Usage: ``{{ model|as_model_name }}``
     """
-    return model._meta.model_name
+    # model_name is never None for a valid model, cast is safe
+    return cast(str, model._meta.model_name)

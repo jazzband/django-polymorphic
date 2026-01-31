@@ -4,7 +4,7 @@ PolymorphicModel Meta Class
 
 import sys
 import warnings
-from typing import Any
+from typing import Any, cast
 
 from django.db import models
 from django.db.models.base import ModelBase
@@ -109,7 +109,9 @@ class PolymorphicModelBase(ModelBase):
 
         from .models import PolymorphicModel
 
-        new_class = super().__new__(cls, model_name, bases, attrs, **kwargs)
+        new_class = cast(
+            type[PolymorphicModel], super().__new__(cls, model_name, bases, attrs, **kwargs)
+        )
 
         # wrap on_delete handlers of reverse relations back to this model with the
         # polymorphic deletion guard
@@ -166,14 +168,14 @@ class PolymorphicModelBase(ModelBase):
         # anymore in the Model Meta, so it doesn't substitute our polymorphic
         # manager as default manager for the third level of inheritance when
         # that third level doesn't define a manager at all.
-        manager = models.Manager()
+        manager: models.Manager[Any] = models.Manager()
         manager.name = "base_objects"
         manager.model = self
         return manager
 
     @property
     def _default_manager(cls) -> PolymorphicManager[Any]:
-        mgr = super()._default_manager
+        mgr: Any = super()._default_manager  # type: ignore[misc]
         if (
             check_dump
             and sys._getframe(1).f_globals.get("__name__")
@@ -203,12 +205,15 @@ class PolymorphicModelBase(ModelBase):
             # Note that if you are stepping through this code in the debugger it will
             # be looking at the wrong frame because a bunch of debugging frames will be
             # on the top of the stack.
-            return mgr.non_polymorphic() if isinstance(mgr, PolymorphicManager) else mgr
-        return mgr
+            return cast(
+                PolymorphicManager[Any],
+                mgr.non_polymorphic() if isinstance(mgr, PolymorphicManager) else mgr,
+            )
+        return cast(PolymorphicManager[Any], mgr)
 
     @property
     def _base_manager(cls) -> PolymorphicManager[Any]:
-        mgr = super()._base_manager
+        mgr: Any = super()._base_manager  # type: ignore[misc]
         if (
             check_dump
             and sys._getframe(1).f_globals.get("__name__")
@@ -216,5 +221,8 @@ class PolymorphicModelBase(ModelBase):
         ):
             # base manager is used when the --all flag is passed - see analogous comment
             # for _default_manager
-            return mgr.non_polymorphic() if isinstance(mgr, PolymorphicManager) else mgr
-        return mgr
+            return cast(
+                PolymorphicManager[Any],
+                mgr.non_polymorphic() if isinstance(mgr, PolymorphicManager) else mgr,
+            )
+        return cast(PolymorphicManager[Any], mgr)

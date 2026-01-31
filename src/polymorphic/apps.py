@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Iterable, Sequence
 
 from django.apps import AppConfig, apps
 from django.core.checks import CheckMessage, Error, Tags, Warning, register
@@ -7,8 +7,8 @@ from django.db import models
 
 @register(Tags.models)
 def check_reserved_field_names(
-    app_configs: list[AppConfig] | None, **kwargs: Any
-) -> list[CheckMessage]:
+    app_configs: Sequence[AppConfig] | None, **kwargs: Any
+) -> Iterable[CheckMessage]:
     """
     System check that ensures models don't use reserved field names.
     """

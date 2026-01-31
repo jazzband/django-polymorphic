@@ -7,9 +7,9 @@ This package provides classes that support both options for polymorphic formsets
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 
-import extra_views
+import extra_views  # type: ignore[import-untyped]
 from django.core.exceptions import ImproperlyConfigured
 from django.forms import BaseFormSet
 
@@ -62,11 +62,11 @@ class PolymorphicFormSetMixin:
         # Since `polymorphic_modelformset_factory` and `polymorphic_inlineformset_factory` mainly
         # reuse the standard factories, and then add `child_forms`, the same can be done here.
         # This makes sure the base class construction is completely honored.
-        FormSet = super().get_formset()
+        FormSet = super().get_formset()  # type: ignore[misc]
         FormSet.child_forms = polymorphic_child_forms_factory(
             self.get_formset_children(), **self.get_formset_child_kwargs()
         )
-        return FormSet
+        return cast(type[BaseFormSet[Any]], FormSet)
 
 
 class PolymorphicFormSetView(PolymorphicFormSetMixin, extra_views.ModelFormSetView):

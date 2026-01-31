@@ -85,7 +85,7 @@ def translate_polymorphic_Q_object(
     if isinstance(potential_q_object, models.Q):
         return tree_node_correct_field_specs(queryset_model, potential_q_object)
 
-    return potential_q_object
+    return potential_q_object  # type: ignore[unreachable]
 
 
 def translate_polymorphic_filter_definitions_in_args(
@@ -211,7 +211,7 @@ def _create_base_path(baseclass: type[models.Model], myclass: type[models.Model]
 
         path = _create_base_path(baseclass, b)
         if path:
-            if b._meta.abstract or b._meta.proxy:
+            if b._meta.abstract or b._meta.proxy:  # type: ignore[attr-defined]
                 return _get_query_related_name(myclass)
             else:
                 return f"{path}__{_get_query_related_name(myclass)}"

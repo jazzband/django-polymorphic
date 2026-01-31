@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, cast
 
 from django.db.models import QuerySet
 from django.db.models.fields.related_descriptors import (
@@ -15,7 +15,8 @@ class NonPolymorphicForwardOneToOneDescriptor(ForwardOneToOneDescriptor):
     """
 
     def get_queryset(self, **hints: Any) -> QuerySet[Any]:
-        return (
+        return cast(
+            QuerySet[Any],
             (
                 getattr(
                     self.field.remote_field.model,
@@ -25,7 +26,7 @@ class NonPolymorphicForwardOneToOneDescriptor(ForwardOneToOneDescriptor):
                 )
             )
             .db_manager(hints=hints)
-            .all()
+            .all(),
         )
 
 
@@ -37,15 +38,16 @@ class NonPolymorphicReverseOneToOneDescriptor(ReverseOneToOneDescriptor):
     """
 
     def get_queryset(self, **hints: Any) -> QuerySet[Any]:
-        return (
+        return cast(
+            QuerySet[Any],
             (
                 getattr(
                     self.related.related_model,
                     "_base_objects",
                     # don't fail if we've been used on a non-poly model
-                    self.related.related_model._base_manager,
+                    self.related.related_model._base_manager,  # type: ignore[union-attr]
                 )
             )
             .db_manager(hints=hints)
-            .all()
+            .all(),
         )
