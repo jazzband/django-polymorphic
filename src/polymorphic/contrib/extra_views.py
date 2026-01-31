@@ -32,7 +32,7 @@ class PolymorphicFormSetMixin:
     Internal Mixin, that provides polymorphic integration with the ``extra_views`` package.
     """
 
-    formset_class: type[BaseFormSet[Any]] = BasePolymorphicModelFormSet
+    formset_class: type[BaseFormSet] = BasePolymorphicModelFormSet
 
     #: Default 0 extra forms
     factory_kwargs: dict[str, Any] = {"extra": 0}
@@ -54,7 +54,7 @@ class PolymorphicFormSetMixin:
     def get_formset_child_kwargs(self) -> dict[str, Any]:
         return {}
 
-    def get_formset(self) -> type[BaseFormSet[Any]]:
+    def get_formset(self) -> type[BaseFormSet]:
         """
         Returns the formset class from the inline formset factory
         """
@@ -66,7 +66,7 @@ class PolymorphicFormSetMixin:
         FormSet.child_forms = polymorphic_child_forms_factory(
             self.get_formset_children(), **self.get_formset_child_kwargs()
         )
-        return cast(type[BaseFormSet[Any]], FormSet)
+        return cast(type[BaseFormSet], FormSet)
 
 
 class PolymorphicFormSetView(PolymorphicFormSetMixin, extra_views.ModelFormSetView):

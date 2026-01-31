@@ -74,7 +74,7 @@ register: Library = Library()
 
 
 @register.filter()
-def include_empty_form(formset: BaseFormSet[Any]) -> Generator[BaseForm, None, None]:
+def include_empty_form(formset: BaseFormSet) -> Generator[BaseForm, None, None]:
     """
     .. templatetag:: include_empty_form
 
