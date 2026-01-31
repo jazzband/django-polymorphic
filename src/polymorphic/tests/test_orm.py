@@ -532,12 +532,6 @@ class PolymorphicTests(TransactionTestCase):
             One2OneRelatingModelDerived,
         )
 
-        # unless the user provides a manager the default_manager and base_manager are
-        # the same
-        assert Model2A._default_manager is Model2A._base_manager
-        assert Model2B._default_manager is Model2B._base_manager
-        assert Model2C._default_manager is Model2C._base_manager
-
         assert type(Model2BFiltered._base_manager) is PolymorphicManager
         assert type(Model2CFiltered._base_manager) is PolymorphicManager
         assert type(Model2CNamedManagers._base_manager) is CustomBaseManager
@@ -2625,3 +2619,17 @@ class PolymorphicTests(TransactionTestCase):
         )
 
         DisparateKeysGrandChild2.objects.all().delete()
+
+    def test_manager_cache_clear_persistence(self):
+        """
+        Test that clearing the model registry cache does not remove overriden
+        base managers.
+
+        https://github.com/jazzband/django-polymorphic/issues/857
+        """
+        from django.apps import apps
+
+        apps.clear_cache()
+
+        self.test_base_manager()
+        self.test_default_manager()
