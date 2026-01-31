@@ -7,7 +7,7 @@ Each row in the inline can correspond with a different subclass.
 from __future__ import annotations
 
 from functools import partial
-from typing import Any
+from typing import TYPE_CHECKING, Any, cast
 
 from django.conf import settings
 from django.contrib.admin.options import InlineModelAdmin
@@ -28,6 +28,9 @@ from polymorphic.formsets.utils import add_media
 
 from .helpers import PolymorphicInlineSupportMixin
 
+if TYPE_CHECKING:
+    from django.contrib.admin.options import _FieldGroups, _FieldsetSpec
+
 
 class PolymorphicInlineModelAdmin(InlineModelAdmin):
     """
@@ -39,7 +42,7 @@ class PolymorphicInlineModelAdmin(InlineModelAdmin):
     * The child inlines can't override the base model fields, only this parent inline can do that.
     """
 
-    formset: type[BasePolymorphicInlineFormSet] = BasePolymorphicInlineFormSet  # type: ignore[assignment]
+    formset: type[BasePolymorphicInlineFormSet] = BasePolymorphicInlineFormSet
 
     #: The extra media to add for the polymorphic inlines effect.
     #: This can be redefined for subclasses.
@@ -59,7 +62,7 @@ class PolymorphicInlineModelAdmin(InlineModelAdmin):
 
     #: Inlines for all model sub types that can be displayed in this inline.
     #: Each row is a :class:`PolymorphicInlineModelAdmin.Child`
-    child_inlines: tuple[type["PolymorphicInlineModelAdmin.Child"], ...] = ()
+    child_inlines: list[type["PolymorphicInlineModelAdmin.Child"]] = []
 
     child_inline_instances: list["PolymorphicInlineModelAdmin.Child"]
 
@@ -119,7 +122,7 @@ class PolymorphicInlineModelAdmin(InlineModelAdmin):
 
     def get_formset(
         self, request: HttpRequest, obj: Any = None, **kwargs: Any
-    ) -> type[BasePolymorphicInlineFormSet]:  # type: ignore[override]
+    ) -> type[BasePolymorphicInlineFormSet]:
         """
         Construct the inline formset class.
 
@@ -133,10 +136,10 @@ class PolymorphicInlineModelAdmin(InlineModelAdmin):
         # Instead of completely redefining super().get_formset(), we use
         # the regular inlineformset_factory(), and amend that with our extra bits.
         # This code line is the essence of what polymorphic_inlineformset_factory() does.
-        FormSet.child_forms = polymorphic_child_forms_factory(
+        FormSet.child_forms = polymorphic_child_forms_factory(  # type: ignore[attr-defined]
             formset_children=self.get_formset_children(request, obj=obj)
         )
-        return FormSet
+        return cast(type[BasePolymorphicInlineFormSet], FormSet)
 
     def get_formset_children(
         self, request: HttpRequest, obj: Any = None
@@ -151,9 +154,7 @@ class PolymorphicInlineModelAdmin(InlineModelAdmin):
             formset_children.append(child_inline.get_formset_child(request, obj=obj))
         return formset_children
 
-    def get_fieldsets(
-        self, request: HttpRequest, obj: Any = None
-    ) -> list[tuple[str | None, dict[str, Any]]]:  # type: ignore[override]
+    def get_fieldsets(self, request: HttpRequest, obj: Any = None) -> "_FieldsetSpec":
         """
         Hook for specifying fieldsets.
         """
@@ -162,8 +163,9 @@ class PolymorphicInlineModelAdmin(InlineModelAdmin):
         else:
             return []  # Avoid exposing fields to the child
 
-    def get_fields(self, request: HttpRequest, obj: Any = None) -> list[str]:  # type: ignore[override]
+    def get_fields(self, request: HttpRequest, obj: Any = None) -> "_FieldGroups":
         if self.fields:
+            # Django's stubs type fields as Sequence[str | Sequence[str]]
             return self.fields
         else:
             return []  # Avoid exposing fields to the child
@@ -182,7 +184,7 @@ class PolymorphicInlineModelAdmin(InlineModelAdmin):
             child_media = child_instance.media
 
             # Avoid adding the same media object again and again
-            if child_media._css != base_media._css and child_media._js != base_media._js:
+            if child_media._css != base_media._css and child_media._js != base_media._js:  # type: ignore[attr-defined]
                 add_media(all_media, child_media)
 
         add_media(all_media, self.polymorphic_media)
@@ -218,7 +220,7 @@ class PolymorphicInlineModelAdmin(InlineModelAdmin):
             # The formset is created by the parent inline.
             raise RuntimeError("The child get_formset() is not used.")
 
-        def get_fields(self, request: HttpRequest, obj: Any = None) -> list[str]:  # type: ignore[override]
+        def get_fields(self, request: HttpRequest, obj: Any = None) -> "_FieldGroups":
             if self.fields:
                 return self.fields
 
@@ -227,7 +229,11 @@ class PolymorphicInlineModelAdmin(InlineModelAdmin):
             # Default Django does: form = self.get_formset(request, obj, fields=None).form
             # Use 'fields=None' avoids recursion in the field autodetection.
             form = self.get_formset_child(request, obj, fields=None).get_form()
-            return list(form.base_fields) + list(self.get_readonly_fields(request, obj))
+            # Cast list[str] to _FieldGroups (compatible at runtime)
+            return cast(
+                "_FieldGroups",
+                list(form.base_fields) + list(self.get_readonly_fields(request, obj)),
+            )
 
         def get_formset_child(
             self, request: HttpRequest, obj: Any = None, **kwargs: Any

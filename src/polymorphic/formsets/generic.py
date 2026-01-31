@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Iterable
-from typing import Any
+from typing import Any, cast
 
 from django.contrib.contenttypes.forms import (
     BaseGenericInlineFormSet,
@@ -52,16 +52,16 @@ class GenericPolymorphicFormSetChild(PolymorphicFormSetChild):
         # This is similar to what generic_inlineformset_factory() does
         # if there is no field called `ct_field` let the exception propagate
         opts = self.model._meta
-        ct_field = opts.get_field(self.ct_field)
+        ct_field_obj = opts.get_field(self.ct_field)
 
         if (
-            not isinstance(ct_field, models.ForeignKey)
-            or ct_field.remote_field.model != ContentType
+            not isinstance(ct_field_obj, models.ForeignKey)
+            or ct_field_obj.remote_field.model != ContentType
         ):
-            raise Exception(f"fk_name '{ct_field}' is not a ForeignKey to ContentType")
+            raise Exception(f"fk_name '{ct_field_obj}' is not a ForeignKey to ContentType")
 
-        fk_field = opts.get_field(self.fk_field)  # let the exception propagate
-        exclude.extend([ct_field.name, fk_field.name])
+        fk_field_obj = opts.get_field(self.fk_field)  # let the exception propagate
+        exclude.extend([ct_field_obj.name, fk_field_obj.name])
         kwargs["exclude"] = exclude
 
         return super().get_form(**kwargs)
@@ -141,6 +141,6 @@ def generic_polymorphic_inlineformset_factory(
     if child_form_kwargs:
         child_kwargs.update(child_form_kwargs)
 
-    FormSet = generic_inlineformset_factory(**kwargs)
-    FormSet.child_forms = polymorphic_child_forms_factory(formset_children, **child_kwargs)
-    return FormSet
+    FormSet = generic_inlineformset_factory(**kwargs)  # type: ignore[arg-type]
+    FormSet.child_forms = polymorphic_child_forms_factory(formset_children, **child_kwargs)  # type: ignore[attr-defined]
+    return cast(type[BaseGenericPolymorphicInlineFormSet], FormSet)

@@ -1,12 +1,19 @@
 import re
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 from django.db import models
+
+if TYPE_CHECKING:
+    from polymorphic.models import PolymorphicModel
+
+    _Base = PolymorphicModel
+else:
+    _Base = object
 
 RE_DEFERRED: re.Pattern[str] = re.compile("_Deferred_.*")
 
 
-class ShowFieldBase:
+class ShowFieldBase(_Base):
     """base class for the ShowField... model mixins, does the work"""
 
     # cause nicer multiline PolymorphicQuery output
@@ -105,14 +112,14 @@ class ShowFieldBase:
         self._showfields_add_regular_fields(parts)
 
         # add annotate fields
-        if hasattr(self, "polymorphic_annotate_names"):
-            self._showfields_add_dynamic_fields(self.polymorphic_annotate_names, "Ann", parts)
+        annotate_names = getattr(self, "polymorphic_annotate_names", None)
+        if annotate_names is not None:
+            self._showfields_add_dynamic_fields(annotate_names, "Ann", parts)
 
         # add extra() select fields
-        if hasattr(self, "polymorphic_extra_select_names"):
-            self._showfields_add_dynamic_fields(
-                self.polymorphic_extra_select_names, "Extra", parts
-            )
+        extra_select_names = getattr(self, "polymorphic_extra_select_names", None)
+        if extra_select_names is not None:
+            self._showfields_add_dynamic_fields(extra_select_names, "Extra", parts)
 
         if self.polymorphic_showfield_deferred:
             fields = self.get_deferred_fields()

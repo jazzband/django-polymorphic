@@ -6,7 +6,7 @@ This makes sure that admin fieldsets/layout settings are exported to the templat
 
 import json
 from collections.abc import Iterator
-from typing import Any
+from typing import Any, cast
 
 from django.contrib.admin.helpers import AdminField, InlineAdminForm, InlineAdminFormSet
 from django.http import HttpRequest
@@ -27,6 +27,8 @@ class PolymorphicInlineAdminForm(InlineAdminForm):
 
     @property
     def is_empty(self) -> bool:
+        if not self.form.prefix:
+            return False
         return "__prefix__" in self.form.prefix
 
 
@@ -143,7 +145,7 @@ class PolymorphicInlineSupportMixin:
         polymorphic inline formset. This fixes the media and form appearance
         of the inline polymorphic models.
         """
-        inline_admin_formsets = super().get_inline_formsets(
+        inline_admin_formsets = super().get_inline_formsets(  # type: ignore[misc]
             request, formsets, inline_instances, obj=obj
         )
 
@@ -154,4 +156,4 @@ class PolymorphicInlineSupportMixin:
                 admin_formset.__class__ = PolymorphicInlineAdminFormSet
                 admin_formset.request = request
                 admin_formset.obj = obj
-        return inline_admin_formsets
+        return cast(list[InlineAdminFormSet], inline_admin_formsets)

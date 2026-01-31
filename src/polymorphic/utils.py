@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections import defaultdict
 from dataclasses import dataclass
 from functools import lru_cache
-from typing import Any
+from typing import Any, cast
 
 from django.apps import apps
 from django.contrib.contenttypes.models import ContentType
@@ -45,7 +45,7 @@ def reset_polymorphic_ctype(*models: type[models.Model], **filters: Any) -> None
             new_model, for_concrete_model=False
         )
 
-        qs = new_model.objects.db_manager(using)
+        qs = new_model.objects.db_manager(using)  # type: ignore[attr-defined]
         if ignore_existing:
             qs = qs.filter(polymorphic_ctype__isnull=True)
         if filters:
@@ -126,12 +126,12 @@ def route_to_ancestor(
 
         for parent_model, field_to_parent in model._meta.parents.items():
             if field_to_parent is not None:
-                new_route = current_route + [ParentLinkInfo(parent_model, field_to_parent)]
+                new_route = current_route + [ParentLinkInfo(parent_model, field_to_parent)]  # type: ignore[arg-type]
                 found_route = find_route(parent_model, target_model, new_route)
                 if found_route is not None:
                     return found_route
             else:
-                return find_route(parent_model, target_model, current_route)
+                return find_route(parent_model, target_model, current_route)  # type: ignore[unreachable]
         return None
 
     found_route = find_route(model_class, ancestor_model, route)
@@ -257,9 +257,10 @@ def _lazy_ctype(model: type[models.Model], using: str = DEFAULT_DB_ALIAS) -> Con
     """
     mgr = ContentType.objects.db_manager(using=using)
     if apps.models_ready and (
-        cid := mgr._cache.get(using, {}).get((model._meta.app_label, model._meta.model_name))
+        cid := mgr._cache.get(using, {}).get((model._meta.app_label, model._meta.model_name))  # type: ignore[attr-defined]
     ):
-        return cid
+        # cast needed because _cache returns Any
+        return cast(ContentType, cid)
     return Q(app_label=model._meta.app_label) & Q(model=model._meta.model_name)
 
 

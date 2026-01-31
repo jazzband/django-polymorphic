@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import warnings
 from collections.abc import Iterable
-from typing import ClassVar
+from typing import ClassVar, cast
 
 from django.contrib.contenttypes.models import ContentType
 from django.db import models, transaction
@@ -80,7 +80,9 @@ class PolymorphicModel(models.Model, metaclass=PolymorphicModelBase):
             DeprecationWarning,
             stacklevel=2,
         )
-        return get_base_polymorphic_model(cls, allow_abstract=True)._meta.pk.attname
+        base_model = get_base_polymorphic_model(cls, allow_abstract=True)
+        assert base_model is not None, "Polymorphic model must have a base"
+        return base_model._meta.pk.attname
 
     @classmethod
     def translate_polymorphic_Q_object(cls, q: Q) -> Q:
@@ -184,7 +186,7 @@ class PolymorphicModel(models.Model, metaclass=PolymorphicModelBase):
                 "not point to a subclass!"
             )
 
-        return model
+        return cast(type[Self] | None, model)
 
     def get_real_concrete_instance_class_id(self) -> int | None:
         model_class = self.get_real_instance_class()
@@ -200,10 +202,11 @@ class PolymorphicModel(models.Model, metaclass=PolymorphicModelBase):
         model_class = self.get_real_instance_class()
         if model_class is None:
             return None
-        return (
+        return cast(
+            type[Self] | None,
             ContentType.objects.db_manager(self._state.db)
             .get_for_model(model_class, for_concrete_model=True)
-            .model_class()
+            .model_class(),
         )
 
     def get_real_instance(self) -> Self:
@@ -246,7 +249,7 @@ class PolymorphicModel(models.Model, metaclass=PolymorphicModelBase):
         # need to update
         parent_updates = (
             [
-                (parent_model, getattr(self, parent_field.get_attname()))
+                (parent_model, getattr(self, parent_field.get_attname()))  # type: ignore[union-attr]
                 for parent_model, parent_field in self._meta.parents.items()
                 if issubclass(parent_model, PolymorphicModel)
             ]
@@ -261,7 +264,9 @@ class PolymorphicModel(models.Model, metaclass=PolymorphicModelBase):
                 for parent_model, pk in parent_updates:
                     parent_model.objects.db_manager(using=using).non_polymorphic().filter(
                         pk=pk
-                    ).update(polymorphic_ctype=lazy_ctype(parent_model, using=using))
+                    ).update(
+                        polymorphic_ctype=lazy_ctype(parent_model, using=using or DEFAULT_DB_ALIAS)
+                    )
                 return ret
         return super().delete(using=using, keep_parents=keep_parents)
 
