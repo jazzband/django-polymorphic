@@ -53,9 +53,16 @@ install-playwright:
 install-docs:
     uv sync --group docs --all-extras
 
-# run static type checking
-check-types:
-    #TODO @just run mypy src/polymorphic
+# run static type checking with mypy
+check-types-mypy:
+    @just run mypy src/polymorphic
+
+# run static type checking with pyright
+check-types-pyright:
+    @just run pyright src/polymorphic
+
+# run all static type checking
+check-types: check-types-mypy check-types-pyright
 
 # run package checks
 check-package:

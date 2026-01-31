@@ -52,8 +52,14 @@ The following filters are provided;
     </div>
 """
 
-import json
+from __future__ import annotations
 
+import json
+from collections.abc import Generator
+from typing import TYPE_CHECKING, Any, cast
+
+from django.db import models
+from django.forms import BaseForm, BaseFormSet
 from django.template import Library
 from django.utils.encoding import force_str
 from django.utils.text import capfirst
@@ -61,11 +67,14 @@ from django.utils.translation import gettext
 
 from polymorphic.formsets import BasePolymorphicModelFormSet
 
-register = Library()
+if TYPE_CHECKING:
+    from django.forms import BaseModelFormSet, ModelForm
+
+register: Library = Library()
 
 
 @register.filter()
-def include_empty_form(formset):
+def include_empty_form(formset: BaseFormSet) -> Generator[BaseForm, None, None]:
     """
     .. templatetag:: include_empty_form
 
@@ -73,16 +82,17 @@ def include_empty_form(formset):
     """
     yield from formset
 
-    if hasattr(formset, "empty_forms"):
+    empty_forms = getattr(formset, "empty_forms", None)
+    if empty_forms is not None:
         # BasePolymorphicModelFormSet
-        yield from formset.empty_forms
+        yield from empty_forms
     else:
         # Standard Django formset
         yield formset.empty_form
 
 
 @register.filter
-def as_script_options(formset):
+def as_script_options(formset: "BaseModelFormSet[Any, Any]") -> str:
     """
     .. templatetag:: as_script_options
 
@@ -119,20 +129,22 @@ def as_script_options(formset):
 
 
 @register.filter
-def as_form_type(form):
+def as_form_type(form: "ModelForm[Any]") -> str:
     """
     .. templatetag:: as_form_type
 
     Usage: ``{{ form|as_form_type }}``
     """
-    return form._meta.model._meta.model_name
+    # model_name is never None for a valid model, cast is safe
+    return cast(str, form._meta.model._meta.model_name)
 
 
 @register.filter
-def as_model_name(model):
+def as_model_name(model: type[models.Model]) -> str:
     """
     .. templatetag:: as_model_name
 
     Usage: ``{{ model|as_model_name }}``
     """
-    return model._meta.model_name
+    # model_name is never None for a valid model, cast is safe
+    return cast(str, model._meta.model_name)

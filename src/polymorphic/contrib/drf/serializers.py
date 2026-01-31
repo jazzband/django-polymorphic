@@ -7,11 +7,11 @@ from rest_framework.fields import empty
 
 
 class PolymorphicSerializer(serializers.Serializer):
-    model_serializer_mapping = None
+    model_serializer_mapping: dict[models.Model, serializers.Serializer]
     resource_type_field_name = "resourcetype"
 
     def __new__(cls, *args, **kwargs):
-        if cls.model_serializer_mapping is None:
+        if getattr(cls, "model_serializer_mapping", None) is None:
             raise ImproperlyConfigured(
                 "`{cls}` is missing a `{cls}.model_serializer_mapping` attribute".format(
                     cls=cls.__name__
@@ -96,8 +96,9 @@ class PolymorphicSerializer(serializers.Serializer):
             # Update parent's validated_data with child's validated_data
             # to preserve any modifications made in child's validate() method
             if child_valid and hasattr(self, "_validated_data"):
-                self._validated_data.update(serializer._validated_data)
-            self._errors.update(serializer.errors)
+                self._validated_data.update(serializer._validated_data)  # pyright: ignore[reportAttributeAccessIssue]
+
+            self._errors.update(serializer.errors)  # type:ignore[attr-defined]  # pyright: ignore[reportAttributeAccessIssue]
         return valid and child_valid
 
     def run_validation(self, data=empty):
