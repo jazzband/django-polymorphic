@@ -37,7 +37,7 @@ check_dump: bool = hasattr(sys, "_getframe")
 # reverse relations to polymorphic models also use polymorphic
 # querysets by default.
 # https://github.com/jazzband/django-polymorphic/pull/858
-dj_base_manager = Options.base_manager.func
+dj_base_manager = Options.base_manager.func  # type: ignore[attr-defined]
 
 
 def polymorphic_base_manager(self):
@@ -60,7 +60,7 @@ def polymorphic_base_manager(self):
     return mgr
 
 
-Options.base_manager.func = polymorphic_base_manager
+Options.base_manager.func = polymorphic_base_manager  # type: ignore[attr-defined]
 
 
 class PolymorphicModelBase(ModelBase):
