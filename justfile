@@ -60,6 +60,7 @@ check-types-mypy:
 # run static type checking with pyright
 check-types-pyright:
     @just run --all-extras --group drf --group extra-views pyright src/polymorphic
+    @just run --all-extras --group drf --group extra-views pyright src/polymorphic/tests/test_type_hints.py --project src/polymorphic/tests/pyright.test.json
 
 # run all static type checking
 check-types: check-types-mypy check-types-pyright

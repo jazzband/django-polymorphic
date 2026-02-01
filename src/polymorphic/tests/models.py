@@ -1,4 +1,8 @@
+from __future__ import annotations
+from typing_extensions import Self
+
 import uuid
+import typing as t
 
 from django.contrib.auth.models import Group
 from django.contrib.auth import get_user_model
@@ -199,7 +203,7 @@ class ModelWithMyManager(ShowFieldTypeAndContent, Model2A):
 
 
 class ModelWithMyManagerNoDefault(ShowFieldTypeAndContent, Model2A):
-    objects = PolymorphicManager()
+    objects: t.ClassVar[PolymorphicManager[Model2A | Self]] = PolymorphicManager()
     my_objects = MyManager()
     field4 = models.CharField(max_length=30)
 

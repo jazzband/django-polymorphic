@@ -171,6 +171,10 @@ ignore_errors = true
 module = "example.*"
 ignore_errors = true
 
+[[tool.mypy.overrides]]
+module = "polymorphic.tests.test_type_hints"
+ignore_errors = false
+
 [tool.django-stubs]
 django_settings_module = "polymorphic.tests.settings"
 
@@ -179,9 +183,9 @@ pythonVersion = "3.10"
 typeCheckingMode = "basic"
 include = ["src/polymorphic"]
 exclude = [
-    "**/migrations",
-    "**/tests",
-    "example",
+  "**/migrations",
+  "example",
+  "src/polymorphic/**/tests/**",
 ]
 reportMissingImports = true
 reportMissingTypeStubs = false
