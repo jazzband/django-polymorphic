@@ -60,7 +60,7 @@ def polymorphic_base_manager(self):
     return mgr
 
 
-Options.base_manager.func = polymorphic_base_manager  # type: ignore[attr-defined]
+setattr(Options.base_manager, "func", polymorphic_base_manager)
 
 
 class PolymorphicModelBase(ModelBase):
