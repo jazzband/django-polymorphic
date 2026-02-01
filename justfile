@@ -55,11 +55,11 @@ install-docs:
 
 # run static type checking with mypy
 check-types-mypy:
-    @just run mypy src/polymorphic
+    @just run --all-extras --group drf --group extra-views mypy src/polymorphic
 
 # run static type checking with pyright
 check-types-pyright:
-    @just run pyright src/polymorphic
+    @just run --all-extras --group drf --group extra-views pyright src/polymorphic
 
 # run all static type checking
 check-types: check-types-mypy check-types-pyright

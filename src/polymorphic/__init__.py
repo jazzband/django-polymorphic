@@ -18,6 +18,7 @@ r"""
 
 Seamless Polymorphic Inheritance for Django Models
 """
+
 from typing import Final
 
 VERSION: Final[str] = "4.10.5"
