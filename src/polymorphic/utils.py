@@ -246,15 +246,6 @@ def prepare_for_copy(obj: models.Model) -> None:
 
 
 def _lazy_ctype(model: type[models.Model], using: str = DEFAULT_DB_ALIAS) -> ContentType | Q:
-    """
-    Return the content type id for the given model class if it is in the cache,
-    otherwise return a subquery that can be used to match the content type as part
-    of a larger query. Safe to call before apps are fully loaded.
-
-    :param model: The model class to get the content type for.
-    :return: The content type for the model class.
-    :rtype: int or Subquery
-    """
     mgr = ContentType.objects.db_manager(using=using)
     if apps.models_ready and (
         cid := mgr._cache.get(using, {}).get((model._meta.app_label, model._meta.model_name))  # type: ignore[attr-defined]
@@ -265,6 +256,15 @@ def _lazy_ctype(model: type[models.Model], using: str = DEFAULT_DB_ALIAS) -> Con
 
 
 def lazy_ctype(model: type[models.Model], using: str = DEFAULT_DB_ALIAS) -> ContentType | Subquery:
+    """
+    Return the content type id for the given model class if it is in the cache,
+    otherwise return a subquery that can be used to match the content type as part
+    of a larger query. Safe to call before apps are fully loaded.
+
+    :param model: The model class to get the content type for.
+    :return: The content type for the model class.
+    :rtype: ContentType object or Subquery
+    """
     ctype = _lazy_ctype(model, using=using)
     return (
         ctype
