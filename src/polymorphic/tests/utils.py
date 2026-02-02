@@ -3,6 +3,7 @@ import shutil
 import re
 from pathlib import Path
 from functools import lru_cache
+import pytest
 
 from django.core.management import call_command
 from django_test_migrations.migrator import Migrator
@@ -14,7 +15,6 @@ from django.apps import apps
 
 from playwright.sync_api import sync_playwright, expect
 from polymorphic import tests
-from polymorphic.tests.models import Model2C
 
 
 DSN_RE = re.compile(r"^(?P<host>[^:/]+)(:(?P<port>\d+))?/(?P<service>.+)$")
@@ -161,6 +161,8 @@ class _GenericUITest(StaticLiveServerTestCase):
     admin_username = "admin"
     admin_password = "password"
     admin = None
+
+    pytestmark = pytest.mark.ui
 
     def admin_url(self):
         return f"{self.live_server_url}{reverse('admin:index')}"

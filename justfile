@@ -47,27 +47,28 @@ install *OPTS:
 
 # install playwright dependencies
 install-playwright:
-    @just run playwright install
-
-# install documentation dependencies
-install-docs:
-    uv sync --group docs --all-extras
+    @just run --no-default-groups --group test playwright install chromium
 
 # run static type checking with mypy
-check-types-mypy:
-    @just run --all-extras --group drf --group extra-views mypy src/polymorphic
+check-types-mypy *RUN_ARGS:
+    @just run --no-default-groups --all-extras --group integrations --group typing {{ RUN_ARGS }} mypy src/polymorphic
 
 # run static type checking with pyright
-check-types-pyright:
-    @just run --all-extras --group drf --group extra-views pyright src/polymorphic
-    @just run --all-extras --group drf --group extra-views pyright --project src/polymorphic/tests/examples/type_hints/pyright.json
+check-types-pyright *RUN_ARGS:
+    @just run --no-default-groups --all-extras --group integrations --group typing {{ RUN_ARGS }} pyright src/polymorphic
+    @just run --no-default-groups --all-extras --group integrations --group typing {{ RUN_ARGS }} pyright --project src/polymorphic/tests/examples/type_hints/pyright.json
 
 # run all static type checking
 check-types: check-types-mypy check-types-pyright
 
+# run all static type checking in an isolated environment
+check-types-isolated:
+    @just check-types-mypy --exact --isolated
+    @just check-types-pyright --exact --isolated
+
 # run package checks
 check-package:
-    @just run pip check
+    @just run --no-default-groups pip check
 
 # remove doc build artifacts-
 [script]
@@ -90,12 +91,12 @@ clean-git-ignored:
 clean: clean-docs clean-env clean-git-ignored
 
 # build html documentation
-build-docs-html: install-docs
-    @just run sphinx-build --fresh-env --builder html --doctree-dir ./docs/_build/doctrees ./docs/ ./docs/_build/html
+build-docs-html:
+    @just run --group docs --group integrations sphinx-build --fresh-env --builder html --doctree-dir ./docs/_build/doctrees ./docs/ ./docs/_build/html
 
 # build pdf documentation
-build-docs-pdf: install-docs
-    @just run sphinx-build --fresh-env --builder latex --doctree-dir ./docs/_build/doctrees ./docs/ ./docs/_build/pdf
+build-docs-pdf:
+    @just run --group docs --group integrations sphinx-build --fresh-env --builder latex --doctree-dir ./docs/_build/doctrees ./docs/ ./docs/_build/pdf
     cd docs/_build/pdf && make
 
 # build the docs
@@ -113,7 +114,7 @@ remake-test-migrations:
     - rm src/polymorphic/tests/other/migrations/00*.py
     - rm src/polymorphic/tests/examples/**/migrations/00*.py
     - rm src/polymorphic/tests/examples/integrations/**/migrations/00*.py
-    uv run --exact --isolated --resolution lowest-direct --group reversion --group extra-views --group drf --script ./manage.py makemigrations
+    uv run --no-default-groups  --exact --isolated --resolution lowest-direct --group integrations --script ./manage.py makemigrations
 
 # open the html documentation
 [script]
@@ -126,11 +127,11 @@ open-docs:
 docs: build-docs-html open-docs
 
 # serve the documentation, with auto-reload
-docs-live: install-docs
-    @just run sphinx-autobuild docs docs/_build --open-browser --watch src --port 8000 --delay 1
+docs-live:
+    @just run --no-default-groups --group docs --group integrations sphinx-autobuild docs docs/_build --open-browser --watch src --port 8000 --delay 1
 
 _link_check:
-    -uv run sphinx-build -b linkcheck -Q -D linkcheck_timeout=10 ./docs/ ./docs/_build
+    -uv run --no-default-groups --group docs sphinx-build -b linkcheck -Q -D linkcheck_timeout=10 ./docs/ ./docs/_build
 
 # check the documentation links for broken links
 [script]
@@ -149,42 +150,47 @@ check-docs-links: _link_check
 
 # lint the documentation
 check-docs:
-    @just run doc8 --ignore-path ./docs/_build --max-line-length 100 -q ./docs
+    @just run --no-default-groups --group lint doc8 --ignore-path ./docs/_build --max-line-length 100 -q ./docs
 
 # lint the code
 check-lint:
-    @just run ruff check --select I
-    @just run ruff check
+    @just run --no-default-groups --group lint ruff check --select I
+    @just run --no-default-groups --group lint ruff check
 
 # check if the code needs formatting
 check-format:
-    @just run ruff format --check
+    @just run --no-default-groups --group lint ruff format --check
+    @just run --no-default-groups --group lint ruff format --line-length 80 --check src/polymorphic/tests/examples
 
 # check that the readme renders
 check-readme:
-    @just run -m readme_renderer ./README.md -o /tmp/README.html
+    @just run --no-default-groups --group lint -m readme_renderer ./README.md -o /tmp/README.html
 
 _check-readme-quiet:
     @just --quiet check-readme
 
 # sort the python imports
 sort-imports:
-    @just run ruff check --fix --select I
+    @just run --no-default-groups --group lint ruff check --fix --select I
 
 # format the code and sort imports
 format: sort-imports
     just --fmt --unstable
-    @just run ruff format
+    @just run --no-default-groups --group lint ruff format
+    @just run --no-default-groups --group lint ruff format --line-length 80 src/polymorphic/tests/examples
 
 # sort the imports and fix linting issues
 lint: sort-imports
-    @just run ruff check --fix
+    @just run --no-default-groups --group lint ruff check --fix
 
 # fix formatting, linting issues and import sorting
 fix: lint format
 
 # run all static checks
-check: check-lint check-format check-types check-package check-docs check-docs-links _check-readme-quiet
+check: check-lint check-format check-types check-package check-docs _check-readme-quiet
+
+# run all checks including documentation link checking (slow)
+check-all: check check-docs-links
 
 [script]
 _lock-python:
@@ -200,37 +206,35 @@ test-lock +PACKAGES: _lock-python
     uv add {{ PACKAGES }}
 
 # run tests
-test *TESTS: install-playwright
-    @just run --exact pytest {{ TESTS }} --cov 
+test *TESTS:
+    @just run --no-default-groups --exact --group test --isolated pytest {{ TESTS }} --cov 
 
-test-db DB_CLIENT="dev" *TESTS: install-playwright
+# test against the specified database backend
+test-db DB_CLIENT="dev" *TESTS:
     # No Optional Dependency Unit Tests
     # todo clean this up, rerunning a lot of tests
-    uv sync --exact --group {{ DB_CLIENT }}
-    @just run pytest {{ TESTS }} --cov 
+    @just run --no-default-groups --exact --group test --isolated --group {{ DB_CLIENT }} pytest {{ TESTS }} --cov 
 
-# run django-reversion integration tests
-test-reversion *TESTS: install-playwright
-    uv sync --exact --group reversion
-    @just run pytest -m integration src/polymorphic/tests/examples/integrations/reversion {{ TESTS }}
+# test django-revision integration
+test-reversion *TESTS:
+    @just run --no-default-groups --group reversion --group test --exact --isolated pytest -m integration src/polymorphic/tests/examples/integrations/reversion {{ TESTS }}
 
+# test django extra views integration
 test-extra-views *TESTS:
-    uv sync --group extra-views
-    @just run pytest -m integration src/polymorphic/tests/examples/integrations/extra_views {{ TESTS }}
+    @just run --no-default-groups --group extra-views --group test --exact --isolated pytest -m integration src/polymorphic/tests/examples/integrations/extra_views {{ TESTS }}
 
+# test django rest framework integration
 test-drf *TESTS:
-    uv sync --group drf
-    @just run pytest -m integration src/polymorphic/tests/examples/integrations/drf {{ TESTS }}
+    @just run --no-default-groups --no-default-groups --group drf --group test --exact --isolated pytest -m integration src/polymorphic/tests/examples/integrations/drf {{ TESTS }}
 
+# test guardian integration
 test-guardian *TESTS:
-    uv sync --group guardian
-    @just run pytest -m integration src/polymorphic/tests/examples/integrations/guardian {{ TESTS }}
+    @just run --no-default-groups --group guardian --group test --exact --isolated pytest -m integration src/polymorphic/tests/examples/integrations/guardian {{ TESTS }}
 
 # run all third party integration tests
-test-integrations DB_CLIENT="dev": install-playwright
+test-integrations DB_CLIENT="dev":
     # Integration Tests
-    uv sync --group {{ DB_CLIENT }} --group reversion --group extra-views --group drf --group guardian
-    @just run pytest -m integration --cov --cov-append
+    @just run --no-default-groups --group {{ DB_CLIENT }} --group integrations --group guardian --group reversion --group test --exact --isolated pytest -m integration --cov --cov-append
 
 # debug an test
 debug-test *TESTS:
@@ -245,12 +249,16 @@ precommit:
 
 # generate the test coverage report
 coverage:
-    @just run coverage combine --keep *.coverage
-    @just run coverage report
-    @just run coverage xml
+    @just run --no-default-groups--group coverage coverage combine --keep *.coverage
+    @just run --no-default-groups --group coverage coverage report
+    @just run --no-default-groups --group coverage coverage xml
 
+_install-docs:
+    uv sync --no-default-groups --group docs --all-extras
+
+# get the intersphinx references for the given library
 [script]
-fetch-refs LIB: install-docs
+fetch-refs LIB: _install-docs
     import os
     from pathlib import Path
     import logging as _logging
@@ -286,7 +294,7 @@ validate_version VERSION:
     print(version)
 
 # issue a release for the given semver string (e.g. 2.1.0)
-release VERSION:
+release VERSION: check-all
     @just validate_version v{{ VERSION }}
     git tag -s v{{ VERSION }} -m "{{ VERSION }} Release"
     git push upstream v{{ VERSION }}

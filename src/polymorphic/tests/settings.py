@@ -1,5 +1,13 @@
 import os
 
+try:
+    import django_stubs_ext
+
+    django_stubs_ext.monkeypatch()
+except ImportError:
+    pass
+
+
 DEBUG = False
 
 rdbms = os.environ.get("RDBMS", "sqlite")

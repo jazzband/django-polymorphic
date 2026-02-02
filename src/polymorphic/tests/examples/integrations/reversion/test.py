@@ -33,7 +33,9 @@ class ReversionIntegrationTests(TestCase):
         # Create a blog post with reversion
         with revisions.create_revision():
             blog_post = BlogPost.objects.create(
-                title="First Post", content="This is my first blog post.", author="John Doe"
+                title="First Post",
+                content="This is my first blog post.",
+                author="John Doe",
             )
             revisions.set_comment("Initial version")
 
@@ -64,7 +66,9 @@ class ReversionIntegrationTests(TestCase):
         # Create a news article with reversion
         with revisions.create_revision():
             news_article = NewsArticle.objects.create(
-                title="Breaking News", content="Important news story.", source="Daily News"
+                title="Breaking News",
+                content="Important news story.",
+                source="Daily News",
             )
             revisions.set_comment("Published article")
 
@@ -86,9 +90,15 @@ class ReversionIntegrationTests(TestCase):
         """Test that polymorphic queries work correctly with versioned objects."""
         # Create instances of both child models
         with revisions.create_revision():
-            BlogPost.objects.create(title="Blog Post", content="Blog content", author="Jane Smith")
+            BlogPost.objects.create(
+                title="Blog Post",
+                content="Blog content",
+                author="Jane Smith",
+            )
             NewsArticle.objects.create(
-                title="News Article", content="News content", source="News Corp"
+                title="News Article",
+                content="News content",
+                source="News Corp",
             )
 
         # Query using the polymorphic base model
@@ -109,7 +119,9 @@ class ReversionIntegrationTests(TestCase):
         # Create initial version
         with revisions.create_revision():
             blog_post = BlogPost.objects.create(
-                title="Original Title", content="Original content", author="Author One"
+                title="Original Title",
+                content="Original content",
+                author="Author One",
             )
 
         # Make several updates
@@ -129,7 +141,9 @@ class ReversionIntegrationTests(TestCase):
 
         # Revert to first version
         versions = Version.objects.get_for_object(blog_post)
-        first_version = versions[2]  # Versions are in reverse chronological order
+        first_version = versions[
+            2
+        ]  # Versions are in reverse chronological order
         first_version.revision.revert()
 
         # Verify reverted state
@@ -172,14 +186,24 @@ class ReversionIntegrationTests(TestCase):
         # Test getting version data
         latest_version = versions[0]
         self.assertEqual(latest_version.field_dict["author"], "Updated Author")
-        self.assertEqual(latest_version.field_dict["content"], "Second update to content.")
+        self.assertEqual(
+            latest_version.field_dict["content"],
+            "Second update to content.",
+        )
 
         middle_version = versions[1]
-        self.assertEqual(middle_version.field_dict["title"], "Updated Manual Test Post")
-        self.assertEqual(middle_version.field_dict["content"], "First update to content.")
+        self.assertEqual(
+            middle_version.field_dict["title"], "Updated Manual Test Post"
+        )
+        self.assertEqual(
+            middle_version.field_dict["content"],
+            "First update to content.",
+        )
 
         original_version = versions[2]
-        self.assertEqual(original_version.field_dict["title"], "Manual Test Post")
+        self.assertEqual(
+            original_version.field_dict["title"], "Manual Test Post"
+        )
         self.assertEqual(original_version.field_dict["author"], "Test Author")
 
         # Test reverting to middle version manually
@@ -187,7 +211,9 @@ class ReversionIntegrationTests(TestCase):
         blog_post.refresh_from_db()
         self.assertEqual(blog_post.title, "Updated Manual Test Post")
         self.assertEqual(blog_post.content, "First update to content.")
-        self.assertEqual(blog_post.author, "Test Author")  # Should be from original
+        self.assertEqual(
+            blog_post.author, "Test Author"
+        )  # Should be from original
 
         # Test accessing revision metadata
         revision = middle_version.revision
@@ -244,8 +270,12 @@ class ReversionIntegrationTests(TestCase):
         """Test reverting multiple polymorphic objects in a single revision."""
         # Create multiple objects in one revision
         with revisions.create_revision():
-            blog1 = BlogPost.objects.create(title="Blog 1", content="Content 1", author="Author 1")
-            blog2 = BlogPost.objects.create(title="Blog 2", content="Content 2", author="Author 2")
+            blog1 = BlogPost.objects.create(
+                title="Blog 1", content="Content 1", author="Author 1"
+            )
+            blog2 = BlogPost.objects.create(
+                title="Blog 2", content="Content 2", author="Author 2"
+            )
             news = NewsArticle.objects.create(
                 title="News 1", content="News content", source="Source 1"
             )
@@ -338,18 +368,26 @@ class ReversionAdminUITests(_GenericUITest):
         versions = Version.objects.get_for_object(blog_post)
         self.assertEqual(versions.count(), 2)
         latest_version = versions[0]
-        self.assertEqual(latest_version.field_dict["title"], "Updated Admin Test Post")
-        self.assertEqual(latest_version.field_dict["author"], "Updated Admin Author")
+        self.assertEqual(
+            latest_version.field_dict["title"], "Updated Admin Test Post"
+        )
+        self.assertEqual(
+            latest_version.field_dict["author"], "Updated Admin Author"
+        )
 
         # Navigate to history page and verify it's accessible
         history_url = f"{self.live_server_url}{reverse('admin:integrations_blogpost_history', args=[blog_post.pk])}"
         self.page.goto(history_url)
 
         # Verify we can see the history page
-        expect(self.page.locator("#content h1")).to_contain_text("Change history")
+        expect(self.page.locator("#content h1")).to_contain_text(
+            "Change history"
+        )
 
         # Verify history table shows version information
-        history_table = self.page.locator("table#change-history, div#change-history")
+        history_table = self.page.locator(
+            "table#change-history, div#change-history"
+        )
         expect(history_table).to_be_visible()
 
         # Use the UI to revert: Click on the oldest version's date/time link
@@ -364,7 +402,9 @@ class ReversionAdminUITests(_GenericUITest):
         # We're now on the specific version's history page (history/<version_id>/)
         current_url = self.page.url
         self.assertIn(
-            "/history/", current_url, f"Should be on history detail page, got: {current_url}"
+            "/history/",
+            current_url,
+            f"Should be on history detail page, got: {current_url}",
         )
 
         # Wait for page to fully load
@@ -373,7 +413,9 @@ class ReversionAdminUITests(_GenericUITest):
         # The page should show the old version's data
         page_content = self.page.content()
         self.assertIn(
-            "Admin Test Post", page_content, "Should see original title on the version page"
+            "Admin Test Post",
+            page_content,
+            "Should see original title on the version page",
         )
 
         # Find and click the submit button to revert
@@ -422,13 +464,17 @@ class ReversionAdminUITests(_GenericUITest):
         # Verify we now have 2 versions (1 from API, 1 from admin)
         versions = Version.objects.get_for_object(article)
         self.assertEqual(versions.count(), 2)
-        self.assertEqual(versions[0].field_dict["title"], "Updated Parent Article")
+        self.assertEqual(
+            versions[0].field_dict["title"], "Updated Parent Article"
+        )
         self.assertEqual(versions[1].field_dict["title"], "Parent Article Test")
 
         # Navigate to history page through parent admin
         history_url = f"{self.live_server_url}{reverse('admin:integrations_article_history', args=[article.pk])}"
         self.page.goto(history_url)
-        expect(self.page.locator("#content h1")).to_contain_text("Change history")
+        expect(self.page.locator("#content h1")).to_contain_text(
+            "Change history"
+        )
 
         # Use the UI to revert: Click on the oldest version
         history_links = self.page.locator("table#change-history a").all()
@@ -494,13 +540,17 @@ class ReversionAdminUITests(_GenericUITest):
         # Verify we have 2 versions from admin operations
         versions = Version.objects.get_for_object(news)
         self.assertEqual(versions.count(), 2)
-        self.assertEqual(versions[0].field_dict["title"], "Updated Breaking News")
+        self.assertEqual(
+            versions[0].field_dict["title"], "Updated Breaking News"
+        )
         self.assertEqual(versions[1].field_dict["title"], "Breaking Admin News")
 
         # Verify history page is accessible
         history_url = f"{self.live_server_url}{reverse('admin:integrations_newsarticle_history', args=[news.pk])}"
         self.page.goto(history_url)
-        expect(self.page.locator("#content h1")).to_contain_text("Change history")
+        expect(self.page.locator("#content h1")).to_contain_text(
+            "Change history"
+        )
 
         # Use the UI to revert: Click on the oldest version
         history_links = self.page.locator("table#change-history a").all()

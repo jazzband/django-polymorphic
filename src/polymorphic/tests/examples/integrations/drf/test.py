@@ -75,11 +75,19 @@ class TestPolymorphicSerializer:
         serializer = TestPolymorphicSerializer()
 
         # The instance should be used directly without re-instantiation
-        assert serializer.model_serializer_mapping[BlogBase] is blog_base_serializer_instance
+        assert (
+            serializer.model_serializer_mapping[BlogBase]
+            is blog_base_serializer_instance
+        )
 
         # The callable should be instantiated
-        assert isinstance(serializer.model_serializer_mapping[BlogOne], BlogOneSerializer)
-        assert serializer.model_serializer_mapping[BlogOne] is not BlogOneSerializer
+        assert isinstance(
+            serializer.model_serializer_mapping[BlogOne], BlogOneSerializer
+        )
+        assert (
+            serializer.model_serializer_mapping[BlogOne]
+            is not BlogOneSerializer
+        )
 
         # Both should be in resource_type_model_mapping
         assert serializer.resource_type_model_mapping["BlogBase"] == BlogBase
@@ -87,7 +95,9 @@ class TestPolymorphicSerializer:
 
         # Now test that serialization actually works with the non-callable serializer
         base_instance = BlogBase.objects.create(name="base", slug="base-slug")
-        one_instance = BlogOne.objects.create(name="one", slug="one-slug", info="info")
+        one_instance = BlogOne.objects.create(
+            name="one", slug="one-slug", info="info"
+        )
 
         # Serialize BlogBase (using the pre-instantiated serializer)
         base_serializer = TestPolymorphicSerializer(base_instance)
@@ -149,7 +159,12 @@ class TestPolymorphicSerializer:
     def test_create(self):
         data = [
             {"name": "a", "slug": "a", "resourcetype": "BlogBase"},
-            {"name": "b", "slug": "b", "info": "info", "resourcetype": "BlogOne"},
+            {
+                "name": "b",
+                "slug": "b",
+                "info": "info",
+                "resourcetype": "BlogOne",
+            },
             {"name": "c", "slug": "c", "resourcetype": "BlogTwo"},
         ]
         serializer = BlogPolymorphicSerializer(data=data, many=True)
@@ -167,7 +182,11 @@ class TestPolymorphicSerializer:
 
     def test_update(self):
         instance = BlogBase.objects.create(name="blog", slug="blog")
-        data = {"name": "new-blog", "slug": "blog", "resourcetype": "BlogBase"}
+        data = {
+            "name": "new-blog",
+            "slug": "blog",
+            "resourcetype": "BlogBase",
+        }
 
         serializer = BlogPolymorphicSerializer(instance, data=data)
         assert serializer.is_valid()
@@ -180,7 +199,9 @@ class TestPolymorphicSerializer:
         instance = BlogBase.objects.create(name="blog", slug="blog")
         data = {"name": "new-blog", "resourcetype": "BlogBase"}
 
-        serializer = BlogPolymorphicSerializer(instance, data=data, partial=True)
+        serializer = BlogPolymorphicSerializer(
+            instance, data=data, partial=True
+        )
         assert serializer.is_valid()
 
         serializer.save()
@@ -191,7 +212,9 @@ class TestPolymorphicSerializer:
         instance = BlogBase.objects.create(name="blog", slug="blog")
         data = {"name": "new-blog"}
 
-        serializer = BlogPolymorphicSerializer(instance, data=data, partial=True)
+        serializer = BlogPolymorphicSerializer(
+            instance, data=data, partial=True
+        )
         assert serializer.is_valid()
 
         serializer.save()
@@ -251,7 +274,9 @@ class TestPolymorphicSerializer:
         instance = BlogBase.objects.create(name="blog", slug="blog")
         data = {"name": "new-blog"}
 
-        serializer = BlogPolymorphicSerializer(instance, data=data, partial=True)
+        serializer = BlogPolymorphicSerializer(
+            instance, data=data, partial=True
+        )
         internal_value = serializer.to_internal_value(data)
 
         assert internal_value["name"] == "new-blog"
@@ -301,7 +326,9 @@ class TestPolymorphicSerializer:
             serializer._get_serializer_from_resource_type("InvalidResourceType")
 
         assert "resourcetype" in excinfo.value.detail
-        assert "Invalid resourcetype" in str(excinfo.value.detail["resourcetype"])
+        assert "Invalid resourcetype" in str(
+            excinfo.value.detail["resourcetype"]
+        )
 
     def test_validate_method_modifications_are_preserved(self):
         """Test that modifications made in child serializer's validate() method are preserved."""
@@ -386,9 +413,13 @@ class TestProjectViewSet:
 
     @pytest.fixture
     def research_project(self):
-        return ResearchProject.objects.create(topic="Research", supervisor="Dr. Smith")
+        return ResearchProject.objects.create(
+            topic="Research", supervisor="Dr. Smith"
+        )
 
-    def test_list_projects(self, client, base_project, art_project, research_project):
+    def test_list_projects(
+        self, client, base_project, art_project, research_project
+    ):
         response = client.get("/examples/integrations/drf/projects/")
         assert response.status_code == 200
         assert len(response.data) == 3
@@ -397,13 +428,17 @@ class TestProjectViewSet:
         assert topics == {"General Project", "Art", "Research"}
 
     def test_retrieve_base_project(self, client, base_project):
-        response = client.get(f"/examples/integrations/drf/projects/{base_project.pk}/")
+        response = client.get(
+            f"/examples/integrations/drf/projects/{base_project.pk}/"
+        )
         assert response.status_code == 200
         assert response.data["topic"] == "General Project"
         assert response.data["resourcetype"] == "Project"
 
     def test_retrieve_art_project(self, client, art_project):
-        response = client.get(f"/examples/integrations/drf/projects/{art_project.pk}/")
+        response = client.get(
+            f"/examples/integrations/drf/projects/{art_project.pk}/"
+        )
         assert response.status_code == 200
         assert response.data["topic"] == "Art"
         assert response.data["artist"] == "Picasso"
@@ -411,7 +446,9 @@ class TestProjectViewSet:
         assert "url" in response.data
 
     def test_retrieve_research_project(self, client, research_project):
-        response = client.get(f"/examples/integrations/drf/projects/{research_project.pk}/")
+        response = client.get(
+            f"/examples/integrations/drf/projects/{research_project.pk}/"
+        )
         assert response.status_code == 200
         assert response.data["topic"] == "Research"
         assert response.data["supervisor"] == "Dr. Smith"
@@ -419,7 +456,9 @@ class TestProjectViewSet:
 
     def test_create_base_project(self, client):
         data = {"topic": "New Project", "resourcetype": "Project"}
-        response = client.post("/examples/integrations/drf/projects/", data, format="json")
+        response = client.post(
+            "/examples/integrations/drf/projects/", data, format="json"
+        )
         assert response.status_code == 201
         assert response.data["topic"] == "New Project"
         assert response.data["resourcetype"] == "Project"
@@ -435,7 +474,9 @@ class TestProjectViewSet:
             "artist": "Michelangelo",
             "resourcetype": "ArtProject",
         }
-        response = client.post("/examples/integrations/drf/projects/", data, format="json")
+        response = client.post(
+            "/examples/integrations/drf/projects/", data, format="json"
+        )
         assert response.status_code == 201
         assert response.data["topic"] == "Sculpture"
         assert response.data["artist"] == "Michelangelo"
@@ -453,7 +494,9 @@ class TestProjectViewSet:
             "supervisor": "Dr. Johnson",
             "resourcetype": "ResearchProject",
         }
-        response = client.post("/examples/integrations/drf/projects/", data, format="json")
+        response = client.post(
+            "/examples/integrations/drf/projects/", data, format="json"
+        )
         assert response.status_code == 201
         assert response.data["topic"] == "AI Research"
         assert response.data["supervisor"] == "Dr. Johnson"
@@ -467,7 +510,9 @@ class TestProjectViewSet:
     def test_update_project(self, client, base_project):
         data = {"topic": "Updated Project", "resourcetype": "Project"}
         response = client.put(
-            f"/examples/integrations/drf/projects/{base_project.pk}/", data, format="json"
+            f"/examples/integrations/drf/projects/{base_project.pk}/",
+            data,
+            format="json",
         )
         assert response.status_code == 200
         assert response.data["topic"] == "Updated Project"
@@ -478,7 +523,9 @@ class TestProjectViewSet:
     def test_partial_update_art_project(self, client, art_project):
         data = {"artist": "Van Gogh"}
         response = client.patch(
-            f"/examples/integrations/drf/projects/{art_project.pk}/", data, format="json"
+            f"/examples/integrations/drf/projects/{art_project.pk}/",
+            data,
+            format="json",
         )
         assert response.status_code == 200
         assert response.data["artist"] == "Van Gogh"
@@ -491,7 +538,9 @@ class TestProjectViewSet:
     def test_partial_update_research_project(self, client, research_project):
         data = {"supervisor": "Dr. Williams"}
         response = client.patch(
-            f"/examples/integrations/drf/projects/{research_project.pk}/", data, format="json"
+            f"/examples/integrations/drf/projects/{research_project.pk}/",
+            data,
+            format="json",
         )
         assert response.status_code == 200
         assert response.data["supervisor"] == "Dr. Williams"
@@ -503,14 +552,18 @@ class TestProjectViewSet:
 
     def test_delete_project(self, client, base_project):
         project_id = base_project.pk
-        response = client.delete(f"/examples/integrations/drf/projects/{project_id}/")
+        response = client.delete(
+            f"/examples/integrations/drf/projects/{project_id}/"
+        )
         assert response.status_code == 204
 
         assert not Project.objects.filter(pk=project_id).exists()
 
     def test_create_with_invalid_resourcetype(self, client):
         data = {"topic": "Test", "resourcetype": "InvalidType"}
-        response = client.post("/examples/integrations/drf/projects/", data, format="json")
+        response = client.post(
+            "/examples/integrations/drf/projects/", data, format="json"
+        )
         assert response.status_code == 400
 
 
@@ -523,7 +576,9 @@ class TestDjangoFiltersViewSet:
 
     @pytest.fixture
     def user(self, django_user_model):
-        return django_user_model.objects.create_user(username="testuser", password="testpass")
+        return django_user_model.objects.create_user(
+            username="testuser", password="testpass"
+        )
 
     @pytest.fixture
     def user_annotator(self, user):
@@ -541,7 +596,9 @@ class TestDjangoFiltersViewSet:
     def ai_annotator_claude(self):
         from .models import AiModelAnnotator
 
-        return AiModelAnnotator.objects.create(ai_model="claude-3", version="2.0")
+        return AiModelAnnotator.objects.create(
+            ai_model="claude-3", version="2.0"
+        )
 
     @pytest.fixture
     def data_by_user(self, user_annotator):
@@ -561,13 +618,17 @@ class TestDjangoFiltersViewSet:
 
         return Data.objects.create(annotator=ai_annotator_claude)
 
-    def test_list_all_annotations(self, client, data_by_user, data_by_gpt4, data_by_claude):
+    def test_list_all_annotations(
+        self, client, data_by_user, data_by_gpt4, data_by_claude
+    ):
         """Test listing all annotation data without filters."""
         response = client.get("/examples/integrations/drf/annotations/")
         assert response.status_code == 200
         assert len(response.data) == 3
 
-    def test_filter_by_annotator(self, client, data_by_user, data_by_gpt4, ai_annotator_gpt4):
+    def test_filter_by_annotator(
+        self, client, data_by_user, data_by_gpt4, ai_annotator_gpt4
+    ):
         """Test filtering by annotator ID."""
         response = client.get(
             f"/examples/integrations/drf/annotations/?annotator={ai_annotator_gpt4.pk}"
@@ -576,10 +637,14 @@ class TestDjangoFiltersViewSet:
         assert len(response.data) == 1
         assert response.data[0]["id"] == data_by_gpt4.pk
 
-    def test_filter_by_ai_model(self, client, data_by_user, data_by_gpt4, data_by_claude):
+    def test_filter_by_ai_model(
+        self, client, data_by_user, data_by_gpt4, data_by_claude
+    ):
         """Test filtering by annotator__ai_model field (issue #520)."""
         # This is the key test - filtering by a field on the polymorphic child model
-        response = client.get("/examples/integrations/drf/annotations/?annotator__ai_model=gpt-4")
+        response = client.get(
+            "/examples/integrations/drf/annotations/?annotator__ai_model=gpt-4"
+        )
         assert response.status_code == 200
         assert len(response.data) == 1
         assert response.data[0]["id"] == data_by_gpt4.pk
@@ -611,7 +676,9 @@ class TestDjangoFiltersViewSet:
         """Test that filtering by ai_model excludes UserAnnotator instances."""
         # When filtering by annotator__ai_model, only AiModelAnnotator results should be returned
         # UserAnnotator doesn't have ai_model field, so data_by_user should not appear
-        response = client.get("/examples/integrations/drf/annotations/?annotator__ai_model=gpt-4")
+        response = client.get(
+            "/examples/integrations/drf/annotations/?annotator__ai_model=gpt-4"
+        )
         assert response.status_code == 200
         assert len(response.data) == 1
         # Verify the user-annotated data is not in results
@@ -619,14 +686,20 @@ class TestDjangoFiltersViewSet:
 
     def test_retrieve_annotation(self, client, data_by_gpt4):
         """Test retrieving a single annotation."""
-        response = client.get(f"/examples/integrations/drf/annotations/{data_by_gpt4.pk}/")
+        response = client.get(
+            f"/examples/integrations/drf/annotations/{data_by_gpt4.pk}/"
+        )
         assert response.status_code == 200
         assert response.data["id"] == data_by_gpt4.pk
 
-    def test_create_annotation_with_user_annotator(self, client, user_annotator):
+    def test_create_annotation_with_user_annotator(
+        self, client, user_annotator
+    ):
         """Test creating annotation data with a UserAnnotator."""
         data = {"annotator": user_annotator.pk}
-        response = client.post("/examples/integrations/drf/annotations/", data, format="json")
+        response = client.post(
+            "/examples/integrations/drf/annotations/", data, format="json"
+        )
         assert response.status_code == 201
         assert response.data["annotator"] == user_annotator.pk
 
@@ -636,10 +709,14 @@ class TestDjangoFiltersViewSet:
         created = Data.objects.first()
         assert created.annotator.pk == user_annotator.pk
 
-    def test_create_annotation_with_ai_annotator(self, client, ai_annotator_gpt4):
+    def test_create_annotation_with_ai_annotator(
+        self, client, ai_annotator_gpt4
+    ):
         """Test creating annotation data with an AiModelAnnotator."""
         data = {"annotator": ai_annotator_gpt4.pk}
-        response = client.post("/examples/integrations/drf/annotations/", data, format="json")
+        response = client.post(
+            "/examples/integrations/drf/annotations/", data, format="json"
+        )
         assert response.status_code == 201
         assert response.data["annotator"] == ai_annotator_gpt4.pk
 

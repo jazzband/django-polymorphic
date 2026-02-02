@@ -57,7 +57,7 @@ class PolymorphicGuard:
         self,
         collector: Collector,
         field: models.Field[Any, Any],
-        sub_objs: PolymorphicQuerySet[Any],
+        sub_objs: PolymorphicQuerySet[Any, Any],
         using: str,
     ) -> None:
         """

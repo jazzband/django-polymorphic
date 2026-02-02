@@ -29,7 +29,8 @@ from .utils import concrete_descendants, route_to_ancestor
 if TYPE_CHECKING:
     from .models import PolymorphicModel  # noqa: F401
 
-_Model = TypeVar("_Model", bound="PolymorphicModel", covariant=True)
+_All = TypeVar("_All", bound="PolymorphicModel", covariant=True)
+_Base = TypeVar("_Base", bound="PolymorphicModel", covariant=True)
 
 _A = TypeVar("_A", bound="PolymorphicModel")
 _B = TypeVar("_B", bound="PolymorphicModel")
@@ -44,7 +45,7 @@ queryset.iterator() implementation
 
 if TYPE_CHECKING:
 
-    class BasePolymorphicModelIterable(ModelIterable[_Model]):
+    class BasePolymorphicModelIterable(ModelIterable[_All]):
         pass
 else:
 
@@ -61,7 +62,7 @@ class _Inconsistent:
     ...
 
 
-class PolymorphicModelIterable(BasePolymorphicModelIterable, Generic[_Model]):
+class PolymorphicModelIterable(BasePolymorphicModelIterable, Generic[_All, _Base]):
     """
     ModelIterable for PolymorphicModel
 
@@ -69,15 +70,15 @@ class PolymorphicModelIterable(BasePolymorphicModelIterable, Generic[_Model]):
     otherwise acts like a regular ModelIterable.
     """
 
-    queryset: "PolymorphicQuerySet[_Model]"
+    queryset: "PolymorphicQuerySet[_All, _Base]"
 
-    def __iter__(self) -> Iterator[_Model]:
+    def __iter__(self) -> Iterator[_All]:
         base_iter = super().__iter__()
         if self.queryset.polymorphic_disabled:
             return base_iter
         return self._polymorphic_iterator(base_iter)
 
-    def _polymorphic_iterator(self, base_iter: Iterator[_Model]) -> Iterator[_Model]:
+    def _polymorphic_iterator(self, base_iter: Iterator[_All]) -> Iterator[_All]:
         """
         Here we do the same as::
 
@@ -121,7 +122,7 @@ class PolymorphicModelIterable(BasePolymorphicModelIterable, Generic[_Model]):
                 return
 
 
-def transmogrify(cls: type[_Model], obj: models.Model) -> _Model:
+def transmogrify(cls: type[_All], obj: models.Model) -> _All:
     """
     Upcast a class to a different type without asking questions.
     """
@@ -129,7 +130,7 @@ def transmogrify(cls: type[_Model], obj: models.Model) -> _Model:
         # Just assign __class__ to a different value.
         new = obj
         new.__class__ = cls
-        return cast(_Model, new)
+        return cast(_All, new)
     else:
         # Run constructor, reassign values
         new = cls()
@@ -142,7 +143,7 @@ def transmogrify(cls: type[_Model], obj: models.Model) -> _Model:
 # PolymorphicQuerySet
 
 
-class PolymorphicQuerySet(QuerySet[_Model, _Model]):
+class PolymorphicQuerySet(QuerySet[_All, _All], Generic[_All, _Base]):
     """
     QuerySet for PolymorphicModel
 
@@ -178,7 +179,7 @@ class PolymorphicQuerySet(QuerySet[_Model, _Model]):
         return new
 
     @classmethod
-    def as_manager(cls) -> models.Manager[_Model]:
+    def as_manager(cls) -> models.Manager[_All]:
         """
         Override base :meth:`~django.db.models.query.QuerySet.as_manager` to return
         a manager extended from :class:`polymorphic.managers.PolymorphicManager`.
@@ -186,7 +187,7 @@ class PolymorphicQuerySet(QuerySet[_Model, _Model]):
 
         from .managers import PolymorphicManager
 
-        manager = PolymorphicManager[_Model].from_queryset(cls)()
+        manager = PolymorphicManager[_All].from_queryset(cls)()
         setattr(manager, "_built_with_as_manager", True)
         return manager
 
@@ -194,19 +195,19 @@ class PolymorphicQuerySet(QuerySet[_Model, _Model]):
 
     def bulk_create(
         self,
-        objs: Iterable[_Model],
+        objs: Iterable[_All],
         batch_size: int | None = None,
         ignore_conflicts: bool = False,
         update_conflicts: bool = False,
         update_fields: Collection[str] | None = None,
         unique_fields: Collection[str] | None = None,
-    ) -> list[_Model]:
+    ) -> list[_All]:
         objs = list(objs)
         for obj in objs:
             obj.pre_save_polymorphic()
         return super().bulk_create(objs, batch_size, ignore_conflicts=ignore_conflicts)
 
-    def non_polymorphic(self) -> Self:
+    def non_polymorphic(self) -> PolymorphicQuerySet[_Base, _Base]:
         """switch off polymorphic behaviour for this query.
         When the queryset is evaluated, only objects of the type of the
         base class used for this query are returned."""
@@ -214,32 +215,32 @@ class PolymorphicQuerySet(QuerySet[_Model, _Model]):
         qs.polymorphic_disabled = True
         if issubclass(qs._iterable_class, PolymorphicModelIterable):
             qs._iterable_class = ModelIterable
-        return qs
+        return cast(PolymorphicQuerySet[_Base, _Base], qs)
 
     @overload
-    def instance_of(self, __a: type[_A], /) -> PolymorphicQuerySet[_A]: ...
+    def instance_of(self, __a: type[_A], /) -> PolymorphicQuerySet[_A, _Base]: ...
 
     @overload
-    def instance_of(self, __a: type[_A], __b: type[_B], /) -> PolymorphicQuerySet[_A | _B]: ...
+    def instance_of(
+        self, __a: type[_A], __b: type[_B], /
+    ) -> PolymorphicQuerySet[_A | _B, _Base]: ...
 
     @overload
     def instance_of(
         self, __a: type[_A], __b: type[_B], __c: type[_C], /
-    ) -> PolymorphicQuerySet[_A | _B | _C]: ...
+    ) -> PolymorphicQuerySet[_A | _B | _C, _Base]: ...
 
     @overload
     def instance_of(
         self, __a: type[_A], __b: type[_B], __c: type[_C], __d: type[_D], /
-    ) -> PolymorphicQuerySet[_A | _B | _C | _D]: ...
+    ) -> PolymorphicQuerySet[_A | _B | _C | _D, _Base]: ...
 
     @overload
-    def instance_of(
-        self, *args: type["PolymorphicModel"]
-    ) -> PolymorphicQuerySet["PolymorphicModel"]: ...
+    def instance_of(self, *args: type["PolymorphicModel"]) -> PolymorphicQuerySet[_All, _Base]: ...
 
     def instance_of(
         self, *args: type["PolymorphicModel"]
-    ) -> PolymorphicQuerySet["PolymorphicModel"]:
+    ) -> PolymorphicQuerySet["PolymorphicModel", _Base]:
         """Filter the queryset to only include the classes in args (and their subclasses)."""
         # Implementation in _translate_polymorphic_filter_defnition.
         return self.filter(instance_of=args)
@@ -421,7 +422,7 @@ class PolymorphicQuerySet(QuerySet[_Model, _Model]):
     # The "polymorphic" keyword argument is not supported anymore.
     # def extra(self, *args, **kwargs):
 
-    def _get_real_instances(self, base_result_objects: Sequence[_Model]) -> list[_Model]:
+    def _get_real_instances(self, base_result_objects: Sequence[_All]) -> list[_All]:
         """
         Polymorphic object loader
 
@@ -506,7 +507,7 @@ class PolymorphicQuerySet(QuerySet[_Model, _Model]):
                 else:
                     # This model has a concrete derived class, track it for bulk retrieval.
                     real_concrete_class = cast(
-                        "type[_Model] | None",
+                        "type[_All] | None",
                         content_type_manager.get_for_id(real_concrete_class_id).model_class(),
                     )
                     if real_concrete_class is not None:
@@ -663,9 +664,7 @@ class PolymorphicQuerySet(QuerySet[_Model, _Model]):
             result = ",\n  ".join(repr(o) for o in self)
             return f"[ {result} ]"
 
-    def get_real_instances(
-        self, base_result_objects: Iterable[_Model] | None = None
-    ) -> list[_Model]:
+    def get_real_instances(self, base_result_objects: Iterable[_All] | None = None) -> list[_All]:
         """
         Cast a list of objects to their actual classes.
 
@@ -679,9 +678,9 @@ class PolymorphicQuerySet(QuerySet[_Model, _Model]):
         """
         "same as _get_real_instances, but make sure that __repr__ for ShowField... creates correct output"
         if base_result_objects is None:
-            base_result_objects = cast(Iterable[_Model], self)
+            base_result_objects = cast(Iterable[_All], self)
         # Convert to list if needed for indexing
-        base_result_list: Sequence[_Model]
+        base_result_list: Sequence[_All]
         if not isinstance(base_result_objects, list):
             base_result_list = list(base_result_objects)
         else:

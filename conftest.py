@@ -1,4 +1,8 @@
 import inspect
+import subprocess
+import sys
+
+import pytest
 
 
 def pytest_configure(config):
@@ -55,3 +59,16 @@ def pytest_runtest_call(item):
             dbg.set_trace()
         except (OSError, AssertionError):
             pass
+
+
+def _install_playwright_browsers() -> None:
+    cmd = [sys.executable, "-m", "playwright", "install", "chromium"]
+    subprocess.run(cmd, check=True)
+
+
+def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:
+    any_ui = any(item.get_closest_marker("ui") is not None for item in items)
+
+    if any_ui and not getattr(config, "_did_install_playwright", False):
+        setattr(config, "_did_install_playwright", True)
+        _install_playwright_browsers()

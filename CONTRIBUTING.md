@@ -39,7 +39,6 @@ just install
 `django-polymorphic` documentation is generated using [Sphinx](https://www.sphinx-doc.org) with the [furo](https://github.com/pradyunsg/furo) theme. Any new feature PRs must provide updated documentation for the features added. To build the docs run doc8 to check for formatting issues then run Sphinx:
 
 ```bash
-just install-docs # install the doc dependencies
 just docs  # builds docs
 just check-docs  # lint the docs
 just check-docs-links  # check for broken links in the docs
@@ -71,6 +70,16 @@ To format source files you can run:
 
 ```bash
 just format
+```
+
+### Type Checking
+
+Both [mypy](https://www.mypy-lang.org) and [pyright](https://microsoft.github.io/pyright) are used to verify static typing. You can run them together or individually:
+
+```bash
+just check-types
+just check-types-mypy
+just check-types-pyright
 ```
 
 ## Running Tests
@@ -127,44 +136,53 @@ just release x.x.x
 ## Just Recipes
 
 ```bash
-build                          # build docs and package
-build-docs                     # build the docs
-build-docs-html                # build html documentation
-build-docs-pdf                 # build pdf documentation
-check                          # run all static checks
-check-docs                     # lint the documentation
-check-docs-links               # check the documentation links for broken links
-check-format                   # check if the code needs formatting
-check-lint                     # lint the code
-check-package                  # run package checks
-check-readme                   # check that the readme renders
-check-types                    # run static type checking
-clean                          # remove all non repository artifacts
-clean-docs                     # remove doc build artifacts-
-clean-env                      # remove the virtual environment
-clean-git-ignored              # remove all git ignored files
-coverage                       # generate the test coverage report
-debug-test *TESTS              # debug a test - (break at test start/run in headed mode)
-docs                           # build and open the documentation
-docs-live                      # serve the documentation, with auto-reload
-fetch-refs LIB
-fix                            # fix formatting, linting issues and import sorting
-format                         # format the code and sort imports
-install *OPTS                  # update and install development dependencies
-install-docs                   # install documentation dependencies
-install-precommit              # install git pre-commit hooks
-install_uv                     # install the uv package manager
-lint                           # sort the imports and fix linting issues
-make-test-migrations           # regenerate test migrations using the lowest version of Django
-manage *COMMAND                # run the django admin
-open-docs                      # open the html documentation
-precommit                      # run the pre-commit checks
-release VERSION                # issue a release for the given semver string (e.g. 2.1.0)
-run +ARGS                      # run the command in the virtual environment
-setup python="python"          # setup the venv, pre-commit hooks and playwright dependencies
-sort-imports                   # sort the python imports
-test *TESTS                    # run tests
-test-db DB_CLIENT="dev" *TESTS
-test-lock +PACKAGES            # lock to specific python and versions of given dependencies
-validate_version VERSION       # validate the given version string against the lib version
+build                             # build docs and package
+build-docs                        # build the docs
+build-docs-html                   # build html documentation
+build-docs-pdf                    # build pdf documentation
+check                             # run all static checks
+check-all                         # run all checks including doc link staleness (slow)
+check-docs                        # lint the documentation
+check-docs-links                  # check the documentation links for broken links
+check-format                      # check if the code needs formatting
+check-lint                        # lint the code
+check-package                     # run package checks
+check-readme                      # check that the readme renders
+check-types                       # run all static type checking
+check-types-isolated              # run all static type checking in an isolated environment
+check-types-mypy *RUN_ARGS        # run static type checking with mypy
+check-types-pyright *RUN_ARGS     # run static type checking with pyright
+clean                             # remove all non repository artifacts
+clean-docs                        # remove doc build artifacts-
+clean-env                         # remove the virtual environment
+clean-git-ignored                 # remove all git ignored files
+coverage                          # generate the test coverage report
+debug-test *TESTS                 # debug an test
+docs                              # build and open the documentation
+docs-live                         # serve the documentation, with auto-reload
+fetch-refs LIB                    # get the intersphinx references for the given library
+fix                               # fix formatting, linting issues and import sorting
+format                            # format the code and sort imports
+install *OPTS                     # update and install development dependencies
+install-playwright                # install playwright dependencies
+install-precommit                 # install git pre-commit hooks
+install_uv                        # install the uv package manager
+lint                              # sort the imports and fix linting issues
+manage *COMMAND                   # run the django admin
+open-docs                         # open the html documentation
+precommit                         # run the pre-commit checks
+release VERSION                   # issue a release for the given semver string (e.g. 2.1.0)
+remake-test-migrations            # regenerate test migrations using the lowest version of Django
+run +ARGS                         # run the command in the virtual environment
+setup python="python"             # setup the venv, pre-commit hooks and playwright dependencies
+sort-imports                      # sort the python imports
+test *TESTS                       # run tests
+test-db DB_CLIENT="dev" *TESTS    # test against the specified database backend
+test-drf *TESTS                   # test django rest framework integration
+test-extra-views *TESTS           # test django extra views integration
+test-guardian *TESTS              # test guardian integration
+test-integrations DB_CLIENT="dev" # run all third party integration tests
+test-lock +PACKAGES               # lock to specific python and versions of given dependencies
+test-reversion *TESTS             # test django-revision integration
+validate_version VERSION          # validate the given version string against the lib version
 ```

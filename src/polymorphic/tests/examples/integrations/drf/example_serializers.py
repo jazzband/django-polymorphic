@@ -16,7 +16,10 @@ class ArtProjectSerializer(serializers.ModelSerializer):
         model = ArtProject
         fields = ("topic", "artist", "url")
         extra_kwargs = {
-            "url": {"view_name": "drf:project-detail", "lookup_field": "pk"},
+            "url": {
+                "view_name": "drf:project-detail",
+                "lookup_field": "pk",
+            },
         }
 
 

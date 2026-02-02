@@ -4,16 +4,27 @@ from django.db import models
 from polymorphic.models import PolymorphicModel
 from polymorphic.managers import PolymorphicManager
 
+if t.TYPE_CHECKING:
+    from polymorphic.managers import (
+        PolymorphicManyRelatedManager,
+        PolymorphicRelatedManager,
+    )
+
 
 class Article(PolymorphicModel):
     title = models.CharField(max_length=100)
-    content = models.TextField()
-    created = models.DateTimeField(auto_now_add=True)
 
-    objects: t.ClassVar[PolymorphicManager[Self | "BlogPost" | "NewsArticle"]]
+    outlet: "MediaOutlet" | "Newspaper" | "OnlineBlog" = models.ForeignKey(  # type: ignore[assignment]
+        "MediaOutlet", on_delete=models.CASCADE, related_name="articles"
+    )
 
-    def __str__(self):
-        return self.title
+    objects: t.ClassVar[
+        PolymorphicManager[Self | "BlogPost" | "NewsArticle", Self]
+    ] = PolymorphicManager()
+
+    topics: PolymorphicManyRelatedManager[
+        "Topic" | "LocationTopic" | "EditorialTopic", "Topic"
+    ]
 
 
 class BlogPost(Article):
@@ -24,9 +35,35 @@ class NewsArticle(Article):
     source = models.CharField(max_length=100)
 
 
-class Topic(models.Model):
+class Topic(PolymorphicModel):
     name = models.CharField(max_length=50)
-    articles = models.ManyToManyField(Article, related_name="topics")
+    articles: PolymorphicManyRelatedManager[
+        Article | BlogPost | NewsArticle, Article
+    ] = models.ManyToManyField(Article, related_name="topics")  # type: ignore[assignment]
 
-    def __str__(self):
-        return self.name
+    if t.TYPE_CHECKING:
+        objects: t.ClassVar[PolymorphicManager[Self, Self]]
+
+
+class LocationTopic(Topic):
+    location = models.CharField(max_length=100)
+
+
+class EditorialTopic(Topic):
+    editor = models.CharField(max_length=100)
+
+
+class MediaOutlet(PolymorphicModel):
+    name = models.CharField(max_length=100)
+
+    articles: PolymorphicRelatedManager[
+        Article | NewsArticle | BlogPost, "Article"
+    ]
+
+
+class Newspaper(MediaOutlet):
+    service_area = models.CharField(max_length=100)
+
+
+class OnlineBlog(MediaOutlet):
+    url = models.URLField()

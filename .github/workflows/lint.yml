@@ -74,8 +74,6 @@ jobs:
           else
             just test-lock Django~=${{ matrix.django-version }}.0
           fi
-          just install
-          just install-docs
       - name: Install Emacs
         if: ${{ github.event.inputs.debug == 'true' }}
         run: |
@@ -90,6 +88,7 @@ jobs:
         run: |
           just check-lint
           just check-format
-          just check-types
+          just check-types-isolated
           just check-package
           just check-readme
+          just check-docs
