@@ -172,7 +172,7 @@ module = "example.*"
 ignore_errors = true
 
 [[tool.mypy.overrides]]
-module = "polymorphic.tests.test_type_hints"
+module = "polymorphic.tests.examples.type_hints.*"
 ignore_errors = false
 
 [tool.django-stubs]

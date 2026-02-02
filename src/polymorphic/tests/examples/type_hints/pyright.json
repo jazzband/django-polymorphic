@@ -1,0 +1,5 @@
+{
+  "extends": "../../../../../pyproject.toml",
+  "exclude": [],
+  "include": ["**/*.py"]
+}
