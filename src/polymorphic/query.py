@@ -31,6 +31,10 @@ if TYPE_CHECKING:
 
 _Model = TypeVar("_Model", bound="PolymorphicModel", covariant=True)
 
+_A = TypeVar("_A", bound="PolymorphicModel")
+_B = TypeVar("_B", bound="PolymorphicModel")
+_C = TypeVar("_C", bound="PolymorphicModel")
+_D = TypeVar("_D", bound="PolymorphicModel")
 
 Polymorphic_QuerySet_objects_per_request: int = 2000
 """
@@ -212,12 +216,35 @@ class PolymorphicQuerySet(QuerySet[_Model, _Model]):
             qs._iterable_class = ModelIterable
         return qs
 
-    def instance_of(self, *args: type[models.Model]) -> Self:
+    @overload
+    def instance_of(self, __a: type[_A], /) -> PolymorphicQuerySet[_A]: ...
+
+    @overload
+    def instance_of(self, __a: type[_A], __b: type[_B], /) -> PolymorphicQuerySet[_A | _B]: ...
+
+    @overload
+    def instance_of(
+        self, __a: type[_A], __b: type[_B], __c: type[_C], /
+    ) -> PolymorphicQuerySet[_A | _B | _C]: ...
+
+    @overload
+    def instance_of(
+        self, __a: type[_A], __b: type[_B], __c: type[_C], __d: type[_D], /
+    ) -> PolymorphicQuerySet[_A | _B | _C | _D]: ...
+
+    @overload
+    def instance_of(
+        self, *args: type["PolymorphicModel"]
+    ) -> PolymorphicQuerySet["PolymorphicModel"]: ...
+
+    def instance_of(
+        self, *args: type["PolymorphicModel"]
+    ) -> PolymorphicQuerySet["PolymorphicModel"]:
         """Filter the queryset to only include the classes in args (and their subclasses)."""
         # Implementation in _translate_polymorphic_filter_defnition.
         return self.filter(instance_of=args)
 
-    def not_instance_of(self, *args: type[models.Model]) -> Self:
+    def not_instance_of(self, *args: type["PolymorphicModel"]) -> Self:
         """Filter the queryset to exclude the classes in args (and their subclasses)."""
         # Implementation in _translate_polymorphic_filter_defnition."""
         return self.filter(not_instance_of=args)
