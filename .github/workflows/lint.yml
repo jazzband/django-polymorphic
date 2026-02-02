@@ -86,9 +86,9 @@ jobs:
         timeout-minutes: 60
       - name: Run Static Analysis
         run: |
+          just check-package
           just check-lint
           just check-format
           just check-types-isolated
-          just check-package
           just check-readme
           just check-docs

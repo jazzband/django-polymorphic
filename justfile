@@ -69,6 +69,7 @@ check-types-isolated:
 # run package checks
 check-package:
     @just run --no-default-groups pip check
+    uv pip check
 
 # remove doc build artifacts-
 [script]
@@ -187,7 +188,7 @@ lint: sort-imports
 fix: lint format
 
 # run all static checks
-check: check-lint check-format check-types check-package check-docs _check-readme-quiet
+check: check-package check-lint check-format check-types check-docs _check-readme-quiet
 
 # run all checks including documentation link checking (slow)
 check-all: check check-docs-links
