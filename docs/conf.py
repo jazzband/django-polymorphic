@@ -301,6 +301,9 @@ autodoc_typehints_format = "short"
 autodoc_class_signature = "separated"
 autodoc_member_order = "groupwise"  # "bysource"
 
+# sphinxcontrib-django / Sphinx 9+ autodoc compat
+autodoc_use_legacy_class_based = True
+
 
 def pypi_role(name, rawtext, text, lineno, inliner, options={}, content=[]):
     from docutils import nodes

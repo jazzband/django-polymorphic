@@ -2,13 +2,14 @@ Admin Integration
 =================
 
 Of course, it's possible to register individual polymorphic models in the
-:doc:`Django admin interface <django:ref/contrib/admin/index>`. However, to use these models in a single
-cohesive interface, some extra base classes are available.
+:doc:`Django admin interface <django:ref/contrib/admin/index>`. However, to use these models in a
+single cohesive interface, some extra base classes are available.
 
 Setup
 -----
 
-Both the parent model and child model need to have a :class:`~django.contrib.admin.ModelAdmin` class.
+Both the parent model and child model need to have a :class:`~django.contrib.admin.ModelAdmin`
+class.
 
 The shared base model should use the :class:`~polymorphic.admin.PolymorphicParentModelAdmin` as base
 class.
@@ -44,8 +45,8 @@ Hence, the fieldset configuration should be placed on the child admin.
     This allows the :class:`~polymorphic.admin.PolymorphicChildModelAdmin` class
     to detect any additional fields in case the child model is overwritten.
 
-.. versionchanged:: 1.0    
-    
+.. versionchanged:: 1.0
+
     It's now needed to register the child model classes too.
 
     In :pypi:`django-polymorphic` 0.9 and below, the

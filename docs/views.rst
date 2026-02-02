@@ -20,7 +20,7 @@ have the following models:
 
 .. literalinclude:: ../src/polymorphic/tests/examples/views/models.py
     :language: python
-    :linenos: 
+    :linenos:
 
 Step 1: Selecting the Type
 --------------------------
@@ -41,7 +41,8 @@ Your template ``project_type_select.html``, might look like this:
 Step 2: Displaying the Form
 ---------------------------
 
-The creation view needs to dynamically select the correct form class based on the chosen model label.
+The creation view needs to dynamically select the correct form class based on the chosen model
+label.
 
 .. literalinclude:: ../src/polymorphic/tests/examples/views/views.py
     :language: python
@@ -63,5 +64,5 @@ And our urls might look like this:
 Using ``extra_views``
 ---------------------
 
-If you are using :pypi:`django-extra-views`, :pypi:`django-polymorphic` provides mixins to help with formsets.
-See :mod:`polymorphic.contrib.extra_views` for more details.
+If you are using :pypi:`django-extra-views`, :pypi:`django-polymorphic` provides mixins to help with
+formsets. See :mod:`polymorphic.contrib.extra_views` for more details.
