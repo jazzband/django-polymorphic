@@ -249,7 +249,7 @@ precommit:
 
 # generate the test coverage report
 coverage:
-    @just run --no-default-groups--group coverage coverage combine --keep *.coverage
+    @just run --no-default-groups --group coverage coverage combine --keep *.coverage
     @just run --no-default-groups --group coverage coverage report
     @just run --no-default-groups --group coverage coverage xml
 
