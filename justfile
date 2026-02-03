@@ -67,7 +67,6 @@ check-types-isolated:
 
 # run package checks
 check-package:
-    @just run --no-default-groups pip check
     uv pip check
 
 # remove doc build artifacts-
@@ -204,6 +203,7 @@ _lock-python:
 # lock to specific python and versions of given dependencies
 test-lock +PACKAGES: _lock-python
     uv add --no-sync {{ PACKAGES }}
+    uv sync --reinstall --no-default-groups --no-install-project
 
 # run tests
 test *TESTS:
