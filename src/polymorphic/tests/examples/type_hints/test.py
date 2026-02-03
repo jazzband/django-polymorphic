@@ -119,3 +119,8 @@ class TypeHintsTest(TestCase):
 
         for art4 in daily.articles.filter().all():
             assert_type(art4, Article | BlogPost | NewsArticle)
+
+        # reveal_type(Topic.articles)
+        # reveal_type(Topic.articles2)
+
+        # reveal_type(Topic.objects.first().articles2)

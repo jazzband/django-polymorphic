@@ -147,13 +147,30 @@ class PolymorphicManager(models.Manager[_All], Generic[_All, _Base]):
 
 
 if TYPE_CHECKING:
-    from django.db.models.fields.related_descriptors import ManyRelatedManager, RelatedManager
+    from django.db.models.fields.related_descriptors import (
+        ManyRelatedManager,
+        ManyToManyDescriptor,
+        RelatedManager,
+    )
 
     class PolymorphicManyRelatedManager(  # type: ignore[type-var]
         ManyRelatedManager[_All, _Through],  # pyright: ignore[reportInvalidTypeArguments]
         PolymorphicManager[_All, _Base],
         Generic[_All, _Base, _Through],
     ): ...
+
+    class PolymorphicManyToManyDescriptor(ManyToManyDescriptor, Generic[_All, _Base, _Through]):
+        @overload  # type: ignore[override]
+        def __get__(self, instance: None, cls: Any | None = None, /) -> Self: ...
+
+        @overload
+        def __get__(
+            self, instance: models.Model, cls: Any | None = None, /
+        ) -> PolymorphicManyRelatedManager[_All, _Base, _Through]: ...
+
+        def __get__(
+            self, instance: models.Model | None, cls: Any | None = None, /
+        ) -> Self | PolymorphicManyRelatedManager[_All, _Base, _Through]: ...
 
     class PolymorphicRelatedManager(  # type: ignore[type-var]
         RelatedManager[_All],  # pyright: ignore[reportInvalidTypeArguments]

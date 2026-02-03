@@ -7,7 +7,7 @@ from polymorphic.managers import PolymorphicManager
 
 if t.TYPE_CHECKING:
     from polymorphic.managers import (
-        PolymorphicManyRelatedManager,
+        PolymorphicManyToManyDescriptor,
         PolymorphicRelatedManager,
     )
 
@@ -23,7 +23,7 @@ class Article(PolymorphicModel):
         PolymorphicManager[Self | "BlogPost" | "NewsArticle", Self]
     ] = PolymorphicManager()
 
-    topics: PolymorphicManyRelatedManager[
+    topics: PolymorphicManyToManyDescriptor[
         "Topic" | "LocationTopic" | "EditorialTopic", "Topic"
     ]
 
@@ -38,12 +38,15 @@ class NewsArticle(Article):
 
 class Topic(PolymorphicModel):
     name = models.CharField(max_length=50)
-    articles: PolymorphicManyRelatedManager[
+    articles: PolymorphicManyToManyDescriptor[
         Article | BlogPost | NewsArticle, Article
     ] = models.ManyToManyField(Article, related_name="topics")  # type: ignore[assignment]
 
+    articles2 = models.ManyToManyField(Article, related_name="topics2")
     if t.TYPE_CHECKING:
-        objects: t.ClassVar[PolymorphicManager[Self, Self]]
+        objects: t.ClassVar[
+            PolymorphicManager[Self | "LocationTopic" | "EditorialTopic", Self]
+        ]
 
 
 class LocationTopic(Topic):
