@@ -51,17 +51,17 @@ jobs:
       TEST_PYTHON_VERSION: ${{ matrix.python-version }}
       TEST_DJANGO_VERSION: ${{ matrix.django-version }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           persist-credentials: false
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         id: sp
         with:
           python-version: ${{ matrix.python-version }}
       
       - name: Install uv
-        uses: astral-sh/setup-uv@v6
+        uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
       - name: Install Just
@@ -86,9 +86,9 @@ jobs:
         timeout-minutes: 60
       - name: Run Static Analysis
         run: |
-          just check-package
           just check-lint
           just check-format
           just check-types-isolated
           just check-readme
           just check-docs
+          just check-package
