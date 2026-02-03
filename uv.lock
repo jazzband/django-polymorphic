@@ -701,6 +701,9 @@ mysql = [
 oracledb = [
     { name = "oracledb" },
 ]
+precommit = [
+    { name = "pre-commit" },
+]
 psycopg2 = [
     { name = "psycopg2" },
 ]
@@ -789,6 +792,7 @@ lint = [
 ]
 mysql = [{ name = "mysqlclient", specifier = ">=1.4.0" }]
 oracledb = [{ name = "oracledb", specifier = ">=2.3.0" }]
+precommit = [{ name = "pre-commit", specifier = ">=3.5.0" }]
 psycopg2 = [{ name = "psycopg2", specifier = ">=2.9.10" }]
 psycopg3 = [{ name = "psycopg", specifier = ">=3.3.2" }]
 reversion = [{ name = "django-reversion", specifier = ">=6.1.0" }]

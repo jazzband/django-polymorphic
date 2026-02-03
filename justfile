@@ -33,17 +33,16 @@ install_uv:
 # setup the venv, pre-commit hooks and playwright dependencies
 setup python="python":
     uv venv -p {{ python }}
-    @just run pre-commit install
-    @just run playwright install
+    @just install-precommit
 
 # install git pre-commit hooks
 install-precommit:
-    @just run pre-commit install
+    @just run --no-default-groups --group precommit --exact pre-commit install
 
 # update and install development dependencies
 install *OPTS:
     uv sync {{ OPTS }}
-    @just run pre-commit install
+    @just install-precommit
 
 # install playwright dependencies
 install-playwright:
@@ -188,7 +187,7 @@ lint: sort-imports
 fix: lint format
 
 # run all static checks
-check: check-package check-lint check-format check-types check-docs _check-readme-quiet
+check: check-lint check-format check-types check-docs _check-readme-quiet check-package
 
 # run all checks including documentation link checking (slow)
 check-all: check check-docs-links
@@ -204,7 +203,7 @@ _lock-python:
 
 # lock to specific python and versions of given dependencies
 test-lock +PACKAGES: _lock-python
-    uv add {{ PACKAGES }}
+    uv add --no-sync {{ PACKAGES }}
 
 # run tests
 test *TESTS:
@@ -295,7 +294,7 @@ validate_version VERSION:
     print(version)
 
 # issue a release for the given semver string (e.g. 2.1.0)
-release VERSION: check-all
+release VERSION: install check-all
     @just validate_version v{{ VERSION }}
     git tag -s v{{ VERSION }} -m "{{ VERSION }} Release"
     git push upstream v{{ VERSION }}

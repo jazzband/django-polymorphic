@@ -262,13 +262,16 @@ integrations = [
     { include-group = "extra-views" },
     { include-group = "drf" },
 ]
+precommit = [
+    "pre-commit>=3.5.0",
+]
 dev = [
     { include-group = "typing" },
     { include-group = "test" },
     { include-group = "docs" },
     { include-group = "drf" },
     { include-group = "lint" },
-    "pre-commit>=3.5.0",
+    { include-group = "precommit" },
     "tomlkit>=0.13.3",
     "ipdb>=0.13.13",
     "ipython>=8.18.1",
