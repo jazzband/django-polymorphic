@@ -85,6 +85,7 @@ sphinx = true
 
 [tool.ruff]
 line-length = 99
+target-version = "py310"
 
 exclude = [
     "**/migrations/*.py",
@@ -209,7 +210,7 @@ typing = [
     "mypy>=1.19.1",
 ]
 lint = [
-    "ruff>=0.9.8", 
+    "ruff>=0.15.0", 
     "readme-renderer[md]>=43.0",
     "doc8>=1.1.2"
 ]

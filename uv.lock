@@ -761,7 +761,7 @@ dev = [
     { name = "pytest-mock", specifier = ">=3.15.1" },
     { name = "pytest-playwright", specifier = ">=0.7.2" },
     { name = "readme-renderer", extras = ["md"], specifier = ">=43.0" },
-    { name = "ruff", specifier = ">=0.9.8" },
+    { name = "ruff", specifier = ">=0.15.0" },
     { name = "sphinx", specifier = ">=7.1.2" },
     { name = "sphinx-autobuild", specifier = ">=2024.10.3" },
     { name = "sphinxcontrib-django", specifier = ">=2.5" },
@@ -788,7 +788,7 @@ integrations = [
 lint = [
     { name = "doc8", specifier = ">=1.1.2" },
     { name = "readme-renderer", extras = ["md"], specifier = ">=43.0" },
-    { name = "ruff", specifier = ">=0.9.8" },
+    { name = "ruff", specifier = ">=0.15.0" },
 ]
 mysql = [{ name = "mysqlclient", specifier = ">=1.4.0" }]
 oracledb = [{ name = "oracledb", specifier = ">=2.3.0" }]
