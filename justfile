@@ -37,12 +37,12 @@ setup python="python":
 
 # install git pre-commit hooks
 install-precommit:
-    @just run --no-default-groups --group precommit --exact pre-commit install
+    @just run --no-default-groups --group precommit --exact --isolated pre-commit install
 
 # update and install development dependencies
 install *OPTS:
-    uv sync {{ OPTS }}
     @just install-precommit
+    uv sync {{ OPTS }}
 
 # install playwright dependencies
 install-playwright:
@@ -113,6 +113,7 @@ remake-test-migrations:
     - rm src/polymorphic/tests/other/migrations/00*.py
     - rm src/polymorphic/tests/examples/**/migrations/00*.py
     - rm src/polymorphic/tests/examples/integrations/**/migrations/00*.py
+    - rm src/polymorphic/tests/examples/type_hints/**/migrations/00*.py
     uv run --no-default-groups  --exact --isolated --resolution lowest-direct --group integrations --script ./manage.py makemigrations
 
 # open the html documentation

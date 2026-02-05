@@ -52,7 +52,7 @@ def polymorphic_base_manager(self):
         and mgr.__class__ is models.Manager
         and mgr.auto_created
     ):
-        manager = PolymorphicManager()
+        manager: PolymorphicManager = PolymorphicManager()
         manager.name = "_base_manager"
         manager.model = self.model
         manager.auto_created = True

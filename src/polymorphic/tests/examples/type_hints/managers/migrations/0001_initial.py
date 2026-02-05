@@ -14,10 +14,9 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='Project',
+            name='ParentModel',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('topic', models.CharField(max_length=30)),
                 ('polymorphic_ctype', models.ForeignKey(editable=False, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='polymorphic_%(app_label)s.%(class)s_set+', to='contenttypes.contenttype')),
             ],
             options={
@@ -25,25 +24,23 @@ class Migration(migrations.Migration):
             },
         ),
         migrations.CreateModel(
-            name='ArtProject',
+            name='Child1',
             fields=[
-                ('project_ptr', models.OneToOneField(auto_created=True, on_delete=django.db.models.deletion.CASCADE, parent_link=True, primary_key=True, serialize=False, to='views.project')),
-                ('artist', models.CharField(max_length=30)),
+                ('parentmodel_ptr', models.OneToOneField(auto_created=True, on_delete=django.db.models.deletion.CASCADE, parent_link=True, primary_key=True, serialize=False, to='type_hints_managers.parentmodel')),
             ],
             options={
                 'abstract': False,
             },
-            bases=('views.project',),
+            bases=('type_hints_managers.parentmodel',),
         ),
         migrations.CreateModel(
-            name='ResearchProject',
+            name='Child2',
             fields=[
-                ('project_ptr', models.OneToOneField(auto_created=True, on_delete=django.db.models.deletion.CASCADE, parent_link=True, primary_key=True, serialize=False, to='views.project')),
-                ('supervisor', models.CharField(max_length=30)),
+                ('child1_ptr', models.OneToOneField(auto_created=True, on_delete=django.db.models.deletion.CASCADE, parent_link=True, primary_key=True, serialize=False, to='type_hints_managers.child1')),
             ],
             options={
                 'abstract': False,
             },
-            bases=('views.project',),
+            bases=('type_hints_managers.child1',),
         ),
     ]

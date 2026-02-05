@@ -30,7 +30,7 @@ if TYPE_CHECKING:
     from .models import PolymorphicModel  # noqa: F401
 
 _All = TypeVar("_All", bound="PolymorphicModel", covariant=True)
-_Base = TypeVar("_Base", bound="PolymorphicModel", covariant=True)
+_Base = TypeVar("_Base", bound="PolymorphicModel", default="PolymorphicModel", covariant=True)
 
 _A = TypeVar("_A", bound="PolymorphicModel")
 _B = TypeVar("_B", bound="PolymorphicModel")
@@ -143,7 +143,7 @@ def transmogrify(cls: type[_All], obj: models.Model) -> _All:
 # PolymorphicQuerySet
 
 
-class PolymorphicQuerySet(QuerySet[_All, _All], Generic[_All, _Base]):
+class PolymorphicQuerySet(QuerySet[_All], Generic[_All, _Base]):
     """
     QuerySet for PolymorphicModel
 
@@ -187,7 +187,7 @@ class PolymorphicQuerySet(QuerySet[_All, _All], Generic[_All, _Base]):
 
         from .managers import PolymorphicManager
 
-        manager = PolymorphicManager[_All].from_queryset(cls)()
+        manager = PolymorphicManager[_All, _Base].from_queryset(cls)()
         setattr(manager, "_built_with_as_manager", True)
         return manager
 
