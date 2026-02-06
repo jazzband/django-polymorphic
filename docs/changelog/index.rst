@@ -1,7 +1,7 @@
 Changelog
 =========
 
-v4.11.0 (2026-02-02)
+v4.11.0 (2026-02-05)
 --------------------
 
 * Implemented `Add type hints for django-polymorphic <https://github.com/jazzband/django-polymorphic/issues/647>`_
