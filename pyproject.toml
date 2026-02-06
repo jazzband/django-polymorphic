@@ -273,6 +273,7 @@ dev = [
     { include-group = "drf" },
     { include-group = "lint" },
     { include-group = "precommit" },
+    "packaging>=24.2",
     "tomlkit>=0.13.3",
     "ipdb>=0.13.13",
     "ipython>=8.18.1",
