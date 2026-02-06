@@ -30,7 +30,7 @@ install_uv:
 install_uv:
     powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
 
-# setup the venv, pre-commit hooks and playwright dependencies
+# setup the venv, pre-commit hooks
 setup python="python":
     uv venv -p {{ python }}
     @just install-precommit
@@ -289,9 +289,14 @@ validate_version VERSION:
     import re
     import tomllib
     import polymorphic
-    version = re.match(r"v?(\d+[.]\d+[.]\w+)", "{{ VERSION }}").groups()[0]
-    assert version == tomllib.load(open('pyproject.toml', 'rb'))['project']['version']
-    assert version == polymorphic.__version__
+    from packaging.version import Version
+    raw_version = "{{ VERSION }}".lstrip("v")
+    version_obj = Version(raw_version)
+    # the version should be normalized
+    assert str(version_obj) == raw_version
+    # make sure all places the version appears agree
+    assert raw_version == tomllib.load(open('pyproject.toml', 'rb'))['project']['version']
+    assert raw_version == polymorphic.__version__
     print(version)
 
 # issue a release for the given semver string (e.g. 2.1.0)
