@@ -94,7 +94,7 @@ A :class:`~django.db.models.ManyToManyField` example:
 
     # The model holding the relation may be any kind of model, polymorphic or not
     class RelatingModel(models.Model):
-    
+
         # ManyToMany relation to a polymorphic model
         many2many = models.ManyToManyField('ModelA')
 
@@ -119,10 +119,11 @@ two options:
 2. Set the primary key attribute, and parent table pointers at all levels of inheritance to ``None``
    and call :meth:`~django.db.models.Model.save`.
 
-The Django documentation :ref:`offers some discussion on copying <topics/db/queries:copying model instances>`,
-including the complexity around related fields and multi-table inheritance.
-:pypi:`django-polymorphic` offers a utility function :func:`~polymorphic.utils.prepare_for_copy`
-that resets all necessary fields on a model instance to prepare it for copying:
+The Django documentation :ref:`offers some discussion on copying
+<topics/db/queries:copying model instances>`, including the complexity around related fields and
+multi-table inheritance. :pypi:`django-polymorphic` offers a utility function
+:func:`~polymorphic.utils.prepare_for_copy` that resets all necessary fields on a model instance to
+prepare it for copying:
 
 .. code-block:: python
 
@@ -137,11 +138,11 @@ that resets all necessary fields on a model instance to prepare it for copying:
 Working with Fixtures
 ---------------------
 
-Polymorphic models work with Django's :django-admin:`dumpdata` and :django-admin:`loaddata` 
+Polymorphic models work with Django's :django-admin:`dumpdata` and :django-admin:`loaddata`
 commands just as regular models do. There are two important considerations:
 
-1. Polymorphic models are multi-table models and :django-admin:`dumpdata` serializes each table 
-   separately. :pypi:`django-polymorphic` `does it's best 
+1. Polymorphic models are multi-table models and :django-admin:`dumpdata` serializes each table
+   separately. :pypi:`django-polymorphic` `does it's best
    <https://github.com/jazzband/django-polymorphic/pull/814>`_ to ensure non-polymorphic managers
    are used when creating fixtures but there may be edge cases where this fails. If you override
    :django-admin:`dumpdata` you must make sure any polymorphic managers encountered
@@ -225,7 +226,7 @@ enhancements for ``filter()`` or ``instance_of()`` etc. still work as expected.
 If you do the final step yourself, you get the usual polymorphic result:
 
 .. code-block:: python
-    
+
     >>> ModelA.objects.get_real_instances(qs)
     [ <ModelA: id 1, field1 (CharField)>,
       <ModelB: id 2, field1 (CharField), field2 (CharField)>,
@@ -379,22 +380,24 @@ Restrictions & Caveats
     :class:`~django.contrib.contenttypes.models.ContentType` (this can happen if you delete child
     rows manually with raw SQL, ``DELETE FROM table``), then polymorphic queries will elide the
     corresponding model objects:
-    
-    *   ``BaseClass.objects.all()`` will **exclude** these rows (it filters for existing child types).
+
+    *   ``BaseClass.objects.all()`` will **exclude** these rows (it filters for existing child
+        types).
     *   ``BaseClass.objects.non_polymorphic().all()`` will behave as normal - but polymorphic
         behavior for the affected rows will be undefined - for instance,
         :meth:`~polymorphic.managers.PolymorphicQuerySet.get_real_instances` will raise an
         exception.
-    
+
     Always use ``instance.delete()`` or ``QuerySet.delete()`` to ensure cascading deletion of the
     base row. If you must delete manually, ensure you also delete the corresponding row from the
     base table.
 
 *   There will be problems if the :class:`~django.contrib.contenttypes.models.ContentType` cache
     becomes out of sync with the database. This can especially happen in tests. You should ensure
-    that the cache is cleared (:meth:`~django.contrib.contenttypes.models.ContentTypeManager.clear_cache`)
-    whenever this happens. In tests this happens when if :django-admin:`flush` is called by the teardown
-    sequence in :class:`~django.test.TransactionTestCase`.
+    that the cache is cleared (
+    :meth:`~django.contrib.contenttypes.models.ContentTypeManager.clear_cache`) whenever this
+    happens. In tests this happens when if :django-admin:`flush` is called by the teardown sequence
+    in :class:`~django.test.TransactionTestCase`.
 
 .. old links:
     - http://code.djangoproject.com/wiki/ModelInheritance

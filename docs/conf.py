@@ -282,6 +282,7 @@ intersphinx_mapping = {
         "https://docs.djangoproject.com/en/stable/_objects/",
     ),
     "python": ("https://docs.python.org/3", None),
+    "typing-extensions": ("https://typing-extensions.readthedocs.io/en/latest/", None),
     "django-guardian": ("https://django-guardian.readthedocs.io/en/stable", None),
     "django-reversion": ("https://django-reversion.readthedocs.io/en/stable", None),
     "django-extra-views": ("https://django-extra-views.readthedocs.io/en/stable", None),
@@ -300,6 +301,9 @@ autodoc_typehints = "description"
 autodoc_typehints_format = "short"
 autodoc_class_signature = "separated"
 autodoc_member_order = "groupwise"  # "bysource"
+
+# sphinxcontrib-django / Sphinx 9+ autodoc compat
+autodoc_use_legacy_class_based = True
 
 
 def pypi_role(name, rawtext, text, lineno, inliner, options={}, content=[]):

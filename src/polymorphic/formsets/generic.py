@@ -1,3 +1,8 @@
+from __future__ import annotations
+
+from collections.abc import Callable, Iterable
+from typing import Any, cast
+
 from django.contrib.contenttypes.forms import (
     BaseGenericInlineFormSet,
     generic_inlineformset_factory,
@@ -18,12 +23,23 @@ class GenericPolymorphicFormSetChild(PolymorphicFormSetChild):
     Formset child for generic inlines
     """
 
-    def __init__(self, *args, **kwargs):
-        self.ct_field = kwargs.pop("ct_field", "content_type")
-        self.fk_field = kwargs.pop("fk_field", "object_id")
+    ct_field: str
+    fk_field: str
+
+    def __init__(
+        self,
+        *args: Any,
+        ct_field: str = "content_type",
+        fk_field: str = "object_id",
+        **kwargs: Any,
+    ) -> None:
+        self.ct_field = ct_field
+        self.fk_field = fk_field
         super().__init__(*args, **kwargs)
 
-    def get_form(self, ct_field="content_type", fk_field="object_id", **kwargs):
+    def get_form(
+        self, ct_field: str = "content_type", fk_field: str = "object_id", **kwargs: Any
+    ) -> type[ModelForm[Any]]:
         """
         Construct the form class for the formset child.
         """
@@ -36,16 +52,16 @@ class GenericPolymorphicFormSetChild(PolymorphicFormSetChild):
         # This is similar to what generic_inlineformset_factory() does
         # if there is no field called `ct_field` let the exception propagate
         opts = self.model._meta
-        ct_field = opts.get_field(self.ct_field)
+        ct_field_obj = opts.get_field(self.ct_field)
 
         if (
-            not isinstance(ct_field, models.ForeignKey)
-            or ct_field.remote_field.model != ContentType
+            not isinstance(ct_field_obj, models.ForeignKey)
+            or ct_field_obj.remote_field.model != ContentType
         ):
-            raise Exception(f"fk_name '{ct_field}' is not a ForeignKey to ContentType")
+            raise Exception(f"fk_name '{ct_field_obj}' is not a ForeignKey to ContentType")
 
-        fk_field = opts.get_field(self.fk_field)  # let the exception propagate
-        exclude.extend([ct_field.name, fk_field.name])
+        fk_field_obj = opts.get_field(self.fk_field)  # let the exception propagate
+        exclude.extend([ct_field_obj.name, fk_field_obj.name])
         kwargs["exclude"] = exclude
 
         return super().get_form(**kwargs)
@@ -58,28 +74,28 @@ class BaseGenericPolymorphicInlineFormSet(BaseGenericInlineFormSet, BasePolymorp
 
 
 def generic_polymorphic_inlineformset_factory(
-    model,
-    formset_children,
-    form=ModelForm,
-    formset=BaseGenericPolymorphicInlineFormSet,
-    ct_field="content_type",
-    fk_field="object_id",
+    model: type[models.Model],
+    formset_children: Iterable[PolymorphicFormSetChild],
+    form: type[ModelForm[Any]] = ModelForm,
+    formset: type[BaseGenericPolymorphicInlineFormSet] = BaseGenericPolymorphicInlineFormSet,
+    ct_field: str = "content_type",
+    fk_field: str = "object_id",
     # Base form
     # TODO: should these fields be removed in favor of creating
     # the base form as a formset child too?
-    fields=None,
-    exclude=None,
-    extra=1,
-    can_order=False,
-    can_delete=True,
-    max_num=None,
-    formfield_callback=None,
-    validate_max=False,
-    for_concrete_model=True,
-    min_num=None,
-    validate_min=False,
-    child_form_kwargs=None,
-):
+    fields: list[str] | None = None,
+    exclude: list[str] | None = None,
+    extra: int = 1,
+    can_order: bool = False,
+    can_delete: bool = True,
+    max_num: int | None = None,
+    formfield_callback: Callable[..., Any] | None = None,
+    validate_max: bool = False,
+    for_concrete_model: bool = True,
+    min_num: int | None = None,
+    validate_min: bool = False,
+    child_form_kwargs: dict[str, Any] | None = None,
+) -> type[BaseGenericPolymorphicInlineFormSet]:
     """
     Construct the class for a generic inline polymorphic formset.
 
@@ -125,6 +141,6 @@ def generic_polymorphic_inlineformset_factory(
     if child_form_kwargs:
         child_kwargs.update(child_form_kwargs)
 
-    FormSet = generic_inlineformset_factory(**kwargs)
-    FormSet.child_forms = polymorphic_child_forms_factory(formset_children, **child_kwargs)
-    return FormSet
+    FormSet = generic_inlineformset_factory(**kwargs)  # type: ignore[arg-type]
+    FormSet.child_forms = polymorphic_child_forms_factory(formset_children, **child_kwargs)  # type: ignore[attr-defined]
+    return cast(type[BaseGenericPolymorphicInlineFormSet], FormSet)

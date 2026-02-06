@@ -28,7 +28,7 @@ Define serializers for each polymorphic model the way you did it when you used
 .. literalinclude:: ../../src/polymorphic/tests/examples/integrations/drf/example_serializers.py
     :language: python
     :linenos:
-    :lines: 1-26
+    :lines: 1-29
 
 
 Note that if you extend `HyperlinkedModelSerializer
@@ -43,7 +43,7 @@ serializers which you have defined above:
 
 .. literalinclude:: ../../src/polymorphic/tests/examples/integrations/drf/example_serializers.py
     :language: python
-    :lines: 29-
+    :lines: 32-
 
 Create viewset with serializer_class equals to your polymorphic serializer:
 
@@ -102,9 +102,12 @@ Test it:
 Customize resource type
 -----------------------
 
-As you can see from the example above, in order to specify the type of your polymorphic model, you need to send a request with resource type field. The value of resource type should be the name of the model.
+As you can see from the example above, in order to specify the type of your polymorphic model, you
+need to send a request with resource type field. The value of resource type should be the name of
+the model.
 
-If you want to change the resource type field name from ``resourcetype`` to something else, you should override ``resource_type_field_name`` attribute:
+If you want to change the resource type field name from ``resourcetype`` to something else, you
+should override ``resource_type_field_name`` attribute:
 
 .. code-block:: python
 
@@ -112,7 +115,8 @@ If you want to change the resource type field name from ``resourcetype`` to some
         resource_type_field_name = 'projecttype'
         ...
 
-If you want to change the behavior of resource type, you should override ``to_resource_type`` method:
+If you want to change the behavior of resource type, you should override ``to_resource_type``
+method:
 
 .. code-block:: python
 

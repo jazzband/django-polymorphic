@@ -41,7 +41,8 @@ that if your QuerySet contains 10,000 objects of 3 different subclasses, then 16
 executed: 1 to fetch the base objects, and 5 (10/2 == 5) * 3 more to fetch the subclasses.
 
 The `chunk_size` parameter on :meth:`~django.db.models.query.QuerySet.iterator` can be used to
-change the number of objects loaded into memory at once during iteration. For example, to load 5000 objects at once:
+change the number of objects loaded into memory at once during iteration. For example, to load 5000
+objects at once:
 
 .. code-block:: python
 

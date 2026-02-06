@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "django-polymorphic"
-version = "4.10.5"
+version = "4.11.0"
 description = "Seamless polymorphic inheritance for Django models."
 readme = "README.md"
 license = "BSD-3-Clause"
@@ -53,6 +53,7 @@ classifiers = [
 ]
 dependencies = [
     "Django >= 4.2",
+    "typing_extensions >= 4.12.0",
 ]
 
 [project.urls]
@@ -76,7 +77,7 @@ exclude = ["src/polymorphic/tests"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/polymorphic"]
-artifacts = ["*.mo"]
+artifacts = ["*.mo", "py.typed"]
 
 [tool.doc8]
 max-line-length = 100
@@ -84,10 +85,12 @@ sphinx = true
 
 [tool.ruff]
 line-length = 99
+target-version = "py310"
 
 exclude = [
     "**/migrations/*.py",
     "**/migrations/**",
+    "src/polymorphic/tests/examples",
 ]
 
 [tool.ruff.lint]
@@ -128,6 +131,7 @@ python_functions = "test_*"
 norecursedirs = "*.egg .eggs dist build docs .tox .git __pycache__"
 markers = [
   "integration: tests under examples/integrations (opt-in)",
+  "ui: browser-based tests",
 ]
 addopts = [
     "--strict-markers",
@@ -145,31 +149,84 @@ relative_files = true
 [tool.coverage.report]
 show_missing = true
 
+[tool.mypy]
+strict = false
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+check_untyped_defs = true
+disallow_untyped_decorators = false
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
+plugins = ["mypy_django_plugin.main"]
+
+[[tool.mypy.overrides]]
+module = "polymorphic.tests.*"
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = "example.*"
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = "polymorphic.tests.examples.type_hints.*"
+ignore_errors = false
+
+[tool.django-stubs]
+django_settings_module = "polymorphic.tests.settings"
+
+[tool.pyright]
+pythonVersion = "3.10"
+typeCheckingMode = "basic"
+include = ["src/polymorphic"]
+exclude = [
+  "**/migrations",
+  "example",
+  "src/polymorphic/**/tests/**",
+]
+reportMissingImports = true
+reportMissingTypeStubs = false
+reportUnusedImport = true
+reportUnusedClass = false
+reportUnusedFunction = false
+reportUnusedVariable = true
+reportDuplicateImport = true
+reportOptionalMemberAccess = false
+reportGeneralTypeIssues = false
+reportOptionalSubscript = false
+reportPrivateImportUsage = false
+
 [dependency-groups]
-dev = [
-    "coverage>=7.6.1",
-    "dj-database-url>=2.2.0",
+typing = [
+    "django-stubs>=5.1.1",
+    "django-stubs-ext>=5.1.1",
+    "djangorestframework-stubs>=3.16.1",
+    "pyright>=1.1.390",
+    "mypy>=1.19.1",
+]
+lint = [
+    "ruff>=0.15.0", 
+    "readme-renderer[md]>=43.0",
+    "doc8>=1.1.2"
+]
+coverage = ["coverage>=7.6.1"]
+test = [
+    { include-group = "coverage" },
     "django-test-migrations>=1.5.0",
-    "ipdb>=0.13.13",
-    "ipython>=8.18.1",
-    "mypy>=1.14.1",
-    "pre-commit>=3.5.0",
     "pytest>=8.3.4",
     "pytest-cov>=5.0.0",
     "pytest-django>=4.10.0",
     "pytest-mock>=3.15.1",
-    "pytest-playwright>=0.7.2",
-    "ruff>=0.9.8",
-    "tomlkit>=0.13.3",
-    "tox>=4.24.1",
-    "tox-uv>=1.13.1",
+    "pytest-playwright>=0.7.2"
 ]
 docs = [
     "django-extra-views>=0.16.0",
-    "djangorestframework>=3.16.1",
-    "doc8>=1.1.2",
     "furo>=2025.7.19",
-    "readme-renderer[md]>=43.0",
     "sphinx>=7.1.2",
     "sphinx-autobuild>=2024.10.3",
     "sphinxcontrib-django>=2.5",
@@ -178,12 +235,11 @@ psycopg2 = [
     "psycopg2>=2.9.10",
 ]
 psycopg3 = [
-    "psycopg",
+    "psycopg>=3.3.2",
 ]
 mysql = [
     "mysqlclient>=1.4.0",
 ]
-
 cx_oracle = [
     "cx-oracle>=8.3.0",
 ]
@@ -202,4 +258,22 @@ drf = [
 ]
 guardian = [
     "django-guardian>=2.4.0",
+]
+integrations = [
+    { include-group = "extra-views" },
+    { include-group = "drf" },
+]
+precommit = [
+    "pre-commit>=3.5.0",
+]
+dev = [
+    { include-group = "typing" },
+    { include-group = "test" },
+    { include-group = "docs" },
+    { include-group = "drf" },
+    { include-group = "lint" },
+    { include-group = "precommit" },
+    "tomlkit>=0.13.3",
+    "ipdb>=0.13.13",
+    "ipython>=8.18.1",
 ]

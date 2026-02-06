@@ -1,5 +1,8 @@
 from django.contrib import admin
-from polymorphic.admin import PolymorphicParentModelAdmin, PolymorphicChildModelAdmin
+from polymorphic.admin import (
+    PolymorphicParentModelAdmin,
+    PolymorphicChildModelAdmin,
+)
 from reversion.admin import VersionAdmin
 from ..models import Article, BlogPost, NewsArticle
 

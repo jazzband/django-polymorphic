@@ -2,22 +2,37 @@
 The child admin displays the change/delete view of the subclass model.
 """
 
+from __future__ import annotations
+
 import inspect
+from typing import TYPE_CHECKING, Any, Generic
 
 from django.contrib import admin
+from django.db import models
+from django.forms import ModelForm
+from django.http import HttpRequest
 from django.urls import resolve
 from django.utils.translation import gettext_lazy as _
+from typing_extensions import TypeVar
 
+from polymorphic.models import PolymorphicModel
 from polymorphic.utils import get_base_polymorphic_model
 
 from ..admin import PolymorphicParentModelAdmin
+
+_ModelT = TypeVar("_ModelT", bound=PolymorphicModel, default=PolymorphicModel)
+
+if TYPE_CHECKING:
+    _ModelAdminBase = admin.ModelAdmin[_ModelT]
+else:
+    _ModelAdminBase = admin.ModelAdmin
 
 
 class ParentAdminNotRegistered(RuntimeError):
     "The admin site for the model is not registered."
 
 
-class PolymorphicChildModelAdmin(admin.ModelAdmin):
+class PolymorphicChildModelAdmin(_ModelAdminBase, Generic[_ModelT]):
     """
     The *optional* base class for the admin interface of derived models.
 
@@ -30,16 +45,16 @@ class PolymorphicChildModelAdmin(admin.ModelAdmin):
     """
 
     #: The base model that the class uses (auto-detected if not set explicitly)
-    base_model = None
+    base_model: type[models.Model] | None = None
 
     #: By setting ``base_form`` instead of ``form``, any subclass fields are automatically added to the form.
     #: This is useful when your model admin class is inherited by others.
-    base_form = None
+    base_form: type[ModelForm[Any]] | None = None
 
     #: By setting ``base_fieldsets`` instead of ``fieldsets``,
     #: any subclass fields can be automatically added.
     #: This is useful when your model admin class is inherited by others.
-    base_fieldsets = None
+    base_fieldsets: Any = None
 
     #: Default title for extra fieldset
     extra_fieldset_title = _("Contents")
@@ -47,13 +62,15 @@ class PolymorphicChildModelAdmin(admin.ModelAdmin):
     #: Whether the child admin model should be visible in the admin index page.
     show_in_index = False
 
-    def __init__(self, model, admin_site, *args, **kwargs):
+    def __init__(self, model: type[_ModelT], admin_site: Any, *args: Any, **kwargs: Any) -> None:
         super().__init__(model, admin_site, *args, **kwargs)
 
         if self.base_model is None:
             self.base_model = get_base_polymorphic_model(model)
 
-    def get_form(self, request, obj=None, **kwargs):
+    def get_form(
+        self, request: HttpRequest, obj: Any | None = None, change: bool = False, **kwargs: Any
+    ) -> type[ModelForm[Any]]:
         # The django admin validation requires the form to have a 'class Meta: model = ..'
         # attribute, or it will complain that the fields are missing.
         # However, this enforces all derived ModelAdmin classes to redefine the model as well,
@@ -77,57 +94,60 @@ class PolymorphicChildModelAdmin(admin.ModelAdmin):
         return super().get_model_perms(request)
 
     @property
-    def change_form_template(self):
+    def change_form_template(self) -> list[str]:  # type: ignore[override]
         opts = self.model._meta
         app_label = opts.app_label
 
         # Pass the base options
+        assert self.base_model is not None, "base_model must be set"
         base_opts = self.base_model._meta
         base_app_label = base_opts.app_label
 
         return [
-            f"admin/{app_label}/{opts.object_name.lower()}/change_form.html",
+            f"admin/{app_label}/{opts.object_name.lower()}/change_form.html",  # type: ignore[union-attr]
             f"admin/{app_label}/change_form.html",
             # Added:
-            f"admin/{base_app_label}/{base_opts.object_name.lower()}/change_form.html",
+            f"admin/{base_app_label}/{base_opts.object_name.lower()}/change_form.html",  # type: ignore[union-attr]
             f"admin/{base_app_label}/change_form.html",
             "admin/polymorphic/change_form.html",
             "admin/change_form.html",
         ]
 
     @property
-    def delete_confirmation_template(self):
+    def delete_confirmation_template(self) -> list[str]:  # type: ignore[override]
         opts = self.model._meta
         app_label = opts.app_label
 
         # Pass the base options
+        assert self.base_model is not None, "base_model must be set"
         base_opts = self.base_model._meta
         base_app_label = base_opts.app_label
 
         return [
-            f"admin/{app_label}/{opts.object_name.lower()}/delete_confirmation.html",
+            f"admin/{app_label}/{opts.object_name.lower()}/delete_confirmation.html",  # type: ignore[union-attr]
             f"admin/{app_label}/delete_confirmation.html",
             # Added:
-            f"admin/{base_app_label}/{base_opts.object_name.lower()}/delete_confirmation.html",
+            f"admin/{base_app_label}/{base_opts.object_name.lower()}/delete_confirmation.html",  # type: ignore[union-attr]
             f"admin/{base_app_label}/delete_confirmation.html",
             "admin/polymorphic/delete_confirmation.html",
             "admin/delete_confirmation.html",
         ]
 
     @property
-    def object_history_template(self):
+    def object_history_template(self) -> list[str]:  # type: ignore[override]
         opts = self.model._meta
         app_label = opts.app_label
 
         # Pass the base options
+        assert self.base_model is not None, "base_model must be set"
         base_opts = self.base_model._meta
         base_app_label = base_opts.app_label
 
         return [
-            f"admin/{app_label}/{opts.object_name.lower()}/object_history.html",
+            f"admin/{app_label}/{opts.object_name.lower()}/object_history.html",  # type: ignore[union-attr]
             f"admin/{app_label}/object_history.html",
             # Added:
-            f"admin/{base_app_label}/{base_opts.object_name.lower()}/object_history.html",
+            f"admin/{base_app_label}/{base_opts.object_name.lower()}/object_history.html",  # type: ignore[union-attr]
             f"admin/{base_app_label}/object_history.html",
             "admin/polymorphic/object_history.html",
             "admin/object_history.html",
@@ -168,17 +188,20 @@ class PolymorphicChildModelAdmin(admin.ModelAdmin):
         return self._get_parent_admin().response_post_save_change(request, obj)
 
     def render_change_form(self, request, context, add=False, change=False, form_url="", obj=None):
+        assert self.base_model is not None, "base_model must be set"
         context.update({"base_opts": self.base_model._meta})
         return super().render_change_form(
             request, context, add=add, change=change, form_url=form_url, obj=obj
         )
 
     def delete_view(self, request, object_id, context=None):
+        assert self.base_model is not None, "base_model must be set"
         extra_context = {"base_opts": self.base_model._meta}
         return super().delete_view(request, object_id, extra_context)
 
     def history_view(self, request, object_id, extra_context=None):
         # Make sure the history view can also display polymorphic breadcrumbs
+        assert self.base_model is not None, "base_model must be set"
         context = {"base_opts": self.base_model._meta}
         if extra_context:
             context.update(extra_context)

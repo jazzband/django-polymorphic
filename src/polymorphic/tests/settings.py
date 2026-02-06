@@ -1,5 +1,13 @@
 import os
 
+try:
+    import django_stubs_ext
+
+    django_stubs_ext.monkeypatch()
+except ImportError:
+    pass
+
+
 DEBUG = False
 
 rdbms = os.environ.get("RDBMS", "sqlite")
@@ -97,6 +105,10 @@ elif rdbms == "oracle":  # pragma: no cover
         }
 DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 INSTALLED_APPS = [
+    "polymorphic.tests.examples.type_hints.managers",
+    "polymorphic.tests.examples.type_hints.one2one",
+    "polymorphic.tests.examples.type_hints.m2m",
+    "polymorphic.tests.examples.type_hints.fk",
     "polymorphic.tests.examples.integrations",
     "polymorphic.tests",
     "polymorphic.tests.deletion",

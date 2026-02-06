@@ -2,6 +2,10 @@
 The parent admin displays the list view of the base model.
 """
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any, Generic, cast
+
 from django.contrib import admin
 from django.contrib.admin.helpers import AdminErrorList, AdminForm
 from django.contrib.admin.templatetags.admin_urls import add_preserved_filters
@@ -13,10 +17,20 @@ from django.template.response import TemplateResponse
 from django.utils.encoding import force_str
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
+from typing_extensions import TypeVar
 
+from polymorphic.models import PolymorphicModel
+from polymorphic.query import PolymorphicQuerySet
 from polymorphic.utils import get_base_polymorphic_model
 
 from .forms import PolymorphicModelChoiceForm
+
+_ModelT = TypeVar("_ModelT", bound=PolymorphicModel, default=PolymorphicModel)
+
+if TYPE_CHECKING:
+    _ModelAdminBase = admin.ModelAdmin[_ModelT]
+else:
+    _ModelAdminBase = admin.ModelAdmin
 
 
 class RegistrationClosed(RuntimeError):
@@ -27,7 +41,7 @@ class ChildAdminNotRegistered(RuntimeError):
     "The admin site for the model is not registered."
 
 
-class PolymorphicParentModelAdmin(admin.ModelAdmin):
+class PolymorphicParentModelAdmin(_ModelAdminBase, Generic[_ModelT]):
     """
     A admin interface that can displays different change/delete pages, depending on the polymorphic model.
     To use this class, one attribute need to be defined:
@@ -44,10 +58,10 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
     """
 
     #: The base model that the class uses (auto-detected if not set explicitly)
-    base_model = None
+    base_model: type[models.Model] | None = None
 
     #: The child models that should be displayed
-    child_models = None
+    child_models: list[type[models.Model]] | None = None
 
     #: Whether the list should be polymorphic too, leave to ``False`` to optimize
     polymorphic_list = False
@@ -60,7 +74,7 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
     #: If your primary key consists of string values, update this regular expression.
     pk_regex = r"(\d+|__fk__)"
 
-    def __init__(self, model, admin_site, *args, **kwargs):
+    def __init__(self, model: type[_ModelT], admin_site: Any, *args: Any, **kwargs: Any) -> None:
         super().__init__(model, admin_site, *args, **kwargs)
         self._is_setup = False
 
@@ -165,7 +179,7 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
 
     def get_queryset(self, request):
         # optimize the list display.
-        qs = super().get_queryset(request)
+        qs = cast(PolymorphicQuerySet, super().get_queryset(request))
         if not self.polymorphic_list:
             qs = qs.non_polymorphic()
         return qs
@@ -252,14 +266,14 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
             data=request.POST if request.method == "POST" else None,
             initial={"ct_id": choices[0][0]},
         )
-        form.fields["ct_id"].choices = choices
+        setattr(form.fields["ct_id"], "choices", choices)
 
         if form.is_valid():
             return HttpResponseRedirect(f"?ct_id={form.cleaned_data['ct_id']}{extra_qs}")
 
         # Wrap in all admin layout
         fieldsets = ((None, {"fields": ("ct_id",)}),)
-        adminForm = AdminForm(form, fieldsets, {}, model_admin=self)
+        adminForm = AdminForm(form, fieldsets, {}, model_admin=self)  # type: ignore[arg-type]
         media = self.media + adminForm.media
         opts = self.model._meta
 
@@ -268,7 +282,7 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
             "adminform": adminForm,
             "is_popup": ("_popup" in request.POST or "_popup" in request.GET),
             "media": mark_safe(media),
-            "errors": AdminErrorList(form, ()),
+            "errors": AdminErrorList(form, ()),  # type: ignore[arg-type]
             "app_label": opts.app_label,
         }
         return self.render_add_type_form(request, context, form_url)
@@ -291,7 +305,7 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
         )
 
         templates = self.add_type_template or [
-            f"admin/{app_label}/{opts.object_name.lower()}/add_type_form.html",
+            f"admin/{app_label}/{opts.object_name.lower()}/add_type_form.html",  # type: ignore[union-attr]
             f"admin/{app_label}/add_type_form.html",
             "admin/polymorphic/add_type_form.html",  # added default here
             "admin/add_type_form.html",
@@ -301,19 +315,20 @@ class PolymorphicParentModelAdmin(admin.ModelAdmin):
         return self.admin_site.admin_view(TemplateResponse)(request, templates, context)
 
     @property
-    def change_list_template(self):
+    def change_list_template(self) -> list[str]:  # type: ignore[override]
         opts = self.model._meta
         app_label = opts.app_label
 
         # Pass the base options
+        assert self.base_model is not None, "base_model must be set"
         base_opts = self.base_model._meta
         base_app_label = base_opts.app_label
 
         return [
-            f"admin/{app_label}/{opts.object_name.lower()}/change_list.html",
+            f"admin/{app_label}/{opts.object_name.lower()}/change_list.html",  # type: ignore[union-attr]
             f"admin/{app_label}/change_list.html",
             # Added base class:
-            f"admin/{base_app_label}/{base_opts.object_name.lower()}/change_list.html",
+            f"admin/{base_app_label}/{base_opts.object_name.lower()}/change_list.html",  # type: ignore[union-attr]
             f"admin/{base_app_label}/change_list.html",
             "admin/change_list.html",
         ]

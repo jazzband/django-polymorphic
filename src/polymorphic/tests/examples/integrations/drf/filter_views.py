@@ -15,7 +15,9 @@ class DataFilterSet(django_filters.FilterSet):
         fields = ["annotator"]
 
     def filter_by_ai_model(self, queryset, name, value):
-        return queryset.filter(annotator__in=AiModelAnnotator.objects.filter(ai_model=value))
+        return queryset.filter(
+            annotator__in=AiModelAnnotator.objects.filter(ai_model=value)
+        )
 
 
 class AnnotationTrainingViewSet(

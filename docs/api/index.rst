@@ -16,7 +16,6 @@ API Documentation
    polymorphic.managers
    polymorphic.models
    polymorphic.deletion
-   polymorphic.query
    polymorphic.showfields
    polymorphic.templatetags/index
    polymorphic.utils

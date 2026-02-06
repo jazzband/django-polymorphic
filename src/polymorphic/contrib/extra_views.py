@@ -5,12 +5,18 @@ The ``extra_views.advanced`` provides a method to combine that with a create/upd
 This package provides classes that support both options for polymorphic formsets.
 """
 
-import extra_views
+from __future__ import annotations
+
+from typing import Any, cast
+
+import extra_views  # type: ignore[import-untyped]
 from django.core.exceptions import ImproperlyConfigured
+from django.forms import BaseFormSet
 
 from polymorphic.formsets import (
     BasePolymorphicInlineFormSet,
     BasePolymorphicModelFormSet,
+    PolymorphicFormSetChild,
     polymorphic_child_forms_factory,
 )
 
@@ -26,16 +32,16 @@ class PolymorphicFormSetMixin:
     Internal Mixin, that provides polymorphic integration with the ``extra_views`` package.
     """
 
-    formset_class = BasePolymorphicModelFormSet
+    formset_class: type[BaseFormSet] = BasePolymorphicModelFormSet
 
     #: Default 0 extra forms
-    factory_kwargs = {"extra": 0}
+    factory_kwargs: dict[str, Any] = {"extra": 0}
 
     #: Define the children
     # :type: list[PolymorphicFormSetChild]
-    formset_children = None
+    formset_children: list[PolymorphicFormSetChild] | None = None
 
-    def get_formset_children(self):
+    def get_formset_children(self) -> list[PolymorphicFormSetChild]:
         """
         :rtype: list[PolymorphicFormSetChild]
         """
@@ -45,10 +51,10 @@ class PolymorphicFormSetMixin:
             )
         return self.formset_children
 
-    def get_formset_child_kwargs(self):
+    def get_formset_child_kwargs(self) -> dict[str, Any]:
         return {}
 
-    def get_formset(self):
+    def get_formset(self) -> type[BaseFormSet]:
         """
         Returns the formset class from the inline formset factory
         """
@@ -56,11 +62,11 @@ class PolymorphicFormSetMixin:
         # Since `polymorphic_modelformset_factory` and `polymorphic_inlineformset_factory` mainly
         # reuse the standard factories, and then add `child_forms`, the same can be done here.
         # This makes sure the base class construction is completely honored.
-        FormSet = super().get_formset()
+        FormSet = super().get_formset()  # type: ignore[misc]
         FormSet.child_forms = polymorphic_child_forms_factory(
             self.get_formset_children(), **self.get_formset_child_kwargs()
         )
-        return FormSet
+        return cast(type[BaseFormSet], FormSet)
 
 
 class PolymorphicFormSetView(PolymorphicFormSetMixin, extra_views.ModelFormSetView):
@@ -81,7 +87,7 @@ class PolymorphicFormSetView(PolymorphicFormSetMixin, extra_views.ModelFormSetVi
 
     """
 
-    formset_class = BasePolymorphicModelFormSet
+    formset_class: type[BasePolymorphicModelFormSet] = BasePolymorphicModelFormSet
 
 
 class PolymorphicInlineFormSetView(PolymorphicFormSetMixin, extra_views.InlineFormSetView):
@@ -103,7 +109,7 @@ class PolymorphicInlineFormSetView(PolymorphicFormSetMixin, extra_views.InlineFo
             ]
     """
 
-    formset_class = BasePolymorphicInlineFormSet
+    formset_class: type[BasePolymorphicInlineFormSet] = BasePolymorphicInlineFormSet
 
 
 class PolymorphicInlineFormSet(PolymorphicFormSetMixin, extra_views.InlineFormSetFactory):
@@ -134,4 +140,4 @@ class PolymorphicInlineFormSet(PolymorphicFormSetMixin, extra_views.InlineFormSe
 
     """
 
-    formset_class = BasePolymorphicInlineFormSet
+    formset_class: type[BasePolymorphicInlineFormSet] = BasePolymorphicInlineFormSet

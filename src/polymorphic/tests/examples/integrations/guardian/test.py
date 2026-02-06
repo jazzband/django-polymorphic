@@ -35,7 +35,9 @@ class GuardianIntegrationTests(TestCase):
 
     def setUp(self):
         """Create test objects."""
-        self.user = User.objects.create_user(username="testuser", password="testpass")
+        self.user = User.objects.create_user(
+            username="testuser", password="testpass"
+        )
         self.blog_post = BlogPost.objects.create(
             title="Test Blog", content="Blog content", author="Blog Author"
         )
@@ -58,12 +60,16 @@ class GuardianIntegrationTests(TestCase):
         blog_ctype = get_polymorphic_base_content_type(self.blog_post)
 
         # Should return Article content type, not BlogPost
-        article_ctype = ContentType.objects.get_for_model(Article, for_concrete_model=False)
+        article_ctype = ContentType.objects.get_for_model(
+            Article, for_concrete_model=False
+        )
         self.assertEqual(blog_ctype, article_ctype)
         self.assertNotEqual(blog_ctype.model, "blogpost")
         self.assertEqual(blog_ctype.model, "article")
 
-    def test_get_polymorphic_base_content_type_for_different_child_models(self):
+    def test_get_polymorphic_base_content_type_for_different_child_models(
+        self,
+    ):
         """Test that different child models return the same base content type."""
         blog_ctype = get_polymorphic_base_content_type(self.blog_post)
         news_ctype = get_polymorphic_base_content_type(self.news_article)
@@ -74,14 +80,20 @@ class GuardianIntegrationTests(TestCase):
 
     def test_get_polymorphic_base_content_type_for_base_model(self):
         """Test that base polymorphic models return their own content type."""
-        article = Article.objects.create(title="Plain Article", content="Plain content")
+        article = Article.objects.create(
+            title="Plain Article", content="Plain content"
+        )
         article_ctype = get_polymorphic_base_content_type(article)
 
-        expected_ctype = ContentType.objects.get_for_model(Article, for_concrete_model=False)
+        expected_ctype = ContentType.objects.get_for_model(
+            Article, for_concrete_model=False
+        )
         self.assertEqual(article_ctype, expected_ctype)
         self.assertEqual(article_ctype.model, "article")
 
-    def test_get_polymorphic_base_content_type_for_non_polymorphic_model(self):
+    def test_get_polymorphic_base_content_type_for_non_polymorphic_model(
+        self,
+    ):
         """Test that non-polymorphic models return their own content type."""
         user_ctype = get_polymorphic_base_content_type(self.user)
 
@@ -93,7 +105,9 @@ class GuardianIntegrationTests(TestCase):
         # Test with a model class instead of instance
         blog_class_ctype = get_polymorphic_base_content_type(BlogPost)
 
-        article_ctype = ContentType.objects.get_for_model(Article, for_concrete_model=False)
+        article_ctype = ContentType.objects.get_for_model(
+            Article, for_concrete_model=False
+        )
         self.assertEqual(blog_class_ctype, article_ctype)
 
     def test_content_type_consistency_across_inheritance_chain(self):
@@ -103,11 +117,15 @@ class GuardianIntegrationTests(TestCase):
         news_ctype = get_polymorphic_base_content_type(self.news_article)
 
         # All should point to the same base Article type
-        article_ctype = ContentType.objects.get_for_model(Article, for_concrete_model=False)
+        article_ctype = ContentType.objects.get_for_model(
+            Article, for_concrete_model=False
+        )
         self.assertEqual(blog_ctype, article_ctype)
         self.assertEqual(news_ctype, article_ctype)
 
-    def test_get_polymorphic_base_content_type_with_instance_and_class(self):
+    def test_get_polymorphic_base_content_type_with_instance_and_class(
+        self,
+    ):
         """Test that the function works consistently with instances and classes."""
         # Get content type from instance
         instance_ctype = get_polymorphic_base_content_type(self.blog_post)
@@ -119,9 +137,13 @@ class GuardianIntegrationTests(TestCase):
         self.assertEqual(instance_ctype, class_ctype)
         self.assertEqual(instance_ctype.model, "article")
 
-    def test_get_polymorphic_base_content_type_returns_content_type_object(self):
+    def test_get_polymorphic_base_content_type_returns_content_type_object(
+        self,
+    ):
         """Test that the function returns a ContentType instance."""
-        self.assertIsInstance(get_polymorphic_base_content_type(self.blog_post), ContentType)
+        self.assertIsInstance(
+            get_polymorphic_base_content_type(self.blog_post), ContentType
+        )
 
     def test_guardian_permissions_use_base_model_namespace(self):
         """
@@ -152,7 +174,9 @@ class GuardianIntegrationTests(TestCase):
 
         # The critical assertion: permission should use Article content type,
         # NOT BlogPost content type
-        article_ctype = ContentType.objects.get_for_model(Article, for_concrete_model=False)
+        article_ctype = ContentType.objects.get_for_model(
+            Article, for_concrete_model=False
+        )
         self.assertEqual(
             perm.content_type,
             article_ctype,

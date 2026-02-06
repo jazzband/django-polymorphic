@@ -1,3 +1,5 @@
+from typing import Any
+
 from django import forms
 from django.contrib.admin.widgets import AdminRadioSelect
 from django.utils.translation import gettext_lazy as _
@@ -15,7 +17,7 @@ class PolymorphicModelChoiceForm(forms.Form):
         label=type_label, widget=AdminRadioSelect(attrs={"class": "radiolist"})
     )
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         # Allow to easily redefine the label (a commonly expected usecase)
         super().__init__(*args, **kwargs)
         self.fields["ct_id"].label = self.type_label

@@ -2,12 +2,19 @@
 Seamless Polymorphic Inheritance for Django Models
 """
 
+from __future__ import annotations
+
 import warnings
+from collections.abc import Iterable
+from typing import ClassVar, cast
 
 from django.contrib.contenttypes.models import ContentType
 from django.db import models, transaction
+from django.db.models import Q
+from django.db.models.base import ModelBase
 from django.db.utils import DEFAULT_DB_ALIAS
 from django.utils.functional import classproperty
+from typing_extensions import Self
 
 from .base import PolymorphicModelBase
 from .managers import PolymorphicManager
@@ -18,12 +25,10 @@ from .utils import get_base_polymorphic_model, lazy_ctype
 # PolymorphicModel
 
 
-class PolymorphicTypeUndefined(LookupError):
-    pass
+class PolymorphicTypeUndefined(LookupError): ...
 
 
-class PolymorphicTypeInvalid(RuntimeError):
-    pass
+class PolymorphicTypeInvalid(RuntimeError): ...
 
 
 class PolymorphicModel(models.Model, metaclass=PolymorphicModelBase):
@@ -35,34 +40,36 @@ class PolymorphicModel(models.Model, metaclass=PolymorphicModelBase):
     and provides a polymorphic manager as the default manager (and as 'objects').
     """
 
-    _meta_skip = True
+    _meta_skip: ClassVar[bool] = True
 
     # for PolymorphicModelBase, so it can tell which models are polymorphic and which are not (duck typing)
-    polymorphic_model_marker = True
+    polymorphic_model_marker: ClassVar[bool] = True
 
     # for PolymorphicQuery, True => an overloaded __repr__ with nicer multi-line output is used by PolymorphicQuery
-    polymorphic_query_multiline_output = False
+    polymorphic_query_multiline_output: ClassVar[bool] = False
 
     # avoid ContentType related field accessor clash (an error emitted by model validation)
     #: The model field that stores the :class:`~django.contrib.contenttypes.models.ContentType` reference to the actual class.
-    polymorphic_ctype = models.ForeignKey(
-        ContentType,
-        null=True,
-        editable=False,
-        on_delete=models.CASCADE,
-        related_name="polymorphic_%(app_label)s.%(class)s_set+",
+    polymorphic_ctype: models.ForeignKey[ContentType | None, ContentType | None] = (
+        models.ForeignKey(
+            ContentType,
+            null=True,
+            editable=False,
+            on_delete=models.CASCADE,
+            related_name="polymorphic_%(app_label)s.%(class)s_set+",
+        )
     )
 
     # some applications want to know the name of the fields that are added to its models
-    polymorphic_internal_model_fields = ["polymorphic_ctype"]
+    polymorphic_internal_model_fields: ClassVar[list[str]] = ["polymorphic_ctype"]
 
-    objects = PolymorphicManager()
+    objects: ClassVar[PolymorphicManager[Self]] = PolymorphicManager()
 
     class Meta:
-        abstract = True
+        abstract: ClassVar[bool] = True
 
     @classproperty
-    def polymorphic_primary_key_name(cls):
+    def polymorphic_primary_key_name(cls) -> str:
         """
         The name of the root primary key field of this polymorphic inheritance chain.
         """
@@ -73,13 +80,15 @@ class PolymorphicModel(models.Model, metaclass=PolymorphicModelBase):
             DeprecationWarning,
             stacklevel=2,
         )
-        return get_base_polymorphic_model(cls, allow_abstract=True)._meta.pk.attname
+        base_model = get_base_polymorphic_model(cls, allow_abstract=True)
+        assert base_model is not None, "Polymorphic model must have a base"
+        return base_model._meta.pk.attname
 
     @classmethod
-    def translate_polymorphic_Q_object(cls, q):
+    def translate_polymorphic_Q_object(cls, q: Q) -> Q:
         return translate_polymorphic_Q_object(cls, q)
 
-    def pre_save_polymorphic(self, using=DEFAULT_DB_ALIAS):
+    def pre_save_polymorphic(self, using: str = DEFAULT_DB_ALIAS) -> None:
         """
         Make sure the ``polymorphic_ctype`` value is correctly set on this model.
 
@@ -110,23 +119,33 @@ class PolymorphicModel(models.Model, metaclass=PolymorphicModelBase):
             )
             self.polymorphic_ctype_id = ctype.pk
 
-    def save(self, *args, **kwargs):
+    def save(
+        self,
+        force_insert: bool | tuple[ModelBase, ...] = False,
+        force_update: bool = False,
+        using: str | None = None,
+        update_fields: Iterable[str] | None = None,
+    ) -> None:
         """Calls :meth:`pre_save_polymorphic` and saves the model."""
         # Determine the database to use:
         # 1. Explicit 'using' parameter takes precedence
         # 2. Otherwise use self._state.db (the database the object was loaded from)
         # 3. Fall back to DEFAULT_DB_ALIAS
         # This ensures database routers are respected when no explicit database is specified
-        using = kwargs.get("using")
         if using is None:
             using = self._state.db or DEFAULT_DB_ALIAS
 
         self.pre_save_polymorphic(using=using)
-        return super().save(*args, **kwargs)
+        return super().save(
+            force_insert=force_insert,
+            force_update=force_update,
+            using=using,
+            update_fields=update_fields,
+        )
 
-    save.alters_data = True
+    save.alters_data = True  # type: ignore[attr-defined]
 
-    def get_real_instance_class(self):
+    def get_real_instance_class(self) -> type[Self] | None:
         """
         Return the actual model type of the object.
 
@@ -167,9 +186,9 @@ class PolymorphicModel(models.Model, metaclass=PolymorphicModelBase):
                 "not point to a subclass!"
             )
 
-        return model
+        return cast(type[Self] | None, model)
 
-    def get_real_concrete_instance_class_id(self):
+    def get_real_concrete_instance_class_id(self) -> int | None:
         model_class = self.get_real_instance_class()
         if model_class is None:
             return None
@@ -179,17 +198,18 @@ class PolymorphicModel(models.Model, metaclass=PolymorphicModelBase):
             .pk
         )
 
-    def get_real_concrete_instance_class(self):
+    def get_real_concrete_instance_class(self) -> type[Self] | None:
         model_class = self.get_real_instance_class()
         if model_class is None:
             return None
-        return (
+        return cast(
+            type[Self] | None,
             ContentType.objects.db_manager(self._state.db)
             .get_for_model(model_class, for_concrete_model=True)
-            .model_class()
+            .model_class(),
         )
 
-    def get_real_instance(self):
+    def get_real_instance(self) -> Self:
         """
         Upcast an object to it's actual type.
 
@@ -216,7 +236,9 @@ class PolymorphicModel(models.Model, metaclass=PolymorphicModelBase):
             )
         return self.__class__.objects.db_manager(self._state.db).get(pk=self.pk)
 
-    def delete(self, using=None, keep_parents=False):
+    def delete(
+        self, using: str | None = None, keep_parents: bool = False
+    ) -> tuple[int, dict[str, int]]:
         """
         Behaves the same as Django's default :meth:`~django.db.models.Model.delete()`,
         but with support for upcasting when ``keep_parents`` is True. When keeping
@@ -227,7 +249,7 @@ class PolymorphicModel(models.Model, metaclass=PolymorphicModelBase):
         # need to update
         parent_updates = (
             [
-                (parent_model, getattr(self, parent_field.get_attname()))
+                (parent_model, getattr(self, parent_field.get_attname()))  # type: ignore[union-attr]
                 for parent_model, parent_field in self._meta.parents.items()
                 if issubclass(parent_model, PolymorphicModel)
             ]
@@ -242,8 +264,10 @@ class PolymorphicModel(models.Model, metaclass=PolymorphicModelBase):
                 for parent_model, pk in parent_updates:
                     parent_model.objects.db_manager(using=using).non_polymorphic().filter(
                         pk=pk
-                    ).update(polymorphic_ctype=lazy_ctype(parent_model, using=using))
+                    ).update(
+                        polymorphic_ctype=lazy_ctype(parent_model, using=using or DEFAULT_DB_ALIAS)
+                    )
                 return ret
         return super().delete(using=using, keep_parents=keep_parents)
 
-    delete.alters_data = True
+    delete.alters_data = True  # type: ignore[attr-defined]

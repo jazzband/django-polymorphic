@@ -2,15 +2,21 @@
 Classes and utilities for handling deletions in polymorphic models.
 """
 
-from functools import cached_property
+from __future__ import annotations
 
+from collections.abc import Callable
+from functools import cached_property
+from typing import Any, cast
+
+from django.db import models
 from django.db.migrations.serializer import BaseSerializer, serializer_factory
 from django.db.migrations.writer import MigrationWriter
+from django.db.models.deletion import Collector
 
 from .query import PolymorphicQuerySet
 
 
-def migration_fingerprint(value):
+def migration_fingerprint(value: Any) -> Any:
     """
     Produce a stable, hashable fingerprint for a value as Django would represent
     it in migrations, but in a structured form when possible.
@@ -40,12 +46,20 @@ class PolymorphicGuard:
     :param action: The :attr:`django.db.models.ForeignKey.on_delete` callable to wrap.
     """
 
-    def __init__(self, action):
+    action: Callable[..., Any]
+
+    def __init__(self, action: Callable[..., Any]) -> None:
         if not callable(action):
             raise TypeError("action must be callable")
         self.action = action
 
-    def __call__(self, collector, field, sub_objs, using):
+    def __call__(
+        self,
+        collector: Collector,
+        field: models.Field[Any, Any],
+        sub_objs: PolymorphicQuerySet[Any, Any],
+        using: str,
+    ) -> None:
         """
         This guard wraps an on_delete action to ensure that any polymorphic queryset
         passed to it is converted to a non-polymorphic queryset before proceeding.
@@ -64,13 +78,13 @@ class PolymorphicGuard:
         """
         if isinstance(sub_objs, PolymorphicQuerySet) and not sub_objs.polymorphic_disabled:
             sub_objs = sub_objs.non_polymorphic()
-        return self.action(collector, field, sub_objs, using)
+        self.action(collector, field, sub_objs, using)
 
     @cached_property
-    def migration_key(self):
+    def migration_key(self) -> Any:
         return migration_fingerprint(self.action)
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         if (
             isinstance(other, tuple)
             and len(other) == 3
@@ -80,20 +94,24 @@ class PolymorphicGuard:
             # deconstruct() tuple. This has been seen for SET(...) callables.
             # The arguments element may be a list instead of a tuple though, this
             # handles that special case
-            return self.action.deconstruct() == (
+            result = self.action.deconstruct() == (  # type: ignore[attr-defined]
                 other[0],
                 tuple(other[1]) if isinstance(other[1], list) else other[1],
                 other[2],
             )
+            # cast(bool) needed because deconstruct() returns Any
+            return cast(bool, result)
         if isinstance(other, PolymorphicGuard):
-            return self.migration_key == other.migration_key
+            result = self.migration_key == other.migration_key
         else:
             try:
-                return self.migration_key == migration_fingerprint(other)
+                result = self.migration_key == migration_fingerprint(other)
             except Exception:
                 return False
+        # cast(bool) needed because migration_key and migration_fingerprint return Any
+        return cast(bool, result)
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(self.migration_key)
 
 
@@ -107,7 +125,7 @@ class PolymorphicGuardSerializer(BaseSerializer):
     migrations will not be generated.
     """
 
-    def serialize(self):
+    def serialize(self) -> tuple[str, set[str]]:
         """
         Serialize the underlying action of the PolymorphicGuard.
         """

@@ -178,7 +178,11 @@ that fills in all fields except :attr:`~polymorphic.models.PolymorphicModel.poly
         def get_fields(self):
             fields = super().get_fields()
             if issubclass(self.model, PolymorphicModel):
-                fields = {field for field in fields if field.name != "polymorphic_ctype"}
+                fields = {
+                    field
+                    for field in fields
+                    if field.name != "polymorphic_ctype"
+                }
             return fields
 
 

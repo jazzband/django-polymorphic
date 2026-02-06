@@ -2,6 +2,6 @@ polymorphic.models
 ==================
 
 .. automodule:: polymorphic.models
-    :members: 
+    :members:
     :show-inheritance:
     :private-members:

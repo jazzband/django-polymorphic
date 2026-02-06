@@ -1,6 +1,11 @@
 Changelog
 =========
 
+v4.11.0 (2026-02-02)
+--------------------
+
+* Implemented `Add type hints for django-polymorphic <https://github.com/jazzband/django-polymorphic/issues/647>`_
+
 v4.9.2, v4.10.5 (2026-01-26)
 ----------------------------
 
@@ -39,7 +44,7 @@ notable changes are:
 1. The :pypi:`django-rest-polymorphic` package is now part of :pypi:`django-polymorphic`.
 2. In queries that need content types that are not cached those fetches are `now embedded as
    subqueries <https://github.com/jazzband/django-polymorphic/pull/828>`_. This reduces the total
-   number of queries needed but most importantly it eliminates `a class of errors 
+   number of queries needed but most importantly it eliminates `a class of errors
    <https://github.com/jazzband/django-polymorphic/issues/383>`_ that could happen if
    Manager/QuerySet methods that should not but do generate database queries are called before
    models are loaded (e.g. get_queryset()).
@@ -91,7 +96,8 @@ v4.8.0 (2026-01-08)
 v4.7.0 (2026-01-07)
 -------------------
 
-Fixed a few outstanding admin bugs, updated documentation and added more admin tests for things like m2m relationships.
+Fixed a few outstanding admin bugs, updated documentation and added more admin tests for things like
+m2m relationships.
 
 * Documented `How to handle non-admin polymorphic forms? <https://github.com/jazzband/django-polymorphic/issues/346>`_
 * Fixed `Admin: add view popup breaks if initial submit has validation error <https://github.com/jazzband/django-polymorphic/issues/612>`_
@@ -175,7 +181,7 @@ v4.2.0 (2025-12-04)
 * Fixed `Show full admin context (breadcrumb and logout nav) in model type selection admin form <https://github.com/jazzband/django-polymorphic/pull/580>`_
 * Fixed `Issue with Autocomplete Fields in StackedPolymorphicInline.Child Inline <https://github.com/jazzband/django-polymorphic/issues/546>`_
 * Support Python 3.14 and Django 6.0, drop support for EOL python 3.9, Django 3.2, 4.0, 4.1 and 5.0.
-* `Modernized package management with new build, test, docs tooling and improved CI 
+* `Modernized package management with new build, test, docs tooling and improved CI
   <https://github.com/jazzband/django-polymorphic/issues/651>`_.
 
 v4.1.0 (2025-05-20)
@@ -918,7 +924,7 @@ only() allowed (but not yet supported)
 setup.py added. Thanks to Andrew Ingram.
 
 More about these additions in the docs:
-http://bserve.webhop.org/wiki/django_polymorphic/doc
+``http://bserve.webhop.org/wiki/django_polymorphic/doc``
 
 Bugfixes
 ~~~~~~~~

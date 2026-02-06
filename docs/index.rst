@@ -121,6 +121,7 @@ Advanced topics
    migrating
    managers
    deletion
+   typing
    advanced
    changelog/index
    api/index
