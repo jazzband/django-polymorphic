@@ -241,8 +241,9 @@ mysql = [
     "mysqlclient>=1.4.0",
 ]
 cx_oracle = [
-    "cx-oracle>=8.3.0",
+    "cx-oracle>=8.3.0"
 ]
+
 oracledb = [
     "oracledb>=2.3.0",
 ]

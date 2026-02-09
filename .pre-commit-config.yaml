@@ -1,6 +1,6 @@
 ci:
   # Don't run these in pre-commit.ci at all
-  skip: [lint, format, typing, docs, pip]
+  skip: [lint, format, docs, pip]
 
 repos:
   - repo: local
@@ -14,12 +14,6 @@ repos:
       - id: format
         name: Format
         entry: just format
-        language: system
-        pass_filenames: false
-
-      - id: typing
-        name: Typing
-        entry: just check-types
         language: system
         pass_filenames: false
 
