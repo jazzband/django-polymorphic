@@ -38,7 +38,6 @@ jobs:
         psycopg-version: ['psycopg2', 'psycopg3']
         django-version:
           - '4.2' # LTS April 2026
-          - '5.1' # December 2025
           - '5.2' # LTS April 2028
           - '6.0' # 
         exclude:
@@ -54,12 +53,8 @@ jobs:
           - python-version: '3.14'
             django-version: '4.2'
           - python-version: '3.14'
-            django-version: '5.1'
-          - python-version: '3.14'
             django-version: '5.2'
 
-          - postgres-version: '12'
-            django-version: '5.1'
           - postgres-version: '12'
             django-version: '5.2'
           - postgres-version: '12'
@@ -74,8 +69,6 @@ jobs:
 
           - postgres-version: 'latest'
             django-version: '4.2'
-          - postgres-version: 'latest'
-            django-version: '5.1'
 
           - postgres-version: '12'
             psycopg-version: 'psycopg3'
