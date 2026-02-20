@@ -9,7 +9,7 @@ from collections.abc import Iterable
 from typing import ClassVar, cast
 
 from django.contrib.contenttypes.models import ContentType
-from django.db import models, transaction
+from django.db import models, router, transaction
 from django.db.models import Q
 from django.db.models.base import ModelBase
 from django.db.utils import DEFAULT_DB_ALIAS
@@ -127,15 +127,18 @@ class PolymorphicModel(models.Model, metaclass=PolymorphicModelBase):
         update_fields: Iterable[str] | None = None,
     ) -> None:
         """Calls :meth:`pre_save_polymorphic` and saves the model."""
-        # Determine the database to use:
+        # Determine the database to use via Django's routing infrastructure:
         # 1. Explicit 'using' parameter takes precedence
-        # 2. Otherwise use self._state.db (the database the object was loaded from)
-        # 3. Fall back to DEFAULT_DB_ALIAS
-        # This ensures database routers are respected when no explicit database is specified
-        if using is None:
-            using = self._state.db or DEFAULT_DB_ALIAS
-
-        self.pre_save_polymorphic(using=using)
+        # 2. Otherwise consult DATABASE_ROUTERS via router.db_for_write()
+        # 3. The router falls back to _state.db, then DEFAULT_DB_ALIAS
+        # This ensures database routers (e.g. read/write split) are respected (issue #865)
+        self.pre_save_polymorphic(
+            using=(
+                router.db_for_write(self.__class__, instance=self)
+                or self._state.db
+                or DEFAULT_DB_ALIAS
+            )
+        )
         return super().save(
             force_insert=force_insert,
             force_update=force_update,
