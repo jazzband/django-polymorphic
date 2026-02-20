@@ -1,6 +1,11 @@
 Changelog
 =========
 
+v4.11.1 (2026-02-20)
+--------------------
+
+* Fixed `Release 4.11 causes UPDATE query to be routed to reader DB <https://github.com/jazzband/django-polymorphic/issues/865>`_
+
 v4.11.0 (2026-02-05)
 --------------------
 
