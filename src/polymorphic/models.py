@@ -131,10 +131,10 @@ class PolymorphicModel(models.Model, metaclass=PolymorphicModelBase):
         # 1. Explicit 'using' parameter takes precedence
         # 2. Otherwise consult DATABASE_ROUTERS via router.db_for_write()
         # 3. The router falls back to _state.db, then DEFAULT_DB_ALIAS
-        # This ensures database routers (e.g. read/write split) are respected (issue #865)
         self.pre_save_polymorphic(
             using=(
-                router.db_for_write(self.__class__, instance=self)
+                using
+                or router.db_for_write(self.__class__, instance=self)
                 or self._state.db
                 or DEFAULT_DB_ALIAS
             )
