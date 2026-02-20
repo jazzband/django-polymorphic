@@ -332,3 +332,40 @@ class MultipleDatabasesTests(TestCase):
 
         # Verify it wasn't saved to default database
         self.assertFalse(Model2B.objects.filter(pk=obj.pk).exists())
+
+    def test_save_respects_db_for_write_router(self):
+        """
+        When a DATABASE_ROUTER routes writes to a different database than where
+        the object was read from, save() should respect db_for_write() rather
+        than blindly using _state.db. Regression test for issue #865.
+        """
+
+        class ReadWriteSplitRouter:
+            """Router that sends writes to 'default' regardless of _state.db."""
+
+            def db_for_read(self, model, **hints):
+                return None
+
+            def db_for_write(self, model, **hints):
+                return "default"
+
+            def allow_relation(self, obj1, obj2, **hints):
+                return True
+
+            def allow_migrate(self, db, app_label, **hints):
+                return True
+
+        # Create an object on "secondary", simulating an object loaded from a
+        # read-replica whose _state.db points at the replica.
+        obj = Model2B.objects.using("secondary").create(field1="test", field2="value")
+        self.assertEqual(obj._state.db, "secondary")
+
+        with self.settings(DATABASE_ROUTERS=[ReadWriteSplitRouter()]):
+            # save() without an explicit `using` should consult the router's
+            # db_for_write() and route to "default", not to _state.db ("secondary").
+            obj.field1 = "modified"
+            obj.save()
+
+        # The write should have landed in "default" (the write database).
+        self.assertTrue(Model2B.objects.using("default").filter(field1="modified").exists())
+        self.assertFalse(Model2B.objects.using("secondary").filter(field1="modified").exists())
