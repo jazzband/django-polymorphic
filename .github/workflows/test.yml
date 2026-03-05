@@ -7,9 +7,16 @@ on:
   push:
     tags-ignore:
       - '*'
-    branches:
-      - '*'
+    branches: ['main']
   pull_request:
+    branches: ['main']
+    paths:
+      - "src/**/*.py"
+      - "src/tests/**/*.py"
+      - ".github/workflows/test.yml"
+      - "pyproject.toml"
+      - "justfile"
+  merge_group:
   workflow_call:
   workflow_dispatch:
     inputs:

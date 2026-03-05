@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "django-polymorphic"
-version = "4.11.1"
+version = "4.11.2"
 description = "Seamless polymorphic inheritance for Django models."
 readme = "README.md"
 license = "BSD-3-Clause"
@@ -48,7 +48,8 @@ classifiers = [
     "Topic :: Internet :: WWW/HTTP",
     "Topic :: Internet :: WWW/HTTP :: Site Management",
     "Topic :: Software Development :: Libraries",
-    "Topic :: Software Development :: Libraries :: Python Modules"
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Typing :: Typed"
 ]
 dependencies = [
     "Django >= 4.2",

@@ -25,6 +25,10 @@ django-polymorphic
    :target: https://pypi.python.org/pypi/django-polymorphic
    :alt: PyPI status
 
+.. image:: https://img.shields.io/pypi/types/django-polymorphic.svg
+   :target: https://pypi.python.org/pypi/django-polymorphic
+   :alt: PyPi Typed
+
 .. image:: https://readthedocs.org/projects/django-polymorphic/badge/?version=latest
    :target: http://django-polymorphic.readthedocs.io/?badge=latest/
    :alt: Documentation Status
