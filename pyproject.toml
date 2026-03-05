@@ -67,6 +67,12 @@ dependencies = [
 
 [tool.uv]
 package = true
+conflicts = [
+    [{ group = "dj42" }, { group = "dj52" }, { group = "dj60" }],
+    [{ group = "mysqlclient14" }, { group = "mysqlclient2x" }],
+    [{ group = "psycopg2" }, { group = "psycopg3" }],
+    [{ group = "cx_oracle" }, { group = "oracledb" }],
+]
 
 [tool.hatch.version]
 path = "src/polymorphic/__init__.py"
@@ -240,6 +246,12 @@ psycopg3 = [
 mysql = [
     "mysqlclient>=1.4.0",
 ]
+mysqlclient14 = [
+    "mysqlclient==1.4.3",
+]
+mysqlclient2x = [
+    "mysqlclient>=2.2.8",
+]
 cx_oracle = [
     "cx-oracle>=8.3.0"
 ]
@@ -266,6 +278,15 @@ integrations = [
 ]
 precommit = [
     "pre-commit>=3.5.0",
+]
+dj42 = [
+    "Django~=4.2; python_version < '3.13'",
+]
+dj52 = [
+    "Django~=5.2",
+]
+dj60 = [
+    "Django~=6.0; python_version >= '3.12'",
 ]
 dev = [
     { include-group = "typing" },
