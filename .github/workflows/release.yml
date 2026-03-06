@@ -98,6 +98,7 @@ jobs:
       - test
       - build
     runs-on: ubuntu-latest
+    permissions: {}   # only needs JAZZBAND_RELEASE_KEY secret, no GitHub token scopes
     steps:
     - name: Download all the dists
       uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3
