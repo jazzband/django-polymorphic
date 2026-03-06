@@ -11,8 +11,7 @@ on:
   pull_request:
     branches: ['main']
     paths:
-      - "src/**/*.py"
-      - "src/tests/**/*.py"
+      - "src/**"
       - ".github/workflows/test.yml"
       - "pyproject.toml"
       - "justfile"
