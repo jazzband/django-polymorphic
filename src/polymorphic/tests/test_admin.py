@@ -7,8 +7,11 @@ from django.test import RequestFactory
 from django.urls import resolve
 from playwright._impl._errors import TargetClosedError
 from polymorphic.admin import (
+    GenericStackedPolymorphicInline,
     PolymorphicChildModelAdmin,
     PolymorphicChildModelFilter,
+    PolymorphicInlineAdminForm,
+    PolymorphicInlineAdminFormSet,
     PolymorphicInlineSupportMixin,
     PolymorphicParentModelAdmin,
     StackedPolymorphicInline,
@@ -25,6 +28,9 @@ from polymorphic.tests.models import (
     Model2D,
     NoChildren,
     ModelWithPolyFK,
+    PolymorphicTagBase,
+    PolymorphicTagA,
+    PolymorphicTagB,
 )
 
 from playwright.sync_api import expect
@@ -1328,3 +1334,792 @@ class M2MAdminTests(_GenericAdminFormTest):
         assert person2.pk in team_member_ids
         assert person3.pk not in team_member_ids
         assert len(team_member_ids) == 2
+
+
+class PolymorphicAdminCoverageTests(AdminTestCase):
+    """Tests targeting uncovered lines in polymorphic/admin/*."""
+
+    # ── parentadmin.py ────────────────────────────────────────────────────────
+
+    def test_get_child_models_not_implemented(self):
+        """get_child_models() raises NotImplementedError when child_models not set."""
+
+        class Model2Admin(PolymorphicParentModelAdmin):
+            base_model = Model2A
+
+        admin_instance = Model2Admin(Model2A, self.admin_site)
+        with pytest.raises(NotImplementedError):
+            admin_instance.get_child_models()
+
+    def test_lazy_setup_old_format(self):
+        """_lazy_setup() raises ImproperlyConfigured for old (model, admin) tuple format."""
+        from django.core.exceptions import ImproperlyConfigured
+
+        class Model2Admin(PolymorphicParentModelAdmin):
+            base_model = Model2A
+            child_models = [str]  # str is a class but not a models.Model subclass
+
+        admin_instance = Model2Admin(Model2A, self.admin_site)
+        with pytest.raises(ImproperlyConfigured):
+            admin_instance._lazy_setup()
+
+    def test_get_real_admin_nonexistent_pk(self):
+        """_get_real_admin() raises Http404 when the object does not exist."""
+        from django.http import Http404
+
+        @self.register(Model2A)
+        class Model2Admin(PolymorphicParentModelAdmin):
+            base_model = Model2A
+            child_models = (Model2B,)
+
+        @self.register(Model2B)
+        class Model2BAdmin(PolymorphicChildModelAdmin):
+            base_model = Model2A
+
+        admin_instance = self.get_admin_instance(Model2A)
+        admin_instance._lazy_setup()
+        with pytest.raises(Http404):
+            admin_instance._get_real_admin(999999)
+
+    def test_get_real_admin_by_ct_nonexistent(self):
+        """_get_real_admin_by_ct() raises Http404 for a nonexistent CT id."""
+        from django.http import Http404
+        from unittest.mock import patch
+
+        @self.register(Model2A)
+        class Model2Admin(PolymorphicParentModelAdmin):
+            base_model = Model2A
+            child_models = (Model2B,)
+
+        @self.register(Model2B)
+        class Model2BAdmin(PolymorphicChildModelAdmin):
+            base_model = Model2A
+
+        admin_instance = self.get_admin_instance(Model2A)
+        admin_instance._lazy_setup()
+        with patch.object(ContentType.objects, "get_for_id", side_effect=ContentType.DoesNotExist):
+            with pytest.raises(Http404):
+                admin_instance._get_real_admin_by_ct(999999)
+
+    def test_get_real_admin_by_ct_deleted_model(self):
+        """_get_real_admin_by_ct() raises Http404 when the model class is gone (stale CT)."""
+        from django.http import Http404
+
+        @self.register(Model2A)
+        class Model2Admin(PolymorphicParentModelAdmin):
+            base_model = Model2A
+            child_models = (Model2B,)
+
+        @self.register(Model2B)
+        class Model2BAdmin(PolymorphicChildModelAdmin):
+            base_model = Model2A
+
+        admin_instance = self.get_admin_instance(Model2A)
+        admin_instance._lazy_setup()
+
+        from unittest.mock import MagicMock, patch
+
+        stale_ct = MagicMock()
+        stale_ct.model_class.return_value = None
+        stale_ct.natural_key.return_value = ("fake_app", "deletedmodel")
+        with patch.object(ContentType.objects, "get_for_id", return_value=stale_ct):
+            with pytest.raises(Http404):
+                admin_instance._get_real_admin_by_ct(stale_ct.pk)
+
+    def test_get_real_admin_by_model_permission_denied(self):
+        """_get_real_admin_by_model() raises PermissionDenied for non-child model."""
+        from django.core.exceptions import PermissionDenied
+
+        @self.register(Model2A)
+        class Model2Admin(PolymorphicParentModelAdmin):
+            base_model = Model2A
+            child_models = (Model2B,)
+
+        @self.register(Model2B)
+        class Model2BAdmin(PolymorphicChildModelAdmin):
+            base_model = Model2A
+
+        admin_instance = self.get_admin_instance(Model2A)
+        admin_instance._lazy_setup()
+        with pytest.raises(PermissionDenied):
+            admin_instance._get_real_admin_by_model(Model2C)
+
+    def test_child_admin_not_registered(self):
+        """_get_real_admin_by_model() raises ChildAdminNotRegistered when model not in site."""
+        from polymorphic.admin.parentadmin import ChildAdminNotRegistered
+
+        @self.register(Model2A)
+        class Model2Admin(PolymorphicParentModelAdmin):
+            base_model = Model2A
+            child_models = (Model2B, Model2C)
+
+        @self.register(Model2B)
+        class Model2BAdmin(PolymorphicChildModelAdmin):
+            base_model = Model2A
+
+        # Model2C is in child_models but NOT registered in the admin site
+        admin_instance = self.get_admin_instance(Model2A)
+        admin_instance._lazy_setup()
+        with pytest.raises(ChildAdminNotRegistered):
+            admin_instance._get_real_admin_by_model(Model2C)
+
+    def test_real_admin_is_self_returns_super(self):
+        """_get_real_admin_by_model() returns super() proxy when real_admin is self."""
+
+        @self.register(Model2A)
+        class Model2Admin(PolymorphicParentModelAdmin):
+            base_model = Model2A
+            child_models = (Model2A, Model2B)
+
+        @self.register(Model2B)
+        class Model2BAdmin(PolymorphicChildModelAdmin):
+            base_model = Model2A
+
+        admin_instance = self.get_admin_instance(Model2A)
+        admin_instance._lazy_setup()
+        result = admin_instance._get_real_admin_by_model(Model2A, super_if_self=True)
+        # Returns a super() proxy, not the instance itself
+        assert result is not admin_instance
+
+    def test_get_queryset_polymorphic_list_true(self):
+        """get_queryset() with polymorphic_list=True returns polymorphic instances."""
+
+        @self.register(Model2A)
+        class Model2Admin(PolymorphicParentModelAdmin):
+            base_model = Model2A
+            child_models = (Model2B, Model2C, Model2D)
+            polymorphic_list = True
+
+        @self.register(Model2B)
+        @self.register(Model2C)
+        @self.register(Model2D)
+        class Model2ChildAdmin(PolymorphicChildModelAdmin):
+            base_model = Model2A
+
+        Model2B.objects.create(field1="B1", field2="B2")
+        admin_instance = self.get_admin_instance(Model2A)
+        request = self.create_admin_request("get", self.get_changelist_url(Model2A))
+        qs = admin_instance.get_queryset(request)
+        obj = qs.first()
+        assert isinstance(obj, Model2B)
+
+    def test_get_child_type_choices_skips_no_permission(self):
+        """get_child_type_choices() skips child models the user cannot add."""
+
+        @self.register(Model2A)
+        class Model2Admin(PolymorphicParentModelAdmin):
+            base_model = Model2A
+            child_models = (Model2B, Model2C)
+
+        @self.register(Model2B)
+        class Model2BAdmin(PolymorphicChildModelAdmin):
+            base_model = Model2A
+
+            def has_add_permission(self, request):
+                return True
+
+        @self.register(Model2C)
+        class Model2CAdmin(PolymorphicChildModelAdmin):
+            base_model = Model2A
+
+            def has_add_permission(self, request):
+                return False
+
+        admin_instance = self.get_admin_instance(Model2A)
+        admin_instance._lazy_setup()
+        request = self.create_admin_request("get", self.get_add_url(Model2A))
+        choices = admin_instance.get_child_type_choices(request, "add")
+        ct_ids = [ct_id for ct_id, _ in choices]
+        assert ContentType.objects.get_for_model(Model2B).pk in ct_ids
+        assert ContentType.objects.get_for_model(Model2C).pk not in ct_ids
+
+    def test_add_type_view_no_add_permission(self):
+        """add_type_view() raises PermissionDenied when the user has no add permission."""
+        from django.core.exceptions import PermissionDenied
+
+        @self.register(Model2A)
+        class Model2Admin(PolymorphicParentModelAdmin):
+            base_model = Model2A
+            child_models = (Model2B,)
+
+            def has_add_permission(self, request):
+                return False
+
+        @self.register(Model2B)
+        class Model2BAdmin(PolymorphicChildModelAdmin):
+            base_model = Model2A
+
+        admin_instance = self.get_admin_instance(Model2A)
+        request = self.create_admin_request("get", self.get_add_url(Model2A))
+        with pytest.raises(PermissionDenied):
+            admin_instance.add_type_view(request)
+
+    def test_add_type_view_no_choices_permission_denied(self):
+        """add_type_view() raises PermissionDenied when no child types are available."""
+        from django.core.exceptions import PermissionDenied
+
+        @self.register(Model2A)
+        class Model2Admin(PolymorphicParentModelAdmin):
+            base_model = Model2A
+            child_models = (Model2B,)
+
+            def get_child_type_choices(self, request, action):
+                return []
+
+        @self.register(Model2B)
+        class Model2BAdmin(PolymorphicChildModelAdmin):
+            base_model = Model2A
+
+        admin_instance = self.get_admin_instance(Model2A)
+        request = self.create_admin_request("get", self.get_add_url(Model2A))
+        with pytest.raises(PermissionDenied):
+            admin_instance.add_type_view(request)
+
+    # ── childadmin.py ─────────────────────────────────────────────────────────
+
+    def test_child_admin_get_form_with_fieldsets(self):
+        """get_form() skips setting fields='__all__' when fieldsets is already set."""
+
+        @self.register(Model2A)
+        class Model2Admin(PolymorphicParentModelAdmin):
+            base_model = Model2A
+            child_models = (Model2B,)
+
+        @self.register(Model2B)
+        class Model2BAdmin(PolymorphicChildModelAdmin):
+            base_model = Model2A
+            fieldsets = (("Fields", {"fields": ("field1", "field2")}),)
+
+        obj = Model2B.objects.create(field1="B1", field2="B2")
+        b_admin = self.get_admin_instance(Model2B)
+        request = self.create_admin_request("get", self.get_change_url(Model2B, obj.pk))
+        form_class = b_admin.get_form(request, obj)
+        assert form_class is not None
+
+    def test_child_admin_get_parent_admin_self_is_parent(self):
+        """_get_parent_admin() returns super() when parent_model == self.model (base model)."""
+
+        @self.register(Model2A)
+        class Model2Admin(PolymorphicParentModelAdmin):
+            base_model = Model2A
+            child_models = (Model2A, Model2B)
+
+        # A PolymorphicChildModelAdmin for Model2A itself:
+        # polymorphic_ctype is defined on Model2A, so parent_model == Model2A == self.model
+        child_admin = PolymorphicChildModelAdmin(Model2A, self.admin_site)
+        parent = child_admin._get_parent_admin()
+        assert parent is not child_admin
+
+    def test_child_admin_get_parent_admin_mro_scan(self):
+        """_get_parent_admin() finds parent via MRO when direct parent not registered."""
+
+        # Register Model2B as a parent admin (but NOT Model2A)
+        @self.register(Model2B)
+        class Model2BParentAdmin(PolymorphicParentModelAdmin):
+            base_model = Model2B
+            child_models = (Model2C,)
+
+        @self.register(Model2C)
+        class Model2CAdmin(PolymorphicChildModelAdmin):
+            base_model = Model2B
+
+        # Model2C._meta.get_field("polymorphic_ctype").model == Model2A (not in registry)
+        # MRO scan finds Model2B which IS registered as PolymorphicParentModelAdmin
+        c_admin = self.get_admin_instance(Model2C)
+        parent = c_admin._get_parent_admin()
+        assert isinstance(parent, PolymorphicParentModelAdmin)
+
+    def test_child_admin_get_parent_admin_not_registered(self):
+        """_get_parent_admin() raises ParentAdminNotRegistered when MRO has no parent admin."""
+        from polymorphic.admin.childadmin import ParentAdminNotRegistered
+
+        @self.register(Model2C)
+        class Model2CAdmin(PolymorphicChildModelAdmin):
+            base_model = Model2A
+
+        c_admin = self.get_admin_instance(Model2C)
+        with pytest.raises(ParentAdminNotRegistered):
+            c_admin._get_parent_admin()
+
+    def test_child_admin_history_view_extra_context(self):
+        """history_view() correctly merges extra_context into the template context."""
+
+        @self.register(Model2A)
+        class Model2Admin(PolymorphicParentModelAdmin):
+            base_model = Model2A
+            child_models = (Model2B,)
+
+        @self.register(Model2B)
+        class Model2BAdmin(PolymorphicChildModelAdmin):
+            base_model = Model2A
+
+        obj = Model2B.objects.create(field1="B1", field2="B2")
+        b_admin = self.get_admin_instance(Model2B)
+        request = self.create_admin_request("get", self.get_history_url(Model2B, obj.pk))
+        response = b_admin.history_view(request, str(obj.pk), extra_context={"custom_key": "v"})
+        assert response.status_code == 200
+
+    def test_child_admin_get_fieldsets_no_subclass_fields(self):
+        """get_fieldsets() returns base_fieldsets when no extra subclass fields exist."""
+
+        @self.register(Model2A)
+        class Model2Admin(PolymorphicParentModelAdmin):
+            base_model = Model2A
+            child_models = (Model2B,)
+
+        @self.register(Model2B)
+        class Model2BAdmin(PolymorphicChildModelAdmin):
+            base_model = Model2A
+            # Covers all fields of Model2B (field1 from Model2A + field2)
+            base_fieldsets = (("All Fields", {"fields": ("field1", "field2")}),)
+
+        obj = Model2B.objects.create(field1="B1", field2="B2")
+        b_admin = self.get_admin_instance(Model2B)
+        request = self.create_admin_request("get", self.get_change_url(Model2B, obj.pk))
+        fieldsets = b_admin.get_fieldsets(request, obj)
+        # No extra fieldset added; base_fieldsets returned directly
+        assert len(fieldsets) == 1
+        assert fieldsets[0][0] == "All Fields"
+
+    def test_child_admin_get_subclass_fields_with_tuple_field(self):
+        """get_subclass_fields() handles tuple entries (multiple fields on one line)."""
+
+        @self.register(Model2A)
+        class Model2Admin(PolymorphicParentModelAdmin):
+            base_model = Model2A
+            child_models = (Model2B,)
+
+        @self.register(Model2B)
+        class Model2BAdmin(PolymorphicChildModelAdmin):
+            base_model = Model2A
+            # field1 is in a tuple (two fields per row); "nonexistent" triggers ValueError→pass
+            base_fieldsets = (("Base", {"fields": (("field1", "nonexistent"),)}),)
+
+        obj = Model2B.objects.create(field1="B1", field2="B2")
+        b_admin = self.get_admin_instance(Model2B)
+        request = self.create_admin_request("get", self.get_change_url(Model2B, obj.pk))
+        fieldsets = b_admin.get_fieldsets(request, obj)
+        assert fieldsets is not None
+
+    def test_child_admin_get_subclass_fields_missing_field(self):
+        """get_subclass_fields() silently skips fields not present in the form."""
+
+        @self.register(Model2A)
+        class Model2Admin(PolymorphicParentModelAdmin):
+            base_model = Model2A
+            child_models = (Model2B,)
+
+        @self.register(Model2B)
+        class Model2BAdmin(PolymorphicChildModelAdmin):
+            base_model = Model2A
+            # "nonexistent_field" doesn't exist on Model2B
+            base_fieldsets = (("Base", {"fields": ("field1", "nonexistent_field")}),)
+
+        obj = Model2B.objects.create(field1="B1", field2="B2")
+        b_admin = self.get_admin_instance(Model2B)
+        request = self.create_admin_request("get", self.get_change_url(Model2B, obj.pk))
+        subclass_fields = b_admin.get_subclass_fields(request, obj)
+        assert isinstance(subclass_fields, list)
+
+    # ── filters.py ────────────────────────────────────────────────────────────
+
+    def test_filter_queryset_type_error(self):
+        """filter queryset() handles TypeError from a non-string truthy value."""
+
+        @self.register(Model2A)
+        class Model2Admin(PolymorphicParentModelAdmin):
+            list_filter = (PolymorphicChildModelFilter,)
+            child_models = (Model2B, Model2C)
+
+        @self.register(Model2B)
+        @self.register(Model2C)
+        class Model2ChildAdmin(PolymorphicChildModelAdmin):
+            base_model = Model2A
+
+        admin_instance = self.get_admin_instance(Model2A)
+        admin_instance._lazy_setup()
+        request = self.create_admin_request("get", "/tmp-admin/")
+        filter_instance = PolymorphicChildModelFilter(request, {}, Model2A, admin_instance)
+        # A list is truthy but int([1]) raises TypeError
+        filter_instance.used_parameters = {"polymorphic_ctype": [1]}
+        qs = Model2A.objects.all()
+        result = filter_instance.queryset(request, qs)
+        # TypeError → value=None → queryset returned unchanged
+        assert list(result) == list(qs)
+
+    def test_filter_queryset_permission_denied(self):
+        """filter queryset() raises PermissionDenied for a CT not in allowed choices."""
+        from django.core.exceptions import PermissionDenied
+
+        @self.register(Model2A)
+        class Model2Admin(PolymorphicParentModelAdmin):
+            list_filter = (PolymorphicChildModelFilter,)
+            child_models = (Model2B,)
+
+        @self.register(Model2B)
+        class Model2BAdmin(PolymorphicChildModelAdmin):
+            base_model = Model2A
+
+        admin_instance = self.get_admin_instance(Model2A)
+        admin_instance._lazy_setup()
+        request = self.create_admin_request("get", "/tmp-admin/")
+        filter_instance = PolymorphicChildModelFilter(request, {}, Model2A, admin_instance)
+        # Use the CT id of Model2C which is not in the allowed choices (only Model2B is)
+        model2c_ct_id = ContentType.objects.get_for_model(Model2C).pk
+        filter_instance.used_parameters = {"polymorphic_ctype": str(model2c_ct_id)}
+        qs = Model2A.objects.all()
+        with pytest.raises(PermissionDenied):
+            filter_instance.queryset(request, qs)
+
+    # ── inlines.py ────────────────────────────────────────────────────────────
+
+    def test_inline_parent_not_in_registry_skips_check(self):
+        """Inline instantiation skips the mixin check when parent model is not registered."""
+
+        class InlineAChild(StackedPolymorphicInline.Child):
+            model = InlineModelA
+
+        class TestInline(StackedPolymorphicInline):
+            model = InlineModelA
+            child_inlines = (InlineAChild,)
+
+        # InlineParent is NOT registered in self.admin_site → parent_admin is None → skip check
+        inline = TestInline(parent_model=InlineParent, admin_site=self.admin_site)
+        assert inline is not None
+
+    def test_inline_improperly_configured_missing_mixin(self):
+        """Raise ImproperlyConfigured when parent admin lacks PolymorphicInlineSupportMixin."""
+        from django.core.exceptions import ImproperlyConfigured
+
+        class InlineAChild(StackedPolymorphicInline.Child):
+            model = InlineModelA
+
+        class TestInline(StackedPolymorphicInline):
+            model = InlineModelA
+            child_inlines = (InlineAChild,)
+
+        @self.register(InlineParent)
+        class BadParentAdmin(admin.ModelAdmin):  # missing PolymorphicInlineSupportMixin
+            inlines = (TestInline,)
+
+        with pytest.raises(ImproperlyConfigured):
+            TestInline(parent_model=InlineParent, admin_site=self.admin_site)
+
+    def test_inline_unsupported_child_type(self):
+        """get_child_inline_instance() raises UnsupportedChildType for an unknown model."""
+        from polymorphic.formsets import UnsupportedChildType
+
+        class InlineAChild(StackedPolymorphicInline.Child):
+            model = InlineModelA
+
+        class TestInline(StackedPolymorphicInline):
+            model = InlineModelA
+            child_inlines = (InlineAChild,)
+
+        @self.register(InlineParent)
+        class GoodParentAdmin(PolymorphicInlineSupportMixin, admin.ModelAdmin):
+            inlines = (TestInline,)
+
+        inline = TestInline(parent_model=InlineParent, admin_site=self.admin_site)
+        with pytest.raises(UnsupportedChildType):
+            inline.get_child_inline_instance(InlineModelB)
+
+    def test_inline_get_fieldsets_with_fieldsets_set(self):
+        """get_fieldsets() returns self.fieldsets when fieldsets is set on the parent inline."""
+
+        class TestInline(StackedPolymorphicInline):
+            model = InlineModelA
+            child_inlines = []
+            fieldsets = (("Test Fields", {"fields": ["field1"]}),)
+
+        @self.register(InlineParent)
+        class ParentAdmin(PolymorphicInlineSupportMixin, admin.ModelAdmin):
+            inlines = (TestInline,)
+
+        inline = TestInline(parent_model=InlineParent, admin_site=self.admin_site)
+        request = self.create_admin_request("get", "/tmp-admin/")
+        result = inline.get_fieldsets(request)
+        assert result == (("Test Fields", {"fields": ["field1"]}),)
+
+    def test_inline_get_fieldsets_empty(self):
+        """get_fieldsets() returns [] when no fieldsets are set on the parent inline."""
+
+        class TestInline(StackedPolymorphicInline):
+            model = InlineModelA
+            child_inlines = []
+
+        @self.register(InlineParent)
+        class ParentAdmin(PolymorphicInlineSupportMixin, admin.ModelAdmin):
+            inlines = (TestInline,)
+
+        inline = TestInline(parent_model=InlineParent, admin_site=self.admin_site)
+        request = self.create_admin_request("get", "/tmp-admin/")
+        assert inline.get_fieldsets(request) == []
+
+    def test_inline_get_fields_with_fields_set(self):
+        """get_fields() returns self.fields when explicitly set on the parent inline."""
+
+        class TestInline(StackedPolymorphicInline):
+            model = InlineModelA
+            child_inlines = []
+            fields = ["field1"]
+
+        @self.register(InlineParent)
+        class ParentAdmin(PolymorphicInlineSupportMixin, admin.ModelAdmin):
+            inlines = (TestInline,)
+
+        inline = TestInline(parent_model=InlineParent, admin_site=self.admin_site)
+        request = self.create_admin_request("get", "/tmp-admin/")
+        assert "field1" in inline.get_fields(request)
+
+    def test_inline_get_fields_no_fields_returns_empty(self):
+        """get_fields() returns [] when self.fields is not set on the parent inline."""
+
+        class TestInline(StackedPolymorphicInline):
+            model = InlineModelA
+            child_inlines = []
+            # fields is None (default)
+
+        @self.register(InlineParent)
+        class ParentAdmin(PolymorphicInlineSupportMixin, admin.ModelAdmin):
+            inlines = (TestInline,)
+
+        inline = TestInline(parent_model=InlineParent, admin_site=self.admin_site)
+        request = self.create_admin_request("get", "/tmp-admin/")
+        assert inline.get_fields(request) == []
+
+    def test_inline_child_get_formset_raises_runtime_error(self):
+        """Child.get_formset() raises RuntimeError because it is not used."""
+
+        class InlineAChild(StackedPolymorphicInline.Child):
+            model = InlineModelA
+
+        class TestInline(StackedPolymorphicInline):
+            model = InlineModelA
+            child_inlines = (InlineAChild,)
+
+        @self.register(InlineParent)
+        class ParentAdmin(PolymorphicInlineSupportMixin, admin.ModelAdmin):
+            inlines = (TestInline,)
+
+        inline = TestInline(parent_model=InlineParent, admin_site=self.admin_site)
+        child = inline.child_inline_instances[0]
+        request = self.create_admin_request("get", "/tmp-admin/")
+        with pytest.raises(RuntimeError):
+            child.get_formset(request)
+
+    def test_inline_child_get_fields_with_fields_set(self):
+        """Child.get_fields() returns self.fields when explicitly set."""
+
+        class InlineAChild(StackedPolymorphicInline.Child):
+            model = InlineModelA
+            fields = ["field1"]
+
+        class TestInline(StackedPolymorphicInline):
+            model = InlineModelA
+            child_inlines = (InlineAChild,)
+
+        @self.register(InlineParent)
+        class ParentAdmin(PolymorphicInlineSupportMixin, admin.ModelAdmin):
+            inlines = (TestInline,)
+
+        inline = TestInline(parent_model=InlineParent, admin_site=self.admin_site)
+        child = inline.child_inline_instances[0]
+        request = self.create_admin_request("get", "/tmp-admin/")
+        assert "field1" in child.get_fields(request)
+
+    def test_inline_child_exclude_in_formset(self):
+        """get_formset_child() respects the Child's exclude attribute."""
+
+        class InlineAChild(StackedPolymorphicInline.Child):
+            model = InlineModelA
+            exclude = ["field1"]
+
+        class TestInline(StackedPolymorphicInline):
+            model = InlineModelA
+            child_inlines = (InlineAChild,)
+
+        @self.register(InlineParent)
+        class ParentAdmin(PolymorphicInlineSupportMixin, admin.ModelAdmin):
+            inlines = (TestInline,)
+
+        inline = TestInline(parent_model=InlineParent, admin_site=self.admin_site)
+        child = inline.child_inline_instances[0]
+        request = self.create_admin_request("get", "/tmp-admin/")
+        formset_child = child.get_formset_child(request)
+        form = formset_child.get_form()
+        assert "field1" not in form.base_fields
+
+    def test_inline_child_form_meta_exclude(self):
+        """get_formset_child() incorporates form's Meta.exclude when Child.exclude is None."""
+        from django import forms
+
+        class InlineModelAForm(forms.ModelForm):
+            class Meta:
+                model = InlineModelA
+                exclude = ["field1"]
+
+        class InlineAChild(StackedPolymorphicInline.Child):
+            model = InlineModelA
+            form = InlineModelAForm
+            # exclude remains None (default)
+
+        class TestInline(StackedPolymorphicInline):
+            model = InlineModelA
+            child_inlines = (InlineAChild,)
+
+        @self.register(InlineParent)
+        class ParentAdmin(PolymorphicInlineSupportMixin, admin.ModelAdmin):
+            inlines = (TestInline,)
+
+        inline = TestInline(parent_model=InlineParent, admin_site=self.admin_site)
+        child = inline.child_inline_instances[0]
+        request = self.create_admin_request("get", "/tmp-admin/")
+        formset_child = child.get_formset_child(request)
+        assert formset_child is not None
+
+    def test_inline_media_different_child_media(self):
+        """inline.media adds child media when CSS and JS both differ from base media."""
+
+        class InlineBChild(StackedPolymorphicInline.Child):
+            model = InlineModelB
+
+            class Media:
+                css = {"all": ["admin/css/unique_child_coverage.css"]}
+                js = ["admin/js/unique_child_coverage.js"]
+
+        class InlineAChild(StackedPolymorphicInline.Child):
+            model = InlineModelA
+
+        class TestInline(StackedPolymorphicInline):
+            model = InlineModelA
+            child_inlines = (InlineAChild, InlineBChild)
+
+        @self.register(InlineParent)
+        class ParentAdmin(PolymorphicInlineSupportMixin, admin.ModelAdmin):
+            inlines = (TestInline,)
+
+        inline = TestInline(parent_model=InlineParent, admin_site=self.admin_site)
+        media = inline.media
+        # The unique CSS + JS from InlineBChild should have been merged in
+        all_css = str(media._css)
+        all_js = str(media._js)
+        assert "unique_child_coverage.css" in all_css
+        assert "unique_child_coverage.js" in all_js
+
+    def test_inline_get_inline_formsets_non_polymorphic(self):
+        """PolymorphicInlineSupportMixin.get_inline_formsets handles non-polymorphic formsets."""
+        from django.contrib.admin import TabularInline
+
+        class RegularInline(TabularInline):
+            model = InlineModelA
+            extra = 0
+
+        class InlineAChild(StackedPolymorphicInline.Child):
+            model = InlineModelA
+
+        class PolyInline(StackedPolymorphicInline):
+            model = InlineModelA
+            child_inlines = (InlineAChild,)
+
+        @self.register(InlineParent)
+        class ParentAdmin(PolymorphicInlineSupportMixin, admin.ModelAdmin):
+            inlines = (RegularInline, PolyInline)
+
+        parent = InlineParent.objects.create(title="Test")
+        response = self.admin_get_change(InlineParent, parent.pk)
+        assert response.status_code == 200
+
+    # ── helpers.py ────────────────────────────────────────────────────────────
+
+    def test_polymorphic_inline_admin_form_is_empty_false_no_prefix(self):
+        """is_empty returns False when the form has no prefix."""
+
+        class FormWithNoPrefix:
+            prefix = None
+
+        admin_form = PolymorphicInlineAdminForm.__new__(PolymorphicInlineAdminForm)
+        admin_form.form = FormWithNoPrefix()
+        assert admin_form.is_empty is False
+
+    def test_polymorphic_inline_admin_formset_init(self):
+        """PolymorphicInlineAdminFormSet.__init__ stores request and obj from kwargs."""
+        from unittest.mock import MagicMock, patch
+
+        request = MagicMock()
+        obj = MagicMock()
+        with patch("django.contrib.admin.helpers.InlineAdminFormSet.__init__", return_value=None):
+            formset = PolymorphicInlineAdminFormSet(request=request, obj=obj)
+        assert formset.request is request
+        assert formset.obj is obj
+
+    # ── generic.py ────────────────────────────────────────────────────────────
+
+    def test_generic_polymorphic_inline_get_formset(self):
+        """GenericPolymorphicInlineModelAdmin.get_formset() and Child methods work."""
+
+        class TagInlineA(GenericStackedPolymorphicInline.Child):
+            model = PolymorphicTagA
+
+        class TagInlineB(GenericStackedPolymorphicInline.Child):
+            model = PolymorphicTagB
+
+        class TagInline(GenericStackedPolymorphicInline):
+            model = PolymorphicTagBase
+            child_inlines = (TagInlineA, TagInlineB)
+
+        @self.register(InlineParent)
+        class ParentAdmin(PolymorphicInlineSupportMixin, admin.ModelAdmin):
+            inlines = (TagInline,)
+
+        parent = InlineParent.objects.create(title="Tag Test")
+        request = self.create_admin_request("get", self.get_change_url(InlineParent, parent.pk))
+        inline = TagInline(parent_model=InlineParent, admin_site=self.admin_site)
+
+        # Exercises GenericPolymorphicInlineModelAdmin.get_formset()
+        FormSet = inline.get_formset(request, parent)
+        assert FormSet is not None
+
+        # Exercises Child.content_type cached_property and Child.get_formset_child()
+        child_inline = inline.child_inline_instances[0]
+        assert child_inline.content_type is not None
+        formset_child = child_inline.get_formset_child(request, parent)
+        assert formset_child is not None
+
+
+class ExistingInlineTests(_GenericAdminFormTest):
+    """Playwright tests that render change forms with pre-existing polymorphic inline rows.
+
+    This exercises PolymorphicInlineAdminFormSet.__iter__ over initial_forms (helpers.py).
+    """
+
+    def test_inline_change_form_with_existing_children(self):
+        """Navigate to a change form for a parent that already has inline children."""
+        parent = InlineParent.objects.create(title="Parent With Inlines")
+        child_a = InlineModelA.objects.create(parent=parent, field1="ChildA1")
+        InlineModelB.objects.create(parent=parent, field1="ChildB1", field2="ChildB2")
+
+        self.page.goto(self.change_url(InlineParent, parent.pk))
+        expect(self.page.locator("input[name='title']")).to_have_value("Parent With Inlines")
+
+        # Both existing inline forms must be rendered (initial_forms iteration)
+        inline0 = self.page.locator("div#inline_children-0")
+        inline1 = self.page.locator("div#inline_children-1")
+        inline0.wait_for(state="visible")
+        inline1.wait_for(state="visible")
+
+        assert (
+            self.page.locator("input[name='inline_children-0-field1']").input_value() == "ChildA1"
+        )
+        assert (
+            self.page.locator("input[name='inline_children-1-field1']").input_value() == "ChildB1"
+        )
+
+        # Edit and save to confirm the round-trip works
+        self.page.fill("input[name='inline_children-0-field1']", "ChildA1-updated")
+        with self.page.expect_navigation(timeout=30000) as nav_info:
+            self.page.click("input[name='_save']")
+
+        assert nav_info.value.status < 400
+        child_a.refresh_from_db()
+        assert child_a.field1 == "ChildA1-updated"
