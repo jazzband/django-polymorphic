@@ -14,19 +14,21 @@ Update the settings file:
         'django.contrib.contenttypes',
     )
 
-The current release of :pypi:`django-polymorphic` supports:
+.. only:: html
 
-.. image:: https://badge.fury.io/py/django-polymorphic.svg
-   :target: https://pypi.python.org/pypi/django-polymorphic/
-   :alt: PyPI version
+    The current release of :pypi:`django-polymorphic` supports:
 
-.. image:: https://img.shields.io/pypi/pyversions/django-polymorphic.svg
-   :target: https://pypi.python.org/pypi/django-polymorphic/
-   :alt: Supported Pythons
+    .. image:: https://badge.fury.io/py/django-polymorphic.svg
+        :target: https://pypi.python.org/pypi/django-polymorphic/
+        :alt: PyPI version
 
-.. image:: https://img.shields.io/pypi/djversions/django-polymorphic.svg
-   :target: https://pypi.org/project/django-polymorphic/
-   :alt: Supported Django
+    .. image:: https://img.shields.io/pypi/pyversions/django-polymorphic.svg
+        :target: https://pypi.python.org/pypi/django-polymorphic/
+        :alt: Supported Pythons
+
+    .. image:: https://img.shields.io/pypi/djversions/django-polymorphic.svg
+        :target: https://pypi.org/project/django-polymorphic/
+        :alt: Supported Django
 
 
 Making Your Models Polymorphic

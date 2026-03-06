@@ -2,15 +2,25 @@ name: Test
 
 permissions:
   contents: read
-  
+
 on:
   push:
     tags-ignore:
       - '*'
-    branches:
-      - '*'
+    branches: ['main']
   pull_request:
+    branches: ['main']
+    paths:
+      - "src/**/*.py"
+      - "src/tests/**/*.py"
+      - ".github/workflows/test.yml"
+      - "pyproject.toml"
+      - "justfile"
+  merge_group:
   workflow_call:
+    secrets:
+      CODECOV_TOKEN:
+        required: true
   workflow_dispatch:
     inputs:
       debug:
@@ -18,8 +28,15 @@ on:
         required: true
         default: false
         type: boolean
+      clear_cache:
+        description: 'Clear GitHub Tool cache.'
+        required: true
+        default: false
+        type: boolean
   schedule:
-    - cron: '0 13 * * *'  # Runs at 6 am pacific every day
+    # Every Sunday at 9:00 AM Los Angeles time.
+    # GitHub cron is UTC; 09:00 PT == 17:00 UTC (PST).
+    - cron: '0 17 * * 0'
 
 
 jobs:
@@ -29,7 +46,7 @@ jobs:
     permissions:
       contents: read
       actions: write
-    # Service containers to run with `container-job`  
+    # Service containers to run with `container-job`
     strategy:
       fail-fast: false
       matrix:
@@ -37,44 +54,44 @@ jobs:
         postgres-version: ['12', '14', 'latest']
         psycopg-version: ['psycopg2', 'psycopg3']
         django-version:
-          - '4.2' # LTS April 2026
-          - '5.2' # LTS April 2028
-          - '6.0' # 
+          - 'dj42' # LTS April 2026
+          - 'dj52' # LTS April 2028
+          - 'dj60' #
         exclude:
 
           - python-version: '3.10'
-            django-version: '6.0'
+            django-version: 'dj60'
           - python-version: '3.11'
-            django-version: '6.0'
-            
+            django-version: 'dj60'
+
           - python-version: '3.13'
-            django-version: '4.2'
+            django-version: 'dj42'
 
           - python-version: '3.14'
-            django-version: '4.2'
+            django-version: 'dj42'
           - python-version: '3.14'
-            django-version: '5.2'
+            django-version: 'dj52'
 
           - postgres-version: '12'
-            django-version: '5.2'
+            django-version: 'dj52'
           - postgres-version: '12'
-            django-version: '6.0'
+            django-version: 'dj60'
 
           - postgres-version: '14'
-            django-version: '4.2'
+            django-version: 'dj42'
           - postgres-version: '14'
-            django-version: '5.2'
+            django-version: 'dj52'
           - postgres-version: '14'
-            django-version: '6.0'
+            django-version: 'dj60'
 
           - postgres-version: 'latest'
-            django-version: '4.2'
+            django-version: 'dj42'
 
           - postgres-version: '12'
             psycopg-version: 'psycopg3'
           - postgres-version: 'latest'
             psycopg-version: 'psycopg2'
-          
+
           # https://github.com/psycopg/psycopg2/pull/1695
           - python-version: '3.13'
             psycopg-version: 'psycopg2'
@@ -88,7 +105,7 @@ jobs:
       POSTGRES_USER: postgres
       POSTGRES_HOST: localhost
       POSTGRES_PORT: 5432
-      COVERAGE_FILE: linux-py${{ matrix.python-version }}-dj${{ matrix.django-version }}-${{ matrix.psycopg-version }}-pg${{ matrix.postgres-version }}.coverage
+      COVERAGE_FILE: linux-py${{ matrix.python-version }}-${{ matrix.django-version }}-${{ matrix.psycopg-version }}-pg${{ matrix.postgres-version }}.coverage
       TEST_PYTHON_VERSION: ${{ matrix.python-version }}
       TEST_DJANGO_VERSION: ${{ matrix.django-version }}
       TEST_DATABASE_CLIENT_VERSION: ${{ matrix.psycopg-version }}
@@ -114,50 +131,47 @@ jobs:
           - 5432:5432
 
     steps:
-    - uses: actions/checkout@v6
+    - name: Clear Tool cache
+      if: ${{ github.event.inputs.clear_cache == 'true' }}
+      run: sudo rm -rf /opt/hostedtoolcache
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      with:
+        persist-credentials: false
     - name: Set up Python ${{ matrix.python-version }}
       id: sp
-      uses: actions/setup-python@v6
+      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
       with:
         python-version: ${{ matrix.python-version }}
+        allow-prereleases: true
     - name: Create test databases
       run: |
         psql -h localhost -p 5432 -U postgres -d postgres -c "CREATE DATABASE test1;"
         psql -h localhost -p 5432 -U postgres -d postgres -c "CREATE DATABASE test2;"
     - name: Install uv
-      uses: astral-sh/setup-uv@v7
+      uses: astral-sh/setup-uv@5a095e7a2014a4212f075830d4f7277575a9d098
       with:
-        enable-cache: true
+        enable-cache: false
     - name: Setup Just
-      uses: extractions/setup-just@v3
+      uses: extractions/setup-just@f8a3cce218d9f83db3a2ecd90e41ac3de6cdfd9b
     - name: Install Emacs
       if: ${{ github.event.inputs.debug == 'true' }}
       run: |
         sudo apt install emacs
     - name: Setup tmate session
       if: ${{ github.event.inputs.debug == 'true' }}
-      uses: mxschmitt/action-tmate@v3.22
-      with:
-        detached: true
+      uses: mxschmitt/action-tmate@c0afd6f790e3a5564914980036ebf83216678101
       timeout-minutes: 60
-    - name: Install Release Dependencies
-      run: |
-        just setup ${{ steps.sp.outputs.python-path }}
-        if [[ "${{ matrix.django-version }}" =~ (a|b|rc) ]]; then
-          just test-lock Django==${{ matrix.django-version }}
-        else
-          just test-lock Django~=${{ matrix.django-version }}.0
-        fi
     - name: Run Unit Tests
+      env:
+        TEST_PYTHON: ${{ steps.sp.outputs.python-path }}
       run: |
-        just test-db ${{ matrix.psycopg-version }}
-        just test-integrations ${{ matrix.psycopg-version }}
+        just test-all --group "${{ matrix.psycopg-version }}" -p "$TEST_PYTHON" --group "$TEST_DJANGO_VERSION"
     - name: Store coverage files
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f
       with:
         name: ${{ env.COVERAGE_FILE }}
         path: ${{ env.COVERAGE_FILE }}
-    
+
 
   sqlite:
     runs-on: ubuntu-latest
@@ -166,75 +180,72 @@ jobs:
       actions: write
     env:
       RDBMS: sqlite
-      COVERAGE_FILE: linux-py${{ matrix.python-version }}-dj${{ matrix.django-version }}-sqlite.coverage
+      COVERAGE_FILE: linux-py${{ matrix.python-version }}-${{ matrix.django-version }}-sqlite.coverage
       TEST_PYTHON_VERSION: ${{ matrix.python-version }}
       TEST_DJANGO_VERSION: ${{ matrix.django-version }}
       TEST_DATABASE_VERSION: "sqlite"
     strategy:
       fail-fast: false
       matrix:
-        python-version: [ '3.10', '3.12', '3.14']
+        python-version: ['3.10', '3.12', '3.14']
         django-version:
-          - '4.2' # LTS April 2026
-          - '5.2' # LTS April 2028
-          - '6.0' # LTS April 2028
+          - 'dj42' # LTS April 2026
+          - 'dj52' # LTS April 2028
+          - 'dj60' #
         exclude:
           - python-version: '3.10'
-            django-version: '5.2'
+            django-version: 'dj52'
           - python-version: '3.10'
-            django-version: '6.0'
+            django-version: 'dj60'
 
           - python-version: '3.12'
-            django-version: '4.2'
+            django-version: 'dj42'
           - python-version: '3.12'
-            django-version: '6.0'
+            django-version: 'dj60'
 
           - python-version: '3.14'
-            django-version: '4.2'
+            django-version: 'dj42'
           - python-version: '3.14'
-            django-version: '5.2'
+            django-version: 'dj52'
 
     steps:
-      - uses: actions/checkout@v6
+      - name: Clear Tool cache
+        if: ${{ github.event.inputs.clear_cache == 'true' }}
+        run: sudo rm -rf /opt/hostedtoolcache
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          persist-credentials: false
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
         id: sp
         with:
           python-version: ${{ matrix.python-version }}
+          allow-prereleases: true
       - name: Install uv
-        uses: astral-sh/setup-uv@v7
+        uses: astral-sh/setup-uv@5a095e7a2014a4212f075830d4f7277575a9d098
         with:
-          enable-cache: true
+          enable-cache: false
       - name: Setup Just
-        uses: extractions/setup-just@v3
+        uses: extractions/setup-just@f8a3cce218d9f83db3a2ecd90e41ac3de6cdfd9b
       - name: Install Emacs
         if: ${{ github.event.inputs.debug == 'true' }}
         run: |
           sudo apt install emacs
       - name: Setup tmate session
         if: ${{ github.event.inputs.debug == 'true' }}
-        uses: mxschmitt/action-tmate@v3.22
-        with:
-          detached: true
-        timeout-minutes: 60       
-      - name: Install Release Dependencies
-        run: |
-          just setup ${{ steps.sp.outputs.python-path }}
-          if [[ "${{ matrix.django-version }}" =~ (a|b|rc) ]]; then
-            just test-lock Django==${{ matrix.django-version }}
-          else
-            just test-lock Django~=${{ matrix.django-version }}.0
-          fi
+        uses: mxschmitt/action-tmate@c0afd6f790e3a5564914980036ebf83216678101
+        timeout-minutes: 60
       - name: Run Unit Tests
+        env:
+          TEST_PYTHON: ${{ steps.sp.outputs.python-path }}
         run: |
-          just test-db
-          just test-integrations
+          just test-all -p "$TEST_PYTHON" --group "$TEST_DJANGO_VERSION"
       - name: Store coverage files
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f
         with:
           name: ${{ env.COVERAGE_FILE }}
           path: ${{ env.COVERAGE_FILE }}
-        
+
 
   mysql:
     runs-on: ubuntu-latest
@@ -246,42 +257,42 @@ jobs:
       matrix:
         python-version: ['3.10', '3.12', '3.14']
         mysql-version: ['8.0', 'latest']
-        mysqlclient-version: ['1.4.3', '']
+        mysqlclient-version: ['mysqlclient14', 'mysqlclient2x']
         django-version:
-          - '4.2'    # LTS April 2024
-          - '5.2'    # LTS April 2028
-          - '6.0' # April 2027
+          - 'dj42'    # LTS April 2024
+          - 'dj52'    # LTS April 2028
+          - 'dj60'    #
         exclude:
-          - django-version: '4.2'
+          - django-version: 'dj42'
             mysql-version: 'latest'
 
-          - django-version: '6.0'
+          - django-version: 'dj60'
             mysql-version: '8.0'
 
           - mysql-version: 'latest'
-            mysqlclient-version: '1.4.3'
+            mysqlclient-version: 'mysqlclient14'
 
           - python-version: '3.12'
-            django-version: '4.2'
+            django-version: 'dj42'
           - python-version: '3.14'
-            django-version: '4.2'
+            django-version: 'dj42'
 
           - python-version: '3.10'
-            django-version: '5.2'
+            django-version: 'dj52'
           - python-version: '3.14'
-            django-version: '5.2'
-          - django-version: '5.2'
-            mysqlclient-version: '1.4.3'
+            django-version: 'dj52'
+          - django-version: 'dj52'
+            mysqlclient-version: 'mysqlclient14'
 
           - python-version: '3.10'
-            django-version: '6.0'
+            django-version: 'dj60'
           - python-version: '3.12'
-            django-version: '6.0'
-  
+            django-version: 'dj60'
+
     env:
       RDBMS: mysql
       MYSQL_VERSION: ${{ matrix.mysql-version }}
-      COVERAGE_FILE: linux-py${{ matrix.python-version }}-dj${{ matrix.django-version }}-${{ matrix.mysqlclient-version }}-mysql${{ matrix.mysql-version }}.coverage
+      COVERAGE_FILE: linux-py${{ matrix.python-version }}-${{ matrix.django-version }}-${{ matrix.mysqlclient-version }}-mysql${{ matrix.mysql-version }}.coverage
       TEST_PYTHON_VERSION: ${{ matrix.python-version }}
       TEST_DJANGO_VERSION: ${{ matrix.django-version }}
       TEST_DATABASE_CLIENT_VERSION: ${{ matrix.mysqlclient-version }}
@@ -313,46 +324,39 @@ jobs:
           SET GLOBAL character_set_server='utf8mb4';
           SET GLOBAL collation_server='utf8mb4_0900_as_cs';
           EOF
-      - uses: actions/checkout@v6
+      - name: Clear Tool cache
+        if: ${{ github.event.inputs.clear_cache == 'true' }}
+        run: sudo rm -rf /opt/hostedtoolcache
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          persist-credentials: false
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
         id: sp
         with:
           python-version: ${{ matrix.python-version }}
+          allow-prereleases: true
       - name: Install Emacs
         if: ${{ github.event.inputs.debug == 'true' }}
         run: |
           sudo apt install emacs
       - name: Setup tmate session
         if: ${{ github.event.inputs.debug == 'true' }}
-        uses: mxschmitt/action-tmate@v3.22
-        with:
-          detached: true
+        uses: mxschmitt/action-tmate@c0afd6f790e3a5564914980036ebf83216678101
         timeout-minutes: 60
       - name: Install uv
-        uses: astral-sh/setup-uv@v7
+        uses: astral-sh/setup-uv@5a095e7a2014a4212f075830d4f7277575a9d098
         with:
-          enable-cache: true
+          enable-cache: false
       - name: Setup Just
-        uses: extractions/setup-just@v3
-      - name: Install Release Dependencies
-        run: |
-          just setup ${{ steps.sp.outputs.python-path }}
-          if [[ "${{ matrix.django-version }}" =~ (a|b|rc) ]]; then
-            just test-lock Django==${{ matrix.django-version }}
-          else
-            just test-lock Django~=${{ matrix.django-version }}.0
-          fi
-      
-      - name: Install mysqlclient if needed
-        if: ${{ matrix.mysqlclient-version != '' }}
-        run: just test-lock mysqlclient==${{ matrix.mysqlclient-version }}
+        uses: extractions/setup-just@f8a3cce218d9f83db3a2ecd90e41ac3de6cdfd9b
       - name: Run Unit Tests
+        env:
+          TEST_PYTHON: ${{ steps.sp.outputs.python-path }}
         run: |
-          just test-db mysql
-          just test-integrations mysql
+          just test-all --group "${{ matrix.mysqlclient-version }}" -p "$TEST_PYTHON" --group "$TEST_DJANGO_VERSION"
       - name: Store coverage files
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f
         with:
           name: ${{ env.COVERAGE_FILE }}
           path: ${{ env.COVERAGE_FILE }}
@@ -364,7 +368,7 @@ jobs:
       actions: write
     env:
       RDBMS: mariadb
-      COVERAGE_FILE: linux-py${{ matrix.python-version }}-dj${{ matrix.django-version }}-${{ matrix.mysqlclient-version }}-mariadb${{ matrix.mariadb-version }}.coverage
+      COVERAGE_FILE: linux-py${{ matrix.python-version }}-${{ matrix.django-version }}-${{ matrix.mysqlclient-version }}-mariadb${{ matrix.mariadb-version }}.coverage
       TEST_PYTHON_VERSION: ${{ matrix.python-version }}
       TEST_DJANGO_VERSION: ${{ matrix.django-version }}
       TEST_DATABASE_CLIENT_VERSION: ${{ matrix.mysqlclient-version }}
@@ -374,44 +378,44 @@ jobs:
       fail-fast: false
       matrix:
         python-version: ['3.10', '3.12', '3.14']
-        mysqlclient-version: ['1.4.3', '']
+        mysqlclient-version: ['mysqlclient14', 'mysqlclient2x']
         mariadb-version: ['10.4', 'latest']
         mariadb-healthcheck: ["mysqladmin ping", "healthcheck.sh --connect --innodb_initialized"]
         django-version:
-          - '4.2'    # LTS April 2024
-          - '5.2'    # LTS April 2028
-          - '6.0' # April 2027
+          - 'dj42'    # LTS April 2024
+          - 'dj52'    # LTS April 2028
+          - 'dj60'    #
         exclude:
-          - django-version: '4.2'
+          - django-version: 'dj42'
             mariadb-version: 'latest'
 
-          - django-version: '5.2'
+          - django-version: 'dj52'
             mariadb-version: '10.4'
-          - django-version: '6.0'
+          - django-version: 'dj60'
             mariadb-version: '10.4'
 
           - mariadb-version: 'latest'
-            mysqlclient-version: '1.4.3'
+            mysqlclient-version: 'mysqlclient14'
 
           - python-version: '3.12'
-            django-version: '4.2'
+            django-version: 'dj42'
           - python-version: '3.14'
-            django-version: '4.2'
+            django-version: 'dj42'
 
           - python-version: '3.10'
-            django-version: '5.2'
+            django-version: 'dj52'
           - python-version: '3.14'
-            django-version: '5.2'
-          - django-version: '5.2'
-            mysqlclient-version: '1.4.3'
+            django-version: 'dj52'
+          - django-version: 'dj52'
+            mysqlclient-version: 'mysqlclient14'
 
           - python-version: '3.10'
-            django-version: '6.0'
+            django-version: 'dj60'
           - python-version: '3.12'
-            django-version: '6.0'
+            django-version: 'dj60'
 
           - mariadb-version: '10.4'
-            mysqlclient-version: ''
+            mysqlclient-version: 'mysqlclient2x'
 
           - mariadb-version: 'latest'
             mariadb-healthcheck: "mysqladmin ping"
@@ -444,46 +448,39 @@ jobs:
           SET GLOBAL character_set_server='utf8mb4';
           SET GLOBAL collation_server='utf8mb4_bin';
           EOF
-      - uses: actions/checkout@v6
+      - name: Clear Tool cache
+        if: ${{ github.event.inputs.clear_cache == 'true' }}
+        run: sudo rm -rf /opt/hostedtoolcache
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          persist-credentials: false
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
         id: sp
         with:
           python-version: ${{ matrix.python-version }}
+          allow-prereleases: true
       - name: Install Emacs
         if: ${{ github.event.inputs.debug == 'true' }}
         run: |
           sudo apt install emacs
       - name: Setup tmate session
         if: ${{ github.event.inputs.debug == 'true' }}
-        uses: mxschmitt/action-tmate@v3.22
-        with:
-          detached: true
+        uses: mxschmitt/action-tmate@c0afd6f790e3a5564914980036ebf83216678101
         timeout-minutes: 60
       - name: Install uv
-        uses: astral-sh/setup-uv@v7
+        uses: astral-sh/setup-uv@5a095e7a2014a4212f075830d4f7277575a9d098
         with:
-          enable-cache: true
+          enable-cache: false
       - name: Setup Just
-        uses: extractions/setup-just@v3
-      - name: Install Release Dependencies
-        run: |
-          just setup ${{ steps.sp.outputs.python-path }}
-          if [[ "${{ matrix.django-version }}" =~ (a|b|rc) ]]; then
-            just test-lock Django==${{ matrix.django-version }}
-          else
-            just test-lock Django~=${{ matrix.django-version }}.0
-          fi
-      
-      - name: Install mysqlclient if needed
-        if: ${{ matrix.mysqlclient-version != '' }}
-        run: just test-lock mysqlclient==${{ matrix.mysqlclient-version }}
+        uses: extractions/setup-just@f8a3cce218d9f83db3a2ecd90e41ac3de6cdfd9b
       - name: Run Unit Tests
+        env:
+          TEST_PYTHON: ${{ steps.sp.outputs.python-path }}
         run: |
-          just test-db mysql
-          just test-integrations mysql
+          just test-all --group "${{ matrix.mysqlclient-version }}" -p "$TEST_PYTHON" --group "$TEST_DJANGO_VERSION"
       - name: Store coverage files
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f
         with:
           name: ${{ env.COVERAGE_FILE }}
           path: ${{ env.COVERAGE_FILE }}
@@ -495,43 +492,42 @@ jobs:
       actions: write
     env:
       RDBMS: oracle
-      COVERAGE_FILE: linux-py${{ matrix.python-version }}-dj${{ matrix.django-version }}-oracle${{ matrix.oracle-version }}.coverage
       TEST_PYTHON_VERSION: ${{ matrix.python-version }}
       TEST_DJANGO_VERSION: ${{ matrix.django-version }}
       TEST_DATABASE_VERSION: ${{ matrix.oracle-version }}
     strategy:
       fail-fast: false
       matrix:
-        python-version: [ '3.10', '3.14']
+        python-version: ['3.10', '3.14']
         django-version:
-          - '4.2' # LTS April 2026
-          - '5.2' # LTS April 2028
-          - '6.0' # LTS April 2028
+          - 'dj42' # LTS April 2026
+          - 'dj52' # LTS April 2028
+          - 'dj60' #
         oracle-version:
           - 'oracle-xe:21'
           - 'oracle-free:latest'
         exclude:
 
-          - django-version: '4.2'
+          - django-version: 'dj42'
             oracle-version: 'oracle-free:latest'
 
-          - django-version: '5.2'
+          - django-version: 'dj52'
             oracle-version: 'oracle-free:latest'
 
-          - django-version: '6.0'
+          - django-version: 'dj60'
             oracle-version: 'oracle-xe:21'
 
           - python-version: '3.10'
-            django-version: '6.0'
+            django-version: 'dj60'
 
           - python-version: '3.14'
-            django-version: '4.2'
+            django-version: 'dj42'
           - python-version: '3.14'
-            django-version: '5.2'
+            django-version: 'dj52'
 
     services:
       oracle1:
-        image: gvenzl/${{ matrix.oracle-version }}
+        image: gvenzl/${{ matrix.oracle-version }}  # zizmor: ignore[unpinned-images]
         env:
           ORACLE_PASSWORD: password
           ORACLE_DATABASE: test1
@@ -546,7 +542,7 @@ jobs:
           --health-retries 10
 
       oracle2:
-        image: gvenzl/${{ matrix.oracle-version }}
+        image: gvenzl/${{ matrix.oracle-version }}  # zizmor: ignore[unpinned-images]
         env:
           ORACLE_PASSWORD: password
           ORACLE_DATABASE: test2
@@ -564,29 +560,33 @@ jobs:
       - name: Set coverage file
         run: |
           ORACLE_TAG=$(echo "${{ matrix.oracle-version }}" | cut -d':' -f2)
-          echo "COVERAGE_FILE=linux-py${{ matrix.python-version }}-dj${{ matrix.django-version }}-oracle${ORACLE_TAG}.coverage" >> $GITHUB_ENV
-      - uses: actions/checkout@v6
+          echo "COVERAGE_FILE=linux-py${{ matrix.python-version }}-${{ matrix.django-version }}-oracle${ORACLE_TAG}.coverage" >> $GITHUB_ENV
+      - name: Clear Tool cache
+        if: ${{ github.event.inputs.clear_cache == 'true' }}
+        run: sudo rm -rf /opt/hostedtoolcache
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          persist-credentials: false
       - name: Set up Python ${{ matrix.python-version }}
         id: sp
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
         with:
           python-version: ${{ matrix.python-version }}
+          allow-prereleases: true
       - name: Install Emacs
         if: ${{ github.event.inputs.debug == 'true' }}
         run: |
           sudo apt install emacs
       - name: Setup tmate session
         if: ${{ github.event.inputs.debug == 'true' }}
-        uses: mxschmitt/action-tmate@v3.22
-        with:
-          detached: true
+        uses: mxschmitt/action-tmate@c0afd6f790e3a5564914980036ebf83216678101
         timeout-minutes: 60
       - name: Install uv
-        uses: astral-sh/setup-uv@v7
+        uses: astral-sh/setup-uv@5a095e7a2014a4212f075830d4f7277575a9d098
         with:
-          enable-cache: true
+          enable-cache: false
       - name: Setup Just
-        uses: extractions/setup-just@v3
+        uses: extractions/setup-just@f8a3cce218d9f83db3a2ecd90e41ac3de6cdfd9b
       - name: Install Oracle Client
         # https://askubuntu.com/questions/1512196/libaio1-on-noble
         run: |
@@ -602,30 +602,23 @@ jobs:
             sudo sh -c "echo /usr/lib/oracle/23/client64/lib/ > /etc/ld.so.conf.d/oracle.conf"
           fi
           sudo ldconfig
-      - name: Install Release Dependencies
-        run: |
-          just setup ${{ steps.sp.outputs.python-path }}
-          if [[ "${{ matrix.django-version }}" =~ (a|b|rc) ]]; then
-            just test-lock Django==${{ matrix.django-version }}
-          else
-            just test-lock Django~=${{ matrix.django-version }}.0
-          fi
-      
       # we don't run integration tests against Oracle in CI, these are slow enough
       - name: Run Full Unit Tests
+        env:
+          TEST_PYTHON: ${{ steps.sp.outputs.python-path }}
         run: |
           if [[ "${{ matrix.oracle-version }}" == oracle-xe* ]]; then
-            just test-db cx_oracle
+            just test-all --group cx_oracle -p "$TEST_PYTHON" --group "$TEST_DJANGO_VERSION"
           else
-            just test-db oracledb
+            just test-all --group oracledb -p "$TEST_PYTHON" --group "$TEST_DJANGO_VERSION"
           fi
 
       - name: Store coverage files
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f
         with:
           name: ${{ env.COVERAGE_FILE }}
           path: ${{ env.COVERAGE_FILE }}
-  
+
 
   windows:
     runs-on: windows-latest
@@ -634,76 +627,70 @@ jobs:
       actions: write
     env:
       RDBMS: sqlite
-      COVERAGE_FILE: windows-py${{ matrix.python-version }}-dj${{ matrix.django-version }}-sqlite.coverage
+      COVERAGE_FILE: windows-py${{ matrix.python-version }}-${{ matrix.django-version }}-sqlite.coverage
       TEST_PYTHON_VERSION: ${{ matrix.python-version }}
       TEST_DJANGO_VERSION: ${{ matrix.django-version }}
       TEST_DATABASE_VERSION: "sqlite"
     strategy:
       fail-fast: false
       matrix:
-        python-version: [ '3.10', '3.12', '3.14']
+        python-version: ['3.10', '3.12', '3.14']
         django-version:
-          - '4.2' # LTS April 2026
-          - '5.2' # LTS April 2028
-          - '6.0' # LTS April 2028
+          - 'dj42' # LTS April 2026
+          - 'dj52' # LTS April 2028
+          - 'dj60' #
         exclude:
           - python-version: '3.10'
-            django-version: '5.2'
+            django-version: 'dj52'
           - python-version: '3.10'
-            django-version: '6.0'
+            django-version: 'dj60'
 
           - python-version: '3.12'
-            django-version: '4.2'
+            django-version: 'dj42'
           - python-version: '3.12'
-            django-version: '6.0'
+            django-version: 'dj60'
 
           - python-version: '3.14'
-            django-version: '4.2'
+            django-version: 'dj42'
           - python-version: '3.14'
-            django-version: '5.2'
+            django-version: 'dj52'
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          persist-credentials: false
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
         id: sp
         with:
           python-version: ${{ matrix.python-version }}
+          allow-prereleases: true
       - name: Install uv
-        uses: astral-sh/setup-uv@v7
+        uses: astral-sh/setup-uv@5a095e7a2014a4212f075830d4f7277575a9d098
         with:
-          enable-cache: true
+          enable-cache: false
       - name: Setup Just
-        uses: extractions/setup-just@v3
+        uses: extractions/setup-just@f8a3cce218d9f83db3a2ecd90e41ac3de6cdfd9b
       - name: install-vim-windows
         if: ${{ github.event.inputs.debug == 'true' }}
-        uses: rhysd/action-setup-vim@v1
+        uses: rhysd/action-setup-vim@19e3dd31a84dbc2c5445d65e9b363f616cab96c1
       - name: Setup tmate session
         if: ${{ github.event.inputs.debug == 'true' }}
-        uses: mxschmitt/action-tmate@v3.22
-        with:
-          detached: true
+        uses: mxschmitt/action-tmate@c0afd6f790e3a5564914980036ebf83216678101
         timeout-minutes: 60
-      - name: Install Release Dependencies
-        run: |
-          just setup ${{ steps.sp.outputs.python-path }}
-          $version = "${{ matrix.django-version }}"
-          if ($version -match "(a|b|rc)") {
-            just test-lock "Django==$version"
-          } else {
-            just test-lock "Django~=$version.0"
-          }
       - name: Run Unit Tests
+        env:
+          TEST_PYTHON: ${{ steps.sp.outputs.python-path }}
         run: |
-          just test
-          just test-integrations
+          just test-all -p "$env:TEST_PYTHON" --group "$env:TEST_DJANGO_VERSION"
+        shell: pwsh
       - name: Store coverage files
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f
         with:
           name: ${{ env.COVERAGE_FILE }}
           path: ${{ env.COVERAGE_FILE }}
 
-  
+
   macos:
     runs-on: macos-latest
     permissions:
@@ -711,75 +698,72 @@ jobs:
       actions: write
     env:
       RDBMS: sqlite
-      COVERAGE_FILE: macos-py${{ matrix.python-version }}-dj${{ matrix.django-version }}-sqlite.coverage
+      COVERAGE_FILE: macos-py${{ matrix.python-version }}-${{ matrix.django-version }}-sqlite.coverage
       TEST_PYTHON_VERSION: ${{ matrix.python-version }}
       TEST_DJANGO_VERSION: ${{ matrix.django-version }}
       TEST_DATABASE_VERSION: "sqlite"
     strategy:
       fail-fast: false
       matrix:
-        python-version: [ '3.10', '3.12', '3.14']
+        python-version: ['3.10', '3.12', '3.14']
         django-version:
-          - '4.2' # LTS April 2026
-          - '5.2' # LTS April 2028
-          - '6.0' # LTS April 2028
+          - 'dj42' # LTS April 2024
+          - 'dj52' # LTS April 2028
+          - 'dj60' #
         exclude:
           - python-version: '3.10'
-            django-version: '5.2'
+            django-version: 'dj52'
           - python-version: '3.10'
-            django-version: '6.0'
+            django-version: 'dj60'
 
           - python-version: '3.12'
-            django-version: '4.2'
+            django-version: 'dj42'
           - python-version: '3.12'
-            django-version: '6.0'
+            django-version: 'dj60'
 
           - python-version: '3.14'
-            django-version: '4.2'
+            django-version: 'dj42'
           - python-version: '3.14'
-            django-version: '5.2'
+            django-version: 'dj52'
 
     steps:
-      - uses: actions/checkout@v6
+      - name: Clear Tool cache
+        if: ${{ github.event.inputs.clear_cache == 'true' }}
+        run: sudo rm -rf /opt/hostedtoolcache
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          persist-credentials: false
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
         id: sp
         with:
           python-version: ${{ matrix.python-version }}
+          allow-prereleases: true
       - name: Install uv
-        uses: astral-sh/setup-uv@v7
+        uses: astral-sh/setup-uv@5a095e7a2014a4212f075830d4f7277575a9d098
         with:
-          enable-cache: true
+          enable-cache: false
       - name: Setup Just
-        uses: extractions/setup-just@v3
+        uses: extractions/setup-just@f8a3cce218d9f83db3a2ecd90e41ac3de6cdfd9b
       - name: install-emacs-macos
         if: ${{ github.event.inputs.debug == 'true' }}
         run: |
           brew install emacs
       - name: Setup tmate session
         if: ${{ github.event.inputs.debug == 'true' }}
-        uses: mxschmitt/action-tmate@v3.22
-        with:
-          detached: true
+        uses: mxschmitt/action-tmate@c0afd6f790e3a5564914980036ebf83216678101
         timeout-minutes: 60
-      - name: Install Release Dependencies
-        run: |
-          just setup ${{ steps.sp.outputs.python-path }}
-          if [[ "${{ matrix.django-version }}" =~ (a|b|rc) ]]; then
-            just test-lock Django==${{ matrix.django-version }}
-          else
-            just test-lock Django~=${{ matrix.django-version }}.0
-          fi
       - name: Run Unit Tests
+        env:
+          TEST_PYTHON: ${{ steps.sp.outputs.python-path }}
         run: |
-          just test
-          just test-integrations
+          just test-all -p "$TEST_PYTHON" --group "$TEST_DJANGO_VERSION"
       - name: Store coverage files
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f
         with:
           name: ${{ env.COVERAGE_FILE }}
           path: ${{ env.COVERAGE_FILE }}
-        
+
 
   coverage-combine:
     needs: [postgres, sqlite, mysql, mariadb, oracle, windows, macos]
@@ -787,21 +771,21 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-python@v6
-        id: sp
-      - name: Install uv
-        uses: astral-sh/setup-uv@v7
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
-          enable-cache: true
+          persist-credentials: false
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
+        id: sp
+        with:
+          python-version: '3.12'
+      - name: Install uv
+        uses: astral-sh/setup-uv@5a095e7a2014a4212f075830d4f7277575a9d098
+        with:
+          enable-cache: false
       - name: Setup Just
-        uses: extractions/setup-just@v3
-      - name: Install Release Dependencies
-        run: |
-          just setup ${{ steps.sp.outputs.python-path }}
-
+        uses: extractions/setup-just@f8a3cce218d9f83db3a2ecd90e41ac3de6cdfd9b
       - name: Get coverage files
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3
         with:
           pattern: "*.coverage"
           merge-multiple: true
@@ -809,7 +793,7 @@ jobs:
       - run: just coverage
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files:

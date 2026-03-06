@@ -49,21 +49,23 @@ install-playwright:
     @just run --no-default-groups --group test playwright install chromium
 
 # run static type checking with mypy
-check-types-mypy *RUN_ARGS:
-    @just run --no-default-groups --all-extras --group integrations --group typing {{ RUN_ARGS }} mypy src/polymorphic
+check-types-mypy *ENV:
+    @just run {{ ENV }} --no-default-groups --group integrations --group typing mypy src/polymorphic
 
 # run static type checking with pyright
-check-types-pyright *RUN_ARGS:
-    @just run --no-default-groups --all-extras --group integrations --group typing {{ RUN_ARGS }} pyright src/polymorphic
-    @just run --no-default-groups --all-extras --group integrations --group typing {{ RUN_ARGS }} pyright --project src/polymorphic/tests/examples/type_hints/pyright.json
+check-types-pyright *ENV:
+    @just run {{ ENV }} --no-default-groups --group integrations --group typing pyright src/polymorphic
+    @just run {{ ENV }} --no-default-groups --group integrations --group typing pyright --project src/polymorphic/tests/examples/type_hints/pyright.json
 
 # run all static type checking
-check-types: check-types-mypy check-types-pyright
+check-types *ENV:
+    @just check-types-mypy {{ ENV }}
+    @just check-types-pyright {{ ENV }}
 
 # run all static type checking in an isolated environment
-check-types-isolated:
-    @just check-types-mypy --exact --isolated
-    @just check-types-pyright --exact --isolated
+check-types-isolated *ENV:
+    @just check-types-mypy {{ ENV }} --exact --isolated
+    @just check-types-pyright {{ ENV }} --exact --isolated
 
 # run package checks
 check-package:
@@ -93,10 +95,17 @@ clean: clean-docs clean-env clean-git-ignored
 build-docs-html:
     @just run --group docs --group integrations sphinx-build --fresh-env --builder html --doctree-dir ./docs/_build/doctrees ./docs/ ./docs/_build/html
 
+[script]
+_open-pdf-docs:
+    import webbrowser
+    from pathlib import Path
+    webbrowser.open(f"file://{Path('./docs/_build/pdf/django-polymorphic.pdf').absolute()}")
+
 # build pdf documentation
 build-docs-pdf:
     @just run --group docs --group integrations sphinx-build --fresh-env --builder latex --doctree-dir ./docs/_build/doctrees ./docs/ ./docs/_build/pdf
-    cd docs/_build/pdf && make
+    make -C ./docs/_build/pdf
+    @just _open-pdf-docs
 
 # build the docs
 build-docs: build-docs-html
@@ -128,7 +137,7 @@ docs: build-docs-html open-docs
 
 # serve the documentation, with auto-reload
 docs-live:
-    @just run --no-default-groups --group docs --group integrations sphinx-autobuild docs docs/_build --open-browser --watch src --port 8000 --delay 1
+    @just run --no-default-groups --group docs --all-extras --group integrations --exact --isolated sphinx-autobuild docs docs/_build --open-browser --watch src --port 0 --delay 1
 
 _link_check:
     -uv run --no-default-groups --group docs sphinx-build -b linkcheck -Q -D linkcheck_timeout=10 ./docs/ ./docs/_build
@@ -149,25 +158,25 @@ check-docs-links: _link_check
         sys.exit(1)
 
 # lint the documentation
-check-docs:
-    @just run --no-default-groups --group lint doc8 --ignore-path ./docs/_build --max-line-length 100 -q ./docs
+check-docs *ENV:
+    @just run {{ ENV }} --no-default-groups --group lint doc8 --ignore-path ./docs/_build --max-line-length 100 -q ./docs
 
 # lint the code
-check-lint:
-    @just run --no-default-groups --group lint ruff check --select I
-    @just run --no-default-groups --group lint ruff check
+check-lint *ENV:
+    @just run {{ ENV }} --no-default-groups --group lint ruff check --select I
+    @just run {{ ENV }} --no-default-groups --group lint ruff check
 
 # check if the code needs formatting
-check-format:
-    @just run --no-default-groups --group lint ruff format --check
-    @just run --no-default-groups --group lint ruff format --line-length 80 --check src/polymorphic/tests/examples
+check-format *ENV:
+    @just run {{ ENV }} --no-default-groups --group lint ruff format --check
+    @just run {{ ENV }} --no-default-groups --group lint ruff format --line-length 80 --check src/polymorphic/tests/examples
 
 # check that the readme renders
-check-readme:
-    @just run --no-default-groups --group lint -m readme_renderer ./README.md -o /tmp/README.html
+check-readme *ENV:
+    @just run {{ ENV }} --no-default-groups --group lint -m readme_renderer ./README.md -o /tmp/README.html
 
-_check-readme-quiet:
-    @just --quiet check-readme
+_check-readme-quiet *ENV:
+    @just --quiet check-readme {{ ENV }}
 
 # sort the python imports
 sort-imports:
@@ -187,34 +196,32 @@ lint: sort-imports
 fix: lint format
 
 # run all static checks
-check: check-lint check-format check-types check-docs _check-readme-quiet check-package
+check *ENV:
+    @just check-lint {{ ENV }}
+    @just check-format {{ ENV }}
+    @just check-types {{ ENV }}
+    @just check-docs {{ ENV }}
+    @just check-readme {{ ENV }}
+    @just check-package
 
 # run all checks including documentation link checking (slow)
-check-all: check check-docs-links
+check-all *ENV:
+    @just check {{ ENV }}
+    @just check-docs-links
 
-[script]
-_lock-python:
-    import tomlkit
-    import sys
-    f='pyproject.toml'
-    d=tomlkit.parse(open(f).read())
-    d['project']['requires-python']='=={}'.format(sys.version.split()[0])
-    open(f,'w').write(tomlkit.dumps(d))
-
-# lock to specific python and versions of given dependencies
-test-lock +PACKAGES: _lock-python
-    uv add --no-sync {{ PACKAGES }}
-    uv sync --reinstall --no-default-groups --no-install-project
+# run zizmor security analysis of CI
+zizmor:
+    cargo install --locked zizmor
+    zizmor --format sarif .github/workflows/ > zizmor.sarif
 
 # run tests
 test *TESTS:
-    @just run --no-default-groups --exact --group test --isolated pytest {{ TESTS }} --cov 
+    @just run --group test pytest {{ TESTS }} --cov
 
-# test against the specified database backend
-test-db DB_CLIENT="dev" *TESTS:
-    # No Optional Dependency Unit Tests
-    # todo clean this up, rerunning a lot of tests
-    @just run --no-default-groups --exact --group test --isolated --group {{ DB_CLIENT }} pytest {{ TESTS }} --cov 
+# run all tests including integrations (accepts uv run flags e.g. -p /path/to/python --group dj52)
+test-all *ENV:
+    @just run {{ ENV }} --no-default-groups --exact --group test --isolated pytest --cov
+    @just run {{ ENV }} --no-default-groups --group integrations --group guardian --group reversion --group test --exact --isolated pytest -m integration --cov --cov-append
 
 # test django-revision integration
 test-reversion *TESTS:
@@ -226,16 +233,15 @@ test-extra-views *TESTS:
 
 # test django rest framework integration
 test-drf *TESTS:
-    @just run --no-default-groups --no-default-groups --group drf --group test --exact --isolated pytest -m integration src/polymorphic/tests/examples/integrations/drf {{ TESTS }}
+    @just run --no-default-groups --group drf --group test --exact --isolated pytest -m integration src/polymorphic/tests/examples/integrations/drf {{ TESTS }}
 
 # test guardian integration
 test-guardian *TESTS:
     @just run --no-default-groups --group guardian --group test --exact --isolated pytest -m integration src/polymorphic/tests/examples/integrations/guardian {{ TESTS }}
 
 # run all third party integration tests
-test-integrations DB_CLIENT="dev":
-    # Integration Tests
-    @just run --no-default-groups --group {{ DB_CLIENT }} --group integrations --group guardian --group reversion --group test --exact --isolated pytest -m integration --cov --cov-append
+test-integrations:
+    @just run --no-default-groups --group integrations --group guardian --group reversion --group test --exact --isolated pytest -m integration --cov --cov-append
 
 # debug an test
 debug-test *TESTS:

@@ -1,0 +1,64 @@
+name: Zizmor
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    paths:
+      - ".github/workflows/**/*.yml"
+  schedule:
+    # Run weekly
+    - cron: '0 0 * * 0'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  zizmor-analysis:
+    name: Run Zizmor
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          persist-credentials: false
+
+      - name: Set up Rust
+        uses: actions-rust-lang/setup-rust-toolchain@a0b538fa0b742a6aa35d6e2c169b4bd06d225a98
+      - name: Install jq
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq
+      - name: Install Zizmor
+        run: |
+          cargo install --locked zizmor
+
+      - name: Run Zizmor analysis
+        run: |
+          zizmor --format sarif .github/workflows/ > results.sarif
+
+      - name: Upload analysis results
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f
+        with:
+          name: zizmor-results
+          path: results.sarif
+          retention-days: 7
+
+      - name: Upload to code-scanning
+        uses: github/codeql-action/upload-sarif@89a39a4e59826350b863aa6b6252a07ad50cf83e
+        with:
+          sarif_file: results.sarif
+
+      - name: Fail on Findings
+        run: |
+          count="$(
+            jq '([.runs[]? | (.results // [])[] | select(.level != "note")] | length) // 0' \
+              results.sarif
+          )"
+          echo "Zizmor findings: $count"
+          test "$count" -eq 0
