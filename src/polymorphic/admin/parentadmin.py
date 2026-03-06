@@ -15,7 +15,6 @@ from django.db import models
 from django.http import Http404, HttpResponseRedirect
 from django.template.response import TemplateResponse
 from django.utils.encoding import force_str
-from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 from typing_extensions import TypeVar
 
@@ -281,7 +280,7 @@ class PolymorphicParentModelAdmin(_ModelAdminBase, Generic[_ModelT]):
             "title": _("Add %s") % force_str(opts.verbose_name),
             "adminform": adminForm,
             "is_popup": ("_popup" in request.POST or "_popup" in request.GET),
-            "media": mark_safe(media),
+            "media": media,
             "errors": AdminErrorList(form, ()),  # type: ignore[arg-type]
             "app_label": opts.app_label,
         }
@@ -296,7 +295,7 @@ class PolymorphicParentModelAdmin(_ModelAdminBase, Generic[_ModelT]):
         context.update(
             {
                 "has_change_permission": self.has_change_permission(request),
-                "form_url": mark_safe(form_url),
+                "form_url": form_url,
                 "opts": opts,
                 "add": True,
                 "save_on_top": self.save_on_top,
