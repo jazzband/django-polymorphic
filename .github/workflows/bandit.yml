@@ -7,6 +7,8 @@ on:
     paths:
       - "src/**"
       - "pyproject.toml"
+      - "justfile"
+      - ".github/workflows/bandit.yml"
   workflow_dispatch:
 
 permissions:
