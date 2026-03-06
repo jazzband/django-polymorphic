@@ -95,10 +95,17 @@ clean: clean-docs clean-env clean-git-ignored
 build-docs-html:
     @just run --group docs --group integrations sphinx-build --fresh-env --builder html --doctree-dir ./docs/_build/doctrees ./docs/ ./docs/_build/html
 
+[script]
+_open-pdf-docs:
+    import webbrowser
+    from pathlib import Path
+    webbrowser.open(f"file://{Path('./docs/_build/pdf/django-polymorphic.pdf').absolute()}")
+
 # build pdf documentation
 build-docs-pdf:
     @just run --group docs --group integrations sphinx-build --fresh-env --builder latex --doctree-dir ./docs/_build/doctrees ./docs/ ./docs/_build/pdf
-    cd docs/_build/pdf && make
+    make -C ./docs/_build/pdf
+    @just _open-pdf-docs
 
 # build the docs
 build-docs: build-docs-html
@@ -128,16 +135,9 @@ open-docs:
 # build and open the documentation
 docs: build-docs-html open-docs
 
-[script]
-_available_port:
-    import socket;
-    s=socket.socket();
-    s.bind(('',0));
-    print(s.getsockname()[1]);s.close()
-
 # serve the documentation, with auto-reload
 docs-live:
-    @just run --no-default-groups --group docs --all-extras --group integrations --exact --isolated sphinx-autobuild docs docs/_build --open-browser --watch src --port {{ shell("just _available_port") }} --delay 1
+    @just run --no-default-groups --group docs --all-extras --group integrations --exact --isolated sphinx-autobuild docs docs/_build --open-browser --watch src --port 0 --delay 1
 
 _link_check:
     -uv run --no-default-groups --group docs sphinx-build -b linkcheck -Q -D linkcheck_timeout=10 ./docs/ ./docs/_build
@@ -209,9 +209,14 @@ check-all *ENV:
     @just check {{ ENV }}
     @just check-docs-links
 
+# run zizmor security analysis of CI
+zizmor:
+    cargo install --locked zizmor
+    zizmor --format sarif .github/workflows/ > zizmor.sarif
+
 # run tests
 test *TESTS:
-    @just run --no-default-groups --exact --group test --isolated pytest {{ TESTS }} --cov
+    @just run --group test pytest {{ TESTS }} --cov
 
 # run all tests including integrations (accepts uv run flags e.g. -p /path/to/python --group dj52)
 test-all *ENV:

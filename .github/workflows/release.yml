@@ -10,13 +10,12 @@ concurrency:
 on:
   push:
     tags:
-      - 'v*'  # only publish on version tags (e.g. v1.0.0)
+      - 'v[0-9]*.[0-9]*.[0-9]*'  # only publish on version tags (e.g. v1.0.0)
 
 jobs:
 
   lint:
     if: github.repository == 'jazzband/django-polymorphic'
-    name: Lint
     permissions:
       contents: read
       actions: write
@@ -24,7 +23,6 @@ jobs:
 
   test:
     if: github.repository == 'jazzband/django-polymorphic'
-    name: Test
     permissions:
       contents: read
       actions: write
@@ -58,8 +56,10 @@ jobs:
     - name: Setup Just
       uses: extractions/setup-just@f8a3cce218d9f83db3a2ecd90e41ac3de6cdfd9b
     - name: Install Dependencies
+      env:
+        PYTHON_PATH: ${{ steps.sp.outputs.python-path }}
       run: |
-        just setup ${{ steps.sp.outputs.python-path }}
+        just setup "$PYTHON_PATH"
         sudo apt-get install -y gettext
     - name: Verify Tag
       run: |
@@ -70,7 +70,7 @@ jobs:
         git fetch --force origin refs/tags/$TAG_NAME:refs/tags/$TAG_NAME
 
         # verify signature
-        curl -sL https://github.com/${{ github.actor }}.gpg | gpg --import 
+        curl -sL https://github.com/${GITHUB_ACTOR}.gpg | gpg --import 
         git tag -v "$TAG_NAME"
 
         # verify version
@@ -146,7 +146,6 @@ jobs:
         "$GITHUB_REF_NAME"
         --repo "$GITHUB_REPOSITORY"
         --generate-notes
-        --prerelease
     - name: Upload artifact signatures to GitHub Release
       env:
         GITHUB_TOKEN: ${{ github.token }}

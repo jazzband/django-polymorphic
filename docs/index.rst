@@ -1,57 +1,59 @@
 django-polymorphic
 ==================
 
-.. image:: https://img.shields.io/badge/License-BSD-blue.svg
-   :target: https://opensource.org/license/bsd-3-clause
-   :alt: License: BSD
+.. only:: html
 
-.. image:: https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json
-   :target: https://github.com/astral-sh/ruff
-   :alt: Ruff
+   .. image:: https://img.shields.io/badge/License-BSD-blue.svg
+      :target: https://opensource.org/license/bsd-3-clause
+      :alt: License: BSD
 
-.. image:: https://badge.fury.io/py/django-polymorphic.svg
-   :target: https://pypi.python.org/pypi/django-polymorphic/
-   :alt: PyPI version
+   .. image:: https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json
+      :target: https://github.com/astral-sh/ruff
+      :alt: Ruff
 
-.. image:: https://img.shields.io/pypi/pyversions/django-polymorphic.svg
-   :target: https://pypi.python.org/pypi/django-polymorphic/
-   :alt: PyPI pyversions
+   .. image:: https://badge.fury.io/py/django-polymorphic.svg
+      :target: https://pypi.python.org/pypi/django-polymorphic/
+      :alt: PyPI version
 
-.. image:: https://img.shields.io/pypi/djversions/django-polymorphic.svg
-   :target: https://pypi.org/project/django-polymorphic/
-   :alt: PyPI Django versions
+   .. image:: https://img.shields.io/pypi/pyversions/django-polymorphic.svg
+      :target: https://pypi.python.org/pypi/django-polymorphic/
+      :alt: PyPI pyversions
 
-.. image:: https://img.shields.io/pypi/status/django-polymorphic.svg
-   :target: https://pypi.python.org/pypi/django-polymorphic
-   :alt: PyPI status
+   .. image:: https://img.shields.io/pypi/djversions/django-polymorphic.svg
+      :target: https://pypi.org/project/django-polymorphic/
+      :alt: PyPI Django versions
 
-.. image:: https://img.shields.io/pypi/types/django-polymorphic.svg
-   :target: https://pypi.python.org/pypi/django-polymorphic
-   :alt: PyPi Typed
+   .. image:: https://img.shields.io/pypi/status/django-polymorphic.svg
+      :target: https://pypi.python.org/pypi/django-polymorphic
+      :alt: PyPI status
 
-.. image:: https://readthedocs.org/projects/django-polymorphic/badge/?version=latest
-   :target: http://django-polymorphic.readthedocs.io/?badge=latest/
-   :alt: Documentation Status
+   .. image:: https://img.shields.io/pypi/types/django-polymorphic.svg
+      :target: https://pypi.python.org/pypi/django-polymorphic
+      :alt: PyPi Typed
 
-.. image:: https://img.shields.io/codecov/c/github/jazzband/django-polymorphic/master.svg
-   :target: https://codecov.io/github/jazzband/django-polymorphic?branch=master
-   :alt: Code Coverage
+   .. image:: https://readthedocs.org/projects/django-polymorphic/badge/?version=latest
+      :target: http://django-polymorphic.readthedocs.io/?badge=latest/
+      :alt: Documentation Status
 
-.. image:: https://github.com/jazzband/django-polymorphic/actions/workflows/test.yml/badge.svg?branch=master
-   :target: https://github.com/jazzband/django-polymorphic/actions/workflows/test.yml?query=branch:master
-   :alt: Test Status
+   .. image:: https://img.shields.io/codecov/c/github/jazzband/django-polymorphic/master.svg
+      :target: https://codecov.io/github/jazzband/django-polymorphic?branch=master
+      :alt: Code Coverage
 
-.. image:: https://github.com/jazzband/django-polymorphic/actions/workflows/lint.yml/badge.svg?branch=master
-   :target: https://github.com/jazzband/django-polymorphic/actions/workflows/lint.yml?query=branch:master
-   :alt: Lint Status
+   .. image:: https://github.com/jazzband/django-polymorphic/actions/workflows/test.yml/badge.svg?branch=master
+      :target: https://github.com/jazzband/django-polymorphic/actions/workflows/test.yml?query=branch:master
+      :alt: Test Status
 
-.. image:: https://img.shields.io/badge/Published%20on-Django%20Packages-0c3c26
-   :target: https://djangopackages.org/packages/p/django-polymorphic/
-   :alt: Published on Django Packages
+   .. image:: https://github.com/jazzband/django-polymorphic/actions/workflows/lint.yml/badge.svg?branch=master
+      :target: https://github.com/jazzband/django-polymorphic/actions/workflows/lint.yml?query=branch:master
+      :alt: Lint Status
 
-.. image:: https://jazzband.co/static/img/badge.svg
-   :target: https://jazzband.co/
-   :alt: Jazzband
+   .. image:: https://img.shields.io/badge/Published%20on-Django%20Packages-0c3c26
+      :target: https://djangopackages.org/packages/p/django-polymorphic/
+      :alt: Published on Django Packages
+
+   .. image:: https://jazzband.co/static/img/badge.svg
+      :target: https://jazzband.co/
+      :alt: Jazzband
 
 
 :pypi:`django-polymorphic` builds on top of the standard Django model inheritance.

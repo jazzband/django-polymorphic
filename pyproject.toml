@@ -270,7 +270,7 @@ drf = [
     "djangorestframework>=3.16.1",
 ]
 guardian = [
-    "django-guardian>=2.4.0",
+    "django-guardian<3.3.0",
 ]
 integrations = [
     { include-group = "extra-views" },
