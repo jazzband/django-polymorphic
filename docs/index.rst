@@ -35,16 +35,16 @@ django-polymorphic
       :target: http://django-polymorphic.readthedocs.io/?badge=latest/
       :alt: Documentation Status
 
-   .. image:: https://img.shields.io/codecov/c/github/jazzband/django-polymorphic/master.svg
-      :target: https://codecov.io/github/jazzband/django-polymorphic?branch=master
+   .. image:: https://img.shields.io/codecov/c/github/jazzband/django-polymorphic/main.svg
+      :target: https://codecov.io/github/jazzband/django-polymorphic?branch=main
       :alt: Code Coverage
 
-   .. image:: https://github.com/jazzband/django-polymorphic/actions/workflows/test.yml/badge.svg?branch=master
-      :target: https://github.com/jazzband/django-polymorphic/actions/workflows/test.yml?query=branch:master
+   .. image:: https://github.com/jazzband/django-polymorphic/actions/workflows/test.yml/badge.svg?branch=main
+      :target: https://github.com/jazzband/django-polymorphic/actions/workflows/test.yml?query=branch:main
       :alt: Test Status
 
-   .. image:: https://github.com/jazzband/django-polymorphic/actions/workflows/lint.yml/badge.svg?branch=master
-      :target: https://github.com/jazzband/django-polymorphic/actions/workflows/lint.yml?query=branch:master
+   .. image:: https://github.com/jazzband/django-polymorphic/actions/workflows/lint.yml/badge.svg?branch=main
+      :target: https://github.com/jazzband/django-polymorphic/actions/workflows/lint.yml?query=branch:main
       :alt: Lint Status
 
    .. image:: https://img.shields.io/badge/Published%20on-Django%20Packages-0c3c26

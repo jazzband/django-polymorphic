@@ -57,7 +57,7 @@ dependencies = [
 ]
 
 [project.urls]
-"Download" = "https://github.com/jazzband/django-polymorphic/tarball/master"
+"Download" = "https://github.com/jazzband/django-polymorphic/tarball/main"
 "Documentation" = "https://django-polymorphic.readthedocs.io"
 "Homepage" = "https://github.com/jazzband/django-polymorphic"
 "Repository" = "https://github.com/jazzband/django-polymorphic"

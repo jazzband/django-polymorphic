@@ -105,7 +105,7 @@ exclude_patterns = ["_build"]
 html_theme = "furo"
 html_theme_options = {
     "source_repository": "https://github.com/jazzband/django-polymorphic/",
-    "source_branch": "master",
+    "source_branch": "main",
     "source_directory": "docs",
 }
 
