@@ -1699,7 +1699,10 @@ class PolymorphicAdminCoverageTests(AdminTestCase):
         b_admin = self.get_admin_instance(Model2B)
         request = self.create_admin_request("get", self.get_change_url(Model2B, obj.pk))
         fieldsets = b_admin.get_fieldsets(request, obj)
-        assert fieldsets is not None
+        assert fieldsets == (
+            ("Base", {"fields": (("field1", "nonexistent"),)}),
+            ("Contents", {"fields": ["field2"]}),
+        )
 
     def test_child_admin_get_subclass_fields_missing_field(self):
         """get_subclass_fields() silently skips fields not present in the form."""
