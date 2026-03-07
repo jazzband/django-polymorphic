@@ -5,6 +5,10 @@ v4.11.2 (2026-03-05)
 --------------------
 
 * Add typed classifier.
+* Remove unnecessary :func:`~django.utils.safestring.mark_safe` from `admin context variables
+  <https://github.com/bckohan/django-polymorphic/commit/6c6114d4c72bb6db73eee54ce58beb93409ec137>`_.
+* Significant security tightening of CI pipelines including security focused static
+  analysis tools: zizmor, CodeQL and bandit.
 
 v4.11.1 (2026-02-20)
 --------------------
