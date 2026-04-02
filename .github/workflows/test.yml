@@ -147,7 +147,7 @@ jobs:
         psql -h localhost -p 5432 -U postgres -d postgres -c "CREATE DATABASE test1;"
         psql -h localhost -p 5432 -U postgres -d postgres -c "CREATE DATABASE test2;"
     - name: Install uv
-      uses: astral-sh/setup-uv@5a095e7a2014a4212f075830d4f7277575a9d098
+      uses: astral-sh/setup-uv@cec208311dfd045dd5311c1add060b2062131d57
       with:
         enable-cache: false
     - name: Setup Just
@@ -221,7 +221,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
           allow-prereleases: true
       - name: Install uv
-        uses: astral-sh/setup-uv@5a095e7a2014a4212f075830d4f7277575a9d098
+        uses: astral-sh/setup-uv@cec208311dfd045dd5311c1add060b2062131d57
         with:
           enable-cache: false
       - name: Setup Just
@@ -344,7 +344,7 @@ jobs:
         uses: mxschmitt/action-tmate@c0afd6f790e3a5564914980036ebf83216678101
         timeout-minutes: 60
       - name: Install uv
-        uses: astral-sh/setup-uv@5a095e7a2014a4212f075830d4f7277575a9d098
+        uses: astral-sh/setup-uv@cec208311dfd045dd5311c1add060b2062131d57
         with:
           enable-cache: false
       - name: Setup Just
@@ -468,7 +468,7 @@ jobs:
         uses: mxschmitt/action-tmate@c0afd6f790e3a5564914980036ebf83216678101
         timeout-minutes: 60
       - name: Install uv
-        uses: astral-sh/setup-uv@5a095e7a2014a4212f075830d4f7277575a9d098
+        uses: astral-sh/setup-uv@cec208311dfd045dd5311c1add060b2062131d57
         with:
           enable-cache: false
       - name: Setup Just
@@ -581,7 +581,7 @@ jobs:
         uses: mxschmitt/action-tmate@c0afd6f790e3a5564914980036ebf83216678101
         timeout-minutes: 60
       - name: Install uv
-        uses: astral-sh/setup-uv@5a095e7a2014a4212f075830d4f7277575a9d098
+        uses: astral-sh/setup-uv@cec208311dfd045dd5311c1add060b2062131d57
         with:
           enable-cache: false
       - name: Setup Just
@@ -665,14 +665,14 @@ jobs:
           python-version: ${{ matrix.python-version }}
           allow-prereleases: true
       - name: Install uv
-        uses: astral-sh/setup-uv@5a095e7a2014a4212f075830d4f7277575a9d098
+        uses: astral-sh/setup-uv@cec208311dfd045dd5311c1add060b2062131d57
         with:
           enable-cache: false
       - name: Setup Just
         uses: extractions/setup-just@f8a3cce218d9f83db3a2ecd90e41ac3de6cdfd9b
       - name: install-vim-windows
         if: ${{ github.event.inputs.debug == 'true' }}
-        uses: rhysd/action-setup-vim@19e3dd31a84dbc2c5445d65e9b363f616cab96c1
+        uses: rhysd/action-setup-vim@febef33995d6649302e9d88dda81e071b68f16a7
       - name: Setup tmate session
         if: ${{ github.event.inputs.debug == 'true' }}
         uses: mxschmitt/action-tmate@c0afd6f790e3a5564914980036ebf83216678101
@@ -739,7 +739,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
           allow-prereleases: true
       - name: Install uv
-        uses: astral-sh/setup-uv@5a095e7a2014a4212f075830d4f7277575a9d098
+        uses: astral-sh/setup-uv@cec208311dfd045dd5311c1add060b2062131d57
         with:
           enable-cache: false
       - name: Setup Just
@@ -778,13 +778,13 @@ jobs:
         with:
           python-version: '3.12'
       - name: Install uv
-        uses: astral-sh/setup-uv@5a095e7a2014a4212f075830d4f7277575a9d098
+        uses: astral-sh/setup-uv@cec208311dfd045dd5311c1add060b2062131d57
         with:
           enable-cache: false
       - name: Setup Just
         uses: extractions/setup-just@f8a3cce218d9f83db3a2ecd90e41ac3de6cdfd9b
       - name: Get coverage files
-        uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
           pattern: "*.coverage"
           merge-multiple: true
@@ -792,7 +792,7 @@ jobs:
       - run: just coverage
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de
+        uses: codecov/codecov-action@57e3a136b779b570ffcdbf80b3bdc90e7fab3de2
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files:
