@@ -63,7 +63,7 @@ class ShowFieldBase(_Base):
         for field in self._meta.fields + self._meta.many_to_many:
             if field.name in self.polymorphic_internal_model_fields or "_ptr" in field.name:
                 continue
-            if field.name in done_fields:
+            if field.name in done_fields:  # pragma: no cover
                 continue  # work around django diamond inheritance problem
             done_fields.add(field.name)
 

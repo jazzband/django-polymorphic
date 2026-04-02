@@ -66,9 +66,28 @@ def _install_playwright_browsers() -> None:
     subprocess.run(cmd, check=True)
 
 
+def _playwright_chromium_installed() -> bool:
+    """Quick check if Playwright chromium browsers are already installed."""
+    import os
+
+    # Check the default Playwright browsers cache location
+    browsers_path = os.environ.get(
+        "PLAYWRIGHT_BROWSERS_PATH",
+        os.path.join(os.path.expanduser("~"), ".cache", "ms-playwright"),
+    )
+    return os.path.isdir(browsers_path) and any(
+        entry.startswith("chromium") for entry in os.listdir(browsers_path)
+    )
+
+
 def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:
     any_ui = any(item.get_closest_marker("ui") is not None for item in items)
 
     if any_ui and not getattr(config, "_did_install_playwright", False):
         setattr(config, "_did_install_playwright", True)
-        _install_playwright_browsers()
+        if not _playwright_chromium_installed():
+            # Browsers not available: deselect UI tests so the rest of the suite can run.
+            # To run UI tests, install Playwright browsers first:
+            #   playwright install chromium
+            config.hook.pytest_deselected(items=[i for i in items if i.get_closest_marker("ui")])
+            items[:] = [i for i in items if i.get_closest_marker("ui") is None]

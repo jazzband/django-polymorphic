@@ -67,7 +67,7 @@ def _compare_mro(cls1: type, cls2: type) -> int:
     except ValueError:
         return 1  # cls1 not inherited by 2
 
-    return (index1 > index2) - (index1 < index2)  # python 3 compatible cmp.
+    return (index1 > index2) - (index1 < index2)  # python 3 compatible cmp.  # pragma: no cover
 
 
 def sort_by_subclass(*classes: type[models.Model]) -> list[type[models.Model]]:
