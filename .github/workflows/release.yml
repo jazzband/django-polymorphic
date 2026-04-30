@@ -88,7 +88,6 @@ jobs:
       - lint
       - test
       - build
-      - publish-to-testpypi
     runs-on: ubuntu-latest
     environment:
       name: pypi
