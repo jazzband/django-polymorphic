@@ -7,7 +7,7 @@ v4.11.3 (2026-04-30)
 * `django-polymorphic <https://github.com/django-commons/django-polymorphic>`_ has a new home at the
   `django-commons <https://django-commons.org>`_ organization!
 
-  * This was necessary because `Jazzband is sun setting
+  * This was necessary because `Jazzband is sunsetting
     <https://github.com/jazzband/help/issues/425>`_. Jazzband was a great home that facilitated
     maintainership transfer of this package. We are extremely thankful for all of `jezdez's
     <https://github.com/jezdez>`_ work over the years running the Jazzband community.
