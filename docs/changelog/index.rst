@@ -1,6 +1,21 @@
 Changelog
 =========
 
+v4.11.3 (2026-04-30)
+--------------------
+
+* `django-polymorphic <https://github.com/django-commons/django-polymorphic>`_ has a new home at the
+  `django-commons <https://django-commons.org>`_ organization!
+
+  * This was necessary because `Jazzband is sun setting
+    <https://github.com/jazzband/help/issues/425>`_. Jazzband was a great home that facilitated
+    maintainership transfer of this package. We are extremely thankful for all of `jezdez's
+    <https://github.com/jezdez>`_ work over the years running the Jazzband community.
+  * We limited publishing access to restrict our supply chain vulnerability surface. If you were a
+    former contributor/maintainer of this project and wish to contribute again please `join
+    django-commons <https://github.com/django-commons/membership>`_ and let us know.
+
+
 v4.11.2 (2026-03-05)
 --------------------
 

@@ -35,25 +35,21 @@ django-polymorphic
       :target: http://django-polymorphic.readthedocs.io/?badge=latest/
       :alt: Documentation Status
 
-   .. image:: https://img.shields.io/codecov/c/github/jazzband/django-polymorphic/main.svg
-      :target: https://codecov.io/github/jazzband/django-polymorphic?branch=main
+   .. image:: https://img.shields.io/codecov/c/github/django-commons/django-polymorphic/main.svg
+      :target: https://codecov.io/github/django-commons/django-polymorphic?branch=main
       :alt: Code Coverage
 
-   .. image:: https://github.com/jazzband/django-polymorphic/actions/workflows/test.yml/badge.svg?branch=main
-      :target: https://github.com/jazzband/django-polymorphic/actions/workflows/test.yml?query=branch:main
+   .. image:: https://github.com/django-commons/django-polymorphic/actions/workflows/test.yml/badge.svg?branch=main
+      :target: https://github.com/django-commons/django-polymorphic/actions/workflows/test.yml?query=branch:main
       :alt: Test Status
 
-   .. image:: https://github.com/jazzband/django-polymorphic/actions/workflows/lint.yml/badge.svg?branch=main
-      :target: https://github.com/jazzband/django-polymorphic/actions/workflows/lint.yml?query=branch:main
+   .. image:: https://github.com/django-commons/django-polymorphic/actions/workflows/lint.yml/badge.svg?branch=main
+      :target: https://github.com/django-commons/django-polymorphic/actions/workflows/lint.yml?query=branch:main
       :alt: Lint Status
 
    .. image:: https://img.shields.io/badge/Published%20on-Django%20Packages-0c3c26
       :target: https://djangopackages.org/packages/p/django-polymorphic/
       :alt: Published on Django Packages
-
-   .. image:: https://jazzband.co/static/img/badge.svg
-      :target: https://jazzband.co/
-      :alt: Jazzband
 
 
 :pypi:`django-polymorphic` builds on top of the standard Django model inheritance.

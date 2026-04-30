@@ -2,6 +2,8 @@
 
 Contributions are encouraged! Please use the issue page to submit feature requests or bug reports. Issues with attached PRs will be given priority and have a much higher likelihood of acceptance. Please also open an issue and associate it with any submitted PRs.
 
+This is a [django-commons](https://django-commons.org) project. If you wish to contribute, [please join the organization!](https://django-commons.org/#how-to-join-as-a-contributor)
+
 We are actively seeking additional maintainers. If you're interested, please open an issue or [contact me](https://github.com/bckohan).
 
 ## Installation

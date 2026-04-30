@@ -13,7 +13,6 @@
 [![Lint Status](https://github.com/django-commons/django-polymorphic/actions/workflows/lint.yml/badge.svg?branch=main)](https://github.com/django-commons/django-polymorphic/actions/workflows/lint.yml?query=branch:main)
 [![Published on Django Packages](https://img.shields.io/badge/Published%20on-Django%20Packages-0c3c26)](https://djangopackages.org/packages/p/django-polymorphic/)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/django-commons/django-polymorphic/badge)](https://securityscorecards.dev/viewer/?uri=github.com/django-commons/django-polymorphic)
-[![django-commons](https://django-commons.co/static/img/badge.svg)](https://django-commons.co/)
 
 ---------------------------------------------------------------------------------------------------
 

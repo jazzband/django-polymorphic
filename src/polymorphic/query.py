@@ -357,7 +357,7 @@ class PolymorphicQuerySet(QuerySet[_All], Generic[_All, _Base]):
             elif isinstance(a, FilteredRelation):
                 patch_lookup(a.condition)
             elif isinstance(a, models.F):
-                a.name = translate_polymorphic_field_path(self.model, a.name)
+                a.name = translate_polymorphic_field_path(self.model, a.name)  # type: ignore[attr-defined]
             elif hasattr(a, "get_source_expressions"):
                 for source_expression in a.get_source_expressions():
                     if source_expression is not None:
