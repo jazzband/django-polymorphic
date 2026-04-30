@@ -13,40 +13,40 @@ v4.11.2 (2026-03-05)
 v4.11.1 (2026-02-20)
 --------------------
 
-* Fixed `Release 4.11 causes UPDATE query to be routed to reader DB <https://github.com/jazzband/django-polymorphic/issues/865>`_
+* Fixed `Release 4.11 causes UPDATE query to be routed to reader DB <https://github.com/django-commons/django-polymorphic/issues/865>`_
 
 v4.11.0 (2026-02-05)
 --------------------
 
-* Implemented `Add type hints for django-polymorphic <https://github.com/jazzband/django-polymorphic/issues/647>`_
+* Implemented `Add type hints for django-polymorphic <https://github.com/django-commons/django-polymorphic/issues/647>`_
 
 v4.9.2, v4.10.5 (2026-01-26)
 ----------------------------
 
-* Fixed `Bad warning messages polymorphic.W001 and polymorphic.W002 when deriving from PolymorphicModel <https://github.com/jazzband/django-polymorphic/issues/857>`_
-* Fixed `Unexpected return type of polymorphic data since 4.9.1 <https://github.com/jazzband/django-polymorphic/issues/855>`_
-* Fixed `related item missing <https://github.com/jazzband/django-polymorphic/issues/851>`_
+* Fixed `Bad warning messages polymorphic.W001 and polymorphic.W002 when deriving from PolymorphicModel <https://github.com/django-commons/django-polymorphic/issues/857>`_
+* Fixed `Unexpected return type of polymorphic data since 4.9.1 <https://github.com/django-commons/django-polymorphic/issues/855>`_
+* Fixed `related item missing <https://github.com/django-commons/django-polymorphic/issues/851>`_
 
 v4.10.4 (2026-01-19)
 --------------------
 
-* Documented `model-bakery integration and test considerations <https://github.com/jazzband/django-polymorphic/issues/849>`_
+* Documented `model-bakery integration and test considerations <https://github.com/django-commons/django-polymorphic/issues/849>`_
 
 v4.9.1, v4.10.3 (2026-01-15)
 ----------------------------
 
-* Fixed `Meta.base_manager_name is not respected <https://github.com/jazzband/django-polymorphic/issues/845>`_
+* Fixed `Meta.base_manager_name is not respected <https://github.com/django-commons/django-polymorphic/issues/845>`_
 
 
 v4.10.2 (2026-01-14)
 --------------------
 
-* Fixed `changelog url on pypi is broken <https://github.com/jazzband/django-polymorphic/issues/842>`_
+* Fixed `changelog url on pypi is broken <https://github.com/django-commons/django-polymorphic/issues/842>`_
 
 v4.10.1 (2026-01-13)
 --------------------
 
-* Fixed `Django-polymorphic does not update the PolymorphicSerializer's validated_data after running the child's validation method <https://github.com/jazzband/django-polymorphic/pull/378>`_
+* Fixed `Django-polymorphic does not update the PolymorphicSerializer's validated_data after running the child's validation method <https://github.com/django-commons/django-polymorphic/pull/378>`_
 
 v4.10.0 (2026-01-13)
 --------------------
@@ -57,16 +57,16 @@ notable changes are:
 
 1. The :pypi:`django-rest-polymorphic` package is now part of :pypi:`django-polymorphic`.
 2. In queries that need content types that are not cached those fetches are `now embedded as
-   subqueries <https://github.com/jazzband/django-polymorphic/pull/828>`_. This reduces the total
+   subqueries <https://github.com/django-commons/django-polymorphic/pull/828>`_. This reduces the total
    number of queries needed but most importantly it eliminates `a class of errors
-   <https://github.com/jazzband/django-polymorphic/issues/383>`_ that could happen if
+   <https://github.com/django-commons/django-polymorphic/issues/383>`_ that could happen if
    Manager/QuerySet methods that should not but do generate database queries are called before
    models are loaded (e.g. get_queryset()).
 
 Issues
 ~~~~~~
 
-* Implemented `Bring django-rest-polymorphic into this package. <https://github.com/jazzband/django-polymorphic/issues/655>`_
+* Implemented `Bring django-rest-polymorphic into this package. <https://github.com/django-commons/django-polymorphic/issues/655>`_
 
   .. tip::
 
@@ -74,11 +74,11 @@ Issues
      your import paths from ``rest_polymorphic.serializers`` to
      :mod:`polymorphic.contrib.drf.serializers`.
 
-* Fixed `Guardian contenttype integraton hook is extremely brittle <https://github.com/jazzband/django-polymorphic/issues/836>`_
-* Fixed `Models defined after load break inheritance utility caches <https://github.com/jazzband/django-polymorphic/issues/827>`_
-* Fixed `get_queryset() results in db queries for proxy models <https://github.com/jazzband/django-polymorphic/issues/824>`_
-* Implemented `System check error for PolymorphicManager marked as use_in_migrations <https://github.com/jazzband/django-polymorphic/issues/820>`_
-* Implemented `Manager warnings should be system checks instead. <https://github.com/jazzband/django-polymorphic/issues/819>`_
+* Fixed `Guardian contenttype integraton hook is extremely brittle <https://github.com/django-commons/django-polymorphic/issues/836>`_
+* Fixed `Models defined after load break inheritance utility caches <https://github.com/django-commons/django-polymorphic/issues/827>`_
+* Fixed `get_queryset() results in db queries for proxy models <https://github.com/django-commons/django-polymorphic/issues/824>`_
+* Implemented `System check error for PolymorphicManager marked as use_in_migrations <https://github.com/django-commons/django-polymorphic/issues/820>`_
+* Implemented `Manager warnings should be system checks instead. <https://github.com/django-commons/django-polymorphic/issues/819>`_
 
 v4.9.0 (2026-01-09)
 -------------------
@@ -87,7 +87,7 @@ v4.9.0 (2026-01-09)
 
   This update may generate new migrations for your polymorphic models, similar to the following.
   This is ok and an expected side effect of fixing `#815
-  <https://github.com/jazzband/django-polymorphic/issues/815>`_
+  <https://github.com/django-commons/django-polymorphic/issues/815>`_
 
   .. code-block:: python
 
@@ -96,16 +96,16 @@ v4.9.0 (2026-01-09)
           options={},
       )
 
-* Fixed `PolymorphicModel.base_manager is the same as default_manager when custom default manager is supplied. <https://github.com/jazzband/django-polymorphic/issues/815>`_
-* Fixed `Use non-polymorphic managers for all invocations of dumpdata <https://github.com/jazzband/django-polymorphic/pull/814>`_
-* Documented `Fixture usage <https://github.com/jazzband/django-polymorphic/pull/791>`_
+* Fixed `PolymorphicModel.base_manager is the same as default_manager when custom default manager is supplied. <https://github.com/django-commons/django-polymorphic/issues/815>`_
+* Fixed `Use non-polymorphic managers for all invocations of dumpdata <https://github.com/django-commons/django-polymorphic/pull/814>`_
+* Documented `Fixture usage <https://github.com/django-commons/django-polymorphic/pull/791>`_
 
 v4.8.0 (2026-01-08)
 -------------------
 
-* Fixed `PolymorphicFormSetChild overrides form exclude <https://github.com/jazzband/django-polymorphic/issues/578>`_
-* Fixed `Issue with polymorphic_ctype when populating polymorphic inline formsets. <https://github.com/jazzband/django-polymorphic/issues/549>`_
-* Fixed `Nested polymorphic_inline_formsets gives AttributeError: 'NoneType' object has no attribute 'get_real_instance_class' <https://github.com/jazzband/django-polymorphic/issues/363>`_
+* Fixed `PolymorphicFormSetChild overrides form exclude <https://github.com/django-commons/django-polymorphic/issues/578>`_
+* Fixed `Issue with polymorphic_ctype when populating polymorphic inline formsets. <https://github.com/django-commons/django-polymorphic/issues/549>`_
+* Fixed `Nested polymorphic_inline_formsets gives AttributeError: 'NoneType' object has no attribute 'get_real_instance_class' <https://github.com/django-commons/django-polymorphic/issues/363>`_
 
 v4.7.0 (2026-01-07)
 -------------------
@@ -113,41 +113,41 @@ v4.7.0 (2026-01-07)
 Fixed a few outstanding admin bugs, updated documentation and added more admin tests for things like
 m2m relationships.
 
-* Documented `How to handle non-admin polymorphic forms? <https://github.com/jazzband/django-polymorphic/issues/346>`_
-* Fixed `Admin: add view popup breaks if initial submit has validation error <https://github.com/jazzband/django-polymorphic/issues/612>`_
-* Fixed `Filters are not preserved in polymorphic parent admin <https://github.com/jazzband/django-polymorphic/issues/356>`_
-* Fixed `Admin change form doesn't preserve changelist filter <https://github.com/jazzband/django-polymorphic/issues/125>`_
+* Documented `How to handle non-admin polymorphic forms? <https://github.com/django-commons/django-polymorphic/issues/346>`_
+* Fixed `Admin: add view popup breaks if initial submit has validation error <https://github.com/django-commons/django-polymorphic/issues/612>`_
+* Fixed `Filters are not preserved in polymorphic parent admin <https://github.com/django-commons/django-polymorphic/issues/356>`_
+* Fixed `Admin change form doesn't preserve changelist filter <https://github.com/django-commons/django-polymorphic/issues/125>`_
 
 v4.6.0 (2026-01-05)
 -------------------
 
 The release fixes longstanding bugs with respect to expected ORM behavior. For a complete list of
 changes see the `v4.6.0 release
-<https://github.com/jazzband/django-polymorphic/releases/tag/v4.6.0>`_.
+<https://github.com/django-commons/django-polymorphic/releases/tag/v4.6.0>`_.
 
-* Fixed `get_real_instance() should also gracefully retry parents on failure (best effort) <https://github.com/jazzband/django-polymorphic/issues/784>`_
-* Fixed `polymorphic_primary_key_name no longer points to base classes polymorphic field <https://github.com/jazzband/django-polymorphic/issues/758>`_
-* Fixed `create_from_super needs to run atomically. <https://github.com/jazzband/django-polymorphic/issues/744>`_
-* Fixed `Support polymorphic models that have different pk fields/values at different levels of the hierarchy. <https://github.com/jazzband/django-polymorphic/issues/686>`_
-* Fixed `Issue with .delete(keep_parents=True) <https://github.com/jazzband/django-polymorphic/issues/645>`_
-* Fixed `PolymorphicChildModelAdmin with show_in_index=False in Django Admin with nav_sidebar <https://github.com/jazzband/django-polymorphic/issues/497>`_
-* Fixed `ForeignKeyViolation when trying to save an entity when using a non-default db <https://github.com/jazzband/django-polymorphic/issues/486>`_
-* Fixed `Content types pulled from wrong database when using database routers <https://github.com/jazzband/django-polymorphic/issues/446>`_
-* Fixed `Copying Polymorphic objects for below the first level not working <https://github.com/jazzband/django-polymorphic/issues/414>`_
-* Fixed `Getting a specific element from a queryset in an post_delete returns None <https://github.com/jazzband/django-polymorphic/issues/347>`_
-* Fixed `Reverse related object descriptor is overwritten on class <https://github.com/jazzband/django-polymorphic/issues/71>`_
+* Fixed `get_real_instance() should also gracefully retry parents on failure (best effort) <https://github.com/django-commons/django-polymorphic/issues/784>`_
+* Fixed `polymorphic_primary_key_name no longer points to base classes polymorphic field <https://github.com/django-commons/django-polymorphic/issues/758>`_
+* Fixed `create_from_super needs to run atomically. <https://github.com/django-commons/django-polymorphic/issues/744>`_
+* Fixed `Support polymorphic models that have different pk fields/values at different levels of the hierarchy. <https://github.com/django-commons/django-polymorphic/issues/686>`_
+* Fixed `Issue with .delete(keep_parents=True) <https://github.com/django-commons/django-polymorphic/issues/645>`_
+* Fixed `PolymorphicChildModelAdmin with show_in_index=False in Django Admin with nav_sidebar <https://github.com/django-commons/django-polymorphic/issues/497>`_
+* Fixed `ForeignKeyViolation when trying to save an entity when using a non-default db <https://github.com/django-commons/django-polymorphic/issues/486>`_
+* Fixed `Content types pulled from wrong database when using database routers <https://github.com/django-commons/django-polymorphic/issues/446>`_
+* Fixed `Copying Polymorphic objects for below the first level not working <https://github.com/django-commons/django-polymorphic/issues/414>`_
+* Fixed `Getting a specific element from a queryset in an post_delete returns None <https://github.com/django-commons/django-polymorphic/issues/347>`_
+* Fixed `Reverse related object descriptor is overwritten on class <https://github.com/django-commons/django-polymorphic/issues/71>`_
 
 v4.3.1, v4.4.2, v4.5.2 (2026-01-01)
 -----------------------------------
 
-* Fixed `Significant performance regression on polymorphic queryset iteration <https://github.com/jazzband/django-polymorphic/pull/781>`_
+* Fixed `Significant performance regression on polymorphic queryset iteration <https://github.com/django-commons/django-polymorphic/pull/781>`_
 
 v4.5.1 (2025-12-24)
 -------------------
 
-* Fixed `4.5.0 generates a lot of migrations on my project <https://github.com/jazzband/django-polymorphic/pull/759>`_
-* Fixed `Annotations with F <https://github.com/jazzband/django-polymorphic/pull/755>`_
-* Fixed `show_in_index=False visibility in admin sites and sidebar <https://github.com/jazzband/django-polymorphic/pull/760>`_
+* Fixed `4.5.0 generates a lot of migrations on my project <https://github.com/django-commons/django-polymorphic/pull/759>`_
+* Fixed `Annotations with F <https://github.com/django-commons/django-polymorphic/pull/755>`_
+* Fixed `show_in_index=False visibility in admin sites and sidebar <https://github.com/django-commons/django-polymorphic/pull/760>`_
 
 v4.5.0 (2025-12-22)
 -------------------
@@ -158,52 +158,52 @@ The release fixes longstanding bugs with respect to deletion of polymorphic mode
 
   This version has a bug that generates unnecessary migrations - use 4.5.1 instead!
 
-* Implemented `Deletion fixes <https://github.com/jazzband/django-polymorphic/pull/746>`_
+* Implemented `Deletion fixes <https://github.com/django-commons/django-polymorphic/pull/746>`_
   **This release fixes the longstanding polymorphic deletion bug.** The fix should be transparent
   and not generate new migrations files. If you experience any issues, please report them.
-* Fixed `AttributeError Using .alias() On Polymorphic Querysets <https://github.com/jazzband/django-polymorphic/pull/745>`_
+* Fixed `AttributeError Using .alias() On Polymorphic Querysets <https://github.com/django-commons/django-polymorphic/pull/745>`_
 
 v4.4.1 (2025-12-15)
 -------------------
 
-* `Fix infinite recursion bug when using only() <https://github.com/jazzband/django-polymorphic/pull/739>`_
+* `Fix infinite recursion bug when using only() <https://github.com/django-commons/django-polymorphic/pull/739>`_
 
 v4.4.0 (2025-12-14)
 -------------------
 
-* Implemented `Add create_from_super method and test <https://github.com/jazzband/django-polymorphic/pull/684>`_
-* Implemented `Move model definition errors to system checks <https://github.com/jazzband/django-polymorphic/pull/693>`_
-* Fixed `Fix ordering of stacked inline admin forms on add. <https://github.com/jazzband/django-polymorphic/pull/719>`_
-* Fixed `Change model definition errors to be system checks <https://github.com/jazzband/django-polymorphic/pull/693>`_
-* Fixed `Replace deepcopy of the Q object <https://github.com/jazzband/django-polymorphic/pull/543>`_
+* Implemented `Add create_from_super method and test <https://github.com/django-commons/django-polymorphic/pull/684>`_
+* Implemented `Move model definition errors to system checks <https://github.com/django-commons/django-polymorphic/pull/693>`_
+* Fixed `Fix ordering of stacked inline admin forms on add. <https://github.com/django-commons/django-polymorphic/pull/719>`_
+* Fixed `Change model definition errors to be system checks <https://github.com/django-commons/django-polymorphic/pull/693>`_
+* Fixed `Replace deepcopy of the Q object <https://github.com/django-commons/django-polymorphic/pull/543>`_
 
 v4.3.0 (2025-12-09)
 -------------------
 
-* Fixed `Resolve primary key name correctly. <https://github.com/jazzband/django-polymorphic/pull/620>`_
-* Implemented `Include get_child_inlines() hook in stacked inline admin forms. <https://github.com/jazzband/django-polymorphic/pull/681>`_
-* Fixed `multi-database support in inheritance accessors. <https://github.com/jazzband/django-polymorphic/pull/550>`_
-* Fixed `Caching in inheritance accessor functions <https://github.com/jazzband/django-polymorphic/pull/510>`_
-* Fixed `Foreign key resolves to parent class when using abstract models <https://github.com/jazzband/django-polymorphic/issues/437>`_
-* Fixed `Support Q expressions that contain subquery expressions <https://github.com/jazzband/django-polymorphic/pull/572>`_
+* Fixed `Resolve primary key name correctly. <https://github.com/django-commons/django-polymorphic/pull/620>`_
+* Implemented `Include get_child_inlines() hook in stacked inline admin forms. <https://github.com/django-commons/django-polymorphic/pull/681>`_
+* Fixed `multi-database support in inheritance accessors. <https://github.com/django-commons/django-polymorphic/pull/550>`_
+* Fixed `Caching in inheritance accessor functions <https://github.com/django-commons/django-polymorphic/pull/510>`_
+* Fixed `Foreign key resolves to parent class when using abstract models <https://github.com/django-commons/django-polymorphic/issues/437>`_
+* Fixed `Support Q expressions that contain subquery expressions <https://github.com/django-commons/django-polymorphic/pull/572>`_
 
 v4.2.0 (2025-12-04)
 -------------------
 
-* Fixed `The objects which were transmogrified aren't initialized correctly if they implement __init__ method. <https://github.com/jazzband/django-polymorphic/issues/615>`_
-* Implemented `Defer to chunk_size parameter on .iterators for fetching get_real_instances() <https://github.com/jazzband/django-polymorphic/pull/672>`_
-* Fixed `Show full admin context (breadcrumb and logout nav) in model type selection admin form <https://github.com/jazzband/django-polymorphic/pull/580>`_
-* Fixed `Issue with Autocomplete Fields in StackedPolymorphicInline.Child Inline <https://github.com/jazzband/django-polymorphic/issues/546>`_
+* Fixed `The objects which were transmogrified aren't initialized correctly if they implement __init__ method. <https://github.com/django-commons/django-polymorphic/issues/615>`_
+* Implemented `Defer to chunk_size parameter on .iterators for fetching get_real_instances() <https://github.com/django-commons/django-polymorphic/pull/672>`_
+* Fixed `Show full admin context (breadcrumb and logout nav) in model type selection admin form <https://github.com/django-commons/django-polymorphic/pull/580>`_
+* Fixed `Issue with Autocomplete Fields in StackedPolymorphicInline.Child Inline <https://github.com/django-commons/django-polymorphic/issues/546>`_
 * Support Python 3.14 and Django 6.0, drop support for EOL python 3.9, Django 3.2, 4.0, 4.1 and 5.0.
 * `Modernized package management with new build, test, docs tooling and improved CI
-  <https://github.com/jazzband/django-polymorphic/issues/651>`_.
+  <https://github.com/django-commons/django-polymorphic/issues/651>`_.
 
 v4.1.0 (2025-05-20)
 -------------------
 
-* `Fixed a bug on Django 5 <https://github.com/jazzband/django-polymorphic/pull/621>`_ where
-  `aggregation queries could result in None-type errors <https://github.com/jazzband/django-polymorphic/issues/616>`_
-* `Use css variables in the admin css <https://github.com/jazzband/django-polymorphic/pull/622>`_
+* `Fixed a bug on Django 5 <https://github.com/django-commons/django-polymorphic/pull/621>`_ where
+  `aggregation queries could result in None-type errors <https://github.com/django-commons/django-polymorphic/issues/616>`_
+* `Use css variables in the admin css <https://github.com/django-commons/django-polymorphic/pull/622>`_
 
 v4.0.0 (2025-05-20)
 -------------------
@@ -221,13 +221,13 @@ There were many updates modernizing the package and incorporating Jazzband stand
 
 Changes that touched the core package code were:
 
-* Remove `legacy Django/python version checks <https://github.com/jazzband/django-polymorphic/pull/567>`_
-* Replace `string formats with f-strings <https://github.com/jazzband/django-polymorphic/pull/566>`_
-* Removed `deprecated usage of package_resources <https://github.com/jazzband/django-polymorphic/pull/541>`_
+* Remove `legacy Django/python version checks <https://github.com/django-commons/django-polymorphic/pull/567>`_
+* Replace `string formats with f-strings <https://github.com/django-commons/django-polymorphic/pull/566>`_
+* Removed `deprecated usage of package_resources <https://github.com/django-commons/django-polymorphic/pull/541>`_
     - as of Python 3.12 package_resources was removed. To get prior releases to work on >3.12 you
       would also need to install `setuptools <https://pypi.org/project/setuptools/>`_.
-* Fixed `multi field lines do not render in the admin <https://github.com/jazzband/django-polymorphic/pull/539>`_
-* Fixed `dark mode rendering in the polymorphic admin <https://github.com/jazzband/django-polymorphic/pull/508>`_
+* Fixed `multi field lines do not render in the admin <https://github.com/django-commons/django-polymorphic/pull/539>`_
+* Fixed `dark mode rendering in the polymorphic admin <https://github.com/django-commons/django-polymorphic/pull/508>`_
 
 v3.1.0 (2021-11-18)
 -------------------
@@ -485,7 +485,7 @@ v0.9.0 (2016-02-17)
 * Fix setting an extra custom manager without overriding the ``_default_manager``.
 * Fix missing ``history_view()`` redirection to the child admin, which is important for
   django-reversion_ support. See the documentation for hints for
-  `django-reversion-compare support <https://github.com/jazzband/django-polymorphic/discussions/831>_`.
+  `django-reversion-compare support <https://github.com/django-commons/django-polymorphic/discussions/831>_`.
 
 
 v0.8.1 (2015-12-29)

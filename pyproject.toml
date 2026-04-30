@@ -13,7 +13,7 @@ license-files = [
     "src/polymorphic/contrib/drf/LICENSE"
 ]
 requires-python = ">=3.10,<4.0"
-repository = "https://github.com/jazzband/django-polymorphic"
+repository = "https://github.com/django-commons/django-polymorphic"
 homepage = "https://django-polymorphic.rtfd.io"
 authors = [
   {name = "Bert Constantin", email = "bert.constantin@gmx.de"},
@@ -57,13 +57,13 @@ dependencies = [
 ]
 
 [project.urls]
-"Download" = "https://github.com/jazzband/django-polymorphic/tarball/main"
+"Download" = "https://github.com/django-commons/django-polymorphic/tarball/main"
 "Documentation" = "https://django-polymorphic.readthedocs.io"
-"Homepage" = "https://github.com/jazzband/django-polymorphic"
-"Repository" = "https://github.com/jazzband/django-polymorphic"
-"Issues" = "https://github.com/jazzband/django-polymorphic/issues"
+"Homepage" = "https://github.com/django-commons/django-polymorphic"
+"Repository" = "https://github.com/django-commons/django-polymorphic"
+"Issues" = "https://github.com/django-commons/django-polymorphic/issues"
 "Changelog" = "https://django-polymorphic.readthedocs.io/en/stable/changelog/index.html"
-"Code_of_Conduct" = "https://jazzband.co/about/conduct"
+"Code_of_Conduct" = "https://github.com/django-commons/membership/blob/main/CODE_OF_CONDUCT.md"
 
 [tool.uv]
 package = true

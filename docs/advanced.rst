@@ -143,7 +143,7 @@ commands just as regular models do. There are two important considerations:
 
 1. Polymorphic models are multi-table models and :django-admin:`dumpdata` serializes each table
    separately. :pypi:`django-polymorphic` `does it's best
-   <https://github.com/jazzband/django-polymorphic/pull/814>`_ to ensure non-polymorphic managers
+   <https://github.com/django-commons/django-polymorphic/pull/814>`_ to ensure non-polymorphic managers
    are used when creating fixtures but there may be edge cases where this fails. If you override
    :django-admin:`dumpdata` you must make sure any polymorphic managers encountered
    :meth:`toggle polymorphism off <polymorphic.managers.PolymorphicQuerySet.non_polymorphic>`. Other
