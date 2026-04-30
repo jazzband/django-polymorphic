@@ -126,12 +126,12 @@ def route_to_ancestor(
 
         for parent_model, field_to_parent in model._meta.parents.items():
             if field_to_parent is not None:
-                new_route = current_route + [ParentLinkInfo(parent_model, field_to_parent)]  # type: ignore[arg-type]
+                new_route = current_route + [ParentLinkInfo(parent_model, field_to_parent)]
                 found_route = find_route(parent_model, target_model, new_route)
                 if found_route is not None:
                     return found_route
             else:
-                return find_route(parent_model, target_model, current_route)  # type: ignore[unreachable]
+                return find_route(parent_model, target_model, current_route)
         return None
 
     found_route = find_route(model_class, ancestor_model, route)

@@ -150,27 +150,28 @@ jobs:
           "$GITHUB_REF_NAME" dist/**
           --repo "$GITHUB_REPOSITORY"
 
-  publish-to-testpypi:
-    name: Publish to TestPyPI
-    needs:
-      - build
-    runs-on: ubuntu-latest
+  # chrisglass owns this: https://test.pypi.org/project/django-polymorphic/
+  # publish-to-testpypi:  
+  #   name: Publish to TestPyPI
+  #   needs:
+  #     - build
+  #   runs-on: ubuntu-latest
 
-    environment:
-      name: testpypi
-      url: https://test.pypi.org/project/${{ needs.build.outputs.PACKAGE_NAME }}
+  #   environment:
+  #     name: testpypi
+  #     url: https://test.pypi.org/project/${{ needs.build.outputs.PACKAGE_NAME }}
 
-    permissions:
-      id-token: write # IMPORTANT: mandatory for trusted publishing
+  #   permissions:
+  #     id-token: write # IMPORTANT: mandatory for trusted publishing
 
-    steps:
-      - name: Download all the dists
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
-        with:
-          name: python-package-distributions
-          path: dist/
-      - name: Publish distribution 📦 to TestPyPI
-        uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e
-        with:
-          repository-url: https://test.pypi.org/legacy/
-          skip-existing: true
+  #   steps:
+  #     - name: Download all the dists
+  #       uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+  #       with:
+  #         name: python-package-distributions
+  #         path: dist/
+  #     - name: Publish distribution 📦 to TestPyPI
+  #       uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e
+  #       with:
+  #         repository-url: https://test.pypi.org/legacy/
+  #         skip-existing: true

@@ -119,7 +119,7 @@ class PolymorphicModelBase(ModelBase):
             if isinstance(fk, (models.ForeignKey, models.OneToOneField)) and not isinstance(
                 fk.remote_field.on_delete, PolymorphicGuard
             ):
-                fk.remote_field.on_delete = PolymorphicGuard(fk.remote_field.on_delete)
+                fk.remote_field.on_delete = PolymorphicGuard(fk.remote_field.on_delete)  # type: ignore[arg-type]
 
         # replace the parent/child descriptors
         if new_class._meta.parents and not (new_class._meta.abstract or new_class._meta.proxy):

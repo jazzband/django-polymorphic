@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "django-polymorphic"
-version = "4.11.2"
+version = "4.11.3"
 description = "Seamless polymorphic inheritance for Django models."
 readme = "README.md"
 license = "BSD-3-Clause"
@@ -173,10 +173,6 @@ plugins = ["mypy_django_plugin.main"]
 
 [[tool.mypy.overrides]]
 module = "polymorphic.tests.*"
-ignore_errors = true
-
-[[tool.mypy.overrides]]
-module = "example.*"
 ignore_errors = true
 
 [[tool.mypy.overrides]]

@@ -767,6 +767,9 @@ jobs:
   coverage-combine:
     needs: [postgres, sqlite, mysql, mariadb, oracle, windows, macos]
     runs-on: ubuntu-latest
+    environment:
+      name: codecov
+      deployment: false  # Prevents creating a GitHub deployment object
     permissions:
       contents: read
     steps:

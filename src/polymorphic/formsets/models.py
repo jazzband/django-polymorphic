@@ -177,9 +177,9 @@ class BasePolymorphicModelFormSet(BaseModelFormSet):
         """
         # BaseModelFormSet logic
         if self.is_bound and i < self.initial_form_count():
-            pk_key = f"{self.add_prefix(i)}-{self.model._meta.pk.name}"
+            pk_key = f"{self.add_prefix(i)}-{self.model._meta.pk.name}"  # type: ignore[union-attr]
             pk = self.data[pk_key]
-            pk_field = self.model._meta.pk
+            pk_field = self.model._meta.pk  # type: ignore[union-attr]
             to_python = self._get_to_python(pk_field)  # type: ignore[attr-defined]
             pk = to_python(pk)
             kwargs["instance"] = self._existing_object(pk)  # type: ignore[attr-defined]

@@ -168,7 +168,7 @@ class PolymorphicManager(models.Manager[_All], Generic[_All, _Base]):
                 raise TypeError(
                     f"{obj.__class__.__name__} is not a direct parent of {self.model.__name__}"
                 )
-            kwargs[parent_ptr.get_attname()] = obj.pk  # type: ignore[union-attr]
+            kwargs[parent_ptr.get_attname()] = obj.pk
 
             # create the new base class with only fields that apply to  it.
             ctype = ContentType.objects.db_manager(

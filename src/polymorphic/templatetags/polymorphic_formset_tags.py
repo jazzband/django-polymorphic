@@ -105,10 +105,10 @@ def as_script_options(formset: "BaseModelFormSet[Any, Any]") -> str:
     - ``add_text``
     - ``show_add_button``
     """
-    verbose_name = getattr(formset, "verbose_name", formset.model._meta.verbose_name)
+    verbose_name = getattr(formset, "verbose_name", formset.model._meta.verbose_name)  # type: ignore[union-attr]
     options = {
         "prefix": formset.prefix,
-        "pkFieldName": formset.model._meta.pk.name,
+        "pkFieldName": formset.model._meta.pk.name,  # type: ignore[union-attr]
         "addText": getattr(formset, "add_text", None)
         or gettext("Add another %(verbose_name)s") % {"verbose_name": capfirst(verbose_name)},
         "showAddButton": getattr(formset, "show_add_button", True),
