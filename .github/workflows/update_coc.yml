@@ -1,0 +1,54 @@
+name: Update Code of Conduct
+
+permissions: read-all
+
+on:
+  workflow_dispatch:
+  # Run every Sunday at midnight UTC (00:00) - triggered by webhook?
+  schedule:
+    - cron: '0 0 * * SUN'
+
+
+jobs:
+  update_code_of_conduct:
+    permissions:
+     contents: write
+     issues: write
+     pull-requests: write
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          persist-credentials: false
+
+      - name: Fetch CODE_OF_CONDUCT.md from django-commons
+        run: |
+          curl -o fetched_code_of_conduct.md https://raw.githubusercontent.com/django-commons/membership/main/CODE_OF_CONDUCT.md
+
+      - name: Check if CODE_OF_CONDUCT.md has changed
+        id: check_changes
+        run: |
+          if cmp -s fetched_code_of_conduct.md CODE_OF_CONDUCT.md; then
+            echo "No changes in CODE_OF_CONDUCT.md"
+            echo "changed=false" >> $GITHUB_OUTPUT
+          else
+            echo "CODE_OF_CONDUCT.md has changed"
+            echo "changed=true" >> $GITHUB_OUTPUT
+            cp fetched_code_of_conduct.md CODE_OF_CONDUCT.md
+          fi
+
+      # Create a pull request to merge the changes into the main branch
+      - name: Create Pull Request
+        if: steps.check_changes.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@c0f553fe549906ede9cf27b5156039d195d2ece0
+        with:
+            token: ${{ secrets.GITHUB_TOKEN }}
+            branch: bot-update-coc
+            add-paths: |
+                CODE_OF_CONDUCT.md
+            title: "🤖 Update Code of Conduct 🤖"
+            body: "Update the Code of Conduct with the latest version from the django-commons repository."
+            commit-message: "Update CODE_OF_CONDUCT.md from django-commons"

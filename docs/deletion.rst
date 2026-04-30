@@ -32,7 +32,7 @@ treatment. However if you encounter attribute errors or database integrity error
 you may manually wrap the :attr:`~django.db.models.ForeignKey.on_delete` action of reverse relations
 to polymorphic models with :class:`~polymorphic.deletion.PolymorphicGuard` to disable polymorphic
 behavior during deletion collection. If you encounter an issue like this
-`please report it to us <https://github.com/jazzband/django-polymorphic/issues>`_. For example:
+`please report it to us <https://github.com/django-commons/django-polymorphic/issues>`_. For example:
 
 .. code-block:: python
 

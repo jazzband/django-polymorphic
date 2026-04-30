@@ -1,12 +1,8 @@
 # Contributing
 
-[![Jazzband](https://jazzband.co/static/img/badge.svg)](https://jazzband.co/)
+Contributions are encouraged! Please use the issue page to submit feature requests or bug reports. Issues with attached PRs will be given priority and have a much higher likelihood of acceptance. Please also open an issue and associate it with any submitted PRs.
 
-This is a [Jazzband](https://jazzband.co) project. By contributing you agree to abide by the [Contributor Code of Conduct](https://jazzband.co/about/conduct) and follow the [guidelines](https://jazzband.co/about/guidelines).
-
-Contributions are encouraged! Please use the issue page to submit feature requests or bug reports. Issues with attached PRs will be given priority and have a much higher likelihood of acceptance.
-
-We are actively seeking additional maintainers. If you're interested, [contact me](https://github.com/bckohan).
+We are actively seeking additional maintainers. If you're interested, please open an issue or [contact me](https://github.com/bckohan).
 
 ## Installation
 

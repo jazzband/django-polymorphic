@@ -8,12 +8,12 @@
 [![PyPI status](https://img.shields.io/pypi/status/django-polymorphic.svg)](https://pypi.python.org/pypi/django-polymorphic)
 [![PyPI - Types](https://img.shields.io/pypi/types/django-polymorphic.svg)](https://pypi.python.org/pypi/django-polymorphic)
 [![Documentation Status](https://readthedocs.org/projects/django-polymorphic/badge/?version=latest)](http://django-polymorphic.readthedocs.io/?badge=latest/)
-[![Code Cov](https://img.shields.io/codecov/c/github/jazzband/django-polymorphic/main.svg)](https://codecov.io/github/jazzband/django-polymorphic?branch=main)
-[![Test Status](https://github.com/jazzband/django-polymorphic/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/jazzband/django-polymorphic/actions/workflows/test.yml?query=branch:main)
-[![Lint Status](https://github.com/jazzband/django-polymorphic/actions/workflows/lint.yml/badge.svg?branch=main)](https://github.com/jazzband/django-polymorphic/actions/workflows/lint.yml?query=branch:main)
+[![Code Cov](https://img.shields.io/codecov/c/github/django-commons/django-polymorphic/main.svg)](https://codecov.io/github/django-commons/django-polymorphic?branch=main)
+[![Test Status](https://github.com/django-commons/django-polymorphic/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/django-commons/django-polymorphic/actions/workflows/test.yml?query=branch:main)
+[![Lint Status](https://github.com/django-commons/django-polymorphic/actions/workflows/lint.yml/badge.svg?branch=main)](https://github.com/django-commons/django-polymorphic/actions/workflows/lint.yml?query=branch:main)
 [![Published on Django Packages](https://img.shields.io/badge/Published%20on-Django%20Packages-0c3c26)](https://djangopackages.org/packages/p/django-polymorphic/)
-[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/jazzband/django-polymorphic/badge)](https://securityscorecards.dev/viewer/?uri=github.com/jazzband/django-polymorphic)
-[![Jazzband](https://jazzband.co/static/img/badge.svg)](https://jazzband.co/)
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/django-commons/django-polymorphic/badge)](https://securityscorecards.dev/viewer/?uri=github.com/django-commons/django-polymorphic)
+[![django-commons](https://django-commons.co/static/img/badge.svg)](https://django-commons.co/)
 
 ---------------------------------------------------------------------------------------------------
 

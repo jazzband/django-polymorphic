@@ -10,19 +10,16 @@ concurrency:
 on:
   push:
     tags:
-      - 'v[0-9]*.[0-9]*.[0-9]*'  # only publish on version tags (e.g. v1.0.0)
+      - "v[0-9]*.[0-9]*.[0-9]*" # only publish on version tags (e.g. v1.0.0)
 
 jobs:
-
   lint:
-    if: github.repository == 'jazzband/django-polymorphic'
     permissions:
       contents: read
       actions: write
     uses: ./.github/workflows/lint.yml
 
   test:
-    if: github.repository == 'jazzband/django-polymorphic'
     permissions:
       contents: read
       actions: write
@@ -31,7 +28,6 @@ jobs:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
   build:
-    if: github.repository == 'jazzband/django-polymorphic'
     name: Build Package
     runs-on: ubuntu-latest
     permissions:
@@ -41,78 +37,72 @@ jobs:
       PACKAGE_NAME: ${{ steps.set-package.outputs.package_name }}
       RELEASE_VERSION: ${{ steps.set-package.outputs.release_version }}
     steps:
-    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-      with:
-        persist-credentials: false
-    - name: Set up Python
-      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
-      id: sp
-      with:
-        python-version: "3.14"  # for tomlib
-    - name: Install uv
-      uses: astral-sh/setup-uv@cec208311dfd045dd5311c1add060b2062131d57
-      with:
-        enable-cache: false
-    - name: Setup Just
-      uses: extractions/setup-just@f8a3cce218d9f83db3a2ecd90e41ac3de6cdfd9b
-    - name: Install Dependencies
-      env:
-        PYTHON_PATH: ${{ steps.sp.outputs.python-path }}
-      run: |
-        just setup "$PYTHON_PATH"
-        sudo apt-get install -y gettext
-    - name: Verify Tag
-      run: |
-        TAG_NAME=${GITHUB_REF#refs/tags/}
-        echo "Verifying tag $TAG_NAME..."
-        # if a tag was deleted and recreated we may have the old one cached
-        # be sure that we're publishing the current tag!
-        git fetch --force origin refs/tags/$TAG_NAME:refs/tags/$TAG_NAME
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
+        with:
+          python-version: "3.14" # for tomlib
+      - name: Install uv
+        uses: astral-sh/setup-uv@cec208311dfd045dd5311c1add060b2062131d57
+        with:
+          enable-cache: false
+          restore-cache: false
+          save-cache: false
+      - name: Setup Just
+        uses: extractions/setup-just@f8a3cce218d9f83db3a2ecd90e41ac3de6cdfd9b
+      - name: Verify Tag
+        run: |
+          TAG_NAME=${GITHUB_REF#refs/tags/}
+          echo "Verifying tag $TAG_NAME..."
+          # if a tag was deleted and recreated we may have the old one cached
+          # be sure that we're publishing the current tag!
+          git fetch --force origin refs/tags/$TAG_NAME:refs/tags/$TAG_NAME
 
-        # verify signature
-        curl -sL https://github.com/${GITHUB_ACTOR}.gpg | gpg --import 
-        git tag -v "$TAG_NAME"
+          # verify signature
+          curl -sL "https://github.com/${GITHUB_ACTOR}.gpg" | gpg --import
+          git tag -v "$TAG_NAME"
 
-        # verify version
-        RELEASE_VERSION=$(just validate_version $TAG_NAME)
+          # verify version
+          RELEASE_VERSION=$(just validate_version $TAG_NAME)
 
-        # export the release version
-        echo "RELEASE_VERSION=${RELEASE_VERSION}" >> $GITHUB_ENV 
-    - name: Build the binary wheel and a source tarball
-      run: just build
-    - name: Store the distribution packages
-      uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f
-      with:
-        name: python-package-distributions
-        path: dist/
-    - name: Set Package Name
-      id: set-package
-      run:
-        PACKAGE_NAME=$(python -c "import tomllib; print(tomllib.load(open('pyproject.toml', 'rb'))['project']['name'])")
-        echo "PACKAGE_NAME=${PACKAGE_NAME}" >> $GITHUB_ENV
+          # export the release version
+          echo "RELEASE_VERSION=${RELEASE_VERSION}" >> $GITHUB_ENV
+      - name: Build the binary wheel and a source tarball
+        run: just build
+      - name: Store the distribution packages
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f
+        with:
+          name: python-package-distributions
+          path: dist/
+      - name: Set Package Name
+        id: set-package
+        run:
+          PACKAGE_NAME=$(python -c "import tomllib; print(tomllib.load(open('pyproject.toml', 'rb'))['project']['name'])")
+          echo "PACKAGE_NAME=${PACKAGE_NAME}" >> $GITHUB_ENV
 
-  publish-to-jazzband:
-    name: Publish to Jazzband
+  publish-to-pypi:
+    name: Publish to PyPI
     needs:
       - lint
       - test
       - build
+      - publish-to-testpypi
     runs-on: ubuntu-latest
-    permissions: {}   # only needs JAZZBAND_RELEASE_KEY secret, no GitHub token scopes
+    environment:
+      name: pypi
+      url: https://pypi.org/p/${{ needs.build.outputs.PACKAGE_NAME }}
+    permissions:
+      id-token: write # IMPORTANT: mandatory for trusted publishing
     steps:
-    - name: Download all the dists
-      uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
-      with:
-        name: python-package-distributions
-        path: dist/
-    - name: Upload Package to Jazzband
-      uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e
-      with:
-        user: jazzband
-        password: ${{ secrets.JAZZBAND_RELEASE_KEY }}
-        attestations: false
-        repository-url: https://jazzband.co/projects/django-polymorphic/upload
-        verbose: true
+      - name: Download all the dists
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: python-package-distributions
+          path: dist/
+      - name: Publish distribution 📦 to PyPI
+        uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e
 
   github-release:
     name: Publish GitHub Release
@@ -122,40 +112,65 @@ jobs:
       - test
       - build
     permissions:
-      contents: write  # IMPORTANT: mandatory for making GitHub Releases
-      id-token: write  # IMPORTANT: mandatory for sigstore
+      contents: write # IMPORTANT: mandatory for making GitHub Releases
+      id-token: write # IMPORTANT: mandatory for sigstore
 
     steps:
-    - name: Download all the dists
-      uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
-      with:
-        name: python-package-distributions
-        path: dist/
-    - name: Sign the dists with Sigstore
-      uses: sigstore/gh-action-sigstore-python@04cffa1d795717b140764e8b640de88853c92acc
-      with:
-        inputs: >-
-          ./dist/*.tar.gz
-          ./dist/*.whl
-    - name: Create GitHub Release
-      env:
-        GITHUB_TOKEN: ${{ github.token }}
-        GITHUB_REF_NAME: ${{ github.ref_name }}
-        GITHUB_REPOSITORY: ${{ github.repository }}
-      run: >-
-        gh release create
-        "$GITHUB_REF_NAME"
-        --repo "$GITHUB_REPOSITORY"
-        --generate-notes
-    - name: Upload artifact signatures to GitHub Release
-      env:
-        GITHUB_TOKEN: ${{ github.token }}
-        GITHUB_REF_NAME: ${{ github.ref_name }}
-        GITHUB_REPOSITORY: ${{ github.repository }}
-      # Upload to GitHub Release using the `gh` CLI.
-      # `dist/` contains the built packages, and the
-      # sigstore-produced signatures and certificates.
-      run: >-
-        gh release upload
-        "$GITHUB_REF_NAME" dist/**
-        --repo "$GITHUB_REPOSITORY"
+      - name: Download all the dists
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: python-package-distributions
+          path: dist/
+      - name: Sign the dists with Sigstore
+        uses: sigstore/gh-action-sigstore-python@04cffa1d795717b140764e8b640de88853c92acc
+        with:
+          inputs: >-
+            ./dist/*.tar.gz
+            ./dist/*.whl
+      - name: Create GitHub Release
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: >-
+          gh release create
+          "$GITHUB_REF_NAME"
+          --repo "$GITHUB_REPOSITORY"
+          --generate-notes
+      - name: Upload artifact signatures to GitHub Release
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        # Upload to GitHub Release using the `gh` CLI.
+        # `dist/` contains the built packages, and the
+        # sigstore-produced signatures and certificates.
+        run: >-
+          gh release upload
+          "$GITHUB_REF_NAME" dist/**
+          --repo "$GITHUB_REPOSITORY"
+
+  publish-to-testpypi:
+    name: Publish to TestPyPI
+    needs:
+      - build
+    runs-on: ubuntu-latest
+
+    environment:
+      name: testpypi
+      url: https://test.pypi.org/project/${{ needs.build.outputs.PACKAGE_NAME }}
+
+    permissions:
+      id-token: write # IMPORTANT: mandatory for trusted publishing
+
+    steps:
+      - name: Download all the dists
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: python-package-distributions
+          path: dist/
+      - name: Publish distribution 📦 to TestPyPI
+        uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e
+        with:
+          repository-url: https://test.pypi.org/legacy/
+          skip-existing: true

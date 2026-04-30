@@ -107,4 +107,4 @@ shortcut:
         ...
 
 For further discussion see `this topic on the Q&A page
-<https://github.com/jazzband/django-polymorphic/discussions/696#discussioncomment-15223661>`_.
+<https://github.com/django-commons/django-polymorphic/discussions/696#discussioncomment-15223661>`_.
