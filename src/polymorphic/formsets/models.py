@@ -252,7 +252,7 @@ class BasePolymorphicModelFormSet(BaseModelFormSet):
                 else:
                     model = ContentType.objects.get_for_id(ct_value).model_class()
             elif i < len(self.queryset_data):
-                model = self.queryset_data[i].__class__
+                model = self.queryset_data[i].__class__  # pragma: no cover
             else:
                 # Extra forms, cycle between all types
                 # TODO: take the 'extra' value of each child formset into account.
