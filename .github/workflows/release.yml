@@ -68,6 +68,8 @@ jobs:
 
           # export the release version
           echo "RELEASE_VERSION=${RELEASE_VERSION}" >> $GITHUB_ENV
+      - name: Install gettext
+        run: sudo apt-get install -y gettext
       - name: Build the binary wheel and a source tarball
         run: just build
       - name: Store the distribution packages
