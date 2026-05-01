@@ -17,9 +17,6 @@ on:
       - "justfile"
   merge_group:
   workflow_call:
-    secrets:
-      CODECOV_TOKEN:
-        required: true
   workflow_dispatch:
     inputs:
       debug:
@@ -767,11 +764,9 @@ jobs:
   coverage-combine:
     needs: [postgres, sqlite, mysql, mariadb, oracle, windows, macos]
     runs-on: ubuntu-latest
-    environment:
-      name: codecov
-      deployment: false  # Prevents creating a GitHub deployment object
     permissions:
       contents: read
+      id-token: write
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
@@ -797,6 +792,6 @@ jobs:
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@57e3a136b779b570ffcdbf80b3bdc90e7fab3de2
         with:
-          token: ${{ secrets.CODECOV_TOKEN }}
+          use_oidc: true
           files:
             ./coverage.xml

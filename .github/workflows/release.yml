@@ -23,9 +23,8 @@ jobs:
     permissions:
       contents: read
       actions: write
+      id-token: write
     uses: ./.github/workflows/test.yml
-    secrets:
-      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
   build:
     name: Build Package
