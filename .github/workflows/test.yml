@@ -2,6 +2,10 @@ name: Test
 
 permissions:
   contents: read
+  
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 on:
   push:
