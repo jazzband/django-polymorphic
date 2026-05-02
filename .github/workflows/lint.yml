@@ -26,6 +26,7 @@ on:
 jobs:
 
   lint:
+    name: Run Static Analysis
     runs-on: ubuntu-latest
     permissions:
       contents: read
