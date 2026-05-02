@@ -9,7 +9,12 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
-permissions: read-all
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   analysis:
@@ -19,8 +24,9 @@ jobs:
       name: scorecard
       deployment: false  # Prevents creating a GitHub deployment object
     permissions:
-      security-events: write
-      id-token: write
+      contents: read
+      security-events: write  # allow uploading code scanning results
+      id-token: write  # to allow OIDC authentication for publishing results to OpenSSF REST API
 
     steps:
       - name: "Checkout code"

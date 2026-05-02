@@ -1,6 +1,7 @@
 name: Publish Release
 
-permissions: read-all
+permissions:
+  contents: read
 
 concurrency:
   # stop previous release runs if tag is recreated
@@ -16,14 +17,12 @@ jobs:
   lint:
     permissions:
       contents: read
-      actions: write
     uses: ./.github/workflows/lint.yml
 
   test:
     permissions:
       contents: read
-      actions: write
-      id-token: write
+      id-token: write  # to allow codecov oidc upload
     uses: ./.github/workflows/test.yml
 
   build:
@@ -31,7 +30,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      actions: write
     outputs:
       PACKAGE_NAME: ${{ steps.set-package.outputs.package_name }}
       RELEASE_VERSION: ${{ steps.set-package.outputs.release_version }}

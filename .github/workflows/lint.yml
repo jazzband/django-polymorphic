@@ -3,6 +3,10 @@ name: Lint
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 on:
   push:
     tags-ignore:
@@ -22,6 +26,7 @@ on:
 jobs:
 
   lint:
+    name: Run Static Analysis
     runs-on: ubuntu-latest
     permissions:
       contents: read

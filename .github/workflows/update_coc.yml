@@ -1,6 +1,11 @@
 name: Update Code of Conduct
 
-permissions: read-all
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 on:
   workflow_dispatch:
@@ -11,10 +16,10 @@ on:
 
 jobs:
   update_code_of_conduct:
+    name: Update Code of Conduct
     permissions:
-     contents: write
-     issues: write
-     pull-requests: write
+     contents: write  # allow updating the CODE_OF_CONDUCT.md file
+     pull-requests: write  # needed for CoC PR
 
     runs-on: ubuntu-latest
 
@@ -43,12 +48,23 @@ jobs:
       # Create a pull request to merge the changes into the main branch
       - name: Create Pull Request
         if: steps.check_changes.outputs.changed == 'true'
-        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1
-        with:
-            token: ${{ secrets.GITHUB_TOKEN }}
-            branch: bot-update-coc
-            add-paths: |
-                CODE_OF_CONDUCT.md
-            title: "🤖 Update Code of Conduct 🤖"
-            body: "Update the Code of Conduct with the latest version from the django-commons repository."
-            commit-message: "Update CODE_OF_CONDUCT.md from django-commons"
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BRANCH: update-coc
+          REF_NAME: ${{ github.ref_name }}
+          GH_ACTOR: ${{ github.actor }}
+          GH_ACTOR_ID: ${{ github.actor_id }}
+        run: |
+          git config user.name "$GH_ACTOR"
+          git config user.email "$GH_ACTOR_ID+$GH_ACTOR@users.noreply.github.com"
+
+          git checkout -B "$BRANCH"
+          git add CODE_OF_CONDUCT.md
+          git commit -m "Update Code of Conduct"
+          git push --force-with-lease origin "$BRANCH"
+
+          gh pr view "$BRANCH" >/dev/null 2>&1 || gh pr create \
+            --base "$REF_NAME" \
+            --head "$BRANCH" \
+            --title "Update Code of Conduct" \
+            --body "Automated update."

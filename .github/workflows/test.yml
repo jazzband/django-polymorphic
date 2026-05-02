@@ -3,6 +3,10 @@ name: Test
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 on:
   push:
     tags-ignore:
@@ -41,13 +45,12 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      actions: write
     # Service containers to run with `container-job`
     strategy:
       fail-fast: false
       matrix:
         python-version: ['3.10', '3.11', '3.12', '3.13', '3.14']
-        postgres-version: ['12', '14', 'latest']
+        postgres-version: ['12', '14@sha256:bbb8851608e3ff4901156bf6a4bf90735a9d44ae014c03811bfdb2f9c354b18b', 'latest']
         psycopg-version: ['psycopg2', 'psycopg3']
         django-version:
           - 'dj42' # LTS April 2026
@@ -173,7 +176,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      actions: write
     env:
       RDBMS: sqlite
       COVERAGE_FILE: linux-py${{ matrix.python-version }}-${{ matrix.django-version }}-sqlite.coverage
@@ -247,7 +249,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      actions: write
     strategy:
       fail-fast: false
       matrix:
@@ -361,7 +362,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      actions: write
     env:
       RDBMS: mariadb
       COVERAGE_FILE: linux-py${{ matrix.python-version }}-${{ matrix.django-version }}-${{ matrix.mysqlclient-version }}-mariadb${{ matrix.mariadb-version }}.coverage
@@ -485,7 +485,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      actions: write
     env:
       RDBMS: oracle
       TEST_PYTHON_VERSION: ${{ matrix.python-version }}
@@ -620,7 +619,6 @@ jobs:
     runs-on: windows-latest
     permissions:
       contents: read
-      actions: write
     env:
       RDBMS: sqlite
       COVERAGE_FILE: windows-py${{ matrix.python-version }}-${{ matrix.django-version }}-sqlite.coverage
@@ -691,7 +689,6 @@ jobs:
     runs-on: macos-latest
     permissions:
       contents: read
-      actions: write
     env:
       RDBMS: sqlite
       COVERAGE_FILE: macos-py${{ matrix.python-version }}-${{ matrix.django-version }}-sqlite.coverage
@@ -762,11 +759,12 @@ jobs:
 
 
   coverage-combine:
+    name: Combine Coverage and Upload to Codecov
     needs: [postgres, sqlite, mysql, mariadb, oracle, windows, macos]
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      id-token: write
+      id-token: write  # for codecov oidc authentication
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
