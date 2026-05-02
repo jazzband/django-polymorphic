@@ -1,6 +1,7 @@
 name: Publish Release
 
-permissions: read-all
+permissions:
+  contents: read
 
 concurrency:
   # stop previous release runs if tag is recreated
