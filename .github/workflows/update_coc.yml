@@ -3,6 +3,10 @@ name: Update Code of Conduct
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 on:
   workflow_dispatch:
   # Run every Sunday at midnight UTC (00:00) - triggered by webhook?
@@ -12,10 +16,10 @@ on:
 
 jobs:
   update_code_of_conduct:
+    name: Update Code of Conduct
     permissions:
-     contents: write
-     issues: write
-     pull-requests: write
+     contents: write  # allow updating the CODE_OF_CONDUCT.md file
+     pull-requests: write  # needed for CoC PR
 
     runs-on: ubuntu-latest
 
