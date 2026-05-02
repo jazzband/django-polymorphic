@@ -44,7 +44,7 @@ jobs:
         with:
           python-version: "3.14" # for tomlib
       - name: Install uv
-        uses: astral-sh/setup-uv@cec208311dfd045dd5311c1add060b2062131d57
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b
         with:
           enable-cache: false
           restore-cache: false
@@ -73,7 +73,7 @@ jobs:
       - name: Build the binary wheel and a source tarball
         run: just build
       - name: Store the distribution packages
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: python-package-distributions
           path: dist/
@@ -102,7 +102,7 @@ jobs:
           name: python-package-distributions
           path: dist/
       - name: Publish distribution 📦 to PyPI
-        uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e
+        uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b
 
   github-release:
     name: Publish GitHub Release
@@ -171,7 +171,7 @@ jobs:
   #         name: python-package-distributions
   #         path: dist/
   #     - name: Publish distribution 📦 to TestPyPI
-  #       uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e
+  #       uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b
   #       with:
   #         repository-url: https://test.pypi.org/legacy/
   #         skip-existing: true
