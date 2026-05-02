@@ -13,7 +13,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -25,8 +25,8 @@ jobs:
       deployment: false  # Prevents creating a GitHub deployment object
     permissions:
       contents: read
-      security-events: write
-      id-token: write
+      security-events: write  # allow uploading code scanning results
+      id-token: write  # to allow OIDC authentication for publishing results to OpenSSF REST API
 
     steps:
       - name: "Checkout code"
